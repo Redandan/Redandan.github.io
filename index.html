@@ -69,7 +69,7 @@
             console.warn('无法通过服务工作者加载应用，回退到普通 <script> 标签。');
             loadMainDartJs();
           }
-        }, 4000);
+        }, 10000);
       });
     } else {
       // 不支持服务工作者，直接加载 <script> 标签。
