@@ -1,0 +1,2 @@
+- name: 記錄部署時間
+  run: echo "{\"last_deploy\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"}" > deploy_time.json
