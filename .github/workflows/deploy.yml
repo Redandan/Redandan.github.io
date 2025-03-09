@@ -14,10 +14,11 @@ jobs:
       - name: 記錄部署時間
         run: echo "{\"last_deploy\": \"$(date -u +\"%Y-%m-%dT%H:%M:%SZ\")\"}" > deploy_time.json
         
-      - name: Commit changes
+      - name: Commit and Push changes
         run: |
           git config user.name "GitHub Action"
           git config user.email "action@github.com"
           git add deploy_time.json
-          git commit -m "Update deploy time"
-          git push
+          git commit -m "Update deploy time" || echo "No changes to commit"
+          git fetch origin
+          git push origin main
