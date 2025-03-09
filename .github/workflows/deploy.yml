@@ -1,7 +1,24 @@
 jobs:
   deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
       - name: 記錄部署時間
         run: echo "{\"last_deploy\": \"$(date -u +\"%Y-%m-%dT%H:%M:%SZ\")\"}" > deploy_time.json
+        
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+        
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: '.'
+          
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
