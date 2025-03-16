@@ -1,9 +1,12 @@
 {
-    "commitMessage":  [
-                          "temp",
-                          ""
-                      ],
-    "commitHash":  "bd272c2",
-    "version":  "1.0.3",
-    "buildTime":  "2025-03-16 15:01:00"
+    "version":  "1.0.1",
+    "app_name":  "agora_mark",
+    "package_name":  "agora_mark",
+    "buildTime":  "2025-03-16 17:08:59",
+    "commitHash":  "596a672",
+    "build_number":  "2",
+    "lastCommitMessage":  [
+                              "deploy update",
+                              ""
+                          ]
 }
