@@ -2,7 +2,8 @@
 const CONFIG = {
     CHECK_INTERVAL: 5 * 60 * 1000, // 5 minutes
     REMOTE_URL: 'https://redandan.github.io/version.json',
-    LOCAL_STORAGE_KEY: 'app_version'
+    LOCAL_STORAGE_KEY: 'app_version',
+    CACHE_KEY: 'app_cache_version'
 };
 
 // Validate version object structure
@@ -53,31 +54,115 @@ async function fetchVersionInfo(url) {
     }
 }
 
-async function clearBrowserCache() {
+// 新增：顯示更新提示 UI
+function showUpdateNotification() {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #4CAF50;
+        color: white;
+        padding: 16px;
+        border-radius: 4px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        z-index: 9999;
+        font-family: Arial, sans-serif;
+    `;
+    notification.textContent = '新版本已準備就緒，正在更新...';
+    document.body.appendChild(notification);
+    return notification;
+}
+
+// 新增：預加載新資源
+async function preloadNewResources() {
+    const resources = [
+        'main.dart.js',
+        'flutter.js',
+        'version.json',
+        // 添加其他需要預加載的關鍵資源
+    ];
+
+    const preloadPromises = resources.map(async (resource) => {
+        try {
+            const response = await fetch(`${resource}?v=${new Date().getTime()}`);
+            if (!response.ok) throw new Error(`Failed to preload ${resource}`);
+            await response.blob(); // 確保完整下載
+            console.log(`Preloaded: ${resource}`);
+        } catch (error) {
+            console.error(`Preload failed for ${resource}:`, error);
+            throw error;
+        }
+    });
+
+    return Promise.all(preloadPromises);
+}
+
+// 新增：清理所有類型的緩存
+async function clearAllCaches() {
     try {
+        // 1. 清理 Cache API
         if ('caches' in window) {
             const keys = await caches.keys();
             await Promise.all(keys.map(key => caches.delete(key)));
-            console.log('Browser cache cleared successfully');
         }
-        
-        // Clear application storage
-        localStorage.removeItem('app_cache_key');
+
+        // 2. 清理 Service Worker
+        if ('serviceWorker' in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(registrations.map(reg => reg.unregister()));
+        }
+
+        // 3. 清理 localStorage 中的緩存相關項
+        const cacheKeys = [
+            CONFIG.LOCAL_STORAGE_KEY,
+            CONFIG.CACHE_KEY,
+            'flutter-app-cache'
+        ];
+        cacheKeys.forEach(key => localStorage.removeItem(key));
+
+        // 4. 清理 sessionStorage
         sessionStorage.clear();
-        
-        // Clear application specific caches
-        try {
-            await navigator.serviceWorker?.register?.().then(registration => {
-                registration.unregister();
-            });
-        } catch (e) {
-            console.log('No service worker to unregister');
-        }
-        
+
+        // 5. 清理 IndexedDB
+        const databases = await window.indexedDB.databases();
+        databases.forEach(db => {
+            window.indexedDB.deleteDatabase(db.name);
+        });
+
         console.log('All caches cleared successfully');
     } catch (error) {
         console.error('Error clearing caches:', error);
         throw error;
+    }
+}
+
+// 改進：更新處理流程
+async function handleUpdate(currentVersion, remoteVersion) {
+    try {
+        // 1. 顯示更新通知
+        const notification = showUpdateNotification();
+
+        // 2. 清理所有緩存
+        console.log('Clearing all caches...');
+        await clearAllCaches();
+
+        // 3. 預加載新資源
+        console.log('Preloading new resources...');
+        await preloadNewResources();
+
+        // 4. 更新版本信息
+        localStorage.setItem(CONFIG.LOCAL_STORAGE_KEY, JSON.stringify(remoteVersion));
+        localStorage.setItem(CONFIG.CACHE_KEY, new Date().getTime().toString());
+
+        // 5. 重新加載頁面
+        console.log('Reloading application...');
+        window.location.reload(true);
+    } catch (error) {
+        console.error('Update process failed:', error);
+        // 如果更新失敗，回滾版本信息
+        localStorage.setItem(CONFIG.LOCAL_STORAGE_KEY, JSON.stringify(currentVersion));
+        alert('更新過程中發生錯誤，請稍後再試');
     }
 }
 
@@ -138,15 +223,7 @@ async function checkVersion() {
 
         if (needsUpdate) {
             console.log('New version available:', remoteVersion.version, 'Build:', remoteVersion.build_number);
-            
-            // Update stored version first
-            localStorage.setItem(CONFIG.LOCAL_STORAGE_KEY, JSON.stringify(remoteVersion));
-            
-            // Clear all caches
-            await clearBrowserCache();
-            
-            // Reload page
-            window.location.reload(true);
+            await handleUpdate(currentVersion, remoteVersion);
         } else {
             console.log('Already running the latest version');
         }
@@ -155,7 +232,16 @@ async function checkVersion() {
     }
 }
 
-// Start version checking
-setInterval(checkVersion, CONFIG.CHECK_INTERVAL);
-// Initial check
-checkVersion(); 
+// 初始化
+window.addEventListener('load', () => {
+    // 檢查是否是更新後的首次加載
+    const cacheVersion = localStorage.getItem(CONFIG.CACHE_KEY);
+    if (cacheVersion) {
+        console.log('Application updated successfully');
+        localStorage.removeItem(CONFIG.CACHE_KEY);
+    }
+    
+    // 開始版本檢查
+    checkVersion();
+    setInterval(checkVersion, CONFIG.CHECK_INTERVAL);
+}); 
