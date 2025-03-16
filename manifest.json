@@ -1,11 +1,11 @@
 {
-    "name": "C2C Platform",
+    "name": "Agora Market",
     "short_name": "C2C",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "C2C Platform - Your Trading Community",
+    "description": "Agora Market - Your Trading Community",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
