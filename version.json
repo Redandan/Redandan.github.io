@@ -1,12 +1,12 @@
 {
-    "version":  "1.0.11",
+    "version":  "1.0.12",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-03-19 15:48:35",
-    "commitHash":  "8f0c5cc",
-    "build_number":  "12",
+    "buildTime":  "2025-03-19 16:35:05",
+    "commitHash":  "f50ebac",
+    "build_number":  "13",
     "lastCommitMessage":  [
-                              "更新外送員歷史訂單",
+                              "nav fixed",
                               ""
                           ]
 }
