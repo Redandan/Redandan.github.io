@@ -52,102 +52,160 @@
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
         }
     </style>
+    <script>
+        const translations = {
+            zh: {
+                title: 'Agora 社群商城',
+                subtitle: '去中心化 C2C 交易平台，安全、高效、自由交易',
+                whatIs: '什麼是 Agora 社群商城？',
+                description: 'Agora 是一個基於區塊鏈的 C2C 交易平台，透過 USDT 交易並結合冷錢包技術，確保交易安全。買家、賣家與外送員能夠在這裡自由交易，無需依賴傳統金融機構。真愛、真貨交易外送員能這裡自由出沒，無需依賴傳統機構。',
+                coinUsage: 'Agora 幣的用途',
+                feeDiscount: '可用於折抵高達 80% OFF 平台手續費',
+                creditGuarantee: '質押 Agora 幣可獲得 信用擔保，提升交易信任度',
+                marketReport: '質押解鎖 市場搜尋報告，掌握熱門趨勢',
+                memberPrivilege: '會員等級專屬特權，如 更低手續費、流量曝光',
+                memberTiers: '會員等級與特權',
+                bronze: '銅級會員',
+                silver: '銀級會員',
+                gold: '金級會員',
+                bronzeFeatures: ['基本搜尋報告', '額外 5% 手續費折扣', '優先流量推薦'],
+                silverFeatures: ['進階市場數據', '額外 10% 手續費折扣', '首頁推薦曝光'],
+                goldFeatures: ['完整競爭分析', '0% 交易手續費', 'DAO 高級治理權限'],
+                joinTitle: '加入 Agora，開啟去中心化交易新時代',
+                contactUs: '有興趣投資或瞭解更多？歡迎聯繫我們！',
+                contactButton: '聯絡我們',
+                footer: '© 2025 Agora 社群商城. All Rights Reserved.'
+            },
+            en: {
+                title: 'Agora Community Marketplace',
+                subtitle: 'Decentralized C2C Trading Platform - Secure, Efficient, Free Trading',
+                whatIs: 'What is Agora Community Marketplace?',
+                description: 'Agora is a blockchain-based C2C trading platform that ensures transaction security through USDT trading and cold wallet technology. Buyers, sellers, and delivery personnel can trade freely here without relying on traditional financial institutions.',
+                coinUsage: 'Agora Coin Usage',
+                feeDiscount: 'Can be used to offset up to 80% OFF platform fees',
+                creditGuarantee: 'Stake Agora coins to obtain credit guarantee and enhance transaction trust',
+                marketReport: 'Unlock market search reports through staking to grasp popular trends',
+                memberPrivilege: 'Exclusive membership privileges such as lower fees and traffic exposure',
+                memberTiers: 'Membership Tiers & Privileges',
+                bronze: 'Bronze Member',
+                silver: 'Silver Member',
+                gold: 'Gold Member',
+                bronzeFeatures: ['Basic Search Reports', 'Additional 5% Fee Discount', 'Priority Traffic Recommendation'],
+                silverFeatures: ['Advanced Market Data', 'Additional 10% Fee Discount', 'Homepage Featured Exposure'],
+                goldFeatures: ['Complete Competition Analysis', '0% Transaction Fee', 'DAO Advanced Governance Rights'],
+                joinTitle: 'Join Agora, Start a New Era of Decentralized Trading',
+                contactUs: 'Interested in investing or learning more? Contact us!',
+                contactButton: 'Contact Us',
+                footer: '© 2025 Agora Community Marketplace. All Rights Reserved.'
+            }
+        };
+
+        function setLanguage(lang) {
+            document.documentElement.lang = lang;
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    if (Array.isArray(translations[lang][key])) {
+                        element.innerHTML = translations[lang][key].map(item => `<li>${item}</li>`).join('');
+                    } else {
+                        element.textContent = translations[lang][key];
+                    }
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setLanguage('zh');
+        });
+    </script>
 </head>
 <body class="bg-[#1F2937] text-gray-300 font-sans">
-    <!-- 頁頭 -->
+    <!-- Language Switcher -->
+    <div class="fixed top-4 right-4 z-50">
+        <button onclick="setLanguage('zh')" class="bg-blue-500 text-white px-3 py-1 rounded-l hover:bg-blue-600">中文</button>
+        <button onclick="setLanguage('en')" class="bg-blue-500 text-white px-3 py-1 rounded-r hover:bg-blue-600">EN</button>
+    </div>
+
+    <!-- Header -->
     <header class="bg-[#1A2C5A] text-white py-8 text-center shadow-lg">
-        <h1 class="text-4xl font-bold">Agora 社群商城</h1>
-        <p class="text-lg mt-2">去中心化 C2C 交易平台，安全、高效、自由交易</p>
+        <h1 class="text-4xl font-bold" data-i18n="title"></h1>
+        <p class="text-lg mt-2" data-i18n="subtitle"></p>
     </header>
     
-    <!-- 主要內容 -->
+    <!-- Main Content -->
     <main class="max-w-5xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
-        <!-- Agora 簡介 -->
+        <!-- Agora Introduction -->
         <section class="mb-16 bg-[#374151] rounded-lg p-6 shadow-md">
-            <h2 class="text-3xl font-bold mb-6 section-header">什麼是 Agora 社群商城？</h2>
-            <p class="text-lg leading-relaxed text-gray-300">
-                Agora 是一個基於區塊鏈的 C2C 交易平台，透過 USDT 交易並結合冷錢包技術，確保交易安全。買家、賣家與外送員能夠在這裡自由交易，無需依賴傳統金融機構。真愛、真貨交易外送員能這裡自由出沒，無需依賴傳統機構。
-            </p>
+            <h2 class="text-3xl font-bold mb-6 section-header" data-i18n="whatIs"></h2>
+            <p class="text-lg leading-relaxed text-gray-300" data-i18n="description"></p>
         </section>
         
-        <!-- Agora 幣的用途 -->
+        <!-- Agora Coin Usage -->
         <section class="mb-16 bg-[#374151] rounded-lg p-6 shadow-md">
-            <h2 class="text-3xl font-bold mb-6 section-header">Agora 幣的用途</h2>
+            <h2 class="text-3xl font-bold mb-6 section-header" data-i18n="coinUsage"></h2>
            
             <ul class="list-none space-y-3">
                 <li class="flex items-start">
                     <i class="fas fa-fire text-orange-400 mr-3 mt-1"></i>
-                    <span class="text-lg text-gray-300">可用於折抵高達 <b class="text-white">80% OFF</b> 平台手續費</span>
+                    <span class="text-lg text-gray-300" data-i18n="feeDiscount"></span>
                 </li>
                 <li class="flex items-start">
                     <i class="fas fa-lock text-blue-400 mr-3 mt-1"></i>
-                    <span class="text-lg text-gray-300">質押 Agora 幣可獲得 <b class="text-white">信用擔保</b>，提升交易信任度</span>
+                    <span class="text-lg text-gray-300" data-i18n="creditGuarantee"></span>
                 </li>
                 <li class="flex items-start">
                     <i class="fas fa-chart-line text-green-400 mr-3 mt-1"></i>
-                    <span class="text-lg text-gray-300">質押解鎖 <b class="text-white">市場搜尋報告</b>，掌握熱門趨勢</span>
+                    <span class="text-lg text-gray-300" data-i18n="marketReport"></span>
                 </li>
                 <li class="flex items-start">
                     <i class="fas fa-bolt text-yellow-400 mr-3 mt-1"></i>
-                    <span class="text-lg text-gray-300">會員等級專屬特權，如 <b class="text-white">更低手續費、流量曝光</b></span>
+                    <span class="text-lg text-gray-300" data-i18n="memberPrivilege"></span>
                 </li>
             </ul>
         </section>
         
-        <!-- 會員等級與特權 -->
+        <!-- Membership Tiers -->
         <section class="mb-16">
-            <h2 class="text-3xl font-bold mb-6 section-header">會員等級與特權</h2>
+            <h2 class="text-3xl font-bold mb-6 section-header" data-i18n="memberTiers"></h2>
             <div class="grid md:grid-cols-3 gap-6">
-                <!-- 銅級會員 -->
+                <!-- Bronze -->
                 <div class="tier-card bg-[#374151] p-6 rounded-lg shadow-md text-center">
                     <div id="bronze-icon" class="text-5xl mb-4 glow-effect">
                         <i class="fas fa-medal text-[#CD7F32] medal-pulse"></i>
                     </div>
-                    <h3 class="text-xl font-bold mb-3 text-white">銅級會員</h3>
-                    <ul class="list-disc pl-4 text-left text-gray-300 space-y-2">
-                        <li>基本搜尋報告</li>
-                        <li>額外 5% 手續費折扣</li>
-                        <li>優先流量推薦</li>
-                    </ul>
+                    <h3 class="text-xl font-bold mb-3 text-white" data-i18n="bronze"></h3>
+                    <ul class="list-disc pl-4 text-left text-gray-300 space-y-2" data-i18n="bronzeFeatures"></ul>
                 </div>
-                <!-- 銀級會員 -->
+                <!-- Silver -->
                 <div class="tier-card bg-[#374151] p-6 rounded-lg shadow-md text-center">
                     <div id="silver-icon" class="text-5xl mb-4 glow-effect">
                         <i class="fas fa-medal text-[#C0C0C0] medal-pulse"></i>
                     </div>
-                    <h3 class="text-xl font-bold mb-3 text-white">銀級會員</h3>
-                    <ul class="list-disc pl-4 text-left text-gray-300 space-y-2">
-                        <li>進階市場數據</li>
-                        <li>額外 10% 手續費折扣</li>
-                        <li>首頁推薦曝光</li>
-                    </ul>
+                    <h3 class="text-xl font-bold mb-3 text-white" data-i18n="silver"></h3>
+                    <ul class="list-disc pl-4 text-left text-gray-300 space-y-2" data-i18n="silverFeatures"></ul>
                 </div>
-                <!-- 金級會員 -->
+                <!-- Gold -->
                 <div class="tier-card bg-[#374151] p-6 rounded-lg shadow-md text-center">
                     <div id="gold-icon" class="text-5xl mb-4 glow-effect">
                         <i class="fas fa-medal text-[#FFD700] medal-pulse"></i>
                     </div>
-                    <h3 class="text-xl font-bold mb-3 text-white">金級會員</h3>
-                    <ul class="list-disc pl-4 text-left text-gray-300 space-y-2">
-                        <li>完整競爭分析</li>
-                        <li>0% 交易手續費</li>
-                        <li>DAO 高級治理權限</li>
-                    </ul>
+                    <h3 class="text-xl font-bold mb-3 text-white" data-i18n="gold"></h3>
+                    <ul class="list-disc pl-4 text-left text-gray-300 space-y-2" data-i18n="goldFeatures"></ul>
                 </div>
             </div>
         </section>
         
-        <!-- 聯絡我們 -->
+        <!-- Contact Us -->
         <section class="text-center">
-            <h2 class="text-3xl font-bold mb-4 section-header">加入 Agora，開啟去中心化交易新時代</h2>
-            <p class="text-lg leading-relaxed text-gray-300 mb-6">有興趣投資或瞭解更多？歡迎聯繫我們！</p>
-            <a href="mailto:contact@agoramarket.com" class="inline-block bg-[#3B82F6] text-white py-3 px-8 rounded-lg shadow-lg hover:bg-[#60A5FA] transition-colors">聯絡我們</a>
+            <h2 class="text-3xl font-bold mb-4 section-header" data-i18n="joinTitle"></h2>
+            <p class="text-lg leading-relaxed text-gray-300 mb-6" data-i18n="contactUs"></p>
+            <a href="mailto:contact@agoramarket.com" class="inline-block bg-[#3B82F6] text-white py-3 px-8 rounded-lg shadow-lg hover:bg-[#60A5FA] transition-colors" data-i18n="contactButton"></a>
         </section>
     </main>
     
-    <!-- 頁腳 -->
+    <!-- Footer -->
     <footer class="bg-[#1A2C5A] text-white text-center py-6">
-        <p>© 2025 Agora 社群商城. All Rights Reserved.</p>
+        <p data-i18n="footer"></p>
     </footer>
 </body>
 </html>
