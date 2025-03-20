@@ -1,12 +1,12 @@
 {
-    "version":  "1.0.16",
+    "version":  "1.0.17",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-03-20 17:42:59",
-    "commitHash":  "5ea4da3",
-    "build_number":  "17",
+    "buildTime":  "2025-03-20 22:30:14",
+    "commitHash":  "d9e49aa",
+    "build_number":  "18",
     "lastCommitMessage":  [
-                              "TEMP",
+                              "NavItem fixed",
                               ""
                           ]
 }
