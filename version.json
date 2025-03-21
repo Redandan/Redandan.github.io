@@ -2,11 +2,11 @@
     "version":  "1.0.17",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-03-20 22:30:14",
-    "commitHash":  "d9e49aa",
+    "buildTime":  "2025-03-21 13:18:32",
+    "commitHash":  "c8b0426",
     "build_number":  "18",
     "lastCommitMessage":  [
-                              "NavItem fixed",
+                              "訂單詳情優化",
                               ""
                           ]
 }
