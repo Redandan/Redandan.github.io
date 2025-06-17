@@ -1,12 +1,9 @@
 {
-    "version":  "1.0.29",
+    "version":  "1.0.30",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-06-17 12:04:34",
-    "commitHash":  "479d43f",
-    "build_number":  "30",
-    "lastCommitMessage":  [
-                              "賣場更新",
-                              ""
-                          ]
+    "buildTime":  "2025-06-17 13:58:01",
+    "commitHash":  "cb0f9ba",
+    "build_number":  "31",
+    "lastCommitMessage":  "購物車按鈕要在商品詳情展�?"
 }
