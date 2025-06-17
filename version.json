@@ -1,9 +1,12 @@
 {
-    "version":  "1.0.32",
+    "version":  "1.0.33",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-06-17 15:18:08",
-    "commitHash":  "0c98e71",
-    "build_number":  "33",
-    "lastCommitMessage":  "多選購物�?"
+    "buildTime":  "2025-06-17 18:05:40",
+    "commitHash":  "5064407",
+    "build_number":  "34",
+    "lastCommitMessage":  [
+                              "聊聊按鈕",
+                              ""
+                          ]
 }
