@@ -1,12 +1,12 @@
 {
-    "version":  "1.0.35",
+    "version":  "1.0.36",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-06-19 23:46:48",
-    "commitHash":  "3e4433e",
-    "build_number":  "36",
+    "buildTime":  "2025-06-19 23:58:52",
+    "commitHash":  "fe727d6",
+    "build_number":  "37",
     "lastCommitMessage":  [
-                              "我的更新",
+                              "切換腳色修正",
                               ""
                           ]
 }
