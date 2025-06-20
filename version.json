@@ -1,12 +1,12 @@
 {
-    "version":  "1.0.40",
+    "version":  "1.0.41",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-06-20 22:56:59",
-    "commitHash":  "b069474",
-    "build_number":  "41",
+    "buildTime":  "2025-06-20 23:33:33",
+    "commitHash":  "02cbe29",
+    "build_number":  "42",
     "lastCommitMessage":  [
-                              " Home Indicator fixed",
+                              "Home Indicator2",
                               ""
                           ]
 }
