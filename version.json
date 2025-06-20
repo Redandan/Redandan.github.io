@@ -1,12 +1,12 @@
 {
-    "version":  "1.0.38",
+    "version":  "1.0.39",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-06-20 22:31:48",
-    "commitHash":  "0b9107b",
-    "build_number":  "39",
+    "buildTime":  "2025-06-20 22:47:07",
+    "commitHash":  "b069474",
+    "build_number":  "40",
     "lastCommitMessage":  [
-                              "聊天列表修正",
+                              " Home Indicator fixed",
                               ""
                           ]
 }
