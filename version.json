@@ -1,12 +1,12 @@
 {
-    "version":  "1.0.37",
+    "version":  "1.0.38",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-06-20 21:48:01",
-    "commitHash":  "7b0d264",
-    "build_number":  "38",
+    "buildTime":  "2025-06-20 22:31:48",
+    "commitHash":  "0b9107b",
+    "build_number":  "39",
     "lastCommitMessage":  [
-                              "賣場管理更新",
+                              "聊天列表修正",
                               ""
                           ]
 }
