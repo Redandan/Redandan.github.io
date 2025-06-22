@@ -1,12 +1,12 @@
 {
-    "version":  "1.0.44",
+    "version":  "1.0.45",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-06-21 18:30:21",
-    "commitHash":  "ab2c996",
-    "build_number":  "45",
+    "buildTime":  "2025-06-23 00:51:30",
+    "commitHash":  "8fd5ea3",
+    "build_number":  "46",
     "lastCommitMessage":  [
-                              "商品管理上下架改成用切換",
+                              "temp",
                               ""
                           ]
 }
