@@ -1,12 +1,12 @@
 {
-    "version":  "1.0.46",
+    "version":  "1.0.47",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-06-23 10:48:32",
-    "commitHash":  "4cf18c3",
-    "build_number":  "47",
+    "buildTime":  "2025-06-23 11:48:48",
+    "commitHash":  "fe366b8",
+    "build_number":  "48",
     "lastCommitMessage":  [
-                              "SellerProductManagementPage fixed",
+                              " 底部導航欄被 Home Indicator 覆蓋問題修復",
                               ""
                           ]
 }
