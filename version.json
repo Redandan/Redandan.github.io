@@ -1,10 +1,10 @@
 {
-    "version":  "1.0.47",
+    "version":  "1.0.48",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-06-23 11:48:48",
+    "buildTime":  "2025-06-23 12:00:05",
     "commitHash":  "fe366b8",
-    "build_number":  "48",
+    "build_number":  "49",
     "lastCommitMessage":  [
                               " 底部導航欄被 Home Indicator 覆蓋問題修復",
                               ""
