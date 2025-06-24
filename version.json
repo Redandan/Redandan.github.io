@@ -1,12 +1,13 @@
 {
-    "version":  "1.0.49",
+    "version":  "1.0.50",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-06-24 11:33:34",
-    "commitHash":  "9bd673b",
-    "build_number":  "50",
+    "buildTime":  "2025-06-24 15:45:04",
+    "commitHash":  "67eebf3",
+    "build_number":  "51",
     "lastCommitMessage":  [
-                              "temp",
-                              ""
+                              "Merge pull request #1 from Redandan/feature/dependency-upgrade",
+                              "",
+                              "Feature/dependency upgrade"
                           ]
 }
