@@ -1,12 +1,9 @@
 {
-    "version":  "1.0.68",
+    "version":  "1.0.69",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-07-05 13:28:17",
-    "commitHash":  "01e7316",
-    "build_number":  "69",
-    "lastCommitMessage":  [
-                              "lint fixed",
-                              ""
-                          ]
+    "buildTime":  "2025-07-05 16:26:31",
+    "commitHash":  "5a3e920",
+    "build_number":  "70",
+    "lastCommitMessage":  "0703014_è²·å®¶\u003e?†å?ï¼šè³£å®¶å?åº—é?ï¼Œå?é¡žå??›ç„¡??"
 }
