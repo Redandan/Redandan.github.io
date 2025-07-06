@@ -1,12 +1,12 @@
 {
-    "version":  "1.0.71",
+    "version":  "1.0.72",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-07-06 09:51:36",
-    "commitHash":  "5946227",
-    "build_number":  "72",
+    "buildTime":  "2025-07-06 11:31:32",
+    "commitHash":  "753dbde",
+    "build_number":  "73",
     "lastCommitMessage":  [
-                              "結帳?��?",
+                              "購物車API ?�移",
                               ""
                           ]
 }
