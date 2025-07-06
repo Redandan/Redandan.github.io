@@ -1,9 +1,12 @@
 {
-    "version":  "1.0.77",
+    "version":  "1.0.78",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-07-06 18:41:55",
-    "commitHash":  "f37195d",
-    "build_number":  "78",
-    "lastCommitMessage":  " AppBar å·²ç?å®Œå…¨?±å??‹é??¢è‡ªè¡Œç®¡??"
+    "buildTime":  "2025-07-06 22:25:17",
+    "commitHash":  "f9ee36b",
+    "build_number":  "79",
+    "lastCommitMessage":  [
+                              "è³¼ç‰©è»Šé€??",
+                              ""
+                          ]
 }
