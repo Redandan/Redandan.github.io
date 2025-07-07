@@ -1,10 +1,10 @@
 {
-    "version":  "1.0.88",
+    "version":  "1.0.89",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-07-07 21:17:06",
-    "commitHash":  "4a7e1a7",
-    "build_number":  "89",
+    "buildTime":  "2025-07-07 21:30:04",
+    "commitHash":  "a091b0b",
+    "build_number":  "90",
     "lastCommitMessage":  [
                               "風格統�?",
                               ""
