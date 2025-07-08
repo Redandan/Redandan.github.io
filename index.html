@@ -4,7 +4,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <script src="version_check.js?v=1.0.92"></script>
+    <script src="version_check.js?v=1.0.93"></script>
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -23,6 +23,18 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
+
+  <!-- Content Security Policy for development -->
+  <meta http-equiv="Content-Security-Policy" 
+        content="script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'; 
+                 object-src 'none'; 
+                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; 
+                 font-src 'self' https://fonts.gstatic.com;">
+  
+  <!-- For production, remove 'unsafe-eval' and 'wasm-unsafe-eval':
+       content="script-src 'self'; object-src 'none'; 
+                style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; 
+                font-src 'self' https://fonts.gstatic.com;" -->
 
   <!-- Viewport meta tags for proper mobile scaling -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
