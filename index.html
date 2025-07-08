@@ -4,7 +4,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <script src="version_check.js?v=1.0.95"></script>
+    <script src="version_check.js?v=1.0.96"></script>
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -26,19 +26,30 @@
 
   <!-- Content Security Policy for development -->
   <meta http-equiv="Content-Security-Policy" 
-        content="script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' https://www.gstatic.com https://storage.googleapis.com; 
+        content="default-src 'self'; 
+                 script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' 'unsafe-inline' https://www.gstatic.com https://storage.googleapis.com https://fonts.googleapis.com; 
                  object-src 'none'; 
                  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; 
                  font-src 'self' https://fonts.gstatic.com;
                  worker-src 'self' blob:;
-                 child-src 'self' blob:;">
+                 child-src 'self' blob:;
+                 connect-src 'self' https://agoramarketapi.purrtechllc.com https://www.gstatic.com https://storage.googleapis.com;
+                 img-src 'self' data: https: blob:;
+                 media-src 'self' blob:;
+                 frame-src 'self' blob:;">
   
   <!-- For production, remove 'unsafe-eval' and 'wasm-unsafe-eval':
-       content="script-src 'self' 'unsafe-inline' https://www.gstatic.com https://storage.googleapis.com; object-src 'none'; 
+       content="default-src 'self'; 
+                script-src 'self' 'unsafe-inline' https://www.gstatic.com https://storage.googleapis.com https://fonts.googleapis.com; 
+                object-src 'none'; 
                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; 
                 font-src 'self' https://fonts.gstatic.com;
                 worker-src 'self' blob:;
-                child-src 'self' blob:;" -->
+                child-src 'self' blob:;
+                connect-src 'self' https://agoramarketapi.purrtechllc.com https://www.gstatic.com https://storage.googleapis.com;
+                img-src 'self' data: https: blob:;
+                media-src 'self' blob:;
+                frame-src 'self' blob:;" -->
 
   <!-- Viewport meta tags for proper mobile scaling -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
