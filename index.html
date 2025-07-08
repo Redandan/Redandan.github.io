@@ -4,7 +4,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <script src="version_check.js?v=1.0.93"></script>
+    <script src="version_check.js?v=1.0.94"></script>
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -26,15 +26,19 @@
 
   <!-- Content Security Policy for development -->
   <meta http-equiv="Content-Security-Policy" 
-        content="script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'; 
+        content="script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' https://www.gstatic.com https://storage.googleapis.com; 
                  object-src 'none'; 
                  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; 
-                 font-src 'self' https://fonts.gstatic.com;">
+                 font-src 'self' https://fonts.gstatic.com;
+                 worker-src 'self' blob:;
+                 child-src 'self' blob:;">
   
   <!-- For production, remove 'unsafe-eval' and 'wasm-unsafe-eval':
-       content="script-src 'self'; object-src 'none'; 
+       content="script-src 'self' https://www.gstatic.com https://storage.googleapis.com; object-src 'none'; 
                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; 
-                font-src 'self' https://fonts.gstatic.com;" -->
+                font-src 'self' https://fonts.gstatic.com;
+                worker-src 'self' blob:;
+                child-src 'self' blob:;" -->
 
   <!-- Viewport meta tags for proper mobile scaling -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -66,6 +70,15 @@
 
   <title>Agora Market</title>
   <link rel="manifest" href="manifest.json">
+  
+  <!-- Flutter configuration -->
+  <script>
+    window.flutterConfiguration = {
+      canvasKitBaseUrl: "/canvaskit/",
+      renderer: "html",
+      assetBase: "/"
+    };
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>
