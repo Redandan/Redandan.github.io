@@ -1,12 +1,12 @@
 {
-    "version":  "1.0.94",
+    "version":  "1.0.95",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-07-28 10:14:45",
-    "commitHash":  "68f1178",
-    "build_number":  "95",
+    "buildTime":  "2025-07-29 17:26:05",
+    "commitHash":  "6d178d9",
+    "build_number":  "96",
     "lastCommitMessage":  [
-                              "ä¸‹æ??¸æ?",
+                              "currency default USDT",
                               ""
                           ]
 }
