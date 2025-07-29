@@ -1,12 +1,12 @@
 {
-    "version":  "1.0.95",
+    "version":  "1.0.96",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-07-29 17:26:05",
-    "commitHash":  "6d178d9",
-    "build_number":  "96",
+    "buildTime":  "2025-07-29 18:11:46",
+    "commitHash":  "aff0285",
+    "build_number":  "97",
     "lastCommitMessage":  [
-                              "currency default USDT",
+                              "庫�?不足?�示",
                               ""
                           ]
 }
