@@ -1,12 +1,12 @@
 {
-    "version":  "1.0.113",
+    "version":  "1.0.114",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-03 14:50:15",
-    "commitHash":  "c91c7a3",
-    "build_number":  "114",
+    "buildTime":  "2025-08-03 15:43:01",
+    "commitHash":  "a681c5d",
+    "build_number":  "115",
     "lastCommitMessage":  [
-                              "Update version to 1.0.112, add message buffer size limit in SseService, and improve connection handling logic.",
+                              "Update version to 1.0.113, enhance SSE connection handling in AuthService and AppInitializer, and add connection health check in SseService.",
                               ""
                           ]
 }
