@@ -1,12 +1,12 @@
 {
-    "version":  "1.0.114",
+    "version":  "1.0.115",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-03 15:43:01",
-    "commitHash":  "a681c5d",
-    "build_number":  "115",
+    "buildTime":  "2025-08-03 16:12:01",
+    "commitHash":  "eb0b014",
+    "build_number":  "116",
     "lastCommitMessage":  [
-                              "Update version to 1.0.113, enhance SSE connection handling in AuthService and AppInitializer, and add connection health check in SseService.",
+                              "Update version to 1.0.114, remove SseDebugPage, and enhance message sending with retry logic and SSE connection management in ChatView.",
                               ""
                           ]
 }
