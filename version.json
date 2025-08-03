@@ -1,12 +1,12 @@
 {
-    "version":  "1.0.110",
+    "version":  "1.0.111",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-03 11:06:51",
-    "commitHash":  "d919544",
-    "build_number":  "111",
+    "buildTime":  "2025-08-03 11:42:05",
+    "commitHash":  "a360e53",
+    "build_number":  "112",
     "lastCommitMessage":  [
-                              "0801051_è²·å®¶\u003e?¢å?\u003e?ç¾ï¼šé¸?‡ç¶²è·¯ç§»?¤BTC",
+                              "Update dependencies and improve product management: Changed agora_market_dart_sdk reference in pubspec files, updated versioning in version.json, and enhanced product validation logic for shipping companies in admin and seller management pages.",
                               ""
                           ]
 }
