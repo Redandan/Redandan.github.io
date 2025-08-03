@@ -1,12 +1,12 @@
 {
-    "version":  "1.0.112",
+    "version":  "1.0.113",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-03 11:55:05",
-    "commitHash":  "a9e4f06",
-    "build_number":  "113",
+    "buildTime":  "2025-08-03 14:50:15",
+    "commitHash":  "c91c7a3",
+    "build_number":  "114",
     "lastCommitMessage":  [
-                              "Update version to 1.0.111, enhance AuthService registration, and refine order review logic in user order detail and orders tab pages.",
+                              "Update version to 1.0.112, add message buffer size limit in SseService, and improve connection handling logic.",
                               ""
                           ]
 }
