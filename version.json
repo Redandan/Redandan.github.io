@@ -1,12 +1,12 @@
 {
-    "version":  "1.0.117",
+    "version":  "1.0.118",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-03 18:32:59",
-    "commitHash":  "ece5487",
-    "build_number":  "118",
+    "buildTime":  "2025-08-05 14:49:41",
+    "commitHash":  "5109c00",
+    "build_number":  "119",
     "lastCommitMessage":  [
-                              "Update agora_market_dart_sdk reference in pubspec files and enhance recharge management page with improved state handling, UI components, and data loading logic.",
+                              "Update agora_market_dart_sdk reference in pubspec files, increment version to 1.0.117, and enhance withdraw management page with improved protocol handling and UI adjustments.",
                               ""
                           ]
 }
