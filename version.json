@@ -1,12 +1,12 @@
 {
-    "version":  "1.0.119",
+    "version":  "1.0.120",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-06 09:49:32",
-    "commitHash":  "ea0f231",
-    "build_number":  "120",
+    "buildTime":  "2025-08-06 11:17:30",
+    "commitHash":  "dbd7b30",
+    "build_number":  "121",
     "lastCommitMessage":  [
-                              "temp",
+                              "Update version to 1.0.119, enhance deposit management with improved logging for recharge process, and handle NO_AVAILABLE_WALLET error with suggested amounts dialog.",
                               ""
                           ]
 }
