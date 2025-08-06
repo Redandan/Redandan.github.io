@@ -1,12 +1,12 @@
 {
-    "version":  "1.0.123",
+    "version":  "1.0.124",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-06 23:51:48",
-    "commitHash":  "83546c4",
-    "build_number":  "124",
+    "buildTime":  "2025-08-07 00:06:36",
+    "commitHash":  "695b87e",
+    "build_number":  "125",
     "lastCommitMessage":  [
-                              "Update version to 1.0.122, add auto version check initialization in AppInitializer, and enhance ProfilePage with version checking and update dialogs.",
+                              "Update version to 1.0.123, modify build time and commit hash, and adjust version service promise type for improved type safety.",
                               ""
                           ]
 }
