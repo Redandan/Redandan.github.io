@@ -1,12 +1,12 @@
 {
-    "version":  "1.0.122",
+    "version":  "1.0.123",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-06 23:04:34",
-    "commitHash":  "e5fe1ba",
-    "build_number":  "123",
+    "buildTime":  "2025-08-06 23:51:48",
+    "commitHash":  "83546c4",
+    "build_number":  "124",
     "lastCommitMessage":  [
-                              "Refactor BaseManagementPage layout by adding padding to filter and query bars, and replace deprecated search and filter bar methods with improved structure for better UI consistency.",
+                              "Update version to 1.0.122, add auto version check initialization in AppInitializer, and enhance ProfilePage with version checking and update dialogs.",
                               ""
                           ]
 }
