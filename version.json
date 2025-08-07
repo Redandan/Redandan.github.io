@@ -2,11 +2,11 @@
     "version":  "1.0.125",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-07 16:35:00",
-    "commitHash":  "06e7374",
+    "buildTime":  "2025-08-07 23:55:41",
+    "commitHash":  "b19fc30",
     "build_number":  "126",
     "lastCommitMessage":  [
-                              "Update version to 1.0.124, modify build time and commit hash, and enhance BaseManagementPage layout for improved readability and structure.",
+                              "Update terminology from \"?µç®±\" to \"?»å??µç®±\" across multiple files for consistency and clarity, and refine password reset messages for improved user understanding.",
                               ""
                           ]
 }
