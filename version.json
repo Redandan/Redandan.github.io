@@ -1,12 +1,12 @@
 {
-    "version":  "1.0.124",
+    "version":  "1.0.125",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-07 00:06:36",
-    "commitHash":  "695b87e",
-    "build_number":  "125",
+    "buildTime":  "2025-08-07 16:35:00",
+    "commitHash":  "06e7374",
+    "build_number":  "126",
     "lastCommitMessage":  [
-                              "Update version to 1.0.123, modify build time and commit hash, and adjust version service promise type for improved type safety.",
+                              "Update version to 1.0.124, modify build time and commit hash, and enhance BaseManagementPage layout for improved readability and structure.",
                               ""
                           ]
 }
