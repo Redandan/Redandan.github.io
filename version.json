@@ -1,12 +1,12 @@
 {
-    "version":  "1.0.125",
+    "version":  "1.0.126",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-07 23:55:41",
-    "commitHash":  "b19fc30",
-    "build_number":  "126",
+    "buildTime":  "2025-08-08 10:19:55",
+    "commitHash":  "63a1094",
+    "build_number":  "127",
     "lastCommitMessage":  [
-                              "Update terminology from \"?µç®±\" to \"?»å??µç®±\" across multiple files for consistency and clarity, and refine password reset messages for improved user understanding.",
+                              "Integrate AppVersionService across multiple pages for version management and display, enhancing initialization and error handling in the splash, login, and about us pages.",
                               ""
                           ]
 }
