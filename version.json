@@ -1,12 +1,12 @@
 {
-    "version":  "1.0.128",
+    "version":  "1.0.129",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-08 15:33:14",
-    "commitHash":  "e77210d",
-    "build_number":  "129",
+    "buildTime":  "2025-08-08 20:47:40",
+    "commitHash":  "a1e4183",
+    "build_number":  "130",
     "lastCommitMessage":  [
-                              "Update agora_market_dart_sdk reference to a new commit, enhance user management page with password reset functionality, and update version to 1.0.126 with modified build time and commit hash.",
+                              "Update agora_market_dart_sdk reference, refactor email verification methods in AuthService to accept email and code parameters, and enhance SecuritySettingsPage to support email verification and resend functionality. Introduce AutoReplyService in dependency injection and add auto-reply configuration page to admin navigation.",
                               ""
                           ]
 }
