@@ -1,12 +1,12 @@
 {
-    "version":  "1.0.126",
+    "version":  "1.0.127",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-08 10:19:55",
-    "commitHash":  "63a1094",
-    "build_number":  "127",
+    "buildTime":  "2025-08-08 14:24:28",
+    "commitHash":  "e77210d",
+    "build_number":  "128",
     "lastCommitMessage":  [
-                              "Integrate AppVersionService across multiple pages for version management and display, enhancing initialization and error handling in the splash, login, and about us pages.",
+                              "Update agora_market_dart_sdk reference to a new commit, enhance user management page with password reset functionality, and update version to 1.0.126 with modified build time and commit hash.",
                               ""
                           ]
 }
