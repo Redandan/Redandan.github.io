@@ -1,12 +1,12 @@
 {
-    "version":  "1.0.130",
+    "version":  "1.0.131",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-09 10:29:47",
-    "commitHash":  "9d2ecb5",
-    "build_number":  "131",
+    "buildTime":  "2025-08-09 10:50:32",
+    "commitHash":  "58c2497",
+    "build_number":  "132",
     "lastCommitMessage":  [
-                              "Update version to 1.0.129, modify build time and commit hash, and refactor version display in ProfilePage to use AppVersionService for consistency across the app. Enhance version information presentation with localized text.",
+                              "Update version to 1.0.130, modify build time and commit hash, and enhance email verification functionality in EditProfilePage. Introduce a new email verification dialog and improve email input handling with visual feedback for verification status.",
                               ""
                           ]
 }
