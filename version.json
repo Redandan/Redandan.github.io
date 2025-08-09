@@ -2,11 +2,15 @@
     "version":  "1.0.131",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-09 18:19:58",
-    "commitHash":  "7be6355",
+    "buildTime":  "2025-08-09 18:40:41",
+    "commitHash":  "213d181",
     "build_number":  "132",
     "lastCommitMessage":  [
-                              "Update agora_market_dart_sdk reference to the latest commit and refactor transaction management page to utilize a dedicated search parameter class, improving code clarity and removing unused export functionality.",
+                              "Add SKU display functionality to product checkout and cart components",
+                              "",
+                              "- Introduced SKU parameter in ProductCheckoutComponents for better product identification.",
+                              "- Enhanced CartItemCard to display SKU information if available.",
+                              "- Updated CartCheckoutPage and ProductPurchaseConfirmPage to pass SKU data, improving user experience during checkout.",
                               ""
                           ]
 }
