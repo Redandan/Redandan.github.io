@@ -2,11 +2,11 @@
     "version":  "1.0.131",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-09 10:50:32",
-    "commitHash":  "58c2497",
+    "buildTime":  "2025-08-09 18:12:09",
+    "commitHash":  "83c6e00",
     "build_number":  "132",
     "lastCommitMessage":  [
-                              "Update version to 1.0.130, modify build time and commit hash, and enhance email verification functionality in EditProfilePage. Introduce a new email verification dialog and improve email input handling with visual feedback for verification status.",
+                              "Refactor search parameters across multiple admin pages to utilize dedicated parameter classes, enhancing code clarity and maintainability. Update agora_market_dart_sdk reference in pubspec files to the latest commit for improved functionality.",
                               ""
                           ]
 }
