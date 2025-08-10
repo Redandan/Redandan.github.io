@@ -1,12 +1,12 @@
 {
-    "version":  "1.0.132",
+    "version":  "1.0.133",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-10 13:57:39",
-    "commitHash":  "3237499",
-    "build_number":  "133",
+    "buildTime":  "2025-08-10 15:41:09",
+    "commitHash":  "712d68b",
+    "build_number":  "134",
     "lastCommitMessage":  [
-                              "Enhance AdminDataTable and BaseManagementPage with custom scrollbar and responsive column widths. Refactor AdminDataTable to support dynamic width calculation and horizontal scrolling, improving usability and layout. Update BaseManagementPage to include a showCustomScrollbar option for better customization.",
+                              "Integrate TokenRefreshService into AuthService for improved token management. Update user preferences to handle refresh tokens, and enhance DioAuthInterceptor to automatically refresh tokens on 403 errors. This refactor improves authentication flow and error handling across the application.",
                               ""
                           ]
 }
