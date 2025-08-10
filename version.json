@@ -1,16 +1,12 @@
 {
-    "version":  "1.0.131",
+    "version":  "1.0.132",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-09 18:40:41",
-    "commitHash":  "213d181",
-    "build_number":  "132",
+    "buildTime":  "2025-08-10 13:57:39",
+    "commitHash":  "3237499",
+    "build_number":  "133",
     "lastCommitMessage":  [
-                              "Add SKU display functionality to product checkout and cart components",
-                              "",
-                              "- Introduced SKU parameter in ProductCheckoutComponents for better product identification.",
-                              "- Enhanced CartItemCard to display SKU information if available.",
-                              "- Updated CartCheckoutPage and ProductPurchaseConfirmPage to pass SKU data, improving user experience during checkout.",
+                              "Enhance AdminDataTable and BaseManagementPage with custom scrollbar and responsive column widths. Refactor AdminDataTable to support dynamic width calculation and horizontal scrolling, improving usability and layout. Update BaseManagementPage to include a showCustomScrollbar option for better customization.",
                               ""
                           ]
 }
