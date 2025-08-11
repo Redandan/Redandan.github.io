@@ -1,12 +1,12 @@
 {
-    "version":  "1.0.133",
+    "version":  "1.0.132",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-10 15:41:09",
-    "commitHash":  "712d68b",
-    "build_number":  "134",
+    "buildTime":  "2025-08-11 22:07:56",
+    "commitHash":  "f15f231",
+    "build_number":  "133",
     "lastCommitMessage":  [
-                              "Integrate TokenRefreshService into AuthService for improved token management. Update user preferences to handle refresh tokens, and enhance DioAuthInterceptor to automatically refresh tokens on 403 errors. This refactor improves authentication flow and error handling across the application.",
+                              "Refactor admin form dialog layout for improved usability. Increase dialog width to 600 and adjust internal components to utilize SizedBox for consistent width. Enhance field rendering with better alignment and responsiveness, ensuring a more user-friendly experience across various field types.",
                               ""
                           ]
 }
