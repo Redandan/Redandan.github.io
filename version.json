@@ -2,11 +2,11 @@
     "version":  "1.0.132",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-12 21:34:00",
-    "commitHash":  "7077b32",
+    "buildTime":  "2025-08-12 22:07:18",
+    "commitHash":  "965ac71",
     "build_number":  "133",
     "lastCommitMessage":  [
-                              "Update agora_market_dart_sdk dependency reference and refactor ColdWallet instantiation. Changed the dependency reference in pubspec.yaml and pubspec.lock to a new commit hash. Refactored the ColdWallet creation to use CreateColdWalletParam for improved clarity and maintainability.",
+                              "Refactor Cold Wallet status and protocol handling in admin interface. Removed static label maps and replaced them with inline mappings for improved clarity. Updated dropdown and radio button implementations for wallet status and protocol selection, ensuring accurate display and selection options. Enhanced initial values setup for wallet forms to streamline data handling.",
                               ""
                           ]
 }
