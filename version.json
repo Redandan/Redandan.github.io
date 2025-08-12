@@ -2,11 +2,11 @@
     "version":  "1.0.132",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-12 12:07:39",
-    "commitHash":  "13b4f75",
+    "buildTime":  "2025-08-12 14:09:23",
+    "commitHash":  "f47555d",
     "build_number":  "133",
     "lastCommitMessage":  [
-                              "Enhance SseService with network connectivity monitoring and message response handling. Introduced connectivity listener to manage network status changes, updated heartbeat intervals for improved responsiveness, and implemented message response timeout checks. Updated SseStatusWidget to display network status and response waiting state. Improved ChatView to handle connection issues before sending messages and files, ensuring a more robust user experience.",
+                              "Implement force connection reset in SseService and update reconnection logic in SseConnectionDetector. Added forceResetConnection method to handle extreme cases and ensure consistent connection state before reconnecting. Improved error handling during connection attempts to enhance reliability.",
                               ""
                           ]
 }
