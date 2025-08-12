@@ -2,11 +2,11 @@
     "version":  "1.0.132",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-11 22:41:09",
-    "commitHash":  "fbab43e",
+    "buildTime":  "2025-08-12 12:07:39",
+    "commitHash":  "13b4f75",
     "build_number":  "133",
     "lastCommitMessage":  [
-                              "Refactor UserStorePage layout for improved usability and responsiveness. Replace Column with SingleChildScrollView to prevent overflow issues, and implement fixed height for product list to enhance layout stability. Update filter and search display logic for better clarity and user interaction.",
+                              "Enhance SseService with network connectivity monitoring and message response handling. Introduced connectivity listener to manage network status changes, updated heartbeat intervals for improved responsiveness, and implemented message response timeout checks. Updated SseStatusWidget to display network status and response waiting state. Improved ChatView to handle connection issues before sending messages and files, ensuring a more robust user experience.",
                               ""
                           ]
 }
