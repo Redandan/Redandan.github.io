@@ -1,12 +1,12 @@
 {
-    "version":  "1.0.132",
+    "version":  "1.0.133",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-13 08:58:59",
-    "commitHash":  "9eacf8e",
-    "build_number":  "133",
+    "buildTime":  "2025-08-13 09:52:19",
+    "commitHash":  "c77e173",
+    "build_number":  "134",
     "lastCommitMessage":  [
-                              "Update agora_market_dart_sdk dependency to a new commit hash and enhance product form validation. Improved shipping company selection and fee validation logic to ensure user input is correctly handled, providing clearer feedback for required fields.",
+                              "Update agora_market_dart_sdk dependency to a new commit hash and implement product deletion functionality across admin and seller interfaces. Enhanced error handling and user feedback during product deletion processes, ensuring a smoother user experience.",
                               ""
                           ]
 }
