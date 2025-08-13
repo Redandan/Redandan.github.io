@@ -2,11 +2,15 @@
     "version":  "1.0.135",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-13 10:44:08",
-    "commitHash":  "e82c5f8",
+    "buildTime":  "2025-08-13 15:11:38",
+    "commitHash":  "2eccbb3",
     "build_number":  "136",
     "lastCommitMessage":  [
-                              "Update version to 1.0.134, modify build details, and enhance product status handling in SellerProductManagementPage. Removed unused logout functionality from SellerLayout for cleaner code.",
+                              "Add seller posts feature to store preview and user store pages",
+                              "",
+                              "- Updated tab controller length to accommodate new \u0027Posts\u0027 tab in both PublicStorePreviewPage and UserStorePage.",
+                              "- Integrated SellerPostsList widget to display seller posts with refresh and load more functionalities.",
+                              "- Enhanced UI with titles and layout adjustments for better user experience.",
                               ""
                           ]
 }
