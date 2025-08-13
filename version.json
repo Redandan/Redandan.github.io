@@ -2,11 +2,11 @@
     "version":  "1.0.133",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-13 09:52:19",
-    "commitHash":  "c77e173",
+    "buildTime":  "2025-08-13 10:14:12",
+    "commitHash":  "704eab8",
     "build_number":  "134",
     "lastCommitMessage":  [
-                              "Update agora_market_dart_sdk dependency to a new commit hash and implement product deletion functionality across admin and seller interfaces. Enhanced error handling and user feedback during product deletion processes, ensuring a smoother user experience.",
+                              "Update product status handling in SellerProductManagementPage to treat \u0027?ох?\u0027 as \u0027OFF_SALE\u0027. Enhance debugging logs for status changes and search parameters in ProductManagementController for improved traceability during product management operations.",
                               ""
                           ]
 }
