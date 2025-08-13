@@ -2,15 +2,15 @@
     "version":  "1.0.135",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-13 17:40:05",
-    "commitHash":  "dba25e6",
+    "buildTime":  "2025-08-13 18:04:09",
+    "commitHash":  "8203f86",
     "build_number":  "136",
     "lastCommitMessage":  [
-                              "Update UserStorePage to reintroduce \u0027Posts\u0027 tab and enhance posts display layout",
+                              "Refactor SellerAddPostPage to remove image upload functionality and enhance error handling",
                               "",
-                              "- Added \u0027Posts\u0027 tab back to the UserStorePage for better navigation.",
-                              "- Updated the layout of the posts section to use a fixed height for improved UI consistency.",
-                              "- Refactored the _buildPostsTab method to utilize SingleChildScrollView for better scrolling behavior.",
+                              "- Removed image selection and upload features from SellerAddPostPage as they are not yet available.",
+                              "- Implemented detailed error messages for post submission failures to improve user feedback.",
+                              "- Added visual indicators and messages to inform users about the disabled image upload feature.",
                               ""
                           ]
 }
