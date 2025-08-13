@@ -1,10 +1,10 @@
 {
-    "version":  "1.0.133",
+    "version":  "1.0.134",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-13 10:14:12",
+    "buildTime":  "2025-08-13 10:32:57",
     "commitHash":  "704eab8",
-    "build_number":  "134",
+    "build_number":  "135",
     "lastCommitMessage":  [
                               "Update product status handling in SellerProductManagementPage to treat \u0027?ох?\u0027 as \u0027OFF_SALE\u0027. Enhance debugging logs for status changes and search parameters in ProductManagementController for improved traceability during product management operations.",
                               ""

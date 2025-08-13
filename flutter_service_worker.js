@@ -56,7 +56,7 @@ const RESOURCES = {"assets/AssetManifest.bin": "d71158da1c0b7cfc181c2f13eaaa95db
 "canvaskit/skwasm.wasm": "39dd80367a4e71582d234948adc521c0",
 "favicon.png": "5dcef449791fa27946b3d35ad8803796",
 "flutter.js": "83d881c1dbb6d6bcd6b42e274605b69c",
-"flutter_bootstrap.js": "1ad58b58fb076d59cfe1726a96d7fbfd",
+"flutter_bootstrap.js": "a3f9f3e84a51d9cba792defaba102260",
 "icons/agora-market-icon.svg": "0809310c9c8ce8213a71b912864eb06c",
 "icons/android-icon-144x144.png": "63fa5dc585dccfddad1550ea018e4ce3",
 "icons/android-icon-192x192.png": "a5813fca5d400b7712cd910d9a868f31",
