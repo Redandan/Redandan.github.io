@@ -2,15 +2,15 @@
     "version":  "1.0.135",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-13 18:04:09",
-    "commitHash":  "8203f86",
+    "buildTime":  "2025-08-13 21:01:56",
+    "commitHash":  "59903d8",
     "build_number":  "136",
     "lastCommitMessage":  [
-                              "Refactor SellerAddPostPage to remove image upload functionality and enhance error handling",
+                              "Implement \"Remember Me\" functionality in login process",
                               "",
-                              "- Removed image selection and upload features from SellerAddPostPage as they are not yet available.",
-                              "- Implemented detailed error messages for post submission failures to improve user feedback.",
-                              "- Added visual indicators and messages to inform users about the disabled image upload feature.",
+                              "- Refactored the login page to utilize a new UserPreferences service for managing saved credentials.",
+                              "- Added methods to save, retrieve, and clear user credentials based on the \"Remember Me\" option.",
+                              "- Enhanced logging for credential management actions to improve traceability and user feedback.",
                               ""
                           ]
 }
