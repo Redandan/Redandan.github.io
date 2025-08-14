@@ -2,15 +2,15 @@
     "version":  "1.0.135",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-13 21:01:56",
-    "commitHash":  "59903d8",
+    "buildTime":  "2025-08-14 11:59:07",
+    "commitHash":  "448872c",
     "build_number":  "136",
     "lastCommitMessage":  [
-                              "Implement \"Remember Me\" functionality in login process",
+                              "Update agora_market_dart_sdk dependency reference and add Store Management features",
                               "",
-                              "- Refactored the login page to utilize a new UserPreferences service for managing saved credentials.",
-                              "- Added methods to save, retrieve, and clear user credentials based on the \"Remember Me\" option.",
-                              "- Enhanced logging for credential management actions to improve traceability and user feedback.",
+                              "- Updated the agora_market_dart_sdk dependency reference in pubspec.yaml and pubspec.lock to a new commit hash for consistency.",
+                              "- Introduced Store Management functionality in the admin section, including navigation and UI elements for managing stores.",
+                              "- Enhanced AdminDashboardPage and AdminShellPage to include Store Management options, improving overall admin navigation experience.",
                               ""
                           ]
 }
