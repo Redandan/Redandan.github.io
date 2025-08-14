@@ -2,15 +2,15 @@
     "version":  "1.0.135",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-14 11:59:07",
-    "commitHash":  "448872c",
+    "buildTime":  "2025-08-14 12:18:23",
+    "commitHash":  "0e414be",
     "build_number":  "136",
     "lastCommitMessage":  [
-                              "Update agora_market_dart_sdk dependency reference and add Store Management features",
+                              "Enhance UserManagementPage to include user ID in the data table",
                               "",
-                              "- Updated the agora_market_dart_sdk dependency reference in pubspec.yaml and pubspec.lock to a new commit hash for consistency.",
-                              "- Introduced Store Management functionality in the admin section, including navigation and UI elements for managing stores.",
-                              "- Enhanced AdminDashboardPage and AdminShellPage to include Store Management options, improving overall admin navigation experience.",
+                              "- Updated the column keys to include \u0027id\u0027 as the first column for user identification.",
+                              "- Added a new ColumnConfig for displaying user ID in the UI.",
+                              "- Modified data retrieval methods to accommodate the new \u0027id\u0027 field, ensuring accurate display of user information.",
                               ""
                           ]
 }
