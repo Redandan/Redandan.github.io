@@ -2,16 +2,16 @@
     "version":  "1.0.135",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-14 13:38:21",
-    "commitHash":  "b098894",
+    "buildTime":  "2025-08-14 15:07:52",
+    "commitHash":  "4ead72f",
     "build_number":  "136",
     "lastCommitMessage":  [
-                              "Enhance UserManagementPage with sorting functionality and UI improvements",
+                              "Update agora_market_dart_sdk dependency and enhance SellerStoreSettingsPage and ProductForm",
                               "",
-                              "- Added sorting capabilities to the user management data table, allowing users to sort by various fields.",
-                              "- Introduced a custom label widget for sortable columns to improve UI clarity.",
-                              "- Implemented a sorting status indicator and help dialog to guide users on sorting features.",
-                              "- Updated agora_market_dart_sdk dependency reference for consistency.",
+                              "- Updated agora_market_dart_sdk dependency reference in pubspec.yaml and pubspec.lock to a new commit hash for consistency.",
+                              "- Enhanced SellerStoreSettingsPage with new fields for defaultShippingFee and freeShippingThreshold, including error handling for invalid inputs.",
+                              "- Improved UI in SellerStoreSettingsPage to provide clearer instructions and examples for setting shipping date ranges.",
+                              "- Updated ProductForm to support dynamic shipping date range selection with additional explanatory text and examples for better user guidance.",
                               ""
                           ]
 }
