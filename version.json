@@ -2,16 +2,15 @@
     "version":  "1.0.135",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-14 15:07:52",
-    "commitHash":  "4ead72f",
+    "buildTime":  "2025-08-15 11:26:51",
+    "commitHash":  "8df348f",
     "build_number":  "136",
     "lastCommitMessage":  [
-                              "Update agora_market_dart_sdk dependency and enhance SellerStoreSettingsPage and ProductForm",
+                              "Update agora_market_dart_sdk dependency and add File Management feature",
                               "",
                               "- Updated agora_market_dart_sdk dependency reference in pubspec.yaml and pubspec.lock to a new commit hash for consistency.",
-                              "- Enhanced SellerStoreSettingsPage with new fields for defaultShippingFee and freeShippingThreshold, including error handling for invalid inputs.",
-                              "- Improved UI in SellerStoreSettingsPage to provide clearer instructions and examples for setting shipping date ranges.",
-                              "- Updated ProductForm to support dynamic shipping date range selection with additional explanatory text and examples for better user guidance.",
+                              "- Added File Management page to the admin section, including routing and navigation updates.",
+                              "- Enhanced Admin navigation items to include File Management, improving overall user experience.",
                               ""
                           ]
 }
