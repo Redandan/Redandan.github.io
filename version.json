@@ -1,17 +1,15 @@
 {
-    "version":  "1.0.136",
+    "version":  "1.0.137",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-16 03:29:42",
-    "commitHash":  "63a626b",
-    "build_number":  "137",
+    "buildTime":  "2025-08-22 15:22:45",
+    "commitHash":  "4036582",
+    "build_number":  "138",
     "lastCommitMessage":  [
-                              "Update agora_market_dart_sdk dependency and implement File Management features",
+                              "Refactor FileManagementPage to reposition file upload button for improved accessibility",
                               "",
-                              "- Updated agora_market_dart_sdk dependency reference in pubspec.yaml and pubspec.lock to a new commit hash for consistency.",
-                              "- Added File Management page to the admin section, including routing and navigation updates.",
-                              "- Enhanced Admin navigation items to include File Management, improving overall user experience.",
-                              "- Implemented file upload and download functionalities with improved error handling and user feedback.",
+                              "- Moved the file upload button to a more prominent location within the UI for better user interaction.",
+                              "- Retained the existing functionality while enhancing the layout for a streamlined experience.",
                               ""
                           ]
 }
