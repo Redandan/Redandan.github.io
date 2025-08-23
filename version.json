@@ -2,17 +2,15 @@
     "version":  "1.0.139",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-23 09:14:24",
-    "commitHash":  "88ce9d5",
+    "buildTime":  "2025-08-23 11:31:01",
+    "commitHash":  "7cded16",
     "build_number":  "140",
     "lastCommitMessage":  [
-                              "Update version to 1.0.138 and refactor seller product management",
+                              "Enhance FileManagementPage with uploader information display",
                               "",
-                              "- Updated version number and build details in version.json.",
-                              "- Refactored seller product management routes, consolidating add and edit product pages into a unified product page.",
-                              "- Enhanced navigation logic for improved user experience and removed deprecated pages.",
-                              "- Added comprehensive form validation in SellerProductPage to ensure data integrity before submission.",
-                              "- Improved image handling and display in product forms, including adaptive image widgets and error handling.",
+                              "- Added \u0027uploader\u0027 field to file records, allowing for better tracking of file uploads.",
+                              "- Introduced \u0027uploaderName\u0027 to display the name of the uploader in the UI.",
+                              "- Updated various UI components to show uploader details alongside file information, improving user experience and clarity.",
                               ""
                           ]
 }
