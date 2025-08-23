@@ -1,16 +1,18 @@
 {
-    "version":  "1.0.139",
+    "version":  "1.0.140",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-23 11:31:01",
-    "commitHash":  "7cded16",
-    "build_number":  "140",
+    "buildTime":  "2025-08-23 20:29:24",
+    "commitHash":  "2f0aa35",
+    "build_number":  "141",
     "lastCommitMessage":  [
-                              "Enhance FileManagementPage with uploader information display",
+                              "Implement chat file and image upload functionality in ChatView",
                               "",
-                              "- Added \u0027uploader\u0027 field to file records, allowing for better tracking of file uploads.",
-                              "- Introduced \u0027uploaderName\u0027 to display the name of the uploader in the UI.",
-                              "- Updated various UI components to show uploader details alongside file information, improving user experience and clarity.",
+                              "- Added methods for uploading chat files and images in FileUploadService, enhancing file handling capabilities.",
+                              "- Integrated file upload logic in ChatView, allowing users to send files and images seamlessly.",
+                              "- Introduced a new FileMessageData structure to manage file metadata and improve message handling.",
+                              "- Enhanced UI components to display file messages, including image previews and download options.",
+                              "- Improved error handling and user feedback during file upload processes, ensuring a smoother user experience.",
                               ""
                           ]
 }
