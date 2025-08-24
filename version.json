@@ -2,15 +2,16 @@
     "version":  "1.0.141",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-24 13:01:17",
-    "commitHash":  "72b29e5",
+    "buildTime":  "2025-08-24 14:42:43",
+    "commitHash":  "194eabd",
     "build_number":  "142",
     "lastCommitMessage":  [
-                              "Enhance store image upload dialog with improved size limits and error handling",
+                              "Enhance SellerProductPage with new product creation features and validation improvements",
                               "",
-                              "- Updated image configuration for store logo and cover images to include maximum file size limits and optimized preview dimensions.",
-                              "- Adjusted image picker settings to use new upload dimensions for better quality.",
-                              "- Implemented file size validation during image upload, providing user feedback for oversized files.",
+                              "- Implemented default form data initialization for new products, providing a better starting point for sellers.",
+                              "- Added a quick-fill button to automatically populate required fields in the product form, streamlining the product creation process.",
+                              "- Enhanced validation logic for both edit and create modes, ensuring comprehensive checks for required fields and providing user feedback for missing or incorrect data.",
+                              "- Improved image handling to support both new uploads and existing images, maintaining a seamless user experience during product management.",
                               ""
                           ]
 }
