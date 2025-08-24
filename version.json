@@ -2,15 +2,15 @@
     "version":  "1.0.141",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-24 12:08:26",
-    "commitHash":  "377b1dc",
+    "buildTime":  "2025-08-24 13:01:17",
+    "commitHash":  "72b29e5",
     "build_number":  "142",
     "lastCommitMessage":  [
-                              "Update agora_market_dart_sdk reference and enhance store image upload functionality",
+                              "Enhance store image upload dialog with improved size limits and error handling",
                               "",
-                              "- Updated agora_market_dart_sdk dependency reference in pubspec.yaml and pubspec.lock to a new commit hash for consistency.",
-                              "- Added image upload dialogs for store logo and cover images, improving user experience for store settings.",
-                              "- Implemented methods to handle logo and cover image updates, including error handling and user feedback through snack bars.",
+                              "- Updated image configuration for store logo and cover images to include maximum file size limits and optimized preview dimensions.",
+                              "- Adjusted image picker settings to use new upload dimensions for better quality.",
+                              "- Implemented file size validation during image upload, providing user feedback for oversized files.",
                               ""
                           ]
 }
