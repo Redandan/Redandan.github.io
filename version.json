@@ -2,16 +2,15 @@
     "version":  "1.0.141",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-24 01:17:33",
-    "commitHash":  "ccbc5f5",
+    "buildTime":  "2025-08-24 12:08:26",
+    "commitHash":  "377b1dc",
     "build_number":  "142",
     "lastCommitMessage":  [
-                              "Update agora_market_dart_sdk reference and enhance profile and avatar management features",
+                              "Update agora_market_dart_sdk reference and enhance store image upload functionality",
                               "",
                               "- Updated agora_market_dart_sdk dependency reference in pubspec.yaml and pubspec.lock to a new commit hash for consistency.",
-                              "- Improved AuthService to handle profile updates with API responses, ensuring local storage is updated accordingly.",
-                              "- Enhanced AvatarEditPage to automatically save uploaded avatars without requiring user confirmation.",
-                              "- Updated ProfilePage to prioritize API avatar data and introduced a method for updating avatar URLs in local storage, improving user experience.",
+                              "- Added image upload dialogs for store logo and cover images, improving user experience for store settings.",
+                              "- Implemented methods to handle logo and cover image updates, including error handling and user feedback through snack bars.",
                               ""
                           ]
 }
