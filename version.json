@@ -1,17 +1,17 @@
 {
-    "version":  "1.0.142",
+    "version":  "1.0.143",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-24 22:11:27",
-    "commitHash":  "9f35001",
-    "build_number":  "143",
+    "buildTime":  "2025-08-25 11:33:07",
+    "commitHash":  "1e2d5bf",
+    "build_number":  "144",
     "lastCommitMessage":  [
-                              "Update agora_market_dart_sdk reference and enhance logistics system integration",
+                              "Update agora_market_dart_sdk reference and enhance shipping options management",
                               "",
                               "- Updated agora_market_dart_sdk dependency reference in pubspec.yaml and pubspec.lock to a new commit hash for consistency.",
-                              "- Refactored address management in AddAddressPage to support a new logistics system, including migration from the legacy system.",
-                              "- Improved user interface for selecting shipping companies and service types, enhancing the overall address setting experience.",
-                              "- Added migration information display to inform users of changes from the old system, ensuring a smooth transition.",
+                              "- Refactored shipping options handling in ProductPurchaseConfirmPage to improve address selection and synchronization with user addresses.",
+                              "- Introduced caching for product shipping options to optimize performance and reduce redundant processing.",
+                              "- Enhanced the user interface for selecting shipping options, providing clearer feedback and improved usability.",
                               ""
                           ]
 }
