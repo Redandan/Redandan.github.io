@@ -1,10 +1,10 @@
 {
-    "version":  "1.0.143",
+    "version":  "1.0.144",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-26 22:34:11",
+    "buildTime":  "2025-08-27 01:43:56",
     "commitHash":  "1204cef",
-    "build_number":  "144",
+    "build_number":  "145",
     "lastCommitMessage":  [
                               "Refactor ProductPurchaseConfirmPage for improved shipping options and error handling",
                               "",
