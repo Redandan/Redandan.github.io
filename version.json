@@ -2,17 +2,17 @@
     "version":  "1.0.143",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-25 13:56:31",
-    "commitHash":  "dfd5b93",
+    "buildTime":  "2025-08-26 18:00:57",
+    "commitHash":  "1204cef",
     "build_number":  "144",
     "lastCommitMessage":  [
-                              "Enhance product checkout components with UI improvements and functionality updates",
+                              "Refactor ProductPurchaseConfirmPage for improved shipping options and error handling",
                               "",
-                              "- Updated the layout of the order remark and payment details sections to include icons and improved styling for better user experience.",
-                              "- Increased the maximum lines for the remark input field and adjusted its placeholder text for clarity.",
-                              "- Enhanced the display of selected specifications with improved styling and layout.",
-                              "- Refactored the shipping selector and address components to streamline address management and improve visual consistency.",
-                              "- Introduced loading states for better user feedback during data fetching processes in the product purchase confirmation page.",
+                              "- Introduced a ShippingService to manage shipping options and address synchronization, enhancing modularity.",
+                              "- Implemented caching for subtotal and currency calculations to optimize performance.",
+                              "- Enhanced error handling during shipping option initialization, providing user feedback for failures.",
+                              "- Refactored UI components for better organization and readability, including dedicated methods for building sections of the purchase confirmation page.",
+                              "- Improved state management for shipping options and addresses, ensuring a smoother user experience during checkout.",
                               ""
                           ]
 }
