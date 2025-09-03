@@ -2,16 +2,17 @@
     "version":  "1.0.143",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-08-30 11:31:17",
-    "commitHash":  "e8ed3b7",
+    "buildTime":  "2025-09-03 10:50:45",
+    "commitHash":  "3cd3120",
     "build_number":  "144",
     "lastCommitMessage":  [
-                              "feat: Implement shipping order functionality with platform and logistics options",
+                              "refactor(test): remove unused imports and minor code cleanup",
                               "",
-                              "- Added a unified shipping order handling method to manage both platform and third-party logistics deliveries.",
-                              "- Introduced user input validation for tracking numbers and remarks in the shipping dialog.",
-                              "- Enhanced user experience with informative alerts and error handling during the shipping process.",
-                              "- Refactored order management to streamline shipping logic and improve code maintainability.",
+                              "- Removed unused imports like \u0027package:flutter/foundation.dart\u0027 and \u0027dart:async\u0027 from multiple test files",
+                              "- Added braces for better code style in data protection test",
+                              "- Simplified string concatenation in test reporter",
+                              "- Added library declaration in types file",
+                              "- Minor adjustments in wallet operations test",
                               ""
                           ]
 }
