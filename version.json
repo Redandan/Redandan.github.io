@@ -1,18 +1,17 @@
 {
-    "version":  "1.0.144",
+    "version":  "1.0.145",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-03 16:47:21",
-    "commitHash":  "e34554a",
-    "build_number":  "145",
+    "buildTime":  "2025-09-03 17:05:24",
+    "commitHash":  "0a7674c",
+    "build_number":  "146",
     "lastCommitMessage":  [
-                              "refactor: enhance shipping option selection logic and improve code readability",
+                              "chore: update version to 1.0.144 and enhance shipping option handling",
                               "",
-                              "- Updated the shipping option selection logic to prioritize available default options, followed by available options, and added fallback handling.",
-                              "- Improved logging for better clarity on selected shipping options and fallback scenarios.",
-                              "- Refactored related methods across multiple files to ensure consistency in shipping option handling.",
-                              "",
-                              "These changes aim to enhance the user experience during checkout by ensuring optimal shipping options are selected.",
+                              "- Bumped version to 1.0.144 with updated build time and commit hash.",
+                              "- Improved shipping option selection logic to include new shipping options format.",
+                              "- Enhanced logging for better clarity on shipping options and fallback scenarios.",
+                              "- Refactored methods to ensure consistency in handling shipping options across the application.",
                               ""
                           ]
 }
