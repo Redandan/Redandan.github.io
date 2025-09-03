@@ -1,17 +1,18 @@
 {
-    "version":  "1.0.145",
+    "version":  "1.0.146",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-03 17:05:24",
-    "commitHash":  "0a7674c",
-    "build_number":  "146",
+    "buildTime":  "2025-09-03 22:39:35",
+    "commitHash":  "9f2717e",
+    "build_number":  "147",
     "lastCommitMessage":  [
-                              "chore: update version to 1.0.144 and enhance shipping option handling",
+                              "refactor: improve image handling in product form",
                               "",
-                              "- Bumped version to 1.0.144 with updated build time and commit hash.",
-                              "- Improved shipping option selection logic to include new shipping options format.",
-                              "- Enhanced logging for better clarity on shipping options and fallback scenarios.",
-                              "- Refactored methods to ensure consistency in handling shipping options across the application.",
+                              "- Enhanced the image management logic by calculating the total number of valid images, including existing and newly added images.",
+                              "- Updated the image removal method to accept image URLs instead of indices, simplifying the removal process.",
+                              "- Improved user feedback by maintaining the snackbar notification for image removal, ensuring a better user experience.",
+                              "",
+                              "These changes aim to streamline image handling in the product form and enhance overall code readability.",
                               ""
                           ]
 }
