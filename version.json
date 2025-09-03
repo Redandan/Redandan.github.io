@@ -1,18 +1,18 @@
 {
-    "version":  "1.0.147",
+    "version":  "1.0.148",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-03 23:14:14",
-    "commitHash":  "9f2717e",
-    "build_number":  "148",
+    "buildTime":  "2025-09-03 23:23:52",
+    "commitHash":  "382f663",
+    "build_number":  "149",
     "lastCommitMessage":  [
-                              "refactor: improve image handling in product form",
+                              "refactor: enhance image processing logic in seller product page",
                               "",
-                              "- Enhanced the image management logic by calculating the total number of valid images, including existing and newly added images.",
-                              "- Updated the image removal method to accept image URLs instead of indices, simplifying the removal process.",
-                              "- Improved user feedback by maintaining the snackbar notification for image removal, ensuring a better user experience.",
+                              "- Improved the handling of existing and newly uploaded images by ensuring that deleted images are excluded from the final list.",
+                              "- Added detailed logging for better tracking of image processing steps, including the retention of file IDs for existing images and the addition of newly uploaded images.",
+                              "- Streamlined the logic for uploading new web images and handling upload failures, enhancing overall user feedback.",
                               "",
-                              "These changes aim to streamline image handling in the product form and enhance overall code readability.",
+                              "These changes aim to improve the image management experience on the seller product page and enhance code clarity.",
                               ""
                           ]
 }
