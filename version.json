@@ -1,18 +1,18 @@
 {
-    "version":  "1.0.143",
+    "version":  "1.0.144",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-03 10:50:45",
-    "commitHash":  "3cd3120",
-    "build_number":  "144",
+    "buildTime":  "2025-09-03 16:47:21",
+    "commitHash":  "e34554a",
+    "build_number":  "145",
     "lastCommitMessage":  [
-                              "refactor(test): remove unused imports and minor code cleanup",
+                              "refactor: enhance shipping option selection logic and improve code readability",
                               "",
-                              "- Removed unused imports like \u0027package:flutter/foundation.dart\u0027 and \u0027dart:async\u0027 from multiple test files",
-                              "- Added braces for better code style in data protection test",
-                              "- Simplified string concatenation in test reporter",
-                              "- Added library declaration in types file",
-                              "- Minor adjustments in wallet operations test",
+                              "- Updated the shipping option selection logic to prioritize available default options, followed by available options, and added fallback handling.",
+                              "- Improved logging for better clarity on selected shipping options and fallback scenarios.",
+                              "- Refactored related methods across multiple files to ensure consistency in shipping option handling.",
+                              "",
+                              "These changes aim to enhance the user experience during checkout by ensuring optimal shipping options are selected.",
                               ""
                           ]
 }
