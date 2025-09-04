@@ -2,16 +2,17 @@
     "version":  "1.0.149",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-04 14:18:16",
-    "commitHash":  "d5045f1",
+    "buildTime":  "2025-09-04 16:07:51",
+    "commitHash":  "7292b02",
     "build_number":  "150",
     "lastCommitMessage":  [
-                              "feat: add geocoding functionality and enhance delivery order detail page",
+                              "feat: integrate global error handling for SDK and enhance checkout page",
                               "",
-                              "- Implemented a new method in LocationService for geocoding addresses to coordinates, including error handling and logging.",
-                              "- Added a delivery map card to the DeliveryOrderDetailPage, displaying pickup and delivery addresses with improved layout and styling.",
+                              "- Updated the agora_market_dart_sdk reference to the latest commit for improved functionality.",
+                              "- Implemented a global error handler for SDK to manage authorization errors, including a mechanism to clear tokens and redirect users to the login page.",
+                              "- Added a missing required parameter for shipping company in the checkout page.",
                               "",
-                              "These changes enhance location services and improve the user experience in the delivery order detail view.",
+                              "These changes enhance error management and improve the user experience during the checkout process.",
                               ""
                           ]
 }
