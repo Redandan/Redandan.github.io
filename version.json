@@ -1,18 +1,19 @@
 {
-    "version":  "1.0.155",
+    "version":  "1.0.156",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-04 22:24:28",
-    "commitHash":  "3cac4e4",
-    "build_number":  "156",
+    "buildTime":  "2025-09-04 23:20:04",
+    "commitHash":  "5999482",
+    "build_number":  "157",
     "lastCommitMessage":  [
-                              "chore: update version to 1.0.153 and enhance 403 error handling",
+                              "chore: update version to 1.0.155 and implement admin role checks",
                               "",
-                              "- Bumped version to 1.0.153 with updated build time and commit hash.",
-                              "- Added comprehensive checks for various 403 error messages in the Unified403Handler.",
-                              "- Integrated the Unified403Handler into multiple pages to streamline error handling and user redirection.",
+                              "- Bumped version to 1.0.155 with updated build time and commit hash.",
+                              "- Added user role management methods to IUserPreferences and UserPreferences for retrieving current user roles and checking admin status.",
+                              "- Enhanced the SplashPage to navigate users based on their roles, directing admins to the admin dashboard and regular users to the home page.",
+                              "- Updated routing in AppRouter to enforce admin guards on various routes.",
                               "",
-                              "These changes improve error management and enhance the user experience during authentication failures.",
+                              "These changes improve user role management and enhance navigation based on user permissions.",
                               ""
                           ]
 }
