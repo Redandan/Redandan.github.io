@@ -1,18 +1,18 @@
 {
-    "version":  "1.0.150",
+    "version":  "1.0.151",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-04 16:35:44",
-    "commitHash":  "7292b02",
-    "build_number":  "151",
+    "buildTime":  "2025-09-04 16:49:51",
+    "commitHash":  "cf2b76e",
+    "build_number":  "152",
     "lastCommitMessage":  [
-                              "feat: integrate global error handling for SDK and enhance checkout page",
+                              "feat: implement global navigator key for consistent navigation management",
                               "",
-                              "- Updated the agora_market_dart_sdk reference to the latest commit for improved functionality.",
-                              "- Implemented a global error handler for SDK to manage authorization errors, including a mechanism to clear tokens and redirect users to the login page.",
-                              "- Added a missing required parameter for shipping company in the checkout page.",
+                              "- Introduced a global navigator key to maintain consistency throughout the application lifecycle.",
+                              "- Updated the AppWidget to utilize the global navigator key instead of creating a new one.",
+                              "- Registered the global navigator key with DioConfigService and GlobalErrorHandler only if it wasn\u0027t already registered.",
                               "",
-                              "These changes enhance error management and improve the user experience during the checkout process.",
+                              "These changes enhance navigation management and improve code clarity in the application.",
                               ""
                           ]
 }
