@@ -1,18 +1,18 @@
 {
-    "version":  "1.0.151",
+    "version":  "1.0.152",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-04 16:49:51",
-    "commitHash":  "cf2b76e",
-    "build_number":  "152",
+    "buildTime":  "2025-09-04 17:16:57",
+    "commitHash":  "69d0f80",
+    "build_number":  "153",
     "lastCommitMessage":  [
-                              "feat: implement global navigator key for consistent navigation management",
+                              "chore: update version to 1.0.151 and enhance profile page notifications",
                               "",
-                              "- Introduced a global navigator key to maintain consistency throughout the application lifecycle.",
-                              "- Updated the AppWidget to utilize the global navigator key instead of creating a new one.",
-                              "- Registered the global navigator key with DioConfigService and GlobalErrorHandler only if it wasn\u0027t already registered.",
+                              "- Bumped version to 1.0.151 with updated build time and commit hash.",
+                              "- Improved the SnackBar notification on the profile page to include an icon and better message formatting.",
+                              "- Added a helper method to display role names in the user\u0027s native language.",
                               "",
-                              "These changes enhance navigation management and improve code clarity in the application.",
+                              "These changes aim to enhance user feedback and improve the overall clarity of notifications in the profile page.",
                               ""
                           ]
 }
