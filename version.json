@@ -1,18 +1,19 @@
 {
-    "version":  "1.0.148",
+    "version":  "1.0.149",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-03 23:23:52",
-    "commitHash":  "382f663",
-    "build_number":  "149",
+    "buildTime":  "2025-09-04 11:31:26",
+    "commitHash":  "6ac4408",
+    "build_number":  "150",
     "lastCommitMessage":  [
-                              "refactor: enhance image processing logic in seller product page",
+                              "refactor: adapt file upload service to new SDK and improve file validation",
                               "",
-                              "- Improved the handling of existing and newly uploaded images by ensuring that deleted images are excluded from the final list.",
-                              "- Added detailed logging for better tracking of image processing steps, including the retention of file IDs for existing images and the addition of newly uploaded images.",
-                              "- Streamlined the logic for uploading new web images and handling upload failures, enhancing overall user feedback.",
+                              "- Updated the file upload service to utilize the new FileUploadResult and FileUploadApi from the agora_market_dart_sdk.",
+                              "- Changed references from tempUrl to presignedUrl for consistency in file upload results.",
+                              "- Enhanced file validation logic to include checks for archive file types and improved error handling for unsupported file types.",
+                              "- Cleaned up unused code and improved logging for better debugging and tracking of file upload processes.",
                               "",
-                              "These changes aim to improve the image management experience on the seller product page and enhance code clarity.",
+                              "These changes aim to streamline file upload functionality and enhance overall code clarity.",
                               ""
                           ]
 }
