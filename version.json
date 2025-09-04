@@ -1,18 +1,19 @@
 {
-    "version":  "1.0.152",
+    "version":  "1.0.153",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-04 17:16:57",
-    "commitHash":  "69d0f80",
-    "build_number":  "153",
+    "buildTime":  "2025-09-04 17:57:00",
+    "commitHash":  "28c0524",
+    "build_number":  "154",
     "lastCommitMessage":  [
-                              "chore: update version to 1.0.151 and enhance profile page notifications",
+                              "chore: update version to 1.0.152 and enhance error handling",
                               "",
-                              "- Bumped version to 1.0.151 with updated build time and commit hash.",
-                              "- Improved the SnackBar notification on the profile page to include an icon and better message formatting.",
-                              "- Added a helper method to display role names in the user\u0027s native language.",
+                              "- Bumped version to 1.0.152 with updated build time and commit hash.",
+                              "- Replaced the global error handling mechanism with a unified approach for managing 403 errors.",
+                              "- Improved API wrapper to provide consistent error handling and logging.",
+                              "- Removed deprecated services related to error handling to streamline the codebase.",
                               "",
-                              "These changes aim to enhance user feedback and improve the overall clarity of notifications in the profile page.",
+                              "These changes aim to enhance error management and improve overall code clarity.",
                               ""
                           ]
 }
