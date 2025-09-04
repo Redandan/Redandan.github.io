@@ -1,10 +1,10 @@
 {
-    "version":  "1.0.153",
+    "version":  "1.0.154",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-04 18:14:26",
+    "buildTime":  "2025-09-04 18:51:06",
     "commitHash":  "b7e1025",
-    "build_number":  "154",
+    "build_number":  "155",
     "lastCommitMessage":  [
                               "feat: register multiple APIs for improved service management",
                               "",
