@@ -1,10 +1,10 @@
 {
-    "version":  "1.0.149",
+    "version":  "1.0.150",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-04 16:07:51",
+    "buildTime":  "2025-09-04 16:35:44",
     "commitHash":  "7292b02",
-    "build_number":  "150",
+    "build_number":  "151",
     "lastCommitMessage":  [
                               "feat: integrate global error handling for SDK and enhance checkout page",
                               "",
