@@ -2,18 +2,16 @@
     "version":  "1.0.153",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-04 17:57:00",
-    "commitHash":  "28c0524",
+    "buildTime":  "2025-09-04 18:14:26",
+    "commitHash":  "b7e1025",
     "build_number":  "154",
     "lastCommitMessage":  [
-                              "chore: update version to 1.0.152 and enhance error handling",
+                              "feat: register multiple APIs for improved service management",
                               "",
-                              "- Bumped version to 1.0.152 with updated build time and commit hash.",
-                              "- Replaced the global error handling mechanism with a unified approach for managing 403 errors.",
-                              "- Improved API wrapper to provide consistent error handling and logging.",
-                              "- Removed deprecated services related to error handling to streamline the codebase.",
+                              "- Added lazy singleton registrations for various APIs including ProductsApi, MemberOrdersApi, MemberNotificationsApi, DeliveryApi, and others.",
+                              "- Each API registration includes error handling and optional authorization header setup based on the provided token.",
                               "",
-                              "These changes aim to enhance error management and improve overall code clarity.",
+                              "These changes enhance the service management capabilities and improve the overall architecture of the dependency injection system.",
                               ""
                           ]
 }
