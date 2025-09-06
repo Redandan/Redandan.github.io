@@ -1,18 +1,18 @@
 {
-    "version":  "1.0.157",
+    "version":  "1.0.158",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-05 17:09:28",
-    "commitHash":  "b556f7d",
-    "build_number":  "158",
+    "buildTime":  "2025-09-06 14:30:20",
+    "commitHash":  "fe92827",
+    "build_number":  "159",
     "lastCommitMessage":  [
-                              "refactor: update localization handling in admin dashboard and app widget",
+                              "refactor: update tab initialization and loading logic in order management and splash pages",
                               "",
-                              "- Replaced hardcoded strings in the AdminDashboardPage with localized strings using AppLocalizations.",
-                              "- Updated AppWidget to utilize AppLocalizations for locale support and localizations delegates.",
-                              "- Removed unused font configuration from pubspec.yaml.",
+                              "- Modified the tab initialization process in SellerOrderManagementPage and OrdersTabPage to set the tab length directly in initState and moved the initialization logic to didChangeDependencies for better lifecycle management.",
+                              "- Enhanced loading steps in SplashPage by initializing them in didChangeDependencies, ensuring proper setup during widget lifecycle.",
+                              "- Improved logging for tab state changes and data loading in OrdersTabPage to provide better insights during debugging.",
                               "",
-                              "These changes enhance internationalization support and improve code organization by utilizing localization resources.",
+                              "These changes streamline the tab management and loading processes, enhancing the overall performance and maintainability of the application.",
                               ""
                           ]
 }
