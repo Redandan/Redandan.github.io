@@ -1,17 +1,18 @@
 {
-    "version":  "1.0.160",
+    "version":  "1.0.161",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-07 22:11:48",
-    "commitHash":  "bf8d56f",
-    "build_number":  "161",
+    "buildTime":  "2025-09-07 23:43:12",
+    "commitHash":  "a2352e4",
+    "build_number":  "162",
     "lastCommitMessage":  [
-                              "refactor: update comments and localization for traditional Chinese",
+                              "refactor: simplify language switch dialog and improve UI components",
                               "",
-                              "- Updated comments in seller_store_settings_page.dart and product_form.dart to use traditional Chinese characters for clarity.",
-                              "- Enhanced localization in app_zh_TW.arb by replacing simplified Chinese terms with traditional Chinese equivalents, improving consistency across the application.",
+                              "- Removed the RadioGroup widget and replaced it with a more streamlined Column layout for language options.",
+                              "- Updated the language selection to use RadioListTile for better UI consistency and user experience.",
+                              "- Enhanced the visual feedback for selected languages by adjusting text styles and adding icons.",
                               "",
-                              "These changes contribute to a more user-friendly experience for traditional Chinese-speaking users.",
+                              "These changes contribute to a cleaner and more intuitive language selection interface.",
                               ""
                           ]
 }
