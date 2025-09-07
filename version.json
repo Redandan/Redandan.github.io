@@ -2,20 +2,16 @@
     "version":  "1.0.159",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-07 13:56:46",
-    "commitHash":  "b34725a",
+    "buildTime":  "2025-09-07 19:22:29",
+    "commitHash":  "853fa25",
     "build_number":  "160",
     "lastCommitMessage":  [
-                              "refactor: clean up code and improve routing logic",
+                              "refactor: integrate ApiWrapper for API calls in product and wallet pages",
                               "",
-                              "- Updated analysis_options.yaml to disable the avoid_print warning.",
-                              "- Removed unused code and comments in simple_test_runner.dart and test_migrator.dart for better readability.",
-                              "- Cleaned up order_management_test_refactored.dart by removing an unused function.",
-                              "- Eliminated unused methods in auth_error_handler.dart and test_auth_isolation.dart to streamline the codebase.",
-                              "- Adjusted routing logic in admin_route_guard.dart and route_guard.dart to use replacePath instead of replaceNamed for consistency.",
-                              "- Removed unused constants in public_store_preview_page.dart and user_store_page.dart to enhance maintainability.",
+                              "- Updated the product_list_page.dart and wallet_page.dart to utilize ApiWrapper for API calls, enhancing error management and code clarity.",
+                              "- Wrapped API calls in both pages with ApiWrapper to streamline error handling and improve maintainability.",
                               "",
-                              "These changes improve code clarity and maintainability across the project.",
+                              "These changes contribute to a more robust and consistent approach to API interactions across the application.",
                               ""
                           ]
 }
