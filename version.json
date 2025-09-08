@@ -1,18 +1,18 @@
 {
-    "version":  "1.0.164",
+    "version":  "1.0.165",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-08 19:18:15",
-    "commitHash":  "8565d10",
-    "build_number":  "165",
+    "buildTime":  "2025-09-08 20:37:33",
+    "commitHash":  "2e552bd",
+    "build_number":  "166",
     "lastCommitMessage":  [
-                              "feat: enhance chat localization and user feedback",
+                              "feat: enhance localization for admin features",
                               "",
-                              "- Updated various text strings in the chat feature to improve localization for English and Traditional Chinese users.",
-                              "- Enhanced error messages, connection notifications, and user prompts to provide clearer feedback during chat operations.",
-                              "- Refactored date and time display strings to utilize localized formats, ensuring consistency in user experience.",
+                              "- Updated the admin dashboard and product editor pages to utilize localized strings for various management features, improving accessibility for English and Traditional Chinese users.",
+                              "- Added new localization entries for admin-related actions and messages, ensuring a consistent user experience across the admin interface.",
+                              "- Enhanced error handling and user feedback in the orders tab and shipping info dialog, contributing to a more user-friendly interface for managing orders and shipping details.",
                               "",
-                              "These changes contribute to a more user-friendly and accessible chat interface.",
+                              "These changes improve the overall usability and inclusivity of the admin features.",
                               ""
                           ]
 }
