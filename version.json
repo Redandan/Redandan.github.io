@@ -1,17 +1,18 @@
 {
-    "version":  "1.0.161",
+    "version":  "1.0.162",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-08 16:19:57",
-    "commitHash":  "575e2d5",
-    "build_number":  "162",
+    "buildTime":  "2025-09-08 18:03:51",
+    "commitHash":  "6c54718",
+    "build_number":  "163",
     "lastCommitMessage":  [
-                              "refactor: update navigation method to use Navigator.pop for consistency",
+                              "feat: improve localization and user feedback in staking page",
                               "",
-                              "- Replaced instances of context.router.pop() with Navigator.pop(context) across multiple pages, including chat and product-related components.",
-                              "- This change ensures a consistent navigation approach throughout the application, improving code maintainability and readability.",
+                              "- Enhanced localization for various text strings in the staking page, providing better accessibility for English and Traditional Chinese users.",
+                              "- Updated user prompts, error messages, and labels to improve clarity and user experience during staking operations.",
+                              "- Refactored countdown and status display to utilize localized strings, ensuring consistent terminology throughout the staking process.",
                               "",
-                              "These updates contribute to a more uniform user experience when navigating back in the application.",
+                              "These changes contribute to a more user-friendly and inclusive interface for managing staking activities.",
                               ""
                           ]
 }
