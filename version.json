@@ -1,18 +1,16 @@
 {
-    "version":  "1.0.162",
+    "version":  "1.0.163",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-08 18:03:51",
-    "commitHash":  "6c54718",
-    "build_number":  "163",
+    "buildTime":  "2025-09-08 18:57:31",
+    "commitHash":  "92922ca",
+    "build_number":  "164",
     "lastCommitMessage":  [
-                              "feat: improve localization and user feedback in staking page",
+                              "refactor: remove deprecated address pages and update routing",
                               "",
-                              "- Enhanced localization for various text strings in the staking page, providing better accessibility for English and Traditional Chinese users.",
-                              "- Updated user prompts, error messages, and labels to improve clarity and user experience during staking operations.",
-                              "- Refactored countdown and status display to utilize localized strings, ensuring consistent terminology throughout the staking process.",
-                              "",
-                              "These changes contribute to a more user-friendly and inclusive interface for managing staking activities.",
+                              "- Deleted the old address pages: `add_address_page_migrated.dart` and `add_address_page_v2.dart`, which are no longer in use.",
+                              "- Updated the routing configuration in `app_router.dart` to remove references to the deleted pages, ensuring cleaner navigation management.",
+                              "- This cleanup contributes to a more maintainable codebase by eliminating unused components.",
                               ""
                           ]
 }
