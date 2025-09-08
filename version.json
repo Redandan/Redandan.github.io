@@ -1,18 +1,12 @@
 {
-    "version":  "1.0.168",
+    "version":  "1.0.169",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-08 23:47:13",
-    "commitHash":  "0b0cd85",
-    "build_number":  "169",
+    "buildTime":  "2025-09-09 00:22:03",
+    "commitHash":  "d587176",
+    "build_number":  "170",
     "lastCommitMessage":  [
-                              "feat: enhance localization for seller post feature",
-                              "",
-                              "- Updated success and failure messages for post publishing to utilize localized strings, improving user feedback in both English and Traditional Chinese.",
-                              "- Enhanced input field labels and hints for title, content, tags, and images to reflect localized text, ensuring a consistent user experience.",
-                              "- Added new localization entries for various post-related actions and messages, contributing to a more user-friendly interface for sellers.",
-                              "",
-                              "These changes improve accessibility and clarity for users when creating and managing posts.",
+                              "bug fixed",
                               ""
                           ]
 }
