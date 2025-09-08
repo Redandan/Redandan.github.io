@@ -1,16 +1,18 @@
 {
-    "version":  "1.0.163",
+    "version":  "1.0.164",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-08 18:57:31",
-    "commitHash":  "92922ca",
-    "build_number":  "164",
+    "buildTime":  "2025-09-08 19:18:15",
+    "commitHash":  "8565d10",
+    "build_number":  "165",
     "lastCommitMessage":  [
-                              "refactor: remove deprecated address pages and update routing",
+                              "feat: enhance chat localization and user feedback",
                               "",
-                              "- Deleted the old address pages: `add_address_page_migrated.dart` and `add_address_page_v2.dart`, which are no longer in use.",
-                              "- Updated the routing configuration in `app_router.dart` to remove references to the deleted pages, ensuring cleaner navigation management.",
-                              "- This cleanup contributes to a more maintainable codebase by eliminating unused components.",
+                              "- Updated various text strings in the chat feature to improve localization for English and Traditional Chinese users.",
+                              "- Enhanced error messages, connection notifications, and user prompts to provide clearer feedback during chat operations.",
+                              "- Refactored date and time display strings to utilize localized formats, ensuring consistency in user experience.",
+                              "",
+                              "These changes contribute to a more user-friendly and accessible chat interface.",
                               ""
                           ]
 }
