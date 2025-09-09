@@ -1,18 +1,18 @@
 {
-    "version":  "1.0.169",
+    "version":  "1.0.170",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-09 10:42:31",
-    "commitHash":  "87ff00f",
-    "build_number":  "170",
+    "buildTime":  "2025-09-09 12:29:03",
+    "commitHash":  "96d093e",
+    "build_number":  "171",
     "lastCommitMessage":  [
-                              "refactor: simplify address parsing in delivery map components",
+                              "refactor: update delivery map components to use latitude/longitude parameters",
                               "",
-                              "- Updated the delivery map components to use default locations instead of parsing addresses, reducing complexity and avoiding unnecessary API calls.",
-                              "- Adjusted the TileLayer configuration to standardize the URL template and user agent package name across components.",
-                              "- Enhanced code clarity and performance by streamlining the location handling process.",
+                              "- Changed pickupAddress and deliveryAddress parameters to pickupLatLng and deliveryLatLng in the SimpleDeliveryMap widget for clarity.",
+                              "- Updated logging statements to directly reference the current location without string interpolation.",
+                              "- Simplified the target location parsing logic by removing unnecessary loading states, enhancing performance and readability.",
                               "",
-                              "These changes improve the overall efficiency and maintainability of the delivery map features.",
+                              "These changes improve the maintainability and clarity of the delivery map features.",
                               ""
                           ]
 }
