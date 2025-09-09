@@ -2,11 +2,17 @@
     "version":  "1.0.169",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-09 00:22:03",
-    "commitHash":  "d587176",
+    "buildTime":  "2025-09-09 10:42:31",
+    "commitHash":  "87ff00f",
     "build_number":  "170",
     "lastCommitMessage":  [
-                              "bug fixed",
+                              "refactor: simplify address parsing in delivery map components",
+                              "",
+                              "- Updated the delivery map components to use default locations instead of parsing addresses, reducing complexity and avoiding unnecessary API calls.",
+                              "- Adjusted the TileLayer configuration to standardize the URL template and user agent package name across components.",
+                              "- Enhanced code clarity and performance by streamlining the location handling process.",
+                              "",
+                              "These changes improve the overall efficiency and maintainability of the delivery map features.",
                               ""
                           ]
 }
