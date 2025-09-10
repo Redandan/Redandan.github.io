@@ -2,14 +2,15 @@
     "version":  "1.0.172",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-10 17:24:22",
-    "commitHash":  "e64ecf6",
+    "buildTime":  "2025-09-10 18:33:25",
+    "commitHash":  "7616461",
     "build_number":  "173",
     "lastCommitMessage":  [
-                              "feat: integrate custom app bar in MyAddressesPage for improved UI",
+                              "feat: enhance localization in address management UI components",
                               "",
-                              "- Replaced the default AppBar with AppBarBase to enhance the visual consistency across the application.",
-                              "- Updated the app bar title to use a localized string for better internationalization support.",
+                              "- Integrated AppLocalizations into AddAddressPage and UnifiedAddressManagementSelector to replace hardcoded strings with localized versions, improving user experience across languages.",
+                              "- Updated various UI elements, including snack bar messages, form labels, and validation messages, to support localization.",
+                              "- Added new localization keys in the app\u0027s ARB files for comprehensive support of English and Traditional Chinese strings.",
                               ""
                           ]
 }
