@@ -1,19 +1,15 @@
 {
-    "version":  "1.0.171",
+    "version":  "1.0.172",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-09 12:47:34",
-    "commitHash":  "40a225b",
-    "build_number":  "172",
+    "buildTime":  "2025-09-10 17:24:22",
+    "commitHash":  "e64ecf6",
+    "build_number":  "173",
     "lastCommitMessage":  [
-                              "chore: bump version to 1.0.170 and update build information",
+                              "feat: integrate custom app bar in MyAddressesPage for improved UI",
                               "",
-                              "- Updated version to 1.0.170 and build number to 171 in version.json.",
-                              "- Changed build time and commit hash for the latest build.",
-                              "- Refactored SimpleDeliveryMap to include onRefreshLocation and onShowLocationInfo callbacks for improved functionality.",
-                              "- Simplified the delivery map layout by removing unnecessary widget nesting, enhancing readability and maintainability.",
-                              "",
-                              "These changes improve the overall structure and usability of the delivery map features.",
+                              "- Replaced the default AppBar with AppBarBase to enhance the visual consistency across the application.",
+                              "- Updated the app bar title to use a localized string for better internationalization support.",
                               ""
                           ]
 }
