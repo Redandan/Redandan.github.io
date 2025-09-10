@@ -2,15 +2,14 @@
     "version":  "1.0.172",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-10 18:33:25",
-    "commitHash":  "7616461",
+    "buildTime":  "2025-09-10 23:23:22",
+    "commitHash":  "5a9ad12",
     "build_number":  "173",
     "lastCommitMessage":  [
-                              "feat: enhance localization in address management UI components",
+                              "refactor: clean up theme helper logging and simplify color selection logic",
                               "",
-                              "- Integrated AppLocalizations into AddAddressPage and UnifiedAddressManagementSelector to replace hardcoded strings with localized versions, improving user experience across languages.",
-                              "- Updated various UI elements, including snack bar messages, form labels, and validation messages, to support localization.",
-                              "- Added new localization keys in the app\u0027s ARB files for comprehensive support of English and Traditional Chinese strings.",
+                              "- Removed unnecessary logging from the isDarkMode method to reduce clutter.",
+                              "- Simplified the color selection logic in getSelectedTabColor method for better readability, while maintaining functionality.",
                               ""
                           ]
 }
