@@ -1,15 +1,17 @@
 {
-    "version":  "1.0.172",
+    "version":  "1.0.173",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-10 23:23:22",
-    "commitHash":  "5a9ad12",
-    "build_number":  "173",
+    "buildTime":  "2025-09-11 11:57:34",
+    "commitHash":  "bcd5cac",
+    "build_number":  "174",
     "lastCommitMessage":  [
-                              "refactor: clean up theme helper logging and simplify color selection logic",
+                              "chore: update dependencies and enhance chat functionality",
                               "",
-                              "- Removed unnecessary logging from the isDarkMode method to reduce clutter.",
-                              "- Simplified the color selection logic in getSelectedTabColor method for better readability, while maintaining functionality.",
+                              "- Updated the agora_market_dart_sdk dependency reference in pubspec.yaml to the latest commit.",
+                              "- Refactored chat message retrieval logic in admin_message_page.dart and chat_view.dart to include sessionId in query parameters for improved message fetching.",
+                              "- Added logging statements in chat_view.dart to track session initialization, message loading, and file upload processes, enhancing debugging capabilities.",
+                              "- Removed redundant logging in product_list_page.dart to streamline the codebase.",
                               ""
                           ]
 }
