@@ -2,14 +2,15 @@
     "version":  "1.0.174",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-11 15:54:13",
-    "commitHash":  "384cffd",
+    "buildTime":  "2025-09-12 11:49:00",
+    "commitHash":  "7dc491b",
     "build_number":  "175",
     "lastCommitMessage":  [
-                              "refactor: improve SSE connection management in chat view",
+                              "chore: update agora_market_dart_sdk dependency and refactor chat message retrieval",
                               "",
-                              "- Added a check to ensure the SSE connection is established before subscribing to messages, enhancing connection reliability.",
-                              "- Removed the disconnection of the SSE service in the dispose method to maintain global connection state, allowing other pages to continue using it.",
+                              "- Updated the agora_market_dart_sdk dependency reference in pubspec.yaml to the latest commit.",
+                              "- Refactored chat message retrieval logic in chat_view.dart to ensure sessionId is passed as a string, improving message fetching consistency.",
+                              "- Removed redundant query parameter initialization for better code clarity.",
                               ""
                           ]
 }
