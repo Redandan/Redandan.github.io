@@ -1,14 +1,15 @@
 {
-    "version":  "1.0.174",
+    "version":  "1.0.175",
     "app_name":  "agora_mark",
     "package_name":  "agora_mark",
-    "buildTime":  "2025-09-12 11:49:00",
-    "commitHash":  "7dc491b",
-    "build_number":  "175",
+    "buildTime":  "2025-09-12 12:26:08",
+    "commitHash":  "d5d2fdd",
+    "build_number":  "176",
     "lastCommitMessage":  [
-                              "chore: update agora_market_dart_sdk dependency and refactor chat message retrieval",
+                              "chore: bump version to 1.0.174 and update build information",
                               "",
-                              "- Updated the agora_market_dart_sdk dependency reference in pubspec.yaml to the latest commit.",
+                              "- Updated version to 1.0.174 and build number to 175 in version.json.",
+                              "- Changed build time and commit hash for the latest build.",
                               "- Refactored chat message retrieval logic in chat_view.dart to ensure sessionId is passed as a string, improving message fetching consistency.",
                               "- Removed redundant query parameter initialization for better code clarity.",
                               ""
