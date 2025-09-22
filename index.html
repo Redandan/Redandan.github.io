@@ -4,7 +4,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <script src="version_check.js?v=1.0.229"></script>
+    <script src="version_check.js?v=1.0.230"></script>
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -23,6 +23,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
+  <meta name="version" content="1.0.0">
 
   <!-- Viewport meta tags for proper mobile scaling -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -306,6 +307,34 @@
       100% { background-position: 0% 50%; }
     }
     
+    .loading-version {
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.8);
+      margin-top: 8px;
+      text-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.3),
+        0 1px 2px rgba(170, 149, 220, 0.2);
+      letter-spacing: 1px;
+      opacity: 0.9;
+      animation: versionGlow 4s ease-in-out infinite;
+    }
+    
+    @keyframes versionGlow {
+      0%, 100% { 
+        opacity: 0.7;
+        text-shadow: 
+          0 2px 4px rgba(0, 0, 0, 0.3),
+          0 1px 2px rgba(170, 149, 220, 0.2);
+      }
+      50% { 
+        opacity: 1;
+        text-shadow: 
+          0 3px 6px rgba(0, 0, 0, 0.4),
+          0 2px 4px rgba(170, 149, 220, 0.3),
+          0 0 15px rgba(170, 149, 220, 0.2);
+      }
+    }
     
     /* Hide loading screen when Flutter is ready */
     .flutter-ready #loading-screen {
@@ -324,12 +353,24 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text">Agora Market</div>
+      <div class="loading-version" id="version-display">v1.0.0</div>
     </div>
   </div>
   
-  <script src="flutter_bootstrap.js?v=1.0.229" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.230" async></script>
   
   <script>
+    // Update version display from meta tag
+    document.addEventListener('DOMContentLoaded', function() {
+      const versionMeta = document.querySelector('meta[name="version"]');
+      const versionDisplay = document.getElementById('version-display');
+      
+      if (versionMeta && versionDisplay) {
+        const version = versionMeta.getAttribute('content');
+        versionDisplay.textContent = `v${version}`;
+      }
+    });
+    
     // Hide loading screen when Flutter is ready
     window.addEventListener('flutter-first-frame', function () {
       // Add a longer delay to ensure login page is fully loaded
