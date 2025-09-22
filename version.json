@@ -1,1 +1,9 @@
-{"app_name":"c2c_platform","version":"1.0.230","build_number":"231","package_name":"c2c_platform"}
+﻿{
+    "package_name":  "com.agora.market",
+    "version":  "1.0.231",
+    "release_notes":  "? 1.0.231 ?湔",
+    "build_time":  "2025-09-22 20:15:01",
+    "build_number":  232,
+    "app_name":  "Agora Market",
+    "commit_hash":  "e1bb94f07607ad3ebec69b795eb9f13b82884484"
+}
