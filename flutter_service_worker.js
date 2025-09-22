@@ -59,7 +59,7 @@ const RESOURCES = {"assets/AssetManifest.bin": "d71158da1c0b7cfc181c2f13eaaa95db
 "canvaskit/skwasm_heavy.wasm": "8034ad26ba2485dab2fd49bdd786837b",
 "favicon.png": "5dcef449791fa27946b3d35ad8803796",
 "flutter.js": "888483df48293866f9f41d3d9274a779",
-"flutter_bootstrap.js": "bdfaa00424d2d4786d34e1047f4007bf",
+"flutter_bootstrap.js": "fc08b695e93dc445b961ca3a494501f4",
 "icons/agora-market-icon.svg": "0809310c9c8ce8213a71b912864eb06c",
 "icons/android-icon-144x144.png": "63fa5dc585dccfddad1550ea018e4ce3",
 "icons/android-icon-192x192.png": "a5813fca5d400b7712cd910d9a868f31",
@@ -96,7 +96,7 @@ const RESOURCES = {"assets/AssetManifest.bin": "d71158da1c0b7cfc181c2f13eaaa95db
 "/": "babd8a5bdeec5c9c951df75410dd5c7e",
 "main.dart.js": "f0f9dcda3c6e9ce1d6060ea46b9c2e03",
 "manifest.json": "696357d72b3c34dfc7d0c3abb5e81fef",
-"version.json": "bdb137273e223ed3207dd2edd772ff56"};
+"version.json": "8038c56b657e661e7acd2834d971c31c"};
 // The application shell files that are downloaded before a service worker can
 // start.
 const CORE = ["main.dart.js",
