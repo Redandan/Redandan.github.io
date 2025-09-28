@@ -635,6 +635,7 @@ class CompiledApp {
       _1589: (x0,x1) => x0.setRemoteDescription(x1),
       _1590: (x0,x1,x2) => ({candidate: x0,sdpMid: x1,sdpMLineIndex: x2}),
       _1591: (x0,x1) => x0.addIceCandidate(x1),
+      _1599: x0 => x0.restartIce(),
       _1601: (x0,x1,x2) => x0.addTrack(x1,x2),
       _1619: (x0,x1) => ({video: x0,audio: x1}),
       _1643: () => new AbortController(),
