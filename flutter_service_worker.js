@@ -45,6 +45,7 @@ const RESOURCES = {"assets/AssetManifest.bin": "d71158da1c0b7cfc181c2f13eaaa95db
 "assets/web/icons/ms-icon-150x150.png": "9223022b000ee835a7c091cefd0197a2",
 "assets/web/icons/ms-icon-310x310.png": "0d56d3ab620dd4e6ace7b00bf4aaa962",
 "assets/web/icons/ms-icon-70x70.png": "d950bf1443b00a5c8391e8ffc7ff3eeb",
+"audio_analyzer.js": "f542ba89f78f0563dae27ea3f7389c69",
 "canvaskit/canvaskit.js": "140ccb7d34d0a55065fbd422b843add6",
 "canvaskit/canvaskit.js.symbols": "58832fbed59e00d2190aa295c4d70360",
 "canvaskit/canvaskit.wasm": "07b9f5853202304d3b0749d9306573cc",
@@ -59,7 +60,7 @@ const RESOURCES = {"assets/AssetManifest.bin": "d71158da1c0b7cfc181c2f13eaaa95db
 "canvaskit/skwasm_heavy.wasm": "8034ad26ba2485dab2fd49bdd786837b",
 "favicon.png": "5dcef449791fa27946b3d35ad8803796",
 "flutter.js": "888483df48293866f9f41d3d9274a779",
-"flutter_bootstrap.js": "36f0547642fe2a15ca6322971d4691d1",
+"flutter_bootstrap.js": "62ecc4bec0a65b38607b980e9178e069",
 "icons/agora-market-icon.svg": "0809310c9c8ce8213a71b912864eb06c",
 "icons/android-icon-144x144.png": "63fa5dc585dccfddad1550ea018e4ce3",
 "icons/android-icon-192x192.png": "a5813fca5d400b7712cd910d9a868f31",
@@ -92,13 +93,13 @@ const RESOURCES = {"assets/AssetManifest.bin": "d71158da1c0b7cfc181c2f13eaaa95db
 "icons/ms-icon-150x150.png": "9223022b000ee835a7c091cefd0197a2",
 "icons/ms-icon-310x310.png": "0d56d3ab620dd4e6ace7b00bf4aaa962",
 "icons/ms-icon-70x70.png": "d950bf1443b00a5c8391e8ffc7ff3eeb",
-"index.html": "86a7aa80f34e1a0b0b37e92958414c26",
-"/": "86a7aa80f34e1a0b0b37e92958414c26",
-"main.dart.js": "6d8df7d7aced44120b1fd8d6b86e0952",
-"main.dart.mjs": "7ca9ccccfbd29b219d9b670dca6fc3f8",
-"main.dart.wasm": "b0731a1a8901668da2b4b324c93905e4",
+"index.html": "2c6415cac39062eb430cf6f7798ce81e",
+"/": "2c6415cac39062eb430cf6f7798ce81e",
+"main.dart.js": "530e4ce3380c22fe70229f55cb717ea5",
+"main.dart.mjs": "8271f2210ae5ffe8f64d084df36de40f",
+"main.dart.wasm": "d60c7ab214dfa88754ba685f885275d5",
 "manifest.json": "696357d72b3c34dfc7d0c3abb5e81fef",
-"version.json": "b6380a6186844d8e2ddc001db68ae14f"};
+"version.json": "2de2cdeb67ffc7faf35dd587701d8d64"};
 // The application shell files that are downloaded before a service worker can
 // start.
 const CORE = ["main.dart.js",
