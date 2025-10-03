@@ -22,7 +22,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
-  <meta name="version" content="1.0.297+298">
+  <meta name="version" content="1.0.298+299">
 
   <!-- Cross-Origin Isolation Headers for SharedArrayBuffers -->
   <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
@@ -58,6 +58,153 @@
 
   <title>Agora Market</title>
   <link rel="manifest" href="manifest.json">
+  
+  <!-- ?? Flutter Web ?¡é?ç¤™è‡ª?•è??†è…³??-->
+  <script>
+    // Auto-accessibility handler for Flutter Web
+    (function() {
+      'use strict';
+      
+      console.log('?? Auto-accessibility handler loading...');
+      
+      // æª¢æ¸¬?Œé??Šç„¡?œç??‰é?
+      function autoClickAccessibility() {
+        const selectors = [
+          'flt-semantics-placeholder[aria-label="Enable accessibility"]', // Most reliable
+          'flt-semantics-placeholder[role="button"]',                        // Second option
+          '[aria-label="Enable accessibility"]',                            // Broad search
+          'button[aria-label="Enable accessibility"]',                     // Standard button
+          'button[aria-label*="Enable"]'                                   // Broader button search
+        ];
+        
+        for (const selector of selectors) {
+          const element = document.querySelector(selector);
+          if (element && isElementVisible(element)) {
+            console.log('??Auto-clicking accessibility button found via:', selector);
+            
+            try {
+              element.click();
+              return true;
+            } catch (e) {
+              console.warn('? ï? Error clicking accessibility button:', e);
+              // ?—è©¦ dispatchEvent ä½œç‚º?™ç”¨?¹æ?
+              try {
+                const event = new Event('click', { bubbles: true, cancelable: true });
+                element.dispatchEvent(event);
+                return true;
+              } catch (e2) {
+                console.warn('? ï? Alternative click method also failed:', e2);
+              }
+            }
+          }
+        }
+        return false;
+      }
+      
+      // æª¢æŸ¥?ƒç??¯å¦?¯è?ä¸”å¯é»æ?
+      function isElementVisible(element) {
+        if (!element) return false;
+        
+        const style = window.getComputedStyle(element);
+        
+        // ?´å¯¬é¬†ç??¯è??§æª¢??- ?ªè??ƒç?ä¸åœ¨ DOM ä¸­éš±?å°±?¯ä»¥?—è©¦é»æ?
+        return style.display !== 'none' && 
+               style.visibility !== 'hidden' &&
+               style.opacity !== '0' &&
+               !element.disabled &&
+               element.tagName !== 'NOSCRIPT'; // ç¢ºä?ä¸æ˜¯ noscript
+            
+        // ç§»é™¤?´æ ¼?„ä?ç½®å?å°ºå¯¸æª¢æŸ¥ï¼Œå??ºç„¡?œç??‰é??¯èƒ½?«æ??¨è????
+      }
+      
+          // ?ªå??•ç??¡é?ç¤™æ???
+          function startAutoHandler() {
+            let attempts = 0;
+            const maxAttempts = 80; // Increased to 80 attempts (40 seconds)
+            const interval = 500;   // æ¯?500ms æª¢æŸ¥ä¸€æ¬?
+            
+            const startTime = Date.now();
+            
+            function tryClickNow() {
+              attempts++;
+              console.log('?? Attempt', attempts, 'to detect accessibility button...');
+              
+              // æª¢æŸ¥?¯å¦?å?é»æ?
+              if (autoClickAccessibility()) {
+                const elapsed = Date.now() - startTime;
+                console.log(`??Accessibility auto-click successful on attempt ${attempts} (${elapsed}ms)`);
+                return;
+              }
+              
+              // æª¢æŸ¥?¯å¦?é¢å·²ç?è¼‰å…¥ï¼ˆæ??‰ç„¡?œç??‰é?ï¼?
+              const hasAccessibilityButton = document.querySelector('flt-semantics-placeholder[aria-label="Enable accessibility"]') ||
+                                           document.querySelector('button[aria-label*="Enable"]') ||
+                                           document.querySelector('[aria-label="Enable accessibility"]');
+              const hasLoginForm = document.querySelector('input[type="text"]') &&
+                                 document.querySelector('input[type="password"]');
+              
+              if (!hasAccessibilityButton && hasLoginForm) {
+                const elapsed = Date.now() - startTime;
+                console.log(`??No accessibility button found, page seems loaded with login form (${elapsed}ms)`);
+                return;
+              }
+              
+              // ?¹åˆ¥?ªå?ï¼šåœ¨ç¬?20 æ¬¡å?è©¦å?å¢å?èª¿è©¦ä¿¡æ¯
+              if (attempts === 20) {
+                const element = document.querySelector('flt-semantics-placeholder[aria-label="Enable accessibility"]');
+                console.log('?? Mid-point check - Element exists:', !!element);
+                if (element) {
+                  console.log('?? Element details:', {
+                    visible: isElementVisible(element),
+                    tagName: element.tagName,
+                    ariaLabel: element.getAttribute('aria-label')
+                  });
+                }
+              }
+              
+              // ç¹¼ç??—è©¦
+              if (attempts < maxAttempts) {
+                setTimeout(tryClickNow, interval);
+              } else {
+                const elapsed = Date.now() - startTime;
+                console.log(`? ï? Accessibility auto-click failed after ${attempts} attempts over ${elapsed}ms`);
+                console.log('?’¡ Manual trigger available: autoClickAccessibility() or window.manualAccessibilityTrigger()');
+                
+                // è¼¸å‡º?€çµ‚ç??‹çµ±è¨?
+                console.log('?? Final stats:', {
+                  attempts: attempts,
+                  totalTime: `${elapsed}ms`,
+                  documentReady: document.readyState,
+                  hasAccessibilityButton: hasAccessibilityButton,
+                  hasLoginForm: hasLoginForm
+                });
+              }
+            }
+            
+            // ?‹å??—è©¦
+            console.log('?? Starting accessibility auto-handler...');
+            tryClickNow();
+          }
+      
+      // DOM è¼‰å…¥å®Œæ?å¾Œé?å§‹è???
+      function initAutoHandler() {
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', startAutoHandler);
+        } else {
+          // DOM å·²ç?è¼‰å…¥å®Œæ?ï¼Œå»¶?²å??•ä»¥ç­‰å? Flutter
+          setTimeout(startAutoHandler, 100);
+        }
+      }
+      
+      // ç«‹å³?å???
+      initAutoHandler();
+      
+      console.log('?? Auto-accessibility handler initialized');
+      
+      // ?´éœ²?‹å?è§¸ç™¼?½æ•¸?°å…¨å±€ï¼Œæ–¹ä¾¿èª¿è©?
+      window.manualAccessibilityTrigger = autoClickAccessibility;
+    })();
+  </script>
   
   <style>
     /* Loading screen styles */
@@ -356,12 +503,12 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.297</div>
+      <div class="loading-version" id="version-display">v1.0.298</div>
     </div>
   </div>
   
   <script src="audio_analyzer.js"></script>
-  <script src="flutter_bootstrap.js?v=1.0.298" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.299" async></script>
   
   <script>
     // Update version display from meta tag
@@ -393,6 +540,7 @@
   </script>
 </body>
 </html>
+
 
 
 
