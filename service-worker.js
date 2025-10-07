@@ -83,12 +83,16 @@ self.addEventListener('fetch', function(event) {
 self.addEventListener('push', function(event) {
   console.log('🔔 [SERVICE_WORKER] 收到推送通知事件');
   
+  // 檢查是否為 iOS PWA 模式
+  const isIOSPWA = event.data && event.data.json().isIOSPWA;
+  
   // 檢查用戶設置（通過向主線程發送消息）
   self.clients.matchAll().then(clients => {
     if (clients.length > 0) {
       clients[0].postMessage({
         type: 'CHECK_WEBPUSH_SETTING',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        isIOSPWA: isIOSPWA
       });
     }
   });
@@ -149,6 +153,17 @@ self.addEventListener('notificationclick', function(event) {
   console.log('🔔 [SERVICE_WORKER] 通知被點擊');
   
   event.notification.close();
+  
+  // 發送點擊事件到主線程
+  self.clients.matchAll().then(clients => {
+    if (clients.length > 0) {
+      clients[0].postMessage({
+        type: 'NOTIFICATION_CLICKED',
+        data: event.notification.data || {},
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
   
   if (event.action === 'open' || !event.action) {
     // 打開應用
