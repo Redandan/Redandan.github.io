@@ -81,7 +81,17 @@ self.addEventListener('fetch', function(event) {
 
 // 處理推送通知
 self.addEventListener('push', function(event) {
-  console.log('Service Worker: 收到推送通知');
+  console.log('🔔 [SERVICE_WORKER] 收到推送通知事件');
+  
+  // 檢查用戶設置（通過向主線程發送消息）
+  self.clients.matchAll().then(clients => {
+    if (clients.length > 0) {
+      clients[0].postMessage({
+        type: 'CHECK_WEBPUSH_SETTING',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
   
   let notificationData = {
     title: 'Agora Market',
@@ -118,19 +128,25 @@ self.addEventListener('push', function(event) {
         actions: data.actions || notificationData.actions
       };
     } catch (e) {
-      console.log('Service Worker: 解析推送數據失敗，使用默認數據');
-      notificationData.body = event.data.text() || notificationData.body;
+      const textData = event.data.text();
+      notificationData.body = textData || notificationData.body;
     }
   }
   
   event.waitUntil(
     self.registration.showNotification(notificationData.title, notificationData)
+      .then(() => {
+        console.log('✅ [SERVICE_WORKER] 通知顯示成功');
+      })
+      .catch((error) => {
+        console.error('❌ [SERVICE_WORKER] 通知顯示失敗:', error);
+      })
   );
 });
 
 // 處理通知點擊
 self.addEventListener('notificationclick', function(event) {
-  console.log('Service Worker: 通知被點擊', event.action);
+  console.log('🔔 [SERVICE_WORKER] 通知被點擊');
   
   event.notification.close();
   
@@ -152,16 +168,16 @@ self.addEventListener('notificationclick', function(event) {
             return clients.openWindow('/');
           }
         })
+        .catch((error) => {
+          console.error('❌ [SERVICE_WORKER] 窗口操作失敗:', error);
+        })
     );
-  } else if (event.action === 'close') {
-    // 關閉通知，不做任何操作
-    console.log('Service Worker: 通知已關閉');
   }
 });
 
 // 處理通知關閉
 self.addEventListener('notificationclose', function(event) {
-  console.log('Service Worker: 通知被關閉');
+  console.log('🔔 [SERVICE_WORKER] 通知被關閉');
 });
 
 // 處理後台同步
