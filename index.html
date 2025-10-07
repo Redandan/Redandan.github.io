@@ -22,7 +22,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
-  <meta name="version" content="1.0.311+312">
+  <meta name="version" content="1.0.313+314">
 
   <!-- Cross-Origin Isolation Headers for SharedArrayBuffers -->
   <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
@@ -58,6 +58,27 @@
 
   <title>Agora Market</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- WASM æ¨¡å?è­¦å? -->
+  <script>
+    // æª¢æ¸¬ WASM æ¨¡å?ä¸¦é¡¯ç¤ºè­¦??
+    if (window.location.search.includes('wasm=true') || 
+        window.location.href.includes('wasm') ||
+        typeof WebAssembly !== 'undefined' && window.location.pathname.includes('main.dart.wasm')) {
+      console.warn('? ï? WASM æ¨¡å?ï¼šWeb Push ?Ÿèƒ½?—é?');
+      console.warn('?’¡ å»ºè­°ä½¿ç”¨æ¨™æ? Web æ¨¡å?ä»¥ç²å¾—å??´å???);
+      
+      // ?¨é??¢è??¥å?é¡¯ç¤ºè­¦å?
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          if (window.FinalPushManager) {
+            console.warn('?? Web Push ??WASM æ¨¡å?ä¸‹é?è¦æ??•è¨­ç½?);
+            console.warn('?? è«‹åœ¨?§åˆ¶?°åŸ·è¡Œï?window.FinalPushManager.completePushSubscription()');
+          }
+        }, 2000);
+      });
+    }
+  </script>
   
   <!-- ?? Flutter Web ?¡é?ç¤™è‡ª?•è??†è…³??-->
   <script>
@@ -503,13 +524,15 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.311</div>
+      <div class="loading-version" id="version-display">v1.0.313</div>
     </div>
   </div>
   
   <script src="audio_analyzer.js"></script>
   <script src="final_push_bridge.js"></script>
-  <script src="flutter_bootstrap.js?v=1.0.313" async></script>
+  <!-- WASM Web Push æ©‹æ¥??-->
+  <script src="wasm_push_bridge.js"></script>
+  <script src="flutter_bootstrap.js?v=1.0.314" async></script>
   
   <!-- Service Worker è¨»å? -->
   <script>
@@ -571,6 +594,7 @@
   </script>
 </body>
 </html>
+
 
 
 
