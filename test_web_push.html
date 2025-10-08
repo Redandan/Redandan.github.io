@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Push 訂閱測試</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .info {
+            color: #17a2b8;
+            font-weight: bold;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .status.supported {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .status.not-supported {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔔 Web Push 訂閱測試</h1>
+        
+        <div id="browserSupport" class="status">
+            <h3>瀏覽器支援檢查</h3>
+            <div id="supportStatus">檢查中...</div>
+        </div>
+
+        <div id="permissionStatus" class="status">
+            <h3>權限狀態</h3>
+            <div id="permissionInfo">檢查中...</div>
+        </div>
+
+        <div id="subscriptionStatus" class="status">
+            <h3>訂閱狀態</h3>
+            <div id="subscriptionInfo">檢查中...</div>
+        </div>
+
+        <div class="actions">
+            <h3>操作</h3>
+            <button id="requestPermissionBtn" class="button" disabled>請求通知權限</button>
+            <button id="subscribeBtn" class="button" disabled>訂閱推送通知</button>
+            <button id="unsubscribeBtn" class="button" disabled>取消訂閱</button>
+            <button id="testNotificationBtn" class="button" disabled>測試通知</button>
+            <button id="quickTestBtn" class="button">快速測試</button>
+            <button id="checkStatusBtn" class="button">檢查狀態</button>
+        </div>
+
+        <div class="log-section">
+            <h3>操作日誌</h3>
+            <div id="log" class="log"></div>
+            <button id="clearLogBtn" class="button">清除日誌</button>
+        </div>
+    </div>
+
+    <!-- 載入統一推送橋接器 -->
+    <script src="unified_push_bridge.js"></script>
+    
+    <script>
+        // 日誌功能
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            logDiv.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        // 清除日誌
+        document.getElementById('clearLogBtn').onclick = function() {
+            document.getElementById('log').innerHTML = '';
+        };
+
+        // 檢查瀏覽器支援
+        function checkBrowserSupport() {
+            log('🔍 檢查瀏覽器支援...');
+            
+            if (!window.UnifiedPushManager) {
+                log('❌ UnifiedPushManager 未載入', 'error');
+                document.getElementById('supportStatus').innerHTML = '<span class="error">❌ 統一推送橋接器未載入</span>';
+                document.getElementById('browserSupport').className = 'status not-supported';
+                return false;
+            }
+
+            const isSupported = window.UnifiedPushManager.isSupported();
+            if (isSupported) {
+                log('✅ 瀏覽器支援 Web Push', 'success');
+                document.getElementById('supportStatus').innerHTML = '<span class="success">✅ 瀏覽器支援 Web Push</span>';
+                document.getElementById('browserSupport').className = 'status supported';
+                return true;
+            } else {
+                log('❌ 瀏覽器不支援 Web Push', 'error');
+                document.getElementById('supportStatus').innerHTML = '<span class="error">❌ 瀏覽器不支援 Web Push</span>';
+                document.getElementById('browserSupport').className = 'status not-supported';
+                return false;
+            }
+        }
+
+        // 檢查權限狀態
+        async function checkPermissionStatus() {
+            log('🔍 檢查權限狀態...');
+            
+            if (!window.UnifiedPushManager) {
+                document.getElementById('permissionInfo').innerHTML = '<span class="error">❌ 橋接器未載入</span>';
+                return;
+            }
+
+            const status = window.UnifiedPushManager.getPermissionStatus();
+            log(`📋 當前權限狀態: ${status}`);
+            
+            let statusText = '';
+            let buttonState = false;
+            
+            switch (status) {
+                case 'granted':
+                    statusText = '<span class="success">✅ 已授權</span>';
+                    buttonState = true;
+                    break;
+                case 'denied':
+                    statusText = '<span class="error">❌ 已拒絕</span>';
+                    buttonState = false;
+                    break;
+                case 'default':
+                    statusText = '<span class="info">⏳ 未請求</span>';
+                    buttonState = true;
+                    break;
+            }
+            
+            document.getElementById('permissionInfo').innerHTML = statusText;
+            document.getElementById('requestPermissionBtn').disabled = !buttonState;
+        }
+
+        // 檢查訂閱狀態
+        async function checkSubscriptionStatus() {
+            log('🔍 檢查訂閱狀態...');
+            
+            if (!window.UnifiedPushManager) {
+                document.getElementById('subscriptionInfo').innerHTML = '<span class="error">❌ 橋接器未載入</span>';
+                return;
+            }
+
+            try {
+                const result = await window.UnifiedPushManager.checkSubscriptionStatus();
+                if (result.success) {
+                    if (result.isSubscribed) {
+                        log('✅ 已訂閱推送通知', 'success');
+                        document.getElementById('subscriptionInfo').innerHTML = '<span class="success">✅ 已訂閱</span>';
+                        document.getElementById('subscribeBtn').disabled = true;
+                        document.getElementById('unsubscribeBtn').disabled = false;
+                        document.getElementById('testNotificationBtn').disabled = false;
+                    } else {
+                        log('ℹ️ 未訂閱推送通知');
+                        document.getElementById('subscriptionInfo').innerHTML = '<span class="info">⏳ 未訂閱</span>';
+                        document.getElementById('subscribeBtn').disabled = false;
+                        document.getElementById('unsubscribeBtn').disabled = true;
+                        document.getElementById('testNotificationBtn').disabled = true;
+                    }
+                } else {
+                    log(`❌ 檢查訂閱狀態失敗: ${result.error}`, 'error');
+                    document.getElementById('subscriptionInfo').innerHTML = `<span class="error">❌ 檢查失敗: ${result.error}</span>`;
+                }
+            } catch (error) {
+                log(`❌ 檢查訂閱狀態異常: ${error.message}`, 'error');
+                document.getElementById('subscriptionInfo').innerHTML = `<span class="error">❌ 檢查異常: ${error.message}</span>`;
+            }
+        }
+
+        // 請求權限
+        document.getElementById('requestPermissionBtn').onclick = async function() {
+            log('🔔 請求通知權限...');
+            
+            try {
+                const result = await window.UnifiedPushManager.requestPermission();
+                log(`📋 權限請求結果: ${result}`);
+                
+                if (result === 'granted') {
+                    log('✅ 通知權限已授權', 'success');
+                } else if (result === 'denied') {
+                    log('❌ 通知權限被拒絕', 'error');
+                } else {
+                    log('ℹ️ 通知權限請求被取消');
+                }
+                
+                await checkPermissionStatus();
+                await checkSubscriptionStatus();
+            } catch (error) {
+                log(`❌ 請求權限失敗: ${error.message}`, 'error');
+            }
+        };
+
+        // 訂閱推送
+        document.getElementById('subscribeBtn').onclick = async function() {
+            log('🚀 開始訂閱推送通知...');
+            
+            try {
+                const result = await window.UnifiedPushManager.completePushSubscription();
+                
+                if (result.success) {
+                    log('✅ 推送訂閱成功', 'success');
+                    if (result.isNew) {
+                        log('🆕 創建了新訂閱');
+                    } else {
+                        log('🔄 使用現有訂閱');
+                    }
+                } else {
+                    log(`❌ 推送訂閱失敗: ${result.error}`, 'error');
+                }
+                
+                await checkSubscriptionStatus();
+            } catch (error) {
+                log(`❌ 訂閱推送異常: ${error.message}`, 'error');
+            }
+        };
+
+        // 取消訂閱
+        document.getElementById('unsubscribeBtn').onclick = async function() {
+            log('🔔 取消推送訂閱...');
+            
+            try {
+                const result = await window.UnifiedPushManager.unsubscribeFromPush();
+                
+                if (result.success) {
+                    log('✅ 推送訂閱已取消', 'success');
+                } else {
+                    log(`❌ 取消訂閱失敗: ${result.error}`, 'error');
+                }
+                
+                await checkSubscriptionStatus();
+            } catch (error) {
+                log(`❌ 取消訂閱異常: ${error.message}`, 'error');
+            }
+        };
+
+        // 測試通知
+        document.getElementById('testNotificationBtn').onclick = function() {
+            log('🔔 發送測試通知...');
+            
+            const result = window.UnifiedPushManager.showLocalNotification(
+                '測試通知',
+                '這是一個測試推送通知',
+                '/icons/Icon-192.png'
+            );
+            
+            if (result) {
+                log('✅ 測試通知已發送', 'success');
+            } else {
+                log('❌ 測試通知發送失敗', 'error');
+            }
+        };
+
+        // 快速測試
+        document.getElementById('quickTestBtn').onclick = async function() {
+            log('🧪 開始快速測試...');
+            
+            try {
+                const result = await window.UnifiedPushManager.quickTest();
+                
+                if (result.success) {
+                    log('✅ 快速測試成功', 'success');
+                    log('📋 訂閱信息: ' + JSON.stringify(result.subscription, null, 2));
+                } else {
+                    log(`❌ 快速測試失敗: ${result.error}`, 'error');
+                }
+                
+                await checkSubscriptionStatus();
+            } catch (error) {
+                log(`❌ 快速測試異常: ${error.message}`, 'error');
+            }
+        };
+
+        // 檢查狀態
+        document.getElementById('checkStatusBtn').onclick = async function() {
+            log('🔄 重新檢查所有狀態...');
+            await checkBrowserSupport();
+            await checkPermissionStatus();
+            await checkSubscriptionStatus();
+        };
+
+        // 初始化
+        window.addEventListener('load', async function() {
+            log('🚀 頁面載入完成，開始初始化...');
+            
+            // 等待橋接器載入
+            setTimeout(async function() {
+                await checkBrowserSupport();
+                await checkPermissionStatus();
+                await checkSubscriptionStatus();
+                
+                log('✅ 初始化完成');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

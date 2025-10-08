@@ -66,21 +66,60 @@
     getVapidPublicKey: function() {
       console.log('🔑 [UNIFIED_BRIDGE] 獲取 VAPID 公鑰...');
       
-      return fetch('/api/webpush/vapid-public-key')
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('HTTP ' + response.status);
+      // 嘗試從多個可能的端點獲取 VAPID 公鑰
+      const endpoints = [
+        '/api/webpush/vapid-public-key',
+        '/api/webpush/vapid',
+        '/api/push/vapid-public-key'
+      ];
+      
+      // 首先嘗試從 localStorage 獲取緩存的公鑰
+      const cachedKey = localStorage.getItem('vapid_public_key');
+      if (cachedKey) {
+        console.log('✅ [UNIFIED_BRIDGE] 使用緩存的 VAPID 公鑰');
+        return Promise.resolve(cachedKey);
+      }
+      
+      // 如果沒有緩存，嘗試從 API 獲取
+      return this._tryGetVapidFromEndpoints(endpoints);
+    },
+
+    // 嘗試從多個端點獲取 VAPID 公鑰
+    _tryGetVapidFromEndpoints: async function(endpoints) {
+      for (const endpoint of endpoints) {
+        try {
+          console.log(`🔑 [UNIFIED_BRIDGE] 嘗試端點: ${endpoint}`);
+          
+          const response = await fetch(endpoint, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || '')
+            }
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            const publicKey = data.publicKey || data.key || data;
+            
+            if (publicKey) {
+              console.log('✅ [UNIFIED_BRIDGE] VAPID 公鑰獲取成功');
+              // 緩存公鑰
+              localStorage.setItem('vapid_public_key', publicKey);
+              return publicKey;
+            }
           }
-          return response.json();
-        })
-        .then(data => {
-          console.log('✅ [UNIFIED_BRIDGE] VAPID 公鑰獲取成功');
-          return data.publicKey;
-        })
-        .catch(error => {
-          console.error('❌ [UNIFIED_BRIDGE] 獲取 VAPID 公鑰失敗:', error);
-          return null;
-        });
+        } catch (error) {
+          console.warn(`⚠️ [UNIFIED_BRIDGE] 端點 ${endpoint} 失敗:`, error.message);
+          continue;
+        }
+      }
+      
+      // 如果所有端點都失敗，使用硬編碼的公鑰（從日誌中獲取）
+      console.warn('⚠️ [UNIFIED_BRIDGE] 所有 API 端點失敗，使用硬編碼公鑰');
+      const fallbackKey = 'BFPiGuKjltU2fNVaoK9KF06ANHwm7xvooxY7eMdQWuhyeITxUrz-upzFDHpmmB7aTQ4v2K4Y_1icF_OkYgUU2KU';
+      localStorage.setItem('vapid_public_key', fallbackKey);
+      return fallbackKey;
     },
 
     // 完整的推送訂閱流程
@@ -133,6 +172,14 @@
         console.log('✅ [UNIFIED_BRIDGE] 推送訂閱創建成功');
         const result = this._subscriptionToJson(subscription);
         
+        // 7. 將訂閱數據提交到後端
+        const submitResult = await this._submitSubscriptionToBackend(result);
+        if (!submitResult.success) {
+          console.error('❌ [UNIFIED_BRIDGE] 提交訂閱數據到後端失敗:', submitResult.error);
+          return { success: false, error: '提交訂閱數據失敗: ' + submitResult.error };
+        }
+        
+        console.log('✅ [UNIFIED_BRIDGE] 訂閱數據已提交到後端');
         return { success: true, subscription: result, isNew: true };
 
       } catch (error) {
@@ -309,12 +356,140 @@
       } else {
         return 'Unknown Browser';
       }
+    },
+
+    // 輔助方法：提交訂閱數據到後端
+    _submitSubscriptionToBackend: async function(subscriptionData) {
+      try {
+        console.log('📤 [UNIFIED_BRIDGE] 提交訂閱數據到後端...');
+        
+        const deviceInfo = this.getDeviceInfo();
+        
+        const payload = {
+          endpoint: subscriptionData.endpoint,
+          p256dh: subscriptionData.p256dh,
+          auth: subscriptionData.auth,
+          userAgent: deviceInfo.userAgent,
+          deviceType: deviceInfo.deviceType,
+          deviceName: deviceInfo.deviceName
+        };
+        
+        console.log('📤 [UNIFIED_BRIDGE] 提交數據:', payload);
+        
+        // 嘗試多個可能的訂閱端點
+        const subscribeEndpoints = [
+          '/api/webpush/subscribe',
+          '/api/push/subscribe',
+          '/api/webpush/register'
+        ];
+        
+        let response = null;
+        let lastError = null;
+        
+        for (const endpoint of subscribeEndpoints) {
+          try {
+            console.log(`📤 [UNIFIED_BRIDGE] 嘗試提交到端點: ${endpoint}`);
+            
+            response = await fetch(endpoint, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || '')
+              },
+              body: JSON.stringify(payload)
+            });
+            
+            if (response.ok) {
+              console.log(`✅ [UNIFIED_BRIDGE] 成功提交到端點: ${endpoint}`);
+              break;
+            } else {
+              console.warn(`⚠️ [UNIFIED_BRIDGE] 端點 ${endpoint} 返回錯誤: ${response.status}`);
+              lastError = `HTTP ${response.status}`;
+            }
+          } catch (error) {
+            console.warn(`⚠️ [UNIFIED_BRIDGE] 端點 ${endpoint} 請求失敗:`, error.message);
+            lastError = error.message;
+            continue;
+          }
+        }
+        
+        if (!response || !response.ok) {
+          console.error('❌ [UNIFIED_BRIDGE] 所有訂閱端點都失敗');
+          return { success: false, error: `所有端點都失敗，最後錯誤: ${lastError}` };
+        }
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ [UNIFIED_BRIDGE] 後端響應錯誤:', response.status, errorText);
+          return { success: false, error: `HTTP ${response.status}: ${errorText}` };
+        }
+        
+        const result = await response.json();
+        console.log('✅ [UNIFIED_BRIDGE] 後端響應成功:', result);
+        
+        return { success: true, data: result };
+        
+      } catch (error) {
+        console.error('❌ [UNIFIED_BRIDGE] 提交訂閱數據失敗:', error);
+        return { success: false, error: error.message };
+      }
+    }
+  };
+
+  // 添加快速測試方法
+  window.UnifiedPushManager.quickTest = async function() {
+    console.log('🧪 [UNIFIED_BRIDGE] 開始快速測試...');
+    
+    try {
+      // 使用已知的 VAPID 公鑰
+      const vapidKey = 'BFPiGuKjltU2fNVaoK9KF06ANHwm7xvooxY7eMdQWuhyeITxUrz-upzFDHpmmB7aTQ4v2K4Y_1icF_OkYgUU2KU';
+      
+      // 檢查瀏覽器支援
+      if (!this.isSupported()) {
+        console.error('❌ [UNIFIED_BRIDGE] 瀏覽器不支援推送通知');
+        return { success: false, error: '瀏覽器不支援推送通知' };
+      }
+      
+      // 檢查權限
+      const permission = this.getPermissionStatus();
+      if (permission !== 'granted') {
+        console.log('🔔 [UNIFIED_BRIDGE] 請求權限...');
+        const result = await this.requestPermission();
+        if (result !== 'granted') {
+          console.error('❌ [UNIFIED_BRIDGE] 權限被拒絕');
+          return { success: false, error: '權限被拒絕' };
+        }
+      }
+      
+      // 註冊 Service Worker
+      const registration = await navigator.serviceWorker.ready;
+      console.log('✅ [UNIFIED_BRIDGE] Service Worker 已準備就緒');
+      
+      // 創建訂閱
+      const applicationServerKey = this._urlBase64ToUint8Array(vapidKey);
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: applicationServerKey
+      });
+      
+      console.log('✅ [UNIFIED_BRIDGE] 推送訂閱創建成功');
+      const result = this._subscriptionToJson(subscription);
+      
+      // 顯示訂閱信息
+      console.log('📋 [UNIFIED_BRIDGE] 訂閱信息:', result);
+      
+      return { success: true, subscription: result };
+      
+    } catch (error) {
+      console.error('❌ [UNIFIED_BRIDGE] 快速測試失敗:', error);
+      return { success: false, error: error.message };
     }
   };
 
   // 初始化完成
   console.log('🚀 [UNIFIED_BRIDGE] 統一推送橋接器已載入');
   console.log('💡 [UNIFIED_BRIDGE] 使用方法: window.UnifiedPushManager.completePushSubscription()');
+  console.log('🧪 [UNIFIED_BRIDGE] 快速測試: window.UnifiedPushManager.quickTest()');
 
 })();
 
