@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>啟用推送通知 - AgoraMarket</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 500px;
+            text-align: center;
+        }
+        .icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 16px;
+            font-size: 24px;
+        }
+        p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+        .benefits {
+            text-align: left;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .benefits ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .benefits li {
+            margin-bottom: 8px;
+            color: #555;
+        }
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 8px;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #5a6fd8;
+        }
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .loading {
+            display: none;
+        }
+        .loading.show {
+            display: inline-block;
+        }
+        .spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">🔔</div>
+        <h1>啟用推送通知</h1>
+        <p>為了讓您及時收到重要通知，請允許瀏覽器顯示推送通知。</p>
+        
+        <div class="benefits">
+            <strong>您將收到：</strong>
+            <ul>
+                <li>新訂單通知</li>
+                <li>消息提醒</li>
+                <li>系統更新</li>
+                <li>重要公告</li>
+            </ul>
+        </div>
+
+        <div id="status" class="status" style="display: none;"></div>
+        
+        <div>
+            <button id="requestBtn" class="btn" onclick="requestPermission()">
+                <span class="loading" id="loading">
+                    <span class="spinner"></span>
+                </span>
+                啟用通知
+            </button>
+            <button class="btn" onclick="goBack()" style="background: #6c757d;">稍後再說</button>
+        </div>
+    </div>
+
+    <script>
+        // 檢查瀏覽器支援
+        function checkSupport() {
+            if (!('Notification' in window)) {
+                showStatus('您的瀏覽器不支援推送通知', 'error');
+                document.getElementById('requestBtn').disabled = true;
+                return false;
+            }
+            return true;
+        }
+
+        // 顯示狀態
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+        }
+
+        // 請求權限
+        async function requestPermission() {
+            if (!checkSupport()) return;
+
+            const btn = document.getElementById('requestBtn');
+            const loading = document.getElementById('loading');
+            
+            btn.disabled = true;
+            loading.classList.add('show');
+            showStatus('正在請求通知權限...', 'info');
+
+            try {
+                const permission = await Notification.requestPermission();
+                
+                loading.classList.remove('show');
+                btn.disabled = false;
+
+                switch (permission) {
+                    case 'granted':
+                        showStatus('✅ 通知權限已啟用！正在返回應用...', 'success');
+                        setTimeout(() => {
+                            goBackWithSuccess();
+                        }, 2000);
+                        break;
+                    case 'denied':
+                        showStatus('❌ 通知權限被拒絕。您可以在瀏覽器設定中手動啟用。', 'error');
+                        break;
+                    default:
+                        showStatus('⚠️ 權限請求被忽略。請重新嘗試。', 'error');
+                        break;
+                }
+            } catch (error) {
+                loading.classList.remove('show');
+                btn.disabled = false;
+                showStatus('❌ 請求權限時發生錯誤: ' + error.message, 'error');
+            }
+        }
+
+        // 返回應用
+        function goBack() {
+            // 直接關閉當前標籤頁
+            window.close();
+        }
+
+        // 成功後返回應用
+        function goBackWithSuccess() {
+            // 直接關閉當前標籤頁
+            window.close();
+        }
+
+        // 頁面載入時檢查當前權限狀態
+        window.onload = function() {
+            if (!checkSupport()) return;
+
+            const currentPermission = Notification.permission;
+            switch (currentPermission) {
+                case 'granted':
+                    showStatus('✅ 通知權限已啟用！正在返回應用...', 'success');
+                    setTimeout(() => {
+                        goBackWithSuccess();
+                    }, 1500);
+                    break;
+                case 'denied':
+                    showStatus('❌ 通知權限已被拒絕。請在瀏覽器設定中手動啟用。', 'error');
+                    break;
+                default:
+                    // 權限狀態為 'default'，可以請求
+                    break;
+            }
+        };
+    </script>
+</body>
+</html>

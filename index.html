@@ -22,7 +22,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
-  <meta name="version" content="1.0.316+317">
+  <meta name="version" content="1.0.319+320">
 
   <!-- Cross-Origin Isolation Headers for SharedArrayBuffers -->
   <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
@@ -61,8 +61,7 @@
 
   <!-- WASM æ¨¡å?è­¦å? -->
   <script>
-    // æª¢æ¸¬ WASM æ¨¡å?ä¸¦é¡¯ç¤ºè­¦??
-    if (window.location.search.includes('wasm=true') || 
+    // æª¢æ¸¬ WASM æ¨¡å?ä¸¦é¡¯ç¤ºè­¦??    if (window.location.search.includes('wasm=true') || 
         window.location.href.includes('wasm') ||
         typeof WebAssembly !== 'undefined' && window.location.pathname.includes('main.dart.wasm')) {
       console.warn('? ï? WASM æ¨¡å?ï¼šWeb Push ?Ÿèƒ½?—é?');
@@ -71,9 +70,9 @@
       // ?¨é??¢è??¥å?é¡¯ç¤ºè­¦å?
       window.addEventListener('load', function() {
         setTimeout(function() {
-          if (window.FinalPushManager) {
+          if (window.UnifiedPushManager) {
             console.warn('?? Web Push ??WASM æ¨¡å?ä¸‹é?è¦æ??•è¨­ç½?);
-            console.warn('?? è«‹åœ¨?§åˆ¶?°åŸ·è¡Œï?window.FinalPushManager.completePushSubscription()');
+            console.warn('?? è«‹åœ¨?§åˆ¶?°åŸ·è¡Œï?window.UnifiedPushManager.completePushSubscription()');
           }
         }, 2000);
       });
@@ -138,12 +137,10 @@
         // ç§»é™¤?´æ ¼?„ä?ç½®å?å°ºå¯¸æª¢æŸ¥ï¼Œå??ºç„¡?œç??‰é??¯èƒ½?«æ??¨è????
       }
       
-          // ?ªå??•ç??¡é?ç¤™æ???
-          function startAutoHandler() {
+          // ?ªå??•ç??¡é?ç¤™æ???          function startAutoHandler() {
             let attempts = 0;
             const maxAttempts = 80; // Increased to 80 attempts (40 seconds)
-            const interval = 500;   // æ¯?500ms æª¢æŸ¥ä¸€æ¬?
-            
+            const interval = 500;   // æ¯?500ms æª¢æŸ¥ä¸€æ¬?            
             const startTime = Date.now();
             
             function tryClickNow() {
@@ -157,8 +154,7 @@
                 return;
               }
               
-              // æª¢æŸ¥?¯å¦?é¢å·²ç?è¼‰å…¥ï¼ˆæ??‰ç„¡?œç??‰é?ï¼?
-              const hasAccessibilityButton = document.querySelector('flt-semantics-placeholder[aria-label="Enable accessibility"]') ||
+              // æª¢æŸ¥?¯å¦?é¢å·²ç?è¼‰å…¥ï¼ˆæ??‰ç„¡?œç??‰é?ï¼?              const hasAccessibilityButton = document.querySelector('flt-semantics-placeholder[aria-label="Enable accessibility"]') ||
                                            document.querySelector('button[aria-label*="Enable"]') ||
                                            document.querySelector('[aria-label="Enable accessibility"]');
               const hasLoginForm = document.querySelector('input[type="text"]') &&
@@ -191,8 +187,7 @@
                 console.log(`? ï? Accessibility auto-click failed after ${attempts} attempts over ${elapsed}ms`);
                 console.log('?’¡ Manual trigger available: autoClickAccessibility() or window.manualAccessibilityTrigger()');
                 
-                // è¼¸å‡º?€çµ‚ç??‹çµ±è¨?
-                console.log('?? Final stats:', {
+                // è¼¸å‡º?€çµ‚ç??‹çµ±è¨?                console.log('?? Final stats:', {
                   attempts: attempts,
                   totalTime: `${elapsed}ms`,
                   documentReady: document.readyState,
@@ -207,8 +202,7 @@
             tryClickNow();
           }
       
-      // DOM è¼‰å…¥å®Œæ?å¾Œé?å§‹è???
-      function initAutoHandler() {
+      // DOM è¼‰å…¥å®Œæ?å¾Œé?å§‹è???      function initAutoHandler() {
         if (document.readyState === 'loading') {
           document.addEventListener('DOMContentLoaded', startAutoHandler);
         } else {
@@ -217,13 +211,11 @@
         }
       }
       
-      // ç«‹å³?å???
-      initAutoHandler();
+      // ç«‹å³?å???      initAutoHandler();
       
       console.log('?? Auto-accessibility handler initialized');
       
-      // ?´éœ²?‹å?è§¸ç™¼?½æ•¸?°å…¨å±€ï¼Œæ–¹ä¾¿èª¿è©?
-      window.manualAccessibilityTrigger = autoClickAccessibility;
+      // ?´éœ²?‹å?è§¸ç™¼?½æ•¸?°å…¨å±€ï¼Œæ–¹ä¾¿èª¿è©?      window.manualAccessibilityTrigger = autoClickAccessibility;
     })();
   </script>
   
@@ -524,15 +516,13 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.316</div>
+      <div class="loading-version" id="version-display">v1.0.319</div>
     </div>
   </div>
   
   <script src="audio_analyzer.js"></script>
-  <script src="final_push_bridge.js"></script>
-  <!-- WASM Web Push æ©‹æ¥??-->
-  <script src="wasm_push_bridge.js"></script>
-  <script src="flutter_bootstrap.js?v=1.0.319" async></script>
+  <script src="unified_push_bridge.js"></script>
+  <script src="flutter_bootstrap.js?v=1.0.320" async></script>
   
   <!-- Service Worker è¨»å? -->
   <script>
@@ -580,8 +570,7 @@
       window._messageHandler = callback;
     };
 
-    // ?•ç?ä¾†è‡ª Service Worker ?„æ???
-    window.handleServiceWorkerMessage = function(data) {
+    // ?•ç?ä¾†è‡ª Service Worker ?„æ???    window.handleServiceWorkerMessage = function(data) {
       if (window._messageHandler) {
         window._messageHandler(data);
       }
@@ -618,6 +607,7 @@
   </script>
 </body>
 </html>
+
 
 
 
