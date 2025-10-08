@@ -84,6 +84,51 @@
       return result;
     },
 
+    // 獲取設備信息
+    getDeviceInfo: function() {
+      console.log('🔍 [JS_BRIDGE] 開始收集設備信息...');
+      
+      const userAgent = navigator.userAgent;
+      const deviceType = this._getDeviceType(userAgent);
+      const deviceName = this._getDeviceName(userAgent);
+      
+      const deviceInfo = {
+        userAgent: userAgent,
+        deviceType: deviceType,
+        deviceName: deviceName
+      };
+      
+      console.log('🔍 [JS_BRIDGE] 設備信息:', deviceInfo);
+      return deviceInfo;
+    },
+
+    // 獲取設備類型
+    _getDeviceType: function(userAgent) {
+      const ua = userAgent.toLowerCase();
+      if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) {
+        return 'mobile';
+      } else if (ua.includes('tablet') || ua.includes('ipad')) {
+        return 'tablet';
+      } else {
+        return 'desktop';
+      }
+    },
+
+    // 獲取設備名稱
+    _getDeviceName: function(userAgent) {
+      if (userAgent.includes('Chrome')) {
+        return 'Chrome Browser';
+      } else if (userAgent.includes('Firefox')) {
+        return 'Firefox Browser';
+      } else if (userAgent.includes('Safari')) {
+        return 'Safari Browser';
+      } else if (userAgent.includes('Edge')) {
+        return 'Edge Browser';
+      } else {
+        return 'Unknown Browser';
+      }
+    },
+
     // 獲取權限狀態的說明文字
     _getPermissionMessage: function(status, isSupported) {
       if (!isSupported) {
