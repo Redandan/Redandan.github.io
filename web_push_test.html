@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Push 診斷測試 - AgoraMarket</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .warning { background: #fff3cd; color: #856404; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Web Push 診斷測試</h1>
+        <p>這個頁面用於診斷 Web Push 功能的各個組件是否正常工作。</p>
+        
+        <div class="test-section">
+            <h2>1. 瀏覽器環境檢查</h2>
+            <div id="browserCheck"></div>
+            <button onclick="checkBrowserSupport()">檢查瀏覽器支援</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>2. Service Worker 測試</h2>
+            <div id="serviceWorkerCheck"></div>
+            <button onclick="testServiceWorker()">測試 Service Worker</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>3. 通知權限測試</h2>
+            <div id="notificationCheck"></div>
+            <button onclick="testNotificationPermission()">測試通知權限</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>4. VAPID Key 測試</h2>
+            <div id="vapidCheck"></div>
+            <input type="text" id="vapidKeyInput" placeholder="輸入 VAPID Key" style="width: 100%; margin: 10px 0;">
+            <button onclick="testVapidKey()">測試 VAPID Key</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>5. 完整流程測試</h2>
+            <div id="fullFlowCheck"></div>
+            <button onclick="testFullFlow()">測試完整流程</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>6. 日誌輸出</h2>
+            <pre id="logOutput"></pre>
+            <button onclick="clearLogs()">清除日誌</button>
+        </div>
+    </div>
+
+    <script>
+        // 日誌輸出
+        function log(message, type = 'info') {
+            const logOutput = document.getElementById('logOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}\n`;
+            logOutput.textContent += logEntry;
+            logOutput.scrollTop = logOutput.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLogs() {
+            document.getElementById('logOutput').textContent = '';
+        }
+
+        // 1. 瀏覽器環境檢查
+        function checkBrowserSupport() {
+            const result = document.getElementById('browserCheck');
+            result.innerHTML = '';
+            
+            log('🔍 開始瀏覽器環境檢查...');
+            
+            const checks = [
+                { name: 'Service Worker', supported: 'serviceWorker' in navigator },
+                { name: 'Push Manager', supported: 'PushManager' in window },
+                { name: 'Notification', supported: 'Notification' in window },
+                { name: 'HTTPS/HTTP', supported: window.location.protocol === 'https:' || window.location.hostname === 'localhost' },
+                { name: 'User Agent', supported: true, value: navigator.userAgent }
+            ];
+            
+            checks.forEach(check => {
+                const div = document.createElement('div');
+                div.className = `test-result ${check.supported ? 'success' : 'error'}`;
+                div.innerHTML = `${check.supported ? '✅' : '❌'} ${check.name}: ${check.value || (check.supported ? '支援' : '不支援')}`;
+                result.appendChild(div);
+                
+                log(`${check.supported ? '✅' : '❌'} ${check.name}: ${check.value || (check.supported ? '支援' : '不支援')}`);
+            });
+        }
+
+        // 2. Service Worker 測試
+        async function testServiceWorker() {
+            const result = document.getElementById('serviceWorkerCheck');
+            result.innerHTML = '';
+            
+            log('🔍 開始 Service Worker 測試...');
+            
+            try {
+                // 檢查文件是否存在
+                const response = await fetch('/service-worker.js');
+                if (response.ok) {
+                    const div = document.createElement('div');
+                    div.className = 'test-result success';
+                    div.innerHTML = '✅ Service Worker 文件存在且可訪問';
+                    result.appendChild(div);
+                    log('✅ Service Worker 文件存在且可訪問');
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                // 嘗試註冊
+                const registration = await navigator.serviceWorker.register('/service-worker.js');
+                const div2 = document.createElement('div');
+                div2.className = 'test-result success';
+                div2.innerHTML = '✅ Service Worker 註冊成功';
+                result.appendChild(div2);
+                log('✅ Service Worker 註冊成功');
+                
+                await navigator.serviceWorker.ready;
+                const div3 = document.createElement('div');
+                div3.className = 'test-result success';
+                div3.innerHTML = '✅ Service Worker 準備就緒';
+                result.appendChild(div3);
+                log('✅ Service Worker 準備就緒');
+                
+            } catch (error) {
+                const div = document.createElement('div');
+                div.className = 'test-result error';
+                div.innerHTML = `❌ Service Worker 測試失敗: ${error.message}`;
+                result.appendChild(div);
+                log(`❌ Service Worker 測試失敗: ${error.message}`);
+            }
+        }
+
+        // 3. 通知權限測試
+        async function testNotificationPermission() {
+            const result = document.getElementById('notificationCheck');
+            result.innerHTML = '';
+            
+            log('🔍 開始通知權限測試...');
+            
+            try {
+                const currentPermission = Notification.permission;
+                const div1 = document.createElement('div');
+                div1.className = 'test-result info';
+                div1.innerHTML = `📋 當前權限狀態: ${currentPermission}`;
+                result.appendChild(div1);
+                log(`📋 當前權限狀態: ${currentPermission}`);
+                
+                if (currentPermission === 'default') {
+                    const permission = await Notification.requestPermission();
+                    const div2 = document.createElement('div');
+                    div2.className = `test-result ${permission === 'granted' ? 'success' : 'warning'}`;
+                    div2.innerHTML = `📋 權限請求結果: ${permission}`;
+                    result.appendChild(div2);
+                    log(`📋 權限請求結果: ${permission}`);
+                }
+                
+            } catch (error) {
+                const div = document.createElement('div');
+                div.className = 'test-result error';
+                div.innerHTML = `❌ 通知權限測試失敗: ${error.message}`;
+                result.appendChild(div);
+                log(`❌ 通知權限測試失敗: ${error.message}`);
+            }
+        }
+
+        // 4. VAPID Key 測試
+        function testVapidKey() {
+            const result = document.getElementById('vapidCheck');
+            const vapidKey = document.getElementById('vapidKeyInput').value;
+            result.innerHTML = '';
+            
+            log('🔍 開始 VAPID Key 測試...');
+            
+            if (!vapidKey) {
+                const div = document.createElement('div');
+                div.className = 'test-result error';
+                div.innerHTML = '❌ 請輸入 VAPID Key';
+                result.appendChild(div);
+                log('❌ 請輸入 VAPID Key');
+                return;
+            }
+            
+            try {
+                // 檢查格式
+                const base64UrlPattern = /^[A-Za-z0-9_-]+$/;
+                if (!base64UrlPattern.test(vapidKey)) {
+                    throw new Error('VAPID Key 格式不正確，應為 Base64 URL Safe 格式');
+                }
+                
+                const div1 = document.createElement('div');
+                div1.className = 'test-result success';
+                div1.innerHTML = `✅ VAPID Key 格式正確，長度: ${vapidKey.length}`;
+                result.appendChild(div1);
+                log(`✅ VAPID Key 格式正確，長度: ${vapidKey.length}`);
+                
+                // 嘗試轉換
+                const uint8Array = urlBase64ToUint8Array(vapidKey);
+                const div2 = document.createElement('div');
+                div2.className = 'test-result success';
+                div2.innerHTML = `✅ VAPID Key 轉換成功，字節長度: ${uint8Array.length}`;
+                result.appendChild(div2);
+                log(`✅ VAPID Key 轉換成功，字節長度: ${uint8Array.length}`);
+                
+                // 檢查長度
+                if (uint8Array.length !== 65) {
+                    const div3 = document.createElement('div');
+                    div3.className = 'test-result warning';
+                    div3.innerHTML = `⚠️ VAPID Key 長度異常，期望 65 字節，實際: ${uint8Array.length}`;
+                    result.appendChild(div3);
+                    log(`⚠️ VAPID Key 長度異常，期望 65 字節，實際: ${uint8Array.length}`);
+                }
+                
+            } catch (error) {
+                const div = document.createElement('div');
+                div.className = 'test-result error';
+                div.innerHTML = `❌ VAPID Key 測試失敗: ${error.message}`;
+                result.appendChild(div);
+                log(`❌ VAPID Key 測試失敗: ${error.message}`);
+            }
+        }
+
+        // 5. 完整流程測試
+        async function testFullFlow() {
+            const result = document.getElementById('fullFlowCheck');
+            result.innerHTML = '';
+            
+            log('🔍 開始完整流程測試...');
+            
+            try {
+                // 檢查所有前置條件
+                if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+                    throw new Error('瀏覽器不支援 Web Push');
+                }
+                
+                const div1 = document.createElement('div');
+                div1.className = 'test-result success';
+                div1.innerHTML = '✅ 瀏覽器支援檢查通過';
+                result.appendChild(div1);
+                log('✅ 瀏覽器支援檢查通過');
+                
+                // 註冊 Service Worker
+                const registration = await navigator.serviceWorker.register('/service-worker.js');
+                await navigator.serviceWorker.ready;
+                
+                const div2 = document.createElement('div');
+                div2.className = 'test-result success';
+                div2.innerHTML = '✅ Service Worker 註冊成功';
+                result.appendChild(div2);
+                log('✅ Service Worker 註冊成功');
+                
+                // 檢查通知權限
+                if (Notification.permission !== 'granted') {
+                    const permission = await Notification.requestPermission();
+                    if (permission !== 'granted') {
+                        throw new Error('通知權限被拒絕');
+                    }
+                }
+                
+                const div3 = document.createElement('div');
+                div3.className = 'test-result success';
+                div3.innerHTML = '✅ 通知權限已授予';
+                result.appendChild(div3);
+                log('✅ 通知權限已授予');
+                
+                // 測試推送訂閱（需要 VAPID Key）
+                const vapidKey = document.getElementById('vapidKeyInput').value;
+                if (vapidKey) {
+                    const subscription = await registration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlBase64ToUint8Array(vapidKey)
+                    });
+                    
+                    const div4 = document.createElement('div');
+                    div4.className = 'test-result success';
+                    div4.innerHTML = '✅ 推送訂閱創建成功';
+                    result.appendChild(div4);
+                    log('✅ 推送訂閱創建成功');
+                    log(`📋 訂閱端點: ${subscription.endpoint}`);
+                    
+                    // 取消訂閱
+                    await subscription.unsubscribe();
+                    const div5 = document.createElement('div');
+                    div5.className = 'test-result success';
+                    div5.innerHTML = '✅ 推送訂閱取消成功';
+                    result.appendChild(div5);
+                    log('✅ 推送訂閱取消成功');
+                } else {
+                    const div4 = document.createElement('div');
+                    div4.className = 'test-result warning';
+                    div4.innerHTML = '⚠️ 跳過推送訂閱測試（需要 VAPID Key）';
+                    result.appendChild(div4);
+                    log('⚠️ 跳過推送訂閱測試（需要 VAPID Key）');
+                }
+                
+                const divFinal = document.createElement('div');
+                divFinal.className = 'test-result success';
+                divFinal.innerHTML = '🎉 完整流程測試通過！';
+                result.appendChild(divFinal);
+                log('🎉 完整流程測試通過！');
+                
+            } catch (error) {
+                const div = document.createElement('div');
+                div.className = 'test-result error';
+                div.innerHTML = `❌ 完整流程測試失敗: ${error.message}`;
+                result.appendChild(div);
+                log(`❌ 完整流程測試失敗: ${error.message}`);
+            }
+        }
+
+        // 工具函數：URL Base64 轉 Uint8Array
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding)
+                .replace(/-/g, '+')
+                .replace(/_/g, '/');
+
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        }
+
+        // 頁面載入時自動執行基本檢查
+        window.addEventListener('load', () => {
+            log('🚀 Web Push 診斷測試頁面載入完成');
+            checkBrowserSupport();
+        });
+    </script>
+</body>
+</html>

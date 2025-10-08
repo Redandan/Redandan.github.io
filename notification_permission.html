@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>通知權限請求 - AgoraMarket</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 500px;
+            text-align: center;
+        }
+        .icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 16px;
+            font-size: 24px;
+        }
+        p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin: 10px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 16px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .loading {
+            display: none;
+            margin: 20px 0;
+        }
+        .loading.show {
+            display: block;
+        }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">🔔</div>
+        <h1>請求通知權限</h1>
+        <p>請允許瀏覽器通知權限，以便接收重要的訂單更新、消息通知和系統提醒</p>
+        
+        <div id="status" class="status" style="display: none;"></div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>正在處理...</p>
+        </div>
+        
+        <button id="subscribeBtn" class="btn" onclick="requestPermission()">
+            請求通知權限
+        </button>
+        
+        <button id="backBtn" class="btn" onclick="goBack()" style="display: none;">
+            返回應用
+        </button>
+    </div>
+
+    <script>
+        // 從 URL 參數獲取配置
+        const urlParams = new URLSearchParams(window.location.search);
+        const vapidKey = urlParams.get('vapidKey');
+        const token = urlParams.get('token');
+        const returnUrl = urlParams.get('returnUrl') || '/';
+
+        console.log('🚀 [NOTIFICATION_PERMISSION] 初始化，VAPID Key:', vapidKey ? '已提供' : '未提供');
+        console.log('🔑 [NOTIFICATION_PERMISSION] Token:', token ? '已提供' : '未提供');
+
+        // 檢查必要參數
+        if (!vapidKey || !token) {
+            showStatus('❌ 缺少必要參數，無法進行訂閱', 'error');
+            document.getElementById('subscribeBtn').disabled = true;
+        }
+
+        // 顯示狀態
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            statusDiv.style.display = 'block';
+        }
+
+        // 顯示/隱藏載入狀態
+        function setLoading(loading) {
+            const loadingDiv = document.getElementById('loading');
+            const subscribeBtn = document.getElementById('subscribeBtn');
+            
+            if (loading) {
+                loadingDiv.classList.add('show');
+                subscribeBtn.disabled = true;
+            } else {
+                loadingDiv.classList.remove('show');
+                subscribeBtn.disabled = false;
+            }
+        }
+
+        // 生成設備名稱
+        function getDeviceName() {
+            const userAgent = navigator.userAgent;
+            if (userAgent.includes('Chrome')) {
+                return 'Chrome Browser';
+            } else if (userAgent.includes('Firefox')) {
+                return 'Firefox Browser';
+            } else if (userAgent.includes('Safari')) {
+                return 'Safari Browser';
+            } else if (userAgent.includes('Edge')) {
+                return 'Edge Browser';
+            } else {
+                return 'Web Browser';
+            }
+        }
+
+        // 生成設備 ID
+        function generateDeviceId() {
+            const userAgent = navigator.userAgent;
+            const screenInfo = `${screen.width}x${screen.height}`;
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const language = navigator.language;
+            
+            // 組合多個信息生成唯一 ID
+            const combined = `${userAgent}-${screenInfo}-${timezone}-${language}`;
+            return btoa(combined).substring(0, 32);
+        }
+
+        // 獲取瀏覽器信息
+        function getBrowserInfo() {
+            return {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                languages: navigator.languages,
+                cookieEnabled: navigator.cookieEnabled,
+                onLine: navigator.onLine,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+            };
+        }
+
+        // 獲取屏幕信息
+        function getScreenInfo() {
+            return {
+                width: screen.width,
+                height: screen.height,
+                availWidth: screen.availWidth,
+                availHeight: screen.availHeight,
+                colorDepth: screen.colorDepth,
+                pixelDepth: screen.pixelDepth
+            };
+        }
+
+        // 創建推送訂閱
+        async function createPushSubscription() {
+            try {
+                console.log('🚀 [NOTIFICATION_PERMISSION] 開始創建推送訂閱...');
+                console.log('🔑 [NOTIFICATION_PERMISSION] VAPID Key:', vapidKey ? '已提供' : '未提供');
+                
+                // 1. 檢查瀏覽器支援
+                if (!('serviceWorker' in navigator)) {
+                    throw new Error('瀏覽器不支援 Service Worker');
+                }
+                if (!('PushManager' in window)) {
+                    throw new Error('瀏覽器不支援 Push Manager');
+                }
+                
+                // 2. 註冊 Service Worker
+                console.log('📝 [NOTIFICATION_PERMISSION] 正在註冊 Service Worker...');
+                const registration = await navigator.serviceWorker.register('/service-worker.js');
+                console.log('✅ [NOTIFICATION_PERMISSION] Service Worker 註冊成功');
+                
+                await navigator.serviceWorker.ready;
+                console.log('✅ [NOTIFICATION_PERMISSION] Service Worker 已準備就緒');
+
+                // 3. 檢查現有訂閱
+                const existingSubscription = await registration.pushManager.getSubscription();
+                if (existingSubscription) {
+                    console.log('ℹ️ [NOTIFICATION_PERMISSION] 發現現有訂閱，將取消後重新創建');
+                    await existingSubscription.unsubscribe();
+                }
+
+                // 4. 創建推送訂閱
+                console.log('📝 [NOTIFICATION_PERMISSION] 正在創建推送訂閱...');
+                console.log('🔑 [NOTIFICATION_PERMISSION] 使用 VAPID Key 長度:', vapidKey.length);
+                
+                const subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(vapidKey)
+                });
+                console.log('✅ [NOTIFICATION_PERMISSION] 推送訂閱已創建');
+                console.log('📋 [NOTIFICATION_PERMISSION] 訂閱端點:', subscription.endpoint);
+
+                // 5. 提取訂閱數據
+                const subscriptionData = {
+                    endpoint: subscription.endpoint,
+                    p256dh: arrayBufferToBase64(subscription.getKey('p256dh')),
+                    auth: arrayBufferToBase64(subscription.getKey('auth')),
+                    userAgent: navigator.userAgent,
+                    deviceType: 'web',
+                    deviceName: getDeviceName(),
+                    deviceId: generateDeviceId(),
+                    browserInfo: getBrowserInfo(),
+                    screenInfo: getScreenInfo(),
+                    timestamp: new Date().toISOString()
+                };
+
+                console.log('📋 [NOTIFICATION_PERMISSION] 訂閱數據創建完成:', subscriptionData);
+                return subscriptionData;
+
+            } catch (error) {
+                console.error('❌ [NOTIFICATION_PERMISSION] 創建推送訂閱失敗:', error);
+                console.error('❌ [NOTIFICATION_PERMISSION] 錯誤詳情:', {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack
+                });
+                return null;
+            }
+        }
+
+        // 主授權函數（只負責權限請求）
+        async function requestPermission() {
+            try {
+                setLoading(true);
+                showStatus('正在檢查瀏覽器支援...', 'info');
+                console.log('🚀 [NOTIFICATION_PERMISSION] 開始權限請求流程...');
+
+                // 1. 檢查瀏覽器支援
+                console.log('🔍 [NOTIFICATION_PERMISSION] 檢查瀏覽器支援...');
+                console.log('   - Service Worker:', 'serviceWorker' in navigator);
+                console.log('   - Push Manager:', 'PushManager' in window);
+                console.log('   - Notification:', 'Notification' in window);
+                
+                if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+                    throw new Error('瀏覽器不支援推送通知');
+                }
+
+                showStatus('正在請求通知權限...', 'info');
+                console.log('🔔 [NOTIFICATION_PERMISSION] 請求通知權限...');
+
+                // 2. 請求通知權限
+                const permission = await Notification.requestPermission();
+                console.log('📋 [NOTIFICATION_PERMISSION] 權限請求結果:', permission);
+                
+                if (permission === 'granted') {
+                    showStatus('✅ 通知權限已授予！正在創建推送訂閱...', 'success');
+                    console.log('🎉 [NOTIFICATION_PERMISSION] 權限已授予，開始創建推送訂閱');
+                    
+                    // 創建推送訂閱
+                    const subscriptionData = await createPushSubscription();
+                    if (subscriptionData) {
+                        showStatus('🎉 推送訂閱創建成功！正在返回應用...', 'success');
+                        console.log('🎉 [NOTIFICATION_PERMISSION] 推送訂閱創建成功，準備返回應用');
+                        
+                        // 延遲返回，讓用戶看到成功消息
+                        setTimeout(() => {
+                            goBackWithResult('permission_granted', subscriptionData, null);
+                        }, 2000);
+                    } else {
+                        throw new Error('推送訂閱創建失敗');
+                    }
+                    
+                } else if (permission === 'denied') {
+                    showStatus('❌ 通知權限被拒絕', 'error');
+                    console.log('❌ [NOTIFICATION_PERMISSION] 權限被拒絕');
+                    
+                    // 延遲返回，讓用戶看到錯誤消息
+                    setTimeout(() => {
+                        goBackWithResult('permission_denied', null, '通知權限被拒絕');
+                    }, 3000);
+                    
+                } else {
+                    showStatus('⚠️ 通知權限未確定', 'info');
+                    console.log('⚠️ [NOTIFICATION_PERMISSION] 權限未確定');
+                    
+                    // 延遲返回
+                    setTimeout(() => {
+                        goBackWithResult('permission_default', null, '通知權限未確定');
+                    }, 2000);
+                }
+
+            } catch (error) {
+                console.error('❌ [NOTIFICATION_PERMISSION] 權限請求失敗:', error);
+                console.error('❌ [NOTIFICATION_PERMISSION] 錯誤詳情:', {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack
+                });
+                showStatus(`❌ 權限請求失敗: ${error.message}`, 'error');
+                
+                // 延遲返回，讓用戶看到錯誤消息
+                setTimeout(() => {
+                    goBackWithResult('permission_error', null, error.message);
+                }, 3000);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+
+        // 存儲權限結果和訂閱數據
+        function storePermissionResult(permission, subscriptionData, message) {
+            try {
+                const result = {
+                    permission: permission,
+                    subscriptionData: subscriptionData,
+                    message: message,
+                    timestamp: Date.now(),
+                    success: permission === 'granted' && subscriptionData !== null
+                };
+                
+                localStorage.setItem('web_push_subscription_result', JSON.stringify(result));
+                console.log('💾 [NOTIFICATION_PERMISSION] 已存儲權限結果:', result);
+                
+                // 同時設置一個標誌，表示有新的結果
+                localStorage.setItem('web_push_subscription_ready', 'true');
+            } catch (error) {
+                console.error('❌ [NOTIFICATION_PERMISSION] 存儲權限結果失敗:', error);
+            }
+        }
+
+        // 通知 Flutter 應用（保留用於其他通知）
+        function notifyFlutterApp(type, data) {
+            try {
+                const event = {
+                    type: type,
+                    timestamp: Date.now(),
+                    ...data
+                };
+                
+                localStorage.setItem('simple_push_result', JSON.stringify(event));
+                console.log('📢 [NOTIFICATION_PERMISSION] 已通知 Flutter 應用:', event);
+            } catch (error) {
+                console.error('❌ [NOTIFICATION_PERMISSION] 通知 Flutter 應用失敗:', error);
+            }
+        }
+
+        // 返回應用
+        function goBack() {
+            window.location.href = returnUrl;
+        }
+
+        // 帶結果返回應用
+        function goBackWithResult(status, subscriptionData, errorMessage) {
+            try {
+                console.log('🚀 [NOTIFICATION_PERMISSION] 開始準備返回 Flutter 應用...');
+                console.log('📋 [NOTIFICATION_PERMISSION] 權限狀態:', status);
+                console.log('📋 [NOTIFICATION_PERMISSION] 訂閱數據:', subscriptionData);
+                console.log('📋 [NOTIFICATION_PERMISSION] 錯誤消息:', errorMessage);
+                console.log('🔗 [NOTIFICATION_PERMISSION] 返回 URL:', returnUrl);
+                
+                const params = new URLSearchParams();
+                params.set('permission_result', status);
+                params.set('timestamp', Date.now().toString());
+                
+                if (errorMessage) {
+                    params.set('error', encodeURIComponent(errorMessage));
+                    console.log('📤 [NOTIFICATION_PERMISSION] 添加錯誤參數:', errorMessage);
+                }
+                
+                // 如果有訂閱數據，將其編碼並添加到 URL 參數中
+                if (subscriptionData) {
+                    const encodedData = encodeURIComponent(JSON.stringify(subscriptionData));
+                    console.log('📤 [NOTIFICATION_PERMISSION] 訂閱數據編碼後長度:', encodedData.length);
+                    
+                    // 檢查 URL 長度限制（瀏覽器通常限制為 2048 字符）
+                    const testUrl = `${returnUrl}?${params.toString()}&subscription_data=${encodedData}`;
+                    console.log('🔗 [NOTIFICATION_PERMISSION] 測試 URL 長度:', testUrl.length);
+                    
+                    if (testUrl.length > 2000) {
+                        console.warn('⚠️ [NOTIFICATION_PERMISSION] URL 長度可能超過限制，嘗試使用 localStorage');
+                        // 使用 localStorage 作為備用方案
+                        localStorage.setItem('web_push_subscription_data', JSON.stringify(subscriptionData));
+                        params.set('use_localStorage', 'true');
+                        console.log('💾 [NOTIFICATION_PERMISSION] 訂閱數據已存儲到 localStorage');
+                    } else {
+                        params.set('subscription_data', encodedData);
+                        console.log('📤 [NOTIFICATION_PERMISSION] 訂閱數據已添加到 URL 參數');
+                    }
+                    console.log('📤 [NOTIFICATION_PERMISSION] 傳遞訂閱數據:', subscriptionData);
+                }
+                
+                const resultUrl = `${returnUrl}?${params.toString()}`;
+                console.log('🔗 [NOTIFICATION_PERMISSION] 最終返回 URL:', resultUrl);
+                console.log('🔗 [NOTIFICATION_PERMISSION] URL 長度:', resultUrl.length);
+                console.log('🚀 [NOTIFICATION_PERMISSION] 正在重定向到 Flutter 應用...');
+                
+                window.location.href = resultUrl;
+            } catch (error) {
+                console.error('❌ [NOTIFICATION_PERMISSION] 返回失敗:', error);
+                // 如果出錯，直接返回
+                goBack();
+            }
+        }
+
+        // 工具函數：URL Base64 轉 Uint8Array
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding)
+                .replace(/-/g, '+')
+                .replace(/_/g, '/');
+
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        }
+
+        // 工具函數：ArrayBuffer 轉 Base64
+        function arrayBufferToBase64(buffer) {
+            const bytes = new Uint8Array(buffer);
+            let binary = '';
+            for (let i = 0; i < bytes.byteLength; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return window.btoa(binary);
+        }
+
+
+        // 頁面載入完成
+        window.addEventListener('load', () => {
+            console.log('✅ [NOTIFICATION_PERMISSION] 頁面載入完成');
+            
+            // 執行全面診斷
+            performComprehensiveDiagnosis();
+        });
+
+        // 全面診斷函數
+        function performComprehensiveDiagnosis() {
+            console.log('🔍 [NOTIFICATION_PERMISSION] 開始全面診斷...');
+            
+            // 1. 檢查 URL 參數
+            console.log('📋 [DIAGNOSIS] URL 參數檢查:');
+            console.log('   - vapidKey:', vapidKey ? `已提供 (長度: ${vapidKey.length})` : '未提供');
+            console.log('   - token:', token ? `已提供 (長度: ${token.length})` : '未提供');
+            console.log('   - returnUrl:', returnUrl);
+            
+            // 2. 檢查瀏覽器環境
+            console.log('🌐 [DIAGNOSIS] 瀏覽器環境檢查:');
+            console.log('   - User Agent:', navigator.userAgent);
+            console.log('   - 協議:', window.location.protocol);
+            console.log('   - 主機:', window.location.host);
+            console.log('   - 完整 URL:', window.location.href);
+            
+            // 3. 檢查 Web Push 支援
+            console.log('🔔 [DIAGNOSIS] Web Push 支援檢查:');
+            console.log('   - Service Worker:', 'serviceWorker' in navigator);
+            console.log('   - Push Manager:', 'PushManager' in window);
+            console.log('   - Notification:', 'Notification' in window);
+            console.log('   - 當前通知權限:', Notification.permission);
+            
+            // 4. 檢查 Service Worker 文件
+            checkServiceWorkerFile();
+            
+            // 5. 檢查 VAPID Key 格式
+            if (vapidKey) {
+                checkVapidKeyFormat();
+            }
+            
+            console.log('✅ [NOTIFICATION_PERMISSION] 全面診斷完成');
+        }
+
+        // 檢查 Service Worker 文件
+        async function checkServiceWorkerFile() {
+            try {
+                console.log('📁 [DIAGNOSIS] 檢查 Service Worker 文件...');
+                const response = await fetch('/service-worker.js');
+                if (response.ok) {
+                    console.log('✅ [DIAGNOSIS] Service Worker 文件存在且可訪問');
+                } else {
+                    console.error('❌ [DIAGNOSIS] Service Worker 文件不可訪問:', response.status);
+                }
+            } catch (error) {
+                console.error('❌ [DIAGNOSIS] Service Worker 文件檢查失敗:', error);
+            }
+        }
+
+        // 檢查 VAPID Key 格式
+        function checkVapidKeyFormat() {
+            try {
+                console.log('🔑 [DIAGNOSIS] 檢查 VAPID Key 格式...');
+                
+                // 檢查是否為 Base64 URL Safe 格式
+                const base64UrlPattern = /^[A-Za-z0-9_-]+$/;
+                if (!base64UrlPattern.test(vapidKey)) {
+                    console.error('❌ [DIAGNOSIS] VAPID Key 格式不正確，應為 Base64 URL Safe 格式');
+                    return;
+                }
+                
+                // 嘗試轉換為 Uint8Array
+                const uint8Array = urlBase64ToUint8Array(vapidKey);
+                console.log('✅ [DIAGNOSIS] VAPID Key 格式正確，長度:', uint8Array.length);
+                
+                // 檢查長度（VAPID 公鑰應該是 65 字節）
+                if (uint8Array.length !== 65) {
+                    console.warn('⚠️ [DIAGNOSIS] VAPID Key 長度異常，期望 65 字節，實際:', uint8Array.length);
+                }
+                
+            } catch (error) {
+                console.error('❌ [DIAGNOSIS] VAPID Key 格式檢查失敗:', error);
+            }
+        }
+    </script>
+</body>
+</html>
