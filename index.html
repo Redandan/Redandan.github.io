@@ -22,7 +22,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
-  <meta name="version" content="1.0.321+322">
+  <meta name="version" content="1.0.322+323">
 
   <!-- Cross-Origin Isolation Headers for SharedArrayBuffers -->
   <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
@@ -516,13 +516,262 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.321</div>
+      <div class="loading-version" id="version-display">v1.0.322</div>
     </div>
   </div>
   
   <script src="audio_analyzer.js"></script>
   <script src="unified_push_bridge.js"></script>
-  <script src="flutter_bootstrap.js?v=1.0.322" async></script>
+  
+  <!-- Web Push JavaScript API -->
+  <script>
+    // Web Push æ¬Šé?è«‹æ??‡è???API
+    (function() {
+      'use strict';
+      
+      console.log('?? [WEB_PUSH_API] Web Push API ?å???..');
+      
+      // ?¨å? Web Push API å°è±¡
+      window.WebPushAPI = {
+        
+        /**
+         * è«‹æ??šçŸ¥æ¬Šé?
+         * @param {string} vapidKey - VAPID ?¬é‘° (ä¿ç??ƒæ•¸ä»¥ä??æ¥??…¼å®?
+         * @param {string} token - èªè? token (ä¿ç??ƒæ•¸ä»¥ä??æ¥??…¼å®?
+         * @returns {Promise<Object>} æ¬Šé?çµæ? (ç´?JSON ?©ä»¶)
+         */
+        async requestNotificationPermission(vapidKey, token) {
+          console.log('?? [WEB_PUSH_API] ?‹å?æ¬Šé?è«‹æ?æµç?...');
+          console.log('?? [WEB_PUSH_API] VAPID Key:', vapidKey ? 'å·²æ?ä¾? : '?ªæ?ä¾?);
+          console.log('?? [WEB_PUSH_API] Token:', token ? 'å·²æ?ä¾? : '?ªæ?ä¾?);
+          
+          try {
+            // 1. æª¢æŸ¥?è¦½?¨æ”¯??            if (!this.checkBrowserSupport()) {
+              throw new Error('?è¦½?¨ä??¯æ´ Web Push');
+            }
+            
+            // 2. è«‹æ??šçŸ¥æ¬Šé?
+            const permissionResult = await this.requestPermission();
+            console.log('?? [WEB_PUSH_API] æ¬Šé?è«‹æ?çµæ?:', permissionResult);
+            
+            if (permissionResult !== 'granted') {
+              return {
+                success: false,
+                status: permissionResult,
+                error: `æ¬Šé?è¢«æ?çµ? ${permissionResult}`
+              };
+            }
+            
+            // 3. ?µå»º?Ÿå¯¦?¨é€è???            const subscriptionData = await this.createPushSubscription(vapidKey);
+            console.log('?? [WEB_PUSH_API] ?¨é€è??±å‰µå»ºæ???);
+            
+            // è¿”å? JSON å­—ç¬¦ä¸²ï??¿å?é¡å?è½‰æ??é?
+            const result = {
+              success: true,
+              status: 'permission_granted',
+              subscriptionData: subscriptionData
+            };
+            console.log('?? [WEB_PUSH_API] è¿”å?çµæ?:', result);
+            return JSON.stringify(result);
+            
+          } catch (error) {
+            console.error('??[WEB_PUSH_API] æ¬Šé?è«‹æ?å¤±æ?:', error);
+            const errorResult = {
+              success: false,
+              status: 'permission_error',
+              error: error.message
+            };
+            console.log('?? [WEB_PUSH_API] è¿”å??¯èª¤çµæ?:', errorResult);
+            return JSON.stringify(errorResult);
+          }
+        },
+        
+        /**
+         * æª¢æŸ¥?è¦½?¨æ”¯??         * @returns {boolean} ?¯å¦?¯æ´
+         */
+        checkBrowserSupport() {
+          const hasServiceWorker = 'serviceWorker' in navigator;
+          const hasPushManager = 'PushManager' in window;
+          const hasNotification = 'Notification' in window;
+          
+          console.log('?? [WEB_PUSH_API] ?è¦½?¨æ”¯?´æª¢??');
+          console.log('  - Service Worker:', hasServiceWorker);
+          console.log('  - Push Manager:', hasPushManager);
+          console.log('  - Notification:', hasNotification);
+          
+          return hasServiceWorker && hasPushManager && hasNotification;
+        },
+        
+        /**
+         * è«‹æ??šçŸ¥æ¬Šé?
+         * @returns {Promise<string>} æ¬Šé??€??         */
+        async requestPermission() {
+          console.log('?? [WEB_PUSH_API] è«‹æ??šçŸ¥æ¬Šé?...');
+          
+          if (Notification.permission === 'granted') {
+            console.log('??[WEB_PUSH_API] æ¬Šé?å·²æ?äº?);
+            return 'granted';
+          }
+          
+          if (Notification.permission === 'denied') {
+            console.log('??[WEB_PUSH_API] æ¬Šé?å·²è¢«?’ç?');
+            return 'denied';
+          }
+          
+          // è«‹æ?æ¬Šé?
+          const permission = await Notification.requestPermission();
+          console.log('?? [WEB_PUSH_API] æ¬Šé?è«‹æ?çµæ?:', permission);
+          
+          return permission;
+        },
+        
+        /**
+         * ?µå»º?¨é€è???         * @param {string} vapidKey - VAPID ?¬é‘°
+         * @returns {Promise<Object>} è¨‚é–±?¸æ?
+         */
+        async createPushSubscription(vapidKey) {
+          console.log('?? [WEB_PUSH_API] ?‹å??µå»º?¨é€è???..');
+          
+          try {
+            // 1. è¨»å? Service Worker
+            const registration = await navigator.serviceWorker.register('/service-worker.js');
+            console.log('??[WEB_PUSH_API] Service Worker è¨»å??å?');
+            
+            // 2. ç­‰å? Service Worker æº–å?å°±ç?
+            await navigator.serviceWorker.ready;
+            console.log('??[WEB_PUSH_API] Service Worker å·²æ??™å°±ç·?);
+            
+            // 3. ?µå»º?¨é€è???            const subscription = await registration.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: this.urlBase64ToUint8Array(vapidKey)
+            });
+            
+            console.log('??[WEB_PUSH_API] ?¨é€è??±å‰µå»ºæ???);
+            console.log('?? [WEB_PUSH_API] è¨‚é–±ç«¯é?:', subscription.endpoint);
+            
+            // 4. è½‰æ??ºå¯?³è¼¸?„æ ¼å¼?            const deviceInfo = this.generateDeviceInfo();
+            const subscriptionData = {
+              endpoint: subscription.endpoint,
+              keys: {
+                p256dh: this.arrayBufferToBase64(subscription.getKey('p256dh')),
+                auth: this.arrayBufferToBase64(subscription.getKey('auth'))
+              },
+              userAgent: deviceInfo.userAgent,
+              deviceType: deviceInfo.deviceType,
+              deviceName: deviceInfo.deviceName
+            };
+            
+            return subscriptionData;
+            
+          } catch (error) {
+            console.error('??[WEB_PUSH_API] ?µå»º?¨é€è??±å¤±??', error);
+            throw new Error(`?¨é€è??±å‰µå»ºå¤±?? ${error.message}`);
+          }
+        },
+        
+        /**
+         * ?Ÿæ?è¨­å?ä¿¡æ¯
+         * @returns {Object} è¨­å?ä¿¡æ¯
+         */
+        generateDeviceInfo() {
+          const userAgent = navigator.userAgent;
+          const deviceName = `${navigator.platform} - ${navigator.userAgentData?.brands?.[0]?.brand || 'Unknown Browser'}`;
+          const deviceId = this.generateDeviceId();
+          const browserInfo = {
+            name: navigator.userAgentData?.brands?.[0]?.brand || 'Unknown',
+            version: navigator.userAgentData?.brands?.[0]?.version || 'Unknown',
+            platform: navigator.platform,
+            userAgent: userAgent
+          };
+          const screenInfo = {
+            width: screen.width,
+            height: screen.height,
+            colorDepth: screen.colorDepth,
+            pixelDepth: screen.pixelDepth
+          };
+          
+          return {
+            userAgent,
+            deviceType: 'web',
+            deviceName,
+            deviceId,
+            browserInfo,
+            screenInfo
+          };
+        },
+        
+        /**
+         * ?Ÿæ?è¨­å? ID
+         * @returns {string} è¨­å? ID
+         */
+        generateDeviceId() {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          ctx.textBaseline = 'top';
+          ctx.font = '14px Arial';
+          ctx.fillText('Device fingerprint', 2, 2);
+          
+          const fingerprint = [
+            navigator.userAgent,
+            navigator.language,
+            screen.width + 'x' + screen.height,
+            new Date().getTimezoneOffset(),
+            canvas.toDataURL()
+          ].join('|');
+          
+          // ç°¡å–®??hash ?½æ•¸
+          let hash = 0;
+          for (let i = 0; i < fingerprint.length; i++) {
+            const char = fingerprint.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // è½‰æ???32 ä½æ•´??          }
+          
+          return Math.abs(hash).toString(36);
+        },
+        
+        /**
+         * å°?VAPID ?¬é‘°è½‰æ???Uint8Array
+         * @param {string} base64String - Base64 å­—ç¬¦ä¸?         * @returns {Uint8Array} Uint8Array
+         */
+        urlBase64ToUint8Array(base64String) {
+          const padding = '='.repeat((4 - base64String.length % 4) % 4);
+          const base64 = (base64String + padding)
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+          
+          const rawData = window.atob(base64);
+          const outputArray = new Uint8Array(rawData.length);
+          
+          for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+          }
+          
+          return outputArray;
+        },
+        
+        /**
+         * å°?ArrayBuffer è½‰æ???Base64
+         * @param {ArrayBuffer} buffer - ArrayBuffer
+         * @returns {string} Base64 å­—ç¬¦ä¸?         */
+        arrayBufferToBase64(buffer) {
+          const bytes = new Uint8Array(buffer);
+          let binary = '';
+          for (let i = 0; i < bytes.byteLength; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          return window.btoa(binary);
+        }
+      };
+      
+      console.log('??[WEB_PUSH_API] Web Push API ?å??–å???);
+      
+      // ?´éœ²?¨å??½æ•¸ä¾?Flutter èª¿ç”¨
+      window.requestNotificationPermission = window.WebPushAPI.requestNotificationPermission.bind(window.WebPushAPI);
+      
+    })();
+  </script>
+  
+  <script src="flutter_bootstrap.js?v=1.0.324" async></script>
   
   <!-- Service Worker è¨»å? -->
   <script>
@@ -607,6 +856,7 @@
   </script>
 </body>
 </html>
+
 
 
 
