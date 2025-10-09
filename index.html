@@ -22,7 +22,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
-  <meta name="version" content="1.0.322+323">
+  <meta name="version" content="1.0.324+325">
 
   <!-- Cross-Origin Isolation Headers for SharedArrayBuffers -->
   <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
@@ -516,7 +516,7 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.322</div>
+      <div class="loading-version" id="version-display">v1.0.324</div>
     </div>
   </div>
   
@@ -674,60 +674,13 @@
          * @returns {Object} Ë®≠Â?‰ø°ÊÅØ
          */
         generateDeviceInfo() {
-          const userAgent = navigator.userAgent;
-          const deviceName = `${navigator.platform} - ${navigator.userAgentData?.brands?.[0]?.brand || 'Unknown Browser'}`;
-          const deviceId = this.generateDeviceId();
-          const browserInfo = {
-            name: navigator.userAgentData?.brands?.[0]?.brand || 'Unknown',
-            version: navigator.userAgentData?.brands?.[0]?.version || 'Unknown',
-            platform: navigator.platform,
-            userAgent: userAgent
-          };
-          const screenInfo = {
-            width: screen.width,
-            height: screen.height,
-            colorDepth: screen.colorDepth,
-            pixelDepth: screen.pixelDepth
-          };
-          
           return {
-            userAgent,
+            userAgent: navigator.userAgent,
             deviceType: 'web',
-            deviceName,
-            deviceId,
-            browserInfo,
-            screenInfo
+            deviceName: navigator.platform
           };
         },
         
-        /**
-         * ?üÊ?Ë®≠Â? ID
-         * @returns {string} Ë®≠Â? ID
-         */
-        generateDeviceId() {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          ctx.textBaseline = 'top';
-          ctx.font = '14px Arial';
-          ctx.fillText('Device fingerprint', 2, 2);
-          
-          const fingerprint = [
-            navigator.userAgent,
-            navigator.language,
-            screen.width + 'x' + screen.height,
-            new Date().getTimezoneOffset(),
-            canvas.toDataURL()
-          ].join('|');
-          
-          // Á∞°ÂñÆ??hash ?ΩÊï∏
-          let hash = 0;
-          for (let i = 0; i < fingerprint.length; i++) {
-            const char = fingerprint.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash; // ËΩâÊ???32 ‰ΩçÊï¥??          }
-          
-          return Math.abs(hash).toString(36);
-        },
         
         /**
          * Â∞?VAPID ?¨Èë∞ËΩâÊ???Uint8Array
@@ -771,7 +724,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.324" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.325" async></script>
   
   <!-- Service Worker Ë®ªÂ? -->
   <script>
@@ -856,6 +809,7 @@
   </script>
 </body>
 </html>
+
 
 
 
