@@ -22,7 +22,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
-  <meta name="version" content="1.0.324+325">
+  <meta name="version" content="1.0.322+323">
 
   <!-- Cross-Origin Isolation Headers for SharedArrayBuffers -->
   <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
@@ -61,7 +61,8 @@
 
   <!-- WASM æ¨¡å?è­¦å? -->
   <script>
-    // æª¢æ¸¬ WASM æ¨¡å?ä¸¦é¡¯ç¤ºè­¦??    if (window.location.search.includes('wasm=true') || 
+    // æª¢æ¸¬ WASM æ¨¡å?ä¸¦é¡¯ç¤ºè­¦??
+    if (window.location.search.includes('wasm=true') || 
         window.location.href.includes('wasm') ||
         typeof WebAssembly !== 'undefined' && window.location.pathname.includes('main.dart.wasm')) {
       console.warn('? ï? WASM æ¨¡å?ï¼šWeb Push ?Ÿèƒ½?—é?');
@@ -137,10 +138,12 @@
         // ç§»é™¤?´æ ¼?„ä?ç½®å?å°ºå¯¸æª¢æŸ¥ï¼Œå??ºç„¡?œç??‰é??¯èƒ½?«æ??¨è????
       }
       
-          // ?ªå??•ç??¡é?ç¤™æ???          function startAutoHandler() {
+          // ?ªå??•ç??¡é?ç¤™æ???
+          function startAutoHandler() {
             let attempts = 0;
             const maxAttempts = 80; // Increased to 80 attempts (40 seconds)
-            const interval = 500;   // æ¯?500ms æª¢æŸ¥ä¸€æ¬?            
+            const interval = 500;   // æ¯?500ms æª¢æŸ¥ä¸€æ¬?
+            
             const startTime = Date.now();
             
             function tryClickNow() {
@@ -154,7 +157,8 @@
                 return;
               }
               
-              // æª¢æŸ¥?¯å¦?é¢å·²ç?è¼‰å…¥ï¼ˆæ??‰ç„¡?œç??‰é?ï¼?              const hasAccessibilityButton = document.querySelector('flt-semantics-placeholder[aria-label="Enable accessibility"]') ||
+              // æª¢æŸ¥?¯å¦?é¢å·²ç?è¼‰å…¥ï¼ˆæ??‰ç„¡?œç??‰é?ï¼?
+              const hasAccessibilityButton = document.querySelector('flt-semantics-placeholder[aria-label="Enable accessibility"]') ||
                                            document.querySelector('button[aria-label*="Enable"]') ||
                                            document.querySelector('[aria-label="Enable accessibility"]');
               const hasLoginForm = document.querySelector('input[type="text"]') &&
@@ -187,7 +191,8 @@
                 console.log(`? ï? Accessibility auto-click failed after ${attempts} attempts over ${elapsed}ms`);
                 console.log('?’¡ Manual trigger available: autoClickAccessibility() or window.manualAccessibilityTrigger()');
                 
-                // è¼¸å‡º?€çµ‚ç??‹çµ±è¨?                console.log('?? Final stats:', {
+                // è¼¸å‡º?€çµ‚ç??‹çµ±è¨?
+                console.log('?? Final stats:', {
                   attempts: attempts,
                   totalTime: `${elapsed}ms`,
                   documentReady: document.readyState,
@@ -202,7 +207,8 @@
             tryClickNow();
           }
       
-      // DOM è¼‰å…¥å®Œæ?å¾Œé?å§‹è???      function initAutoHandler() {
+      // DOM è¼‰å…¥å®Œæ?å¾Œé?å§‹è???
+      function initAutoHandler() {
         if (document.readyState === 'loading') {
           document.addEventListener('DOMContentLoaded', startAutoHandler);
         } else {
@@ -211,11 +217,13 @@
         }
       }
       
-      // ç«‹å³?å???      initAutoHandler();
+      // ç«‹å³?å???
+      initAutoHandler();
       
       console.log('?? Auto-accessibility handler initialized');
       
-      // ?´éœ²?‹å?è§¸ç™¼?½æ•¸?°å…¨å±€ï¼Œæ–¹ä¾¿èª¿è©?      window.manualAccessibilityTrigger = autoClickAccessibility;
+      // ?´éœ²?‹å?è§¸ç™¼?½æ•¸?°å…¨å±€ï¼Œæ–¹ä¾¿èª¿è©?
+      window.manualAccessibilityTrigger = autoClickAccessibility;
     })();
   </script>
   
@@ -516,7 +524,7 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.324</div>
+      <div class="loading-version" id="version-display">v1.0.322</div>
     </div>
   </div>
   
@@ -546,7 +554,8 @@
           console.log('?? [WEB_PUSH_API] Token:', token ? 'å·²æ?ä¾? : '?ªæ?ä¾?);
           
           try {
-            // 1. æª¢æŸ¥?è¦½?¨æ”¯??            if (!this.checkBrowserSupport()) {
+            // 1. æª¢æŸ¥?è¦½?¨æ”¯??
+            if (!this.checkBrowserSupport()) {
               throw new Error('?è¦½?¨ä??¯æ´ Web Push');
             }
             
@@ -562,7 +571,8 @@
               };
             }
             
-            // 3. ?µå»º?Ÿå¯¦?¨é€è???            const subscriptionData = await this.createPushSubscription(vapidKey);
+            // 3. ?µå»º?Ÿå¯¦?¨é€è???
+            const subscriptionData = await this.createPushSubscription(vapidKey);
             console.log('?? [WEB_PUSH_API] ?¨é€è??±å‰µå»ºæ???);
             
             // è¿”å? JSON å­—ç¬¦ä¸²ï??¿å?é¡å?è½‰æ??é?
@@ -587,7 +597,8 @@
         },
         
         /**
-         * æª¢æŸ¥?è¦½?¨æ”¯??         * @returns {boolean} ?¯å¦?¯æ´
+         * æª¢æŸ¥?è¦½?¨æ”¯??
+         * @returns {boolean} ?¯å¦?¯æ´
          */
         checkBrowserSupport() {
           const hasServiceWorker = 'serviceWorker' in navigator;
@@ -604,7 +615,8 @@
         
         /**
          * è«‹æ??šçŸ¥æ¬Šé?
-         * @returns {Promise<string>} æ¬Šé??€??         */
+         * @returns {Promise<string>} æ¬Šé??€??
+         */
         async requestPermission() {
           console.log('?? [WEB_PUSH_API] è«‹æ??šçŸ¥æ¬Šé?...');
           
@@ -626,7 +638,8 @@
         },
         
         /**
-         * ?µå»º?¨é€è???         * @param {string} vapidKey - VAPID ?¬é‘°
+         * ?µå»º?¨é€è???
+         * @param {string} vapidKey - VAPID ?¬é‘°
          * @returns {Promise<Object>} è¨‚é–±?¸æ?
          */
         async createPushSubscription(vapidKey) {
@@ -641,7 +654,8 @@
             await navigator.serviceWorker.ready;
             console.log('??[WEB_PUSH_API] Service Worker å·²æ??™å°±ç·?);
             
-            // 3. ?µå»º?¨é€è???            const subscription = await registration.pushManager.subscribe({
+            // 3. ?µå»º?¨é€è???
+            const subscription = await registration.pushManager.subscribe({
               userVisibleOnly: true,
               applicationServerKey: this.urlBase64ToUint8Array(vapidKey)
             });
@@ -649,7 +663,8 @@
             console.log('??[WEB_PUSH_API] ?¨é€è??±å‰µå»ºæ???);
             console.log('?? [WEB_PUSH_API] è¨‚é–±ç«¯é?:', subscription.endpoint);
             
-            // 4. è½‰æ??ºå¯?³è¼¸?„æ ¼å¼?            const deviceInfo = this.generateDeviceInfo();
+            // 4. è½‰æ??ºå¯?³è¼¸?„æ ¼å¼?
+            const deviceInfo = this.generateDeviceInfo();
             const subscriptionData = {
               endpoint: subscription.endpoint,
               keys: {
@@ -674,17 +689,66 @@
          * @returns {Object} è¨­å?ä¿¡æ¯
          */
         generateDeviceInfo() {
+          const userAgent = navigator.userAgent;
+          const deviceName = `${navigator.platform} - ${navigator.userAgentData?.brands?.[0]?.brand || 'Unknown Browser'}`;
+          const deviceId = this.generateDeviceId();
+          const browserInfo = {
+            name: navigator.userAgentData?.brands?.[0]?.brand || 'Unknown',
+            version: navigator.userAgentData?.brands?.[0]?.version || 'Unknown',
+            platform: navigator.platform,
+            userAgent: userAgent
+          };
+          const screenInfo = {
+            width: screen.width,
+            height: screen.height,
+            colorDepth: screen.colorDepth,
+            pixelDepth: screen.pixelDepth
+          };
+          
           return {
-            userAgent: navigator.userAgent,
+            userAgent,
             deviceType: 'web',
-            deviceName: navigator.platform
+            deviceName,
+            deviceId,
+            browserInfo,
+            screenInfo
           };
         },
         
+        /**
+         * ?Ÿæ?è¨­å? ID
+         * @returns {string} è¨­å? ID
+         */
+        generateDeviceId() {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          ctx.textBaseline = 'top';
+          ctx.font = '14px Arial';
+          ctx.fillText('Device fingerprint', 2, 2);
+          
+          const fingerprint = [
+            navigator.userAgent,
+            navigator.language,
+            screen.width + 'x' + screen.height,
+            new Date().getTimezoneOffset(),
+            canvas.toDataURL()
+          ].join('|');
+          
+          // ç°¡å–®??hash ?½æ•¸
+          let hash = 0;
+          for (let i = 0; i < fingerprint.length; i++) {
+            const char = fingerprint.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // è½‰æ???32 ä½æ•´??
+          }
+          
+          return Math.abs(hash).toString(36);
+        },
         
         /**
          * å°?VAPID ?¬é‘°è½‰æ???Uint8Array
-         * @param {string} base64String - Base64 å­—ç¬¦ä¸?         * @returns {Uint8Array} Uint8Array
+         * @param {string} base64String - Base64 å­—ç¬¦ä¸?
+         * @returns {Uint8Array} Uint8Array
          */
         urlBase64ToUint8Array(base64String) {
           const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -705,7 +769,8 @@
         /**
          * å°?ArrayBuffer è½‰æ???Base64
          * @param {ArrayBuffer} buffer - ArrayBuffer
-         * @returns {string} Base64 å­—ç¬¦ä¸?         */
+         * @returns {string} Base64 å­—ç¬¦ä¸?
+         */
         arrayBufferToBase64(buffer) {
           const bytes = new Uint8Array(buffer);
           let binary = '';
@@ -724,7 +789,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.325" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.324" async></script>
   
   <!-- Service Worker è¨»å? -->
   <script>
@@ -772,7 +837,8 @@
       window._messageHandler = callback;
     };
 
-    // ?•ç?ä¾†è‡ª Service Worker ?„æ???    window.handleServiceWorkerMessage = function(data) {
+    // ?•ç?ä¾†è‡ª Service Worker ?„æ???
+    window.handleServiceWorkerMessage = function(data) {
       if (window._messageHandler) {
         window._messageHandler(data);
       }
@@ -809,7 +875,6 @@
   </script>
 </body>
 </html>
-
 
 
 
