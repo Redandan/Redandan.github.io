@@ -60,7 +60,7 @@ const RESOURCES = {"assets/AssetManifest.bin": "d71158da1c0b7cfc181c2f13eaaa95db
 "canvaskit/skwasm_heavy.wasm": "8034ad26ba2485dab2fd49bdd786837b",
 "favicon.png": "5dcef449791fa27946b3d35ad8803796",
 "flutter.js": "888483df48293866f9f41d3d9274a779",
-"flutter_bootstrap.js": "bc6936c8fe281406fc504c95d6d94b47",
+"flutter_bootstrap.js": "2e039e61f3132aa2ee00b793daa0e7d9",
 "icons/agora-market-icon.svg": "0809310c9c8ce8213a71b912864eb06c",
 "icons/android-icon-144x144.png": "63fa5dc585dccfddad1550ea018e4ce3",
 "icons/android-icon-192x192.png": "a5813fca5d400b7712cd910d9a868f31",
@@ -93,18 +93,18 @@ const RESOURCES = {"assets/AssetManifest.bin": "d71158da1c0b7cfc181c2f13eaaa95db
 "icons/ms-icon-150x150.png": "9223022b000ee835a7c091cefd0197a2",
 "icons/ms-icon-310x310.png": "0d56d3ab620dd4e6ace7b00bf4aaa962",
 "icons/ms-icon-70x70.png": "d950bf1443b00a5c8391e8ffc7ff3eeb",
-"index.html": "53e9de04d4f8077e0a09f6a3e6b7b619",
-"/": "53e9de04d4f8077e0a09f6a3e6b7b619",
-"main.dart.js": "8ed7b2f67497a79606655d8c7ebb8717",
+"index.html": "6ec03c41ee5d38e35ab6f3d642056287",
+"/": "6ec03c41ee5d38e35ab6f3d642056287",
+"main.dart.js": "244b7a03690092c283cb31a759f6bb93",
 "main.dart.mjs": "68412ff74483929fbabf196aa69d00e1",
-"main.dart.wasm": "78e82cb577cbbc7d71e257d13176ca55",
+"main.dart.wasm": "c0d3dfb1bd85aacc0ae9d4673800711f",
 "manifest.json": "c918cd892f1180ef22cf86743676f02f",
 "service-worker.js": "00ed98aa15ec0d1cf259517ff4658240",
 "splash/iPhone_14_Plus_portrait.png": "96e752610906ba2a93c65f8abe1645f1",
 "splash/iPhone_14_portrait.png": "96e752610906ba2a93c65f8abe1645f1",
 "splash/iPhone_14_Pro_Max_portrait.png": "96e752610906ba2a93c65f8abe1645f1",
 "splash/iPhone_14_Pro_portrait.png": "96e752610906ba2a93c65f8abe1645f1",
-"version.json": "7a6cc89ee897956f6ad0c0143fa7271e"};
+"version.json": "8b69eaf1a04b8f6be4dd623df39a784c"};
 // The application shell files that are downloaded before a service worker can
 // start.
 const CORE = ["main.dart.js",
