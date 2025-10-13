@@ -868,6 +868,7 @@ class CompiledApp {
       _6797: x0 => x0.vendorSub,
       _6799: x0 => x0.language,
       _6800: x0 => x0.languages,
+      _6801: x0 => x0.onLine,
       _6806: x0 => x0.hardwareConcurrency,
       _7001: x0 => x0.length,
       _7290: x0 => x0.signalingState,
