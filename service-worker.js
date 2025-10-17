@@ -5,6 +5,7 @@ const CACHE_NAME = 'agora-market-v1';
 const urlsToCache = [
   '/',
   '/index.html',
+  '/official.html',
   '/main.dart.js',
   '/flutter_bootstrap.js',
   '/icons/Icon-192.png',
