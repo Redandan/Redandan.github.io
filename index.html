@@ -141,7 +141,7 @@
           // ?ªå??•ç??¡é?ç¤™æ???
           function startAutoHandler() {
             let attempts = 0;
-            const maxAttempts = 80; // Increased to 80 attempts (40 seconds)
+            const maxAttempts = 20; // ?ªå?ï¼šæ?å°‘åˆ° 20 æ¬¡å?è©?(10 ç§?
             const interval = 500;   // æ¯?500ms æª¢æŸ¥ä¸€æ¬?
             
             const startTime = Date.now();
@@ -163,10 +163,21 @@
                                            document.querySelector('[aria-label="Enable accessibility"]');
               const hasLoginForm = document.querySelector('input[type="text"]') &&
                                  document.querySelector('input[type="password"]');
+              const hasFlutterContent = document.querySelector('flt-scene-host') || 
+                                       document.querySelector('flt-glass-pane') ||
+                                       document.querySelector('canvas');
               
-              if (!hasAccessibilityButton && hasLoginForm) {
+              // ?ªå?ï¼šæ›´?ºèƒ½?„æ??ç?æ­¢æ?ä»?
+              if (!hasAccessibilityButton && (hasLoginForm || hasFlutterContent)) {
                 const elapsed = Date.now() - startTime;
-                console.log(`??No accessibility button found, page seems loaded with login form (${elapsed}ms)`);
+                console.log(`??No accessibility button found, page seems loaded (${elapsed}ms)`);
+                return;
+              }
+              
+              // ?ªå?ï¼šå??œå?è©¦è???10 æ¬¡ä?æ²’æ??¾åˆ°?‰é?ï¼Œæ??ç?æ­?
+              if (attempts > 10 && !hasAccessibilityButton) {
+                const elapsed = Date.now() - startTime;
+                console.log(`??Early termination: No accessibility button detected after ${attempts} attempts (${elapsed}ms)`);
                 return;
               }
               
@@ -789,7 +800,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.336" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.333" async></script>
   
   <!-- Service Worker è¨»å? -->
   <script>
