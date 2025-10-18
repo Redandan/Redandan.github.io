@@ -74,7 +74,6 @@
                 joinTitle: '加入 Agora，開啟去中心化交易新時代',
                 contactUs: '有興趣投資或瞭解更多？歡迎聯繫我們！',
                 contactButton: '聯絡我們',
-                backToApp: '回到應用',
                 footer: '© 2025 Agora 社群商城. All Rights Reserved.'
             },
             en: {
@@ -97,7 +96,6 @@
                 joinTitle: 'Join Agora, Start a New Era of Decentralized Trading',
                 contactUs: 'Interested in investing or learning more? Contact us!',
                 contactButton: 'Contact Us',
-                backToApp: 'Back to App',
                 footer: '© 2025 Agora Community Marketplace. All Rights Reserved.'
             }
         };
@@ -116,14 +114,18 @@
             });
         }
 
-        function goBack() {
-            // 嘗試使用瀏覽器的歷史記錄返回
-            if (window.history.length > 1) {
-                window.history.back();
-            } else {
-                // 如果沒有歷史記錄，導航到主頁
-                window.location.href = '/';
-            }
+        function closeTab() {
+            // 嘗試關閉當前 tab
+            window.close();
+            
+            // 如果無法關閉 tab，顯示提示信息
+            setTimeout(() => {
+                const currentLang = document.documentElement.lang || 'zh';
+                const message = currentLang === 'zh' 
+                    ? '無法關閉此頁面，請手動關閉瀏覽器標籤頁'
+                    : 'Cannot close this page, please close the browser tab manually';
+                alert(message);
+            }, 100);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -134,10 +136,9 @@
 <body class="bg-[#1F2937] text-gray-300 font-sans">
     <!-- Navigation Controls -->
     <div class="fixed top-4 z-50 flex gap-2">
-        <!-- Back Button -->
-        <button onclick="goBack()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center">
-            <i class="fas fa-arrow-left mr-2"></i>
-            <span data-i18n="backToApp">回到應用</span>
+        <!-- Close Button -->
+        <button onclick="closeTab()" class="bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center">
+            <i class="fas fa-times"></i>
         </button>
         <!-- Language Switcher -->
         <div class="flex">
