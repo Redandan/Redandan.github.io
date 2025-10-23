@@ -22,7 +22,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
-  <meta name="version" content="1.0.345+346">
+  <meta name="version" content="1.0.346+347">
 
   <!-- Cross-Origin Isolation Headers for SharedArrayBuffers -->
   <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
@@ -534,8 +534,8 @@
       <div class="loading-logo">
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
-      <div class="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.345</div>
+      <div class="loading-text" id="loading-text">Agora Market</div>
+      <div class="loading-version" id="version-display">v1.0.346</div>
     </div>
   </div>
   
@@ -800,7 +800,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.346" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.348" async></script>
   
   <!-- Service Worker è¨»å? -->
   <script>
@@ -859,6 +859,8 @@
   <script>
     // Update version display from meta tag
     document.addEventListener('DOMContentLoaded', function() {
+      console.log('?? [DEBUG] index.html DOMContentLoaded äº‹ä»¶è§¸ç™¼');
+      
       const versionMeta = document.querySelector('meta[name="version"]');
       const versionDisplay = document.getElementById('version-display');
       
@@ -866,96 +868,76 @@
         const fullVersion = versionMeta.getAttribute('content'); // e.g., "1.0.293+294"
         const displayVersion = fullVersion ? fullVersion.split('+')[0] : '1.0.0'; // e.g., "1.0.293"
         versionDisplay.textContent = `v${displayVersion}`;
+        console.log('??[SUCCESS] ?ˆæœ¬?Ÿå·²è¨­ç½®:', displayVersion);
       }
       
       // ?”§ ?°å?ï¼šæª¢æ¸?localStorage ä¸­ç? JWT ä¸¦é¡¯ç¤ºè¨»?Šæ??Ÿæ?ç¤?
+      console.log('?? [DEBUG] ?‹å?æª¢æŸ¥è¨»å??å??€??..');
       checkRegistrationSuccess();
+      
+      // ?”§ ?°å?ï¼šç›£?½è¨»?Šé??¢ç?æ¶ˆæ¯
+      window.addEventListener('message', function(event) {
+        console.log('?“¨ [MESSAGE] ?¶åˆ°ä¾†è‡ªè¨»å??é¢?„æ???', event.data);
+        
+        if (event.data.type === 'register_page_log') {
+        } else if (event.data.type === 'register_success') {
+          
+          // æª¢æŸ¥ JWT ?¯å¦?Ÿç?ä¿å?äº?
+          const accessToken = localStorage.getItem('access_token');
+          const refreshToken = localStorage.getItem('refresh_token');
+          const userInfo = localStorage.getItem('user_info');
+          
+        }
+      });
     });
     
     // æª¢æ¸¬è¨»å??å??€??
     function checkRegistrationSuccess() {
       try {
+        console.log('?? [DEBUG] ?‹å?æª¢æŸ¥ localStorage ?€??..');
+        
+        // æª¢æŸ¥?€??localStorage ?…ç›®
+        const allKeys = Object.keys(localStorage);
+        console.log('?? [DEBUG] localStorage ä¸­ç??€?‰éµ:', allKeys);
+        
         const accessToken = localStorage.getItem('access_token');
         const refreshToken = localStorage.getItem('refresh_token');
         const userInfo = localStorage.getItem('user_info');
         
+        console.log('?? [DEBUG] æª¢æŸ¥ localStorage ?€??');
+        console.log('  - access_token:', accessToken ? `å­˜åœ¨ (${accessToken.substring(0, 20)}...)` : 'ä¸å???);
+        console.log('  - refresh_token:', refreshToken ? `å­˜åœ¨ (${refreshToken.substring(0, 20)}...)` : 'ä¸å???);
+        console.log('  - user_info:', userInfo ? `å­˜åœ¨ (${userInfo.substring(0, 50)}...)` : 'ä¸å???);
+        
+        // æª¢æŸ¥?¯å¦?‰ä»»ä½•å???'token' ?„éµ
+        const tokenKeys = allKeys.filter(key => key.toLowerCase().includes('token'));
+        console.log('?? [DEBUG] ?…å« "token" ?„éµ:', tokenKeys);
+        
         if (accessToken || refreshToken || userInfo) {
-          console.log('?? æª¢æ¸¬?°è¨»?Šæ??Ÿç? JWT tokenï¼Œé¡¯ç¤ºæ??Ÿæ?ç¤?);
+          console.log('?? [SUCCESS] æª¢æ¸¬?°è¨»?Šæ??Ÿç? JWT tokenï¼Œé¡¯ç¤ºæ??Ÿæ?ç¤?);
           showRegistrationSuccessMessage();
-        }
+        } 
       } catch (error) {
-        console.warn('æª¢æŸ¥è¨»å??€?‹æ??¼ç??¯èª¤:', error);
+        console.warn('??[ERROR] æª¢æŸ¥è¨»å??€?‹æ??¼ç??¯èª¤:', error);
       }
     }
     
     // é¡¯ç¤ºè¨»å??å??ç¤º
     function showRegistrationSuccessMessage() {
-      const loadingScreen = document.getElementById('loading-screen');
-      if (!loadingScreen) return;
+      const loadingText = document.getElementById('loading-text');
+      const versionDisplay = document.getElementById('version-display');
       
-      // ?µå»º?å??ç¤º?ƒç?
-      const successMessage = document.createElement('div');
-      successMessage.id = 'registration-success-message';
-      successMessage.style.cssText = `
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: rgba(40, 167, 69, 0.95);
-        color: white;
-        padding: 20px 40px;
-        border-radius: 15px;
-        font-size: 18px;
-        font-weight: 600;
-        text-align: center;
-        box-shadow: 0 10px 30px rgba(40, 167, 69, 0.3);
-        z-index: 10000;
-        animation: successPulse 2s ease-in-out infinite;
-        backdrop-filter: blur(10px);
-        border: 2px solid rgba(255, 255, 255, 0.2);
-      `;
+      if (!loadingText) return;
       
-      successMessage.innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-          <span style="font-size: 24px;">??</span>
-          <div>
-            <div style="font-size: 16px; margin-bottom: 5px;">è¨»å??å?ï¼?/div>
-            <div style="font-size: 14px; opacity: 0.9;">è·³è??»å…¥ä¸?..</div>
-          </div>
-        </div>
-      `;
+      console.log('?? [SUCCESS] é¡¯ç¤ºè¨»å??å??ç¤º');
       
-      // æ·»å??•ç•«æ¨??
-      const style = document.createElement('style');
-      style.textContent = `
-        @keyframes successPulse {
-          0%, 100% { 
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 0.9;
-          }
-          50% { 
-            transform: translate(-50%, -50%) scale(1.05);
-            opacity: 1;
-          }
-        }
-      `;
-      document.head.appendChild(style);
+      // ç°¡å??‡å?é¡¯ç¤º
+      loadingText.textContent = '?? è¨»å??å?ï¼Œæ­£?¨ç™»??..';
       
-      // æ·»å??°é???
-      loadingScreen.appendChild(successMessage);
-      
-      // 3ç§’å??ªå?ç§»é™¤?ç¤º
-      setTimeout(() => {
-        if (successMessage && successMessage.parentNode) {
-          successMessage.style.transition = 'opacity 0.5s ease-out';
-          successMessage.style.opacity = '0';
-          setTimeout(() => {
-            if (successMessage.parentNode) {
-              successMessage.parentNode.removeChild(successMessage);
-            }
-          }, 500);
-        }
-      }, 3000);
+      // ç°¡å??€?‹é¡¯ç¤?
+      if (versionDisplay) {
+        versionDisplay.textContent = '?ªå??»å…¥ä¸?..';
+      }
       
       console.log('??è¨»å??å??ç¤ºå·²é¡¯ç¤?);
     }
@@ -977,6 +959,7 @@
   </script>
 </body>
 </html>
+
 
 
 

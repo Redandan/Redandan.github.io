@@ -889,6 +889,9 @@
         document.getElementById('registerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            console.log('🎉 [SUCCESS] Register form submit event triggered');
+            console.log('🔍 [DEBUG] Starting registration process...');
+            
             // 清除之前的錯誤
             clearAllErrors();
             
@@ -936,31 +939,142 @@
                 });
                 
                 // 處理JSON響應
+                console.log('🔍 [DEBUG] API 響應狀態:', response.status);
+                console.log('🔍 [DEBUG] API 響應頭:', response.headers);
+                
                 const result = await response.json();
+                console.log('🔍 [DEBUG] API 響應原始數據:', result);
+                console.log('🔍 [DEBUG] API 響應類型:', typeof result);
+                console.log('🔍 [DEBUG] API 響應鍵:', Object.keys(result));
                 
                 if (response.ok && result.success) {
                     // 註冊成功，保存JWT並跳轉到主頁
-                    console.log('Registration successful, saving JWT and redirecting to home');
+                    console.log('🎉 [SUCCESS] 註冊成功，開始保存JWT並跳轉到主頁');
+                    console.log('🔍 [DEBUG] 註冊響應結果:', result);
                     
                     // 保存JWT到localStorage
-                    if (result.token) {
-                        localStorage.setItem('access_token', result.token);
-                        console.log('Access token saved');
+                    console.log('🔍 [DEBUG] 開始提取 JWT 信息...');
+                    
+                    // 檢查 loginResult 是否存在
+                    if (result.loginResult) {
+                        console.log('✅ [SUCCESS] 找到 loginResult 對象');
                         
-                        if (result.refreshToken) {
-                            localStorage.setItem('refresh_token', result.refreshToken);
-                            console.log('Refresh token saved');
+                        // 提取 access token
+                        const actualToken = result.loginResult.token;
+                        if (actualToken) {
+                            localStorage.setItem('access_token', actualToken);
+                            console.log('✅ [SUCCESS] Access token 已保存到 localStorage');
+                            console.log('🔑 [DEBUG] Token 前20字符:', actualToken.substring(0, 20) + '...');
+                        } else {
+                            console.error('❌ [ERROR] loginResult 中沒有找到 token');
                         }
                         
-                        // 保存用戶信息
-                        if (result.userInfo) {
-                            localStorage.setItem('user_info', JSON.stringify(result.userInfo));
-                            console.log('User info saved');
+                        // 提取 refresh token
+                        const actualRefreshToken = result.loginResult.refreshToken;
+                        if (actualRefreshToken) {
+                            localStorage.setItem('refresh_token', actualRefreshToken);
+                            console.log('✅ [SUCCESS] Refresh token 已保存到 localStorage');
+                            console.log('🔑 [DEBUG] Refresh token 前20字符:', actualRefreshToken.substring(0, 20) + '...');
+                        } else {
+                            console.error('❌ [ERROR] loginResult 中沒有找到 refreshToken');
                         }
+                        
+                        // 提取用戶信息
+                        const userInfo = result.loginResult.userInfo;
+                        if (userInfo) {
+                            localStorage.setItem('user_info', JSON.stringify(userInfo));
+                            console.log('✅ [SUCCESS] User info 已保存到 localStorage');
+                            console.log('👤 [DEBUG] User info:', userInfo);
+                        } else {
+                            console.error('❌ [ERROR] loginResult 中沒有找到 userInfo');
+                        }
+                        
+                        // 保存額外的用戶信息
+                        if (result.loginResult.userId) {
+                            localStorage.setItem('user_id', result.loginResult.userId.toString());
+                            console.log('✅ [SUCCESS] User ID 已保存到 localStorage:', result.loginResult.userId);
+                        }
+                        
+                        if (result.loginResult.username) {
+                            localStorage.setItem('username', result.loginResult.username);
+                            console.log('✅ [SUCCESS] Username 已保存到 localStorage:', result.loginResult.username);
+                        }
+                    } else {
+                        console.error('❌ [ERROR] API 響應中沒有找到 loginResult 對象');
+                        console.error('🔍 [DEBUG] 實際響應結構:', result);
+                    }
+                        
+                    // 驗證保存結果
+                    const savedToken = localStorage.getItem('access_token');
+                    const savedRefreshToken = localStorage.getItem('refresh_token');
+                    const savedUserInfo = localStorage.getItem('user_info');
+                    const savedUserId = localStorage.getItem('user_id');
+                    const savedUsername = localStorage.getItem('username');
+                    
+                    console.log('🔍 [DEBUG] 驗證保存結果:');
+                    console.log('  - access_token:', savedToken ? '✅ 已保存' : '❌ 未保存');
+                    console.log('  - refresh_token:', savedRefreshToken ? '✅ 已保存' : '❌ 未保存');
+                    console.log('  - user_info:', savedUserInfo ? '✅ 已保存' : '❌ 未保存');
+                    console.log('  - user_id:', savedUserId ? '✅ 已保存' : '❌ 未保存');
+                    console.log('  - username:', savedUsername ? '✅ 已保存' : '❌ 未保存');
+                    
+                    // 顯示所有 localStorage 鍵
+                    const allKeys = Object.keys(localStorage);
+                    console.log('🔍 [DEBUG] localStorage 中的所有鍵:', allKeys);
+                    
+                    // 發送註冊成功日誌到 Flutter 應用
+                    try {
+                        if (window.parent && window.parent.postMessage) {
+                            window.parent.postMessage({
+                                type: 'register_success',
+                                message: 'Registration successful, JWT saved',
+                                data: {
+                                    hasToken: !!savedToken,
+                                    hasRefreshToken: !!savedRefreshToken,
+                                    hasUserInfo: !!savedUserInfo,
+                                    hasUserId: !!savedUserId,
+                                    hasUsername: !!savedUsername,
+                                    localStorageKeys: Object.keys(localStorage)
+                                }
+                            }, '*');
+                        }
+                    } catch (e) {
+                        console.warn('無法發送註冊成功日誌到 Flutter 應用:', e);
                     }
                     
-                    // 跳轉到主頁
-                    window.location.href = '/#/home';
+                    // 確認 JWT 已保存後再跳轉
+                    console.log('🔍 [DEBUG] 開始驗證 JWT 保存狀態...');
+                    
+                    // 驗證 JWT 是否真的保存到 localStorage
+                    const verifyToken = localStorage.getItem('access_token');
+                    const verifyRefreshToken = localStorage.getItem('refresh_token');
+                    const verifyUserInfo = localStorage.getItem('user_info');
+                    
+                    console.log('🔍 [DEBUG] JWT 保存驗證結果:');
+                    console.log('  - access_token:', verifyToken ? `✅ 已保存 (${verifyToken.substring(0, 20)}...)` : '❌ 未保存');
+                    console.log('  - refresh_token:', verifyRefreshToken ? `✅ 已保存 (${verifyRefreshToken.substring(0, 20)}...)` : '❌ 未保存');
+                    console.log('  - user_info:', verifyUserInfo ? `✅ 已保存 (${verifyUserInfo.substring(0, 50)}...)` : '❌ 未保存');
+                    
+                    if (verifyToken) {
+                        console.log('✅ [SUCCESS] JWT 驗證成功，準備跳轉');
+                        
+                        // 獲取來源 host
+                        const sourceHost = getSourceHost();
+                        console.log('🔍 [DEBUG] 來源 host:', sourceHost);
+                        
+                        // 跳轉到 Flutter 應用的根路徑，讓 Flutter 處理路由
+                        const targetUrl = sourceHost + '/';
+                        console.log('🚀 [INFO] 跳轉目標 URL:', targetUrl);
+                        
+                        // 添加短暫延遲，確保所有操作完成
+                        setTimeout(() => {
+                            console.log('🚀 [INFO] 執行跳轉到:', targetUrl);
+                            window.location.href = targetUrl;
+                        }, 200);
+                    } else {
+                        console.error('❌ [ERROR] JWT 保存驗證失敗，無法跳轉');
+                        showMessage('註冊成功但 JWT 保存失敗，請手動重新登入', 'warning');
+                    }
                     return;
                 } else {
                     handleRegistrationError(result);
@@ -1002,6 +1116,21 @@
 
         // 頁面載入時初始化
         window.addEventListener('load', function() {
+            console.log('🎉 [SUCCESS] Register page window.load event triggered');
+            console.log('🔍 [DEBUG] Register page fully loaded');
+            
+            // 發送日誌到 Flutter 應用
+            try {
+                if (window.parent && window.parent.postMessage) {
+                    window.parent.postMessage({
+                        type: 'register_page_log',
+                        message: 'Register page loaded successfully'
+                    }, '*');
+                }
+            } catch (e) {
+                console.warn('無法發送日誌到 Flutter 應用:', e);
+            }
+            
             // 初始化來源 host
             initSourceHost();
             
@@ -1013,7 +1142,7 @@
             // 初始化欄位事件監聽器
             initFieldEventListeners();
             
-            console.log('Registration page loaded');
+            console.log('✅ [SUCCESS] Registration page initialization completed');
         });
     </script>
 </body>
