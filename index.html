@@ -22,7 +22,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
-  <meta name="version" content="1.0.346+347">
+  <meta name="version" content="1.0.348+349">
 
   <!-- Cross-Origin Isolation Headers for SharedArrayBuffers -->
   <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
@@ -46,7 +46,6 @@
   <link rel="apple-touch-icon" sizes="152x152" href="icons/apple-icon-152x152.png">
   <link rel="apple-touch-icon" sizes="70x70" href="icons/apple-icon-70x70.png">
 
-
   <!-- iOS splash screens -->
   <link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)" href="splash/iPhone_14_Pro_Max_portrait.png">
   <link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)" href="splash/iPhone_14_Pro_portrait.png">
@@ -65,28 +64,28 @@
     if (window.location.search.includes('wasm=true') || 
         window.location.href.includes('wasm') ||
         typeof WebAssembly !== 'undefined' && window.location.pathname.includes('main.dart.wasm')) {
-      console.warn('?†Ô? WASM Ê®°Â?ÔºöWeb Push ?üËÉΩ?óÈ?');
-      console.warn('?í° Âª∫Ë≠∞‰ΩøÁî®Ê®ôÊ? Web Ê®°Â?‰ª•Áç≤ÂæóÂ??¥Â???);
+      console.warn('WASM mode: Web Push functionality limited');
+      console.warn('Recommend using standard Web mode for full functionality');
       
       // ?®È??¢Ë??•Â?È°ØÁ§∫Ë≠¶Â?
       window.addEventListener('load', function() {
         setTimeout(function() {
           if (window.UnifiedPushManager) {
-            console.warn('?? Web Push ??WASM Ê®°Â?‰∏ãÈ?Ë¶ÅÊ??ïË®≠ÁΩ?);
-            console.warn('?? Ë´ãÂú®?ßÂà∂?∞Âü∑Ë°åÔ?window.UnifiedPushManager.completePushSubscription()');
+            console.warn('Web Push requires manual setup in WASM mode');
+            console.warn('Please execute in console: window.UnifiedPushManager.completePushSubscription()');
           }
         }, 2000);
       });
     }
   </script>
   
-  <!-- ?? Flutter Web ?°È?Á§ôËá™?ïË??ÜËÖ≥??-->
+  <!-- Flutter Web ?°È?Á§ôËá™?ïË??ÜËÖ≥??-->
   <script>
     // Auto-accessibility handler for Flutter Web
     (function() {
       'use strict';
       
-      console.log('?? Auto-accessibility handler loading...');
+      console.log('Auto-accessibility handler loading...');
       
       // Ê™¢Ê∏¨?åÈ??äÁÑ°?úÁ??âÈ?
       function autoClickAccessibility() {
@@ -101,20 +100,20 @@
         for (const selector of selectors) {
           const element = document.querySelector(selector);
           if (element && isElementVisible(element)) {
-            console.log('??Auto-clicking accessibility button found via:', selector);
+            console.log('Auto-clicking accessibility button found via:', selector);
             
             try {
               element.click();
               return true;
             } catch (e) {
-              console.warn('?†Ô? Error clicking accessibility button:', e);
+              console.warn('Error clicking accessibility button:', e);
               // ?óË©¶ dispatchEvent ‰ΩúÁÇ∫?ôÁî®?πÊ?
               try {
                 const event = new Event('click', { bubbles: true, cancelable: true });
                 element.dispatchEvent(event);
                 return true;
               } catch (e2) {
-                console.warn('?†Ô? Alternative click method also failed:', e2);
+                console.warn('Alternative click method also failed:', e2);
               }
             }
           }
@@ -138,85 +137,85 @@
         // ÁßªÈô§?¥Ê†º?Ñ‰?ÁΩÆÂ?Â∞∫ÂØ∏Ê™¢Êü•ÔºåÂ??∫ÁÑ°?úÁ??âÈ??ØËÉΩ?´Ê??®Ë????
       }
       
-          // ?™Â??ïÁ??°È?Á§ôÊ???
-          function startAutoHandler() {
-            let attempts = 0;
-            const maxAttempts = 20; // ?™Â?ÔºöÊ?Â∞ëÂà∞ 20 Ê¨°Â?Ë©?(10 Áß?
-            const interval = 500;   // ÊØ?500ms Ê™¢Êü•‰∏ÄÊ¨?
-            
-            const startTime = Date.now();
-            
-            function tryClickNow() {
-              attempts++;
-              console.log('?? Attempt', attempts, 'to detect accessibility button...');
-              
-              // Ê™¢Êü•?ØÂê¶?êÂ?ÈªûÊ?
-              if (autoClickAccessibility()) {
-                const elapsed = Date.now() - startTime;
-                console.log(`??Accessibility auto-click successful on attempt ${attempts} (${elapsed}ms)`);
-                return;
-              }
-              
-              // Ê™¢Êü•?ØÂê¶?ÅÈù¢Â∑≤Á?ËºâÂÖ•ÔºàÊ??âÁÑ°?úÁ??âÈ?Ôº?
-              const hasAccessibilityButton = document.querySelector('flt-semantics-placeholder[aria-label="Enable accessibility"]') ||
-                                           document.querySelector('button[aria-label*="Enable"]') ||
-                                           document.querySelector('[aria-label="Enable accessibility"]');
-              const hasLoginForm = document.querySelector('input[type="text"]') &&
-                                 document.querySelector('input[type="password"]');
-              const hasFlutterContent = document.querySelector('flt-scene-host') || 
-                                       document.querySelector('flt-glass-pane') ||
-                                       document.querySelector('canvas');
-              
-              // ?™Â?ÔºöÊõ¥?∫ËÉΩ?ÑÊ??çÁ?Ê≠¢Ê?‰ª?
-              if (!hasAccessibilityButton && (hasLoginForm || hasFlutterContent)) {
-                const elapsed = Date.now() - startTime;
-                console.log(`??No accessibility button found, page seems loaded (${elapsed}ms)`);
-                return;
-              }
-              
-              // ?™Â?ÔºöÂ??úÂ?Ë©¶Ë???10 Ê¨°‰?Ê≤íÊ??æÂà∞?âÈ?ÔºåÊ??çÁ?Ê≠?
-              if (attempts > 10 && !hasAccessibilityButton) {
-                const elapsed = Date.now() - startTime;
-                console.log(`??Early termination: No accessibility button detected after ${attempts} attempts (${elapsed}ms)`);
-                return;
-              }
-              
-              // ?πÂà•?™Â?ÔºöÂú®Á¨?20 Ê¨°Â?Ë©¶Â?Â¢ûÂ?Ë™øË©¶‰ø°ÊÅØ
-              if (attempts === 20) {
-                const element = document.querySelector('flt-semantics-placeholder[aria-label="Enable accessibility"]');
-                console.log('?? Mid-point check - Element exists:', !!element);
-                if (element) {
-                  console.log('?? Element details:', {
-                    visible: isElementVisible(element),
-                    tagName: element.tagName,
-                    ariaLabel: element.getAttribute('aria-label')
-                  });
-                }
-              }
-              
-              // ÁπºÁ??óË©¶
-              if (attempts < maxAttempts) {
-                setTimeout(tryClickNow, interval);
-              } else {
-                const elapsed = Date.now() - startTime;
-                console.log(`?†Ô? Accessibility auto-click failed after ${attempts} attempts over ${elapsed}ms`);
-                console.log('?í° Manual trigger available: autoClickAccessibility() or window.manualAccessibilityTrigger()');
-                
-                // Ëº∏Âá∫?ÄÁµÇÁ??ãÁµ±Ë®?
-                console.log('?? Final stats:', {
-                  attempts: attempts,
-                  totalTime: `${elapsed}ms`,
-                  documentReady: document.readyState,
-                  hasAccessibilityButton: hasAccessibilityButton,
-                  hasLoginForm: hasLoginForm
-                });
-              }
-            }
-            
-            // ?ãÂ??óË©¶
-            console.log('?? Starting accessibility auto-handler...');
-            tryClickNow();
+      // ?™Â??ïÁ??°È?Á§ôÊ???
+      function startAutoHandler() {
+        let attempts = 0;
+        const maxAttempts = 20; // ?™Â?ÔºöÊ?Â∞ëÂà∞ 20 Ê¨°Â?Ë©?(10 Áß?
+        const interval = 500;   // ÊØ?500ms Ê™¢Êü•‰∏ÄÊ¨?
+        
+        const startTime = Date.now();
+        
+        function tryClickNow() {
+          attempts++;
+          console.log('Attempt', attempts, 'to detect accessibility button...');
+          
+          // Ê™¢Êü•?ØÂê¶?êÂ?ÈªûÊ?
+          if (autoClickAccessibility()) {
+            const elapsed = Date.now() - startTime;
+            console.log('Accessibility auto-click successful on attempt', attempts, '(' + elapsed + 'ms)');
+            return;
           }
+          
+          // Ê™¢Êü•?ØÂê¶?ÅÈù¢Â∑≤Á?ËºâÂÖ•ÔºàÊ??âÁÑ°?úÁ??âÈ?Ôº?
+          const hasAccessibilityButton = document.querySelector('flt-semantics-placeholder[aria-label="Enable accessibility"]') ||
+                                       document.querySelector('button[aria-label*="Enable"]') ||
+                                       document.querySelector('[aria-label="Enable accessibility"]');
+          const hasLoginForm = document.querySelector('input[type="text"]') &&
+                             document.querySelector('input[type="password"]');
+          const hasFlutterContent = document.querySelector('flt-scene-host') || 
+                                   document.querySelector('flt-glass-pane') ||
+                                   document.querySelector('canvas');
+          
+          // ?™Â?ÔºöÊõ¥?∫ËÉΩ?ÑÊ??çÁ?Ê≠¢Ê?‰ª?
+          if (!hasAccessibilityButton && (hasLoginForm || hasFlutterContent)) {
+            const elapsed = Date.now() - startTime;
+            console.log('No accessibility button found, page seems loaded (' + elapsed + 'ms)');
+            return;
+          }
+          
+          // ?™Â?ÔºöÂ??úÂ?Ë©¶Ë???10 Ê¨°‰?Ê≤íÊ??æÂà∞?âÈ?ÔºåÊ??çÁ?Ê≠?
+          if (attempts > 10 && !hasAccessibilityButton) {
+            const elapsed = Date.now() - startTime;
+            console.log('Early termination: No accessibility button detected after', attempts, 'attempts (' + elapsed + 'ms)');
+            return;
+          }
+          
+          // ?πÂà•?™Â?ÔºöÂú®Á¨?20 Ê¨°Â?Ë©¶Â?Â¢ûÂ?Ë™øË©¶‰ø°ÊÅØ
+          if (attempts === 20) {
+            const element = document.querySelector('flt-semantics-placeholder[aria-label="Enable accessibility"]');
+            console.log('Mid-point check - Element exists:', !!element);
+            if (element) {
+              console.log('Element details:', {
+                visible: isElementVisible(element),
+                tagName: element.tagName,
+                ariaLabel: element.getAttribute('aria-label')
+              });
+            }
+          }
+          
+          // ÁπºÁ??óË©¶
+          if (attempts < maxAttempts) {
+            setTimeout(tryClickNow, interval);
+          } else {
+            const elapsed = Date.now() - startTime;
+            console.log('Accessibility auto-click failed after', attempts, 'attempts over', elapsed + 'ms');
+            console.log('Manual trigger available: autoClickAccessibility() or window.manualAccessibilityTrigger()');
+            
+            // Ëº∏Âá∫?ÄÁµÇÁ??ãÁµ±Ë®?
+            console.log('Final stats:', {
+              attempts: attempts,
+              totalTime: elapsed + 'ms',
+              documentReady: document.readyState,
+              hasAccessibilityButton: hasAccessibilityButton,
+              hasLoginForm: hasLoginForm
+            });
+          }
+        }
+        
+        // ?ãÂ??óË©¶
+        console.log('Starting accessibility auto-handler...');
+        tryClickNow();
+      }
       
       // DOM ËºâÂÖ•ÂÆåÊ?ÂæåÈ?ÂßãË???
       function initAutoHandler() {
@@ -231,7 +230,7 @@
       // Á´ãÂç≥?ùÂ???
       initAutoHandler();
       
-      console.log('?? Auto-accessibility handler initialized');
+      console.log('Auto-accessibility handler initialized');
       
       // ?¥Èú≤?ãÂ?Ëß∏Áôº?ΩÊï∏?∞ÂÖ®Â±ÄÔºåÊñπ‰æøË™øË©?
       window.manualAccessibilityTrigger = autoClickAccessibility;
@@ -438,16 +437,6 @@
       }
     }
     
-    @keyframes logoFloat {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-10px); }
-    }
-    
-    @keyframes shimmer {
-      0%, 100% { transform: rotate(0deg) scale(1); opacity: 0.3; }
-      50% { transform: rotate(180deg) scale(1.1); opacity: 0.6; }
-    }
-    
     .loading-text {
       font-size: 28px;
       font-weight: 700;
@@ -535,7 +524,7 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.346</div>
+      <div class="loading-version" id="version-display">v1.0.348</div>
     </div>
   </div>
   
@@ -548,7 +537,7 @@
     (function() {
       'use strict';
       
-      console.log('?? [WEB_PUSH_API] Web Push API ?ùÂ???..');
+      console.log('[WEB_PUSH_API] Web Push API initializing...');
       
       // ?®Â? Web Push API Â∞çË±°
       window.WebPushAPI = {
@@ -560,31 +549,31 @@
          * @returns {Promise<Object>} Ê¨äÈ?ÁµêÊ? (Á¥?JSON ?©‰ª∂)
          */
         async requestNotificationPermission(vapidKey, token) {
-          console.log('?? [WEB_PUSH_API] ?ãÂ?Ê¨äÈ?Ë´ãÊ?ÊµÅÁ?...');
-          console.log('?? [WEB_PUSH_API] VAPID Key:', vapidKey ? 'Â∑≤Ê?‰æ? : '?™Ê?‰æ?);
-          console.log('?? [WEB_PUSH_API] Token:', token ? 'Â∑≤Ê?‰æ? : '?™Ê?‰æ?);
+          console.log('[WEB_PUSH_API] Starting permission request process...');
+          console.log('[WEB_PUSH_API] VAPID Key:', vapidKey ? 'provided' : 'not provided');
+          console.log('[WEB_PUSH_API] Token:', token ? 'provided' : 'not provided');
           
           try {
             // 1. Ê™¢Êü•?èË¶Ω?®ÊîØ??
             if (!this.checkBrowserSupport()) {
-              throw new Error('?èË¶Ω?®‰??ØÊè¥ Web Push');
+              throw new Error('Browser does not support Web Push');
             }
             
             // 2. Ë´ãÊ??öÁü•Ê¨äÈ?
             const permissionResult = await this.requestPermission();
-            console.log('?? [WEB_PUSH_API] Ê¨äÈ?Ë´ãÊ?ÁµêÊ?:', permissionResult);
+            console.log('[WEB_PUSH_API] Permission request result:', permissionResult);
             
             if (permissionResult !== 'granted') {
               return {
                 success: false,
                 status: permissionResult,
-                error: `Ê¨äÈ?Ë¢´Ê?Áµ? ${permissionResult}`
+                error: 'Permission denied: ' + permissionResult
               };
             }
             
             // 3. ?µÂª∫?üÂØ¶?®ÈÄÅË???
             const subscriptionData = await this.createPushSubscription(vapidKey);
-            console.log('?? [WEB_PUSH_API] ?®ÈÄÅË??±ÂâµÂª∫Ê???);
+            console.log('[WEB_PUSH_API] Push subscription created successfully');
             
             // ËøîÂ? JSON Â≠óÁ¨¶‰∏≤Ô??øÂ?È°ûÂ?ËΩâÊ??èÈ?
             const result = {
@@ -592,17 +581,17 @@
               status: 'permission_granted',
               subscriptionData: subscriptionData
             };
-            console.log('?? [WEB_PUSH_API] ËøîÂ?ÁµêÊ?:', result);
+            console.log('[WEB_PUSH_API] Returning result:', result);
             return JSON.stringify(result);
             
           } catch (error) {
-            console.error('??[WEB_PUSH_API] Ê¨äÈ?Ë´ãÊ?Â§±Ê?:', error);
+            console.error('[WEB_PUSH_API] Permission request failed:', error);
             const errorResult = {
               success: false,
               status: 'permission_error',
               error: error.message
             };
-            console.log('?? [WEB_PUSH_API] ËøîÂ??ØË™§ÁµêÊ?:', errorResult);
+            console.log('[WEB_PUSH_API] Returning error result:', errorResult);
             return JSON.stringify(errorResult);
           }
         },
@@ -616,7 +605,7 @@
           const hasPushManager = 'PushManager' in window;
           const hasNotification = 'Notification' in window;
           
-          console.log('?? [WEB_PUSH_API] ?èË¶Ω?®ÊîØ?¥Ê™¢??');
+          console.log('[WEB_PUSH_API] Browser support check:');
           console.log('  - Service Worker:', hasServiceWorker);
           console.log('  - Push Manager:', hasPushManager);
           console.log('  - Notification:', hasNotification);
@@ -629,21 +618,21 @@
          * @returns {Promise<string>} Ê¨äÈ??Ä??
          */
         async requestPermission() {
-          console.log('?? [WEB_PUSH_API] Ë´ãÊ??öÁü•Ê¨äÈ?...');
+          console.log('[WEB_PUSH_API] Requesting notification permission...');
           
           if (Notification.permission === 'granted') {
-            console.log('??[WEB_PUSH_API] Ê¨äÈ?Â∑≤Ê?‰∫?);
+            console.log('[WEB_PUSH_API] Permission already granted');
             return 'granted';
           }
           
           if (Notification.permission === 'denied') {
-            console.log('??[WEB_PUSH_API] Ê¨äÈ?Â∑≤Ë¢´?íÁ?');
+            console.log('[WEB_PUSH_API] Permission already denied');
             return 'denied';
           }
           
           // Ë´ãÊ?Ê¨äÈ?
           const permission = await Notification.requestPermission();
-          console.log('?? [WEB_PUSH_API] Ê¨äÈ?Ë´ãÊ?ÁµêÊ?:', permission);
+          console.log('[WEB_PUSH_API] Permission request result:', permission);
           
           return permission;
         },
@@ -654,16 +643,16 @@
          * @returns {Promise<Object>} Ë®ÇÈñ±?∏Ê?
          */
         async createPushSubscription(vapidKey) {
-          console.log('?? [WEB_PUSH_API] ?ãÂ??µÂª∫?®ÈÄÅË???..');
+          console.log('[WEB_PUSH_API] Starting push subscription creation...');
           
           try {
             // 1. Ë®ªÂ? Service Worker
             const registration = await navigator.serviceWorker.register('/service-worker.js');
-            console.log('??[WEB_PUSH_API] Service Worker Ë®ªÂ??êÂ?');
+            console.log('[WEB_PUSH_API] Service Worker registered successfully');
             
             // 2. Á≠âÂ? Service Worker Ê∫ñÂ?Â∞±Á?
             await navigator.serviceWorker.ready;
-            console.log('??[WEB_PUSH_API] Service Worker Â∑≤Ê??ôÂ∞±Á∑?);
+            console.log('[WEB_PUSH_API] Service Worker ready');
             
             // 3. ?µÂª∫?®ÈÄÅË???
             const subscription = await registration.pushManager.subscribe({
@@ -671,8 +660,8 @@
               applicationServerKey: this.urlBase64ToUint8Array(vapidKey)
             });
             
-            console.log('??[WEB_PUSH_API] ?®ÈÄÅË??±ÂâµÂª∫Ê???);
-            console.log('?? [WEB_PUSH_API] Ë®ÇÈñ±Á´ØÈ?:', subscription.endpoint);
+            console.log('[WEB_PUSH_API] Push subscription created successfully');
+            console.log('[WEB_PUSH_API] Subscription endpoint:', subscription.endpoint);
             
             // 4. ËΩâÊ??∫ÂèØ?≥Ëº∏?ÑÊ†ºÂº?
             const deviceInfo = this.generateDeviceInfo();
@@ -690,8 +679,8 @@
             return subscriptionData;
             
           } catch (error) {
-            console.error('??[WEB_PUSH_API] ?µÂª∫?®ÈÄÅË??±Â§±??', error);
-            throw new Error(`?®ÈÄÅË??±ÂâµÂª∫Â§±?? ${error.message}`);
+            console.error('[WEB_PUSH_API] Push subscription creation failed:', error);
+            throw new Error('Push subscription creation failed: ' + error.message);
           }
         },
         
@@ -701,7 +690,7 @@
          */
         generateDeviceInfo() {
           const userAgent = navigator.userAgent;
-          const deviceName = `${navigator.platform} - ${navigator.userAgentData?.brands?.[0]?.brand || 'Unknown Browser'}`;
+          const deviceName = navigator.platform + ' - ' + (navigator.userAgentData?.brands?.[0]?.brand || 'Unknown Browser');
           const deviceId = this.generateDeviceId();
           const browserInfo = {
             name: navigator.userAgentData?.brands?.[0]?.brand || 'Unknown',
@@ -792,7 +781,7 @@
         }
       };
       
-      console.log('??[WEB_PUSH_API] Web Push API ?ùÂ??ñÂ???);
+      console.log('[WEB_PUSH_API] Web Push API initialization completed');
       
       // ?¥Èú≤?®Â??ΩÊï∏‰æ?Flutter Ë™øÁî®
       window.requestNotificationPermission = window.WebPushAPI.requestNotificationPermission.bind(window.WebPushAPI);
@@ -800,7 +789,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.348" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.349" async></script>
   
   <!-- Service Worker Ë®ªÂ? -->
   <script>
@@ -809,11 +798,11 @@
       window.addEventListener('load', function() {
         navigator.serviceWorker.register('/service-worker.js')
           .then(function(registration) {
-            console.log('Service Worker Ë®ªÂ??êÂ?:', registration.scope);
+            console.log('Service Worker registered successfully:', registration.scope);
             
             // ??ÅΩ Service Worker Ê∂àÊÅØ
             navigator.serviceWorker.addEventListener('message', function(event) {
-              console.log('?∂Âà∞ Service Worker Ê∂àÊÅØ:', event.data);
+              console.log('Received Service Worker message:', event.data);
               
               // Â∞áÊ??ØÂÇ≥?ûÁµ¶ Flutter
               if (window.flutter_inappwebview) {
@@ -829,7 +818,7 @@
               newWorker.addEventListener('statechange', function() {
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                   // ?êÁ§∫?®Êà∂?¥Êñ∞
-                  if (confirm('?ºÁèæ?∞Á??¨Ô??ØÂê¶Á´ãÂç≥?¥Êñ∞Ôº?)) {
+                  if (confirm('New version found, update now?')) {
                     newWorker.postMessage({ type: 'SKIP_WAITING' });
                     window.location.reload();
                   }
@@ -838,7 +827,7 @@
             });
           })
           .catch(function(error) {
-            console.error('Service Worker Ë®ªÂ?Â§±Ê?:', error);
+            console.error('Service Worker registration failed:', error);
           });
       });
     }
@@ -859,7 +848,7 @@
   <script>
     // Update version display from meta tag
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('?? [DEBUG] index.html DOMContentLoaded ‰∫ã‰ª∂Ëß∏Áôº');
+      console.log('[DEBUG] index.html DOMContentLoaded event triggered');
       
       const versionMeta = document.querySelector('meta[name="version"]');
       const versionDisplay = document.getElementById('version-display');
@@ -867,17 +856,17 @@
       if (versionMeta && versionDisplay) {
         const fullVersion = versionMeta.getAttribute('content'); // e.g., "1.0.293+294"
         const displayVersion = fullVersion ? fullVersion.split('+')[0] : '1.0.0'; // e.g., "1.0.293"
-        versionDisplay.textContent = `v${displayVersion}`;
-        console.log('??[SUCCESS] ?àÊú¨?üÂ∑≤Ë®≠ÁΩÆ:', displayVersion);
+        versionDisplay.textContent = 'v' + displayVersion;
+        console.log('[SUCCESS] Version number set:', displayVersion);
       }
       
-      // ?îß ?∞Â?ÔºöÊ™¢Ê∏?localStorage ‰∏≠Á? JWT ‰∏¶È°ØÁ§∫Ë®ª?äÊ??üÊ?Á§?
-      console.log('?? [DEBUG] ?ãÂ?Ê™¢Êü•Ë®ªÂ??êÂ??Ä??..');
+      // Ê™¢Ê∏¨ localStorage ‰∏≠Á? JWT ‰∏¶È°ØÁ§∫Ë®ª?äÊ??üÊ?Á§?
+      console.log('[DEBUG] Starting registration success check...');
       checkRegistrationSuccess();
       
-      // ?îß ?∞Â?ÔºöÁõ£?ΩË®ª?äÈ??¢Á?Ê∂àÊÅØ
+      // ??ÅΩË®ªÂ??ÅÈù¢?ÑÊ???
       window.addEventListener('message', function(event) {
-        console.log('?ì® [MESSAGE] ?∂Âà∞‰æÜËá™Ë®ªÂ??ÅÈù¢?ÑÊ???', event.data);
+        console.log('[MESSAGE] Received message from registration page:', event.data);
         
         if (event.data.type === 'register_page_log') {
         } else if (event.data.type === 'register_success') {
@@ -894,31 +883,31 @@
     // Ê™¢Ê∏¨Ë®ªÂ??êÂ??Ä??
     function checkRegistrationSuccess() {
       try {
-        console.log('?? [DEBUG] ?ãÂ?Ê™¢Êü• localStorage ?Ä??..');
+        console.log('[DEBUG] Starting localStorage status check...');
         
         // Ê™¢Êü•?Ä??localStorage ?ÖÁõÆ
         const allKeys = Object.keys(localStorage);
-        console.log('?? [DEBUG] localStorage ‰∏≠Á??Ä?âÈçµ:', allKeys);
+        console.log('[DEBUG] All keys in localStorage:', allKeys);
         
         const accessToken = localStorage.getItem('access_token');
         const refreshToken = localStorage.getItem('refresh_token');
         const userInfo = localStorage.getItem('user_info');
         
-        console.log('?? [DEBUG] Ê™¢Êü• localStorage ?Ä??');
-        console.log('  - access_token:', accessToken ? `Â≠òÂú® (${accessToken.substring(0, 20)}...)` : '‰∏çÂ???);
-        console.log('  - refresh_token:', refreshToken ? `Â≠òÂú® (${refreshToken.substring(0, 20)}...)` : '‰∏çÂ???);
-        console.log('  - user_info:', userInfo ? `Â≠òÂú® (${userInfo.substring(0, 50)}...)` : '‰∏çÂ???);
+        console.log('[DEBUG] Checking localStorage status:');
+        console.log('  - access_token:', accessToken ? 'exists (' + accessToken.substring(0, 20) + '...)' : 'not found');
+        console.log('  - refresh_token:', refreshToken ? 'exists (' + refreshToken.substring(0, 20) + '...)' : 'not found');
+        console.log('  - user_info:', userInfo ? 'exists (' + userInfo.substring(0, 50) + '...)' : 'not found');
         
         // Ê™¢Êü•?ØÂê¶?â‰ªª‰ΩïÂ???'token' ?ÑÈçµ
         const tokenKeys = allKeys.filter(key => key.toLowerCase().includes('token'));
-        console.log('?? [DEBUG] ?ÖÂê´ "token" ?ÑÈçµ:', tokenKeys);
+        console.log('[DEBUG] Keys containing "token":', tokenKeys);
         
         if (accessToken || refreshToken || userInfo) {
-          console.log('?? [SUCCESS] Ê™¢Ê∏¨?∞Ë®ª?äÊ??üÁ? JWT tokenÔºåÈ°ØÁ§∫Ê??üÊ?Á§?);
+          console.log('[SUCCESS] Detected successful registration JWT token, showing success message');
           showRegistrationSuccessMessage();
         } 
       } catch (error) {
-        console.warn('??[ERROR] Ê™¢Êü•Ë®ªÂ??Ä?ãÊ??ºÁ??ØË™§:', error);
+        console.warn('[ERROR] Error occurred while checking registration status:', error);
       }
     }
     
@@ -929,17 +918,17 @@
       
       if (!loadingText) return;
       
-      console.log('?? [SUCCESS] È°ØÁ§∫Ë®ªÂ??êÂ??êÁ§∫');
+      console.log('[SUCCESS] Showing registration success message');
       
       // Á∞°Â??áÂ?È°ØÁ§∫
-      loadingText.textContent = '?? Ë®ªÂ??êÂ?ÔºåÊ≠£?®Áôª??..';
+      loadingText.textContent = 'Registration successful, logging in...';
       
       // Á∞°Â??Ä?ãÈ°ØÁ§?
       if (versionDisplay) {
-        versionDisplay.textContent = '?™Â??ªÂÖ•‰∏?..';
+        versionDisplay.textContent = 'Auto-logging in...';
       }
       
-      console.log('??Ë®ªÂ??êÂ??êÁ§∫Â∑≤È°ØÁ§?);
+      console.log('Registration success message displayed');
     }
     
     // Hide loading screen when Flutter is ready
@@ -959,109 +948,3 @@
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
