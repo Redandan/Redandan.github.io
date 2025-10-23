@@ -1102,12 +1102,14 @@
             
             try {
                 // 發送註冊請求
-                const response = await fetch('/api/auth/register', {
+                const response = await fetch('https://agoramarketapi.purrtechllc.com/api/auth/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json',
                     },
-                    body: JSON.stringify(registerData)
+                    body: JSON.stringify(registerData),
+                    signal: AbortSignal.timeout(30000) // 30秒超時
                 });
                 
                 // 處理JSON響應
