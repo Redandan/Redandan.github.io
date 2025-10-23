@@ -22,7 +22,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
-  <meta name="version" content="1.0.344+345">
+  <meta name="version" content="1.0.345+346">
 
   <!-- Cross-Origin Isolation Headers for SharedArrayBuffers -->
   <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
@@ -535,7 +535,7 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.344</div>
+      <div class="loading-version" id="version-display">v1.0.345</div>
     </div>
   </div>
   
@@ -800,7 +800,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.345" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.346" async></script>
   
   <!-- Service Worker Ë®ªÂ? -->
   <script>
@@ -867,7 +867,98 @@
         const displayVersion = fullVersion ? fullVersion.split('+')[0] : '1.0.0'; // e.g., "1.0.293"
         versionDisplay.textContent = `v${displayVersion}`;
       }
+      
+      // ?îß ?∞Â?ÔºöÊ™¢Ê∏?localStorage ‰∏≠Á? JWT ‰∏¶È°ØÁ§∫Ë®ª?äÊ??üÊ?Á§?
+      checkRegistrationSuccess();
     });
+    
+    // Ê™¢Ê∏¨Ë®ªÂ??êÂ??Ä??
+    function checkRegistrationSuccess() {
+      try {
+        const accessToken = localStorage.getItem('access_token');
+        const refreshToken = localStorage.getItem('refresh_token');
+        const userInfo = localStorage.getItem('user_info');
+        
+        if (accessToken || refreshToken || userInfo) {
+          console.log('?? Ê™¢Ê∏¨?∞Ë®ª?äÊ??üÁ? JWT tokenÔºåÈ°ØÁ§∫Ê??üÊ?Á§?);
+          showRegistrationSuccessMessage();
+        }
+      } catch (error) {
+        console.warn('Ê™¢Êü•Ë®ªÂ??Ä?ãÊ??ºÁ??ØË™§:', error);
+      }
+    }
+    
+    // È°ØÁ§∫Ë®ªÂ??êÂ??êÁ§∫
+    function showRegistrationSuccessMessage() {
+      const loadingScreen = document.getElementById('loading-screen');
+      if (!loadingScreen) return;
+      
+      // ?µÂª∫?êÂ??êÁ§∫?ÉÁ?
+      const successMessage = document.createElement('div');
+      successMessage.id = 'registration-success-message';
+      successMessage.style.cssText = `
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(40, 167, 69, 0.95);
+        color: white;
+        padding: 20px 40px;
+        border-radius: 15px;
+        font-size: 18px;
+        font-weight: 600;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(40, 167, 69, 0.3);
+        z-index: 10000;
+        animation: successPulse 2s ease-in-out infinite;
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+      `;
+      
+      successMessage.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+          <span style="font-size: 24px;">??</span>
+          <div>
+            <div style="font-size: 16px; margin-bottom: 5px;">Ë®ªÂ??êÂ?Ôº?/div>
+            <div style="font-size: 14px; opacity: 0.9;">Ë∑≥Ë??ªÂÖ•‰∏?..</div>
+          </div>
+        </div>
+      `;
+      
+      // Ê∑ªÂ??ïÁï´Ê®??
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes successPulse {
+          0%, 100% { 
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 0.9;
+          }
+          50% { 
+            transform: translate(-50%, -50%) scale(1.05);
+            opacity: 1;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+      
+      // Ê∑ªÂ??∞È???
+      loadingScreen.appendChild(successMessage);
+      
+      // 3ÁßíÂ??™Â?ÁßªÈô§?êÁ§∫
+      setTimeout(() => {
+        if (successMessage && successMessage.parentNode) {
+          successMessage.style.transition = 'opacity 0.5s ease-out';
+          successMessage.style.opacity = '0';
+          setTimeout(() => {
+            if (successMessage.parentNode) {
+              successMessage.parentNode.removeChild(successMessage);
+            }
+          }, 500);
+        }
+      }, 3000);
+      
+      console.log('??Ë®ªÂ??êÂ??êÁ§∫Â∑≤È°ØÁ§?);
+    }
     
     // Hide loading screen when Flutter is ready
     window.addEventListener('flutter-first-frame', function () {
@@ -886,6 +977,7 @@
   </script>
 </body>
 </html>
+
 
 
 
