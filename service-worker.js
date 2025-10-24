@@ -3,7 +3,7 @@
 
 // 動態生成緩存名稱，包含版本號
 const getCacheName = () => {
-  const version = '1.0.357'; // 從 meta 標籤或環境變量獲取
+  const version = '1.0.358'; // 從 meta 標籤或環境變量獲取
   return `agora-market-v${version}`;
 };
 
@@ -11,9 +11,7 @@ const CACHE_NAME = getCacheName();
 const urlsToCache = [
   '/',
   '/index.html',
-  '/official.html',
-  '/main.dart.js',
-  '/flutter_bootstrap.js',
+  '/manifest.json',
   '/icons/Icon-192.png',
   '/icons/Icon-512.png',
   '/icons/Icon-120.png',
@@ -26,11 +24,26 @@ self.addEventListener('install', function(event) {
     caches.open(CACHE_NAME)
       .then(function(cache) {
         console.log('Service Worker: 緩存文件');
-        return cache.addAll(urlsToCache);
+        // 使用更安全的緩存策略，逐個添加文件
+        return Promise.allSettled(
+          urlsToCache.map(url => 
+            cache.add(url).catch(err => {
+              console.warn('Service Worker: 無法緩存文件', url, err);
+              return null; // 繼續處理其他文件
+            })
+          )
+        );
       })
-      .then(function() {
+      .then(function(results) {
+        const successful = results.filter(r => r.status === 'fulfilled').length;
+        const failed = results.filter(r => r.status === 'rejected').length;
+        console.log(`Service Worker: 緩存完成 - 成功: ${successful}, 失敗: ${failed}`);
         console.log('Service Worker: 安裝完成');
         return self.skipWaiting();
+      })
+      .catch(function(error) {
+        console.error('Service Worker: 安裝失敗', error);
+        return self.skipWaiting(); // 即使緩存失敗也要繼續
       })
   );
 });
@@ -274,3 +287,4 @@ self.addEventListener('error', function(event) {
 self.addEventListener('unhandledrejection', function(event) {
   console.error('Service Worker: 未處理的 Promise 拒絕', event.reason);
 });
+

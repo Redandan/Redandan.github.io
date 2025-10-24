@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?àÊú¨?ñÁ∑©Â≠òÊ?Ë≠?-->
-    <meta name="cache-version" content="1.0.357">
+    <meta name="cache-version" content="1.0.358">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -25,7 +25,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
-  <meta name="version" content="1.0.357+358">
+  <meta name="version" content="1.0.358+359">
 
   <!-- Cross-Origin Isolation Headers for SharedArrayBuffers -->
   <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
@@ -59,7 +59,7 @@
   <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.357">
+  <link rel="manifest" href="manifest.json?v=1.0.358">
 
   <!-- WASM Ê®°Â?Ë≠¶Â? -->
   <script>
@@ -527,12 +527,12 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.356</div>
+      <div class="loading-version" id="version-display">v1.0.357</div>
     </div>
   </div>
   
-  <script src="audio_analyzer.js?v=1.0.357"></script>
-  <script src="unified_push_bridge.js?v=1.0.357"></script>
+  <script src="audio_analyzer.js?v=1.0.358"></script>
+  <script src="unified_push_bridge.js?v=1.0.358"></script>
   
   <!-- Web Push JavaScript API -->
   <script>
@@ -792,68 +792,83 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.357" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.358" async></script>
   
   <!-- Service Worker Ë®ªÂ? -->
   <script>
     // Ë®ªÂ? Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        // ?àÂ?Ë©¶Ë®ª?äÊ??ëÁ??™Â?Áæ?Service Worker
-        navigator.serviceWorker.register('/service-worker.js?v=' + Date.now())
-          .then(function(registration) {
-            console.log('Service Worker registered successfully:', registration.scope);
-            
-            // ??ÅΩ Service Worker Ê∂àÊÅØ
-            navigator.serviceWorker.addEventListener('message', function(event) {
-              console.log('Received Service Worker message:', event.data);
-              
-              // Â∞áÊ??ØÂÇ≥?ûÁµ¶ Flutter
-              if (window.flutter_inappwebview) {
-                window.flutter_inappwebview.callHandler('handleServiceWorkerMessage', event.data);
-              } else if (window.registerMessageHandler) {
-                window.registerMessageHandler(event.data);
+        // Á≠âÂ? Flutter ?ùÂ??ñÂ??êÂ??çË®ª?äÊ??ëÁ? Service Worker
+        setTimeout(function() {
+          // Ê™¢Êü•?ØÂê¶Â∑≤Á???Service Worker ?®È?Ë°?
+          navigator.serviceWorker.getRegistration().then(function(existingRegistration) {
+            if (existingRegistration && existingRegistration.active) {
+              console.log('Existing Service Worker found:', existingRegistration.active.scriptURL);
+              // Â¶ÇÊ?Â≠òÂú® Flutter Service WorkerÔºåÊ??ë‰?Ë¶ÜË?ÂÆ?
+              if (existingRegistration.active.scriptURL.includes('flutter_service_worker')) {
+                console.log('Flutter Service Worker detected, skipping custom registration');
+                return;
               }
-            });
+            }
             
-            // Ê™¢Êü•?¥Êñ∞
-            registration.addEventListener('updatefound', function() {
-              const newWorker = registration.installing;
-              newWorker.addEventListener('statechange', function() {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  // ?™Â??¥Êñ∞Ôºå‰??êÁ§∫?®Êà∂
-                  console.log('New Service Worker installed, updating...');
-                  newWorker.postMessage({ type: 'SKIP_WAITING' });
-                  window.location.reload();
-                }
+            // Ë®ªÂ??ëÂÄëÁ??™Â?Áæ?Service Worker
+            navigator.serviceWorker.register('/service-worker.js?v=' + Date.now())
+              .then(function(registration) {
+                console.log('Service Worker registered successfully:', registration.scope);
+                
+                // ??ÅΩ Service Worker Ê∂àÊÅØ
+                navigator.serviceWorker.addEventListener('message', function(event) {
+                  console.log('Received Service Worker message:', event.data);
+                  
+                  // Â∞áÊ??ØÂÇ≥?ûÁµ¶ Flutter
+                  if (window.flutter_inappwebview) {
+                    window.flutter_inappwebview.callHandler('handleServiceWorkerMessage', event.data);
+                  } else if (window.registerMessageHandler) {
+                    window.registerMessageHandler(event.data);
+                  }
+                });
+                
+                // Ê™¢Êü•?¥Êñ∞
+                registration.addEventListener('updatefound', function() {
+                  const newWorker = registration.installing;
+                  newWorker.addEventListener('statechange', function() {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                      // ?™Â??¥Êñ∞Ôºå‰??êÁ§∫?®Êà∂
+                      console.log('New Service Worker installed, updating...');
+                      newWorker.postMessage({ type: 'SKIP_WAITING' });
+                      window.location.reload();
+                    }
+                  });
+                });
+                
+                // ÂÆöÊ?Ê™¢Êü•?¥Êñ∞ÔºàÊ?5?ÜÈ?Ôº?
+                setInterval(function() {
+                  registration.update();
+                }, 5 * 60 * 1000);
+                
+                // ?¥Èú≤Âº∑Âà∂?¥Êñ∞?ΩÊï∏
+                window.forceUpdate = function() {
+                  console.log('Force updating Service Worker...');
+                  if (navigator.serviceWorker.controller) {
+                    navigator.serviceWorker.controller.postMessage({ type: 'FORCE_UPDATE' });
+                  } else {
+                    console.log('No Service Worker controller found, trying to register...');
+                    navigator.serviceWorker.register('/service-worker.js?v=' + Date.now())
+                      .then(reg => {
+                        console.log('Service Worker registered for force update');
+                        reg.update();
+                      })
+                      .catch(err => console.error('Force update registration failed:', err));
+                  }
+                };
+              })
+              .catch(function(error) {
+                console.error('Custom Service Worker registration failed:', error);
+                console.log('Falling back to Flutter Service Worker...');
               });
-            });
-            
-            // ÂÆöÊ?Ê™¢Êü•?¥Êñ∞ÔºàÊ?5?ÜÈ?Ôº?
-            setInterval(function() {
-              registration.update();
-            }, 5 * 60 * 1000);
-            
-            // ?¥Èú≤Âº∑Âà∂?¥Êñ∞?ΩÊï∏
-            window.forceUpdate = function() {
-              console.log('Force updating Service Worker...');
-              if (navigator.serviceWorker.controller) {
-                navigator.serviceWorker.controller.postMessage({ type: 'FORCE_UPDATE' });
-              } else {
-                console.log('No Service Worker controller found, trying to register...');
-                navigator.serviceWorker.register('/service-worker.js?v=' + Date.now())
-                  .then(reg => {
-                    console.log('Service Worker registered for force update');
-                    reg.update();
-                  })
-                  .catch(err => console.error('Force update registration failed:', err));
-              }
-            };
-          })
-          .catch(function(error) {
-            console.error('Custom Service Worker registration failed:', error);
-            console.log('Falling back to Flutter Service Worker...');
           });
+        }, 3000); // Á≠âÂ? 3 ÁßíË? Flutter ÂÆåÊ??ùÂ???
       });
     }
 
@@ -973,6 +988,7 @@
   </script>
 </body>
 </html>
+
 
 
 
