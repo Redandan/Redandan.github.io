@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <!-- ?ùÂ? HTML ?á‰ª∂?ÑÁ∑©Â≠òÊéß??- ?≠Ê?Á∑©Â?‰ª•‰æø Service Worker ?ïÁ? -->
+    <meta http-equiv="Cache-Control" content="max-age=300, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
+    <!-- ?àÊú¨?ñÁ∑©Â≠òÊ?Ë≠?-->
+    <meta name="cache-version" content="1.0.355">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -22,7 +25,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
-  <meta name="version" content="1.0.352+353">
+  <meta name="version" content="1.0.354+355">
 
   <!-- Cross-Origin Isolation Headers for SharedArrayBuffers -->
   <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
@@ -56,7 +59,7 @@
   <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="manifest.json?v=1.0.355">
 
   <!-- WASM Ê®°Â?Ë≠¶Â? -->
   <script>
@@ -524,12 +527,12 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.352</div>
+      <div class="loading-version" id="version-display">v1.0.354</div>
     </div>
   </div>
   
-  <script src="audio_analyzer.js"></script>
-  <script src="unified_push_bridge.js"></script>
+  <script src="audio_analyzer.js?v=1.0.355"></script>
+  <script src="unified_push_bridge.js?v=1.0.355"></script>
   
   <!-- Web Push JavaScript API -->
   <script>
@@ -789,7 +792,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.353" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.355" async></script>
   
   <!-- Service Worker Ë®ªÂ? -->
   <script>
@@ -817,14 +820,26 @@
               const newWorker = registration.installing;
               newWorker.addEventListener('statechange', function() {
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  // ?êÁ§∫?®Êà∂?¥Êñ∞
-                  if (confirm('New version found, update now?')) {
-                    newWorker.postMessage({ type: 'SKIP_WAITING' });
-                    window.location.reload();
-                  }
+                  // ?™Â??¥Êñ∞Ôºå‰??êÁ§∫?®Êà∂
+                  console.log('New Service Worker installed, updating...');
+                  newWorker.postMessage({ type: 'SKIP_WAITING' });
+                  window.location.reload();
                 }
               });
             });
+            
+            // ÂÆöÊ?Ê™¢Êü•?¥Êñ∞ÔºàÊ?5?ÜÈ?Ôº?
+            setInterval(function() {
+              registration.update();
+            }, 5 * 60 * 1000);
+            
+            // ?¥Èú≤Âº∑Âà∂?¥Êñ∞?ΩÊï∏
+            window.forceUpdate = function() {
+              console.log('Force updating Service Worker...');
+              if (navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({ type: 'FORCE_UPDATE' });
+              }
+            };
           })
           .catch(function(error) {
             console.error('Service Worker registration failed:', error);
@@ -948,6 +963,7 @@
   </script>
 </body>
 </html>
+
 
 
 
