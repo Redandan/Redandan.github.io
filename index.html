@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?ˆæœ¬?–ç·©å­˜æ?è­?-->
-    <meta name="cache-version" content="1.0.355">
+    <meta name="cache-version" content="1.0.356">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -25,7 +25,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
-  <meta name="version" content="1.0.354+355">
+  <meta name="version" content="1.0.356+357">
 
   <!-- Cross-Origin Isolation Headers for SharedArrayBuffers -->
   <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
@@ -59,7 +59,7 @@
   <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.355">
+  <link rel="manifest" href="manifest.json?v=1.0.356">
 
   <!-- WASM æ¨¡å?è­¦å? -->
   <script>
@@ -527,12 +527,12 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.354</div>
+      <div class="loading-version" id="version-display">v1.0.355</div>
     </div>
   </div>
   
-  <script src="audio_analyzer.js?v=1.0.355"></script>
-  <script src="unified_push_bridge.js?v=1.0.355"></script>
+  <script src="audio_analyzer.js?v=1.0.356"></script>
+  <script src="unified_push_bridge.js?v=1.0.356"></script>
   
   <!-- Web Push JavaScript API -->
   <script>
@@ -792,14 +792,15 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.355" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.356" async></script>
   
   <!-- Service Worker è¨»å? -->
   <script>
     // è¨»å? Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/service-worker.js')
+        // ?ˆå?è©¦è¨»?Šæ??‘ç??ªå?ç¾?Service Worker
+        navigator.serviceWorker.register('/service-worker.js?v=' + Date.now())
           .then(function(registration) {
             console.log('Service Worker registered successfully:', registration.scope);
             
@@ -838,11 +839,20 @@
               console.log('Force updating Service Worker...');
               if (navigator.serviceWorker.controller) {
                 navigator.serviceWorker.controller.postMessage({ type: 'FORCE_UPDATE' });
+              } else {
+                console.log('No Service Worker controller found, trying to register...');
+                navigator.serviceWorker.register('/service-worker.js?v=' + Date.now())
+                  .then(reg => {
+                    console.log('Service Worker registered for force update');
+                    reg.update();
+                  })
+                  .catch(err => console.error('Force update registration failed:', err));
               }
             };
           })
           .catch(function(error) {
-            console.error('Service Worker registration failed:', error);
+            console.error('Custom Service Worker registration failed:', error);
+            console.log('Falling back to Flutter Service Worker...');
           });
       });
     }
@@ -963,6 +973,7 @@
   </script>
 </body>
 </html>
+
 
 
 

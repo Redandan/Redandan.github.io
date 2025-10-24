@@ -3,7 +3,7 @@
 
 // ????蝺拙??迂嚗??怎??祈?
 const getCacheName = () => {
-  const version = '1.0.355'; // 敺?meta 璅惜?憓????
+  const version = '1.0.356'; // 敺?meta 璅惜?憓????
   return `agora-market-v${version}`;
 };
 
@@ -274,4 +274,5 @@ self.addEventListener('error', function(event) {
 self.addEventListener('unhandledrejection', function(event) {
   console.error('Service Worker: ?芾??? Promise ??', event.reason);
 });
+
 
