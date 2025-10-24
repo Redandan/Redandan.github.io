@@ -1,9 +1,9 @@
 ﻿// Agora Market Service Worker
-// ???券?蝺???
+// 處理推送通知和離線功能
 
-// ????蝺拙??迂嚗??怎??祈?
+// 動態生成緩存名稱，包含版本號
 const getCacheName = () => {
-  const version = '1.0.356'; // 敺?meta 璅惜?憓????
+  const version = '1.0.357'; // 從 meta 標籤或環境變量獲取
   return `agora-market-v${version}`;
 };
 
@@ -19,52 +19,52 @@ const urlsToCache = [
   '/icons/Icon-120.png',
 ];
 
-// 摰? Service Worker
+// 安裝 Service Worker
 self.addEventListener('install', function(event) {
-  console.log('Service Worker: 摰?銝?..');
+  console.log('Service Worker: 安裝中...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(function(cache) {
-        console.log('Service Worker: 蝺拙??辣');
+        console.log('Service Worker: 緩存文件');
         return cache.addAll(urlsToCache);
       })
       .then(function() {
-        console.log('Service Worker: 摰?摰?');
+        console.log('Service Worker: 安裝完成');
         return self.skipWaiting();
       })
   );
 });
 
-// 瞈瘣?Service Worker
+// 激活 Service Worker
 self.addEventListener('activate', function(event) {
-  console.log('Service Worker: 瞈瘣颱葉...');
+  console.log('Service Worker: 激活中...');
   event.waitUntil(
     caches.keys().then(function(cacheNames) {
       return Promise.all(
         cacheNames.map(function(cacheName) {
           if (cacheName !== CACHE_NAME) {
-            console.log('Service Worker: ?芷?楨摮?, cacheName);
+            console.log('Service Worker: 刪除舊緩存', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
     }).then(function() {
-      console.log('Service Worker: 瞈瘣餃???);
+      console.log('Service Worker: 激活完成');
       return self.clients.claim();
     })
   );
 });
 
-// ?蝬脩窗隢? - 蝬脩窗?芸?蝑
+// 攔截網絡請求 - 網絡優先策略
 self.addEventListener('fetch', function(event) {
-  // 撠 HTML ?辣嚗蝙?函雯蝯∪????
+  // 對於 HTML 文件，使用網絡優先策略
   if (event.request.destination === 'document' || 
       event.request.url.includes('index.html') ||
       event.request.url.includes('official.html')) {
     event.respondWith(
       fetch(event.request)
         .then(function(response) {
-          // 憒?蝬脩窗隢???嚗?啁楨摮?
+          // 如果網絡請求成功，更新緩存
           if (response && response.status === 200) {
             const responseToCache = response.clone();
             caches.open(CACHE_NAME)
@@ -75,12 +75,12 @@ self.addEventListener('fetch', function(event) {
           return response;
         })
         .catch(function() {
-          // 蝬脩窗憭望???餈?蝺拙??
+          // 網絡失敗時，返回緩存版本
           return caches.match(event.request);
         })
     );
   } else {
-    // 撠?嗡?鞈?嚗蝙?函楨摮????
+    // 對於其他資源，使用緩存優先策略
     event.respondWith(
       caches.match(event.request)
         .then(function(response) {
@@ -106,14 +106,14 @@ self.addEventListener('fetch', function(event) {
   }
 });
 
-// ???券
+// 處理推送通知
 self.addEventListener('push', function(event) {
-  console.log('?? [SERVICE_WORKER] ?嗅?券鈭辣');
+  console.log('🔔 [SERVICE_WORKER] 收到推送通知事件');
   
-  // 瑼Ｘ?臬??iOS PWA 璅∪?
+  // 檢查是否為 iOS PWA 模式
   const isIOSPWA = event.data && event.data.json().isIOSPWA;
   
-  // 瑼Ｘ?冽閮剔蔭嚗??蜓蝺??潮??荔?
+  // 檢查用戶設置（通過向主線程發送消息）
   self.clients.matchAll().then(clients => {
     if (clients.length > 0) {
       clients[0].postMessage({
@@ -126,7 +126,7 @@ self.addEventListener('push', function(event) {
   
   let notificationData = {
     title: 'Agora Market',
-    body: '?冽??啁??',
+    body: '您有新的通知',
     icon: '/icons/Icon-192.png',
     badge: '/icons/Icon-120.png',
     tag: 'agora-market-notification',
@@ -134,18 +134,18 @@ self.addEventListener('push', function(event) {
     actions: [
       {
         action: 'open',
-        title: '?亦?',
+        title: '查看',
         icon: '/icons/Icon-120.png'
       },
       {
         action: 'close',
-        title: '??',
+        title: '關閉',
         icon: '/icons/Icon-120.png'
       }
     ]
   };
   
-  // 憒?????閫??銝虫蝙??
+  // 如果有推送數據，解析並使用
   if (event.data) {
     try {
       const data = event.data.json();
@@ -167,21 +167,21 @@ self.addEventListener('push', function(event) {
   event.waitUntil(
     self.registration.showNotification(notificationData.title, notificationData)
       .then(() => {
-        console.log('??[SERVICE_WORKER] ?憿舐內??');
+        console.log('✅ [SERVICE_WORKER] 通知顯示成功');
       })
       .catch((error) => {
-        console.error('??[SERVICE_WORKER] ?憿舐內憭望?:', error);
+        console.error('❌ [SERVICE_WORKER] 通知顯示失敗:', error);
       })
   );
 });
 
-// ???暺?
+// 處理通知點擊
 self.addEventListener('notificationclick', function(event) {
-  console.log('?? [SERVICE_WORKER] ?鋡恍???);
+  console.log('🔔 [SERVICE_WORKER] 通知被點擊');
   
   event.notification.close();
   
-  // ?潮???隞嗅銝餌?蝔?
+  // 發送點擊事件到主線程
   self.clients.matchAll().then(clients => {
     if (clients.length > 0) {
       clients[0].postMessage({
@@ -193,11 +193,11 @@ self.addEventListener('notificationclick', function(event) {
   });
   
   if (event.action === 'open' || !event.action) {
-    // ???
+    // 打開應用
     event.waitUntil(
       clients.matchAll({ type: 'window', includeUncontrolled: true })
         .then(function(clientList) {
-          // 憒?撌脩??????????啗府蝒
+          // 如果已經有窗口打開，聚焦到該窗口
           for (let i = 0; i < clientList.length; i++) {
             const client = clientList[i];
             if (client.url === '/' && 'focus' in client) {
@@ -205,74 +205,72 @@ self.addEventListener('notificationclick', function(event) {
             }
           }
           
-          // 憒?瘝?蝒??嚗??蝒
+          // 如果沒有窗口打開，打開新窗口
           if (clients.openWindow) {
             return clients.openWindow('/');
           }
         })
         .catch((error) => {
-          console.error('??[SERVICE_WORKER] 蝒??憭望?:', error);
+          console.error('❌ [SERVICE_WORKER] 窗口操作失敗:', error);
         })
     );
   }
 });
 
-// ?????
+// 處理通知關閉
 self.addEventListener('notificationclose', function(event) {
-  console.log('?? [SERVICE_WORKER] ?鋡恍???);
+  console.log('🔔 [SERVICE_WORKER] 通知被關閉');
 });
 
-// ??敺?郊
+// 處理後台同步
 self.addEventListener('sync', function(event) {
-  console.log('Service Worker: 敺?郊', event.tag);
+  console.log('Service Worker: 後台同步', event.tag);
   
   if (event.tag === 'background-sync') {
     event.waitUntil(doBackgroundSync());
   }
 });
 
-// 敺?郊?賣
+// 後台同步函數
 function doBackgroundSync() {
-  console.log('Service Worker: ?瑁?敺?郊');
-  // ?券ㄐ?瑁??閬?甇亦?隞餃?
+  console.log('Service Worker: 執行後台同步');
+  // 在這裡執行需要同步的任務
   return Promise.resolve();
 }
 
-// ??瘨
+// 處理消息
 self.addEventListener('message', function(event) {
-  console.log('Service Worker: ?嗅瘨', event.data);
+  console.log('Service Worker: 收到消息', event.data);
   
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
   
-  // ??撘瑕?湔隢?
+  // 處理強制更新請求
   if (event.data && event.data.type === 'FORCE_UPDATE') {
-    console.log('Service Worker: 撘瑕?湔蝺拙?');
+    console.log('Service Worker: 強制更新緩存');
     event.waitUntil(
       caches.keys().then(function(cacheNames) {
         return Promise.all(
           cacheNames.map(function(cacheName) {
-            console.log('Service Worker: 皜蝺拙?', cacheName);
+            console.log('Service Worker: 清除緩存', cacheName);
             return caches.delete(cacheName);
           })
         );
       }).then(function() {
-        console.log('Service Worker: 蝺拙?皜摰?嚗??啣?鋆?);
+        console.log('Service Worker: 緩存清除完成，重新安裝');
         return self.skipWaiting();
       })
     );
   }
 });
 
-// ?航炊??
+// 錯誤處理
 self.addEventListener('error', function(event) {
-  console.error('Service Worker: ?潛??航炊', event.error);
+  console.error('Service Worker: 發生錯誤', event.error);
 });
 
-// ?芾??? Promise ??
+// 未處理的 Promise 拒絕
 self.addEventListener('unhandledrejection', function(event) {
-  console.error('Service Worker: ?芾??? Promise ??', event.reason);
+  console.error('Service Worker: 未處理的 Promise 拒絕', event.reason);
 });
-
-
