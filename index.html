@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?ˆæœ¬?–ç·©å­˜æ?è­?-->
-    <meta name="cache-version" content="1.0.385">
+    <meta name="cache-version" content="1.0.386">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -25,7 +25,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
-  <meta name="version" content="1.0.385+386">
+  <meta name="version" content="1.0.386+387">
 
   <!-- Cross-Origin Isolation Headers for SharedArrayBuffers -->
   <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
@@ -59,7 +59,7 @@
   <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.385">
+  <link rel="manifest" href="manifest.json?v=1.0.386">
 
   <!-- WASM æ¨¡å?è­¦å? -->
   <script>
@@ -527,12 +527,12 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.384</div>
+      <div class="loading-version" id="version-display">v1.0.385</div>
     </div>
   </div>
   
-  <script src="audio_analyzer.js?v=1.0.385"></script>
-  <script src="unified_push_bridge.js?v=1.0.385"></script>
+  <script src="audio_analyzer.js?v=1.0.386"></script>
+  <script src="unified_push_bridge.js?v=1.0.386"></script>
   
   <!-- Web Push JavaScript API -->
   <script>
@@ -792,83 +792,114 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.385" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.386" async></script>
   
   <!-- Service Worker è¨»å? -->
   <script>
     // è¨»å? Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        // ç­‰å? Flutter ?å??–å??å??è¨»?Šæ??‘ç? Service Worker
-        setTimeout(function() {
-          // æª¢æŸ¥?¯å¦å·²ç???Service Worker ?¨é?è¡?
-          navigator.serviceWorker.getRegistration().then(function(existingRegistration) {
-            if (existingRegistration && existingRegistration.active) {
-              console.log('Existing Service Worker found:', existingRegistration.active.scriptURL);
-              // å¦‚æ?å­˜åœ¨ Flutter Service Workerï¼Œæ??‘ä?è¦†è?å®?
-              if (existingRegistration.active.scriptURL.includes('flutter_service_worker')) {
-                console.log('Flutter Service Worker detected, skipping custom registration');
-                return;
-              }
-            }
-            
-            // è¨»å??‘å€‘ç??ªå?ç¾?Service Worker
-            navigator.serviceWorker.register('/service-worker.js?v=' + Date.now())
-              .then(function(registration) {
-                console.log('Service Worker registered successfully:', registration.scope);
-                
-                // ??½ Service Worker æ¶ˆæ¯
-                navigator.serviceWorker.addEventListener('message', function(event) {
-                  console.log('Received Service Worker message:', event.data);
-                  
-                  // å°‡æ??¯å‚³?çµ¦ Flutter
-                  if (window.flutter_inappwebview) {
-                    window.flutter_inappwebview.callHandler('handleServiceWorkerMessage', event.data);
-                  } else if (window.registerMessageHandler) {
-                    window.registerMessageHandler(event.data);
+        // å»¶å?è¨»å?ï¼šç?å¾…é??¢å¯è¦?+ Flutter é¦–å?æ¸²æ?å¾?+ é¡å?å»¶æ?
+        (function delaySWRegistration() {
+          const isLocalhost = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+          if (isLocalhost) {
+            console.log('Skipping Service Worker registration on localhost for development stability');
+            return;
+          }
+
+          function whenVisible() {
+            return new Promise(resolve => {
+              if (document.visibilityState === 'visible') return resolve();
+              const onVis = () => {
+                if (document.visibilityState === 'visible') {
+                  document.removeEventListener('visibilitychange', onVis);
+                  resolve();
+                }
+              };
+              document.addEventListener('visibilitychange', onVis);
+            });
+          }
+
+          function whenFlutterFirstFrame() {
+            return new Promise(resolve => {
+              let resolved = false;
+              const onFirst = () => { if (!resolved) { resolved = true; window.removeEventListener('flutter-first-frame', onFirst); resolve(); } };
+              window.addEventListener('flutter-first-frame', onFirst);
+              // ä¿é?ï¼šè‹¥äº‹ä»¶?ªè§¸?¼ï?5 ç§’å??ªå?ç¹¼ç?
+              setTimeout(() => { if (!resolved) { resolved = true; window.removeEventListener('flutter-first-frame', onFirst); resolve(); } }, 5000);
+            });
+          }
+
+          Promise.all([whenVisible(), whenFlutterFirstFrame()]).then(() => {
+            setTimeout(function() {
+              // æª¢æŸ¥?¯å¦å·²ç???Service Worker ?¨é?è¡?
+              navigator.serviceWorker.getRegistration().then(function(existingRegistration) {
+                if (existingRegistration && existingRegistration.active) {
+                  console.log('Existing Service Worker found:', existingRegistration.active.scriptURL);
+                  // å¦‚æ?å­˜åœ¨ Flutter Service Workerï¼Œæ??‘ä?è¦†è?å®?
+                  if (existingRegistration.active.scriptURL.includes('flutter_service_worker')) {
+                    console.log('Flutter Service Worker detected, skipping custom registration');
+                    return;
                   }
-                });
-                
-                // æª¢æŸ¥?´æ–°
-                registration.addEventListener('updatefound', function() {
-                  const newWorker = registration.installing;
-                  newWorker.addEventListener('statechange', function() {
-                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                      // ?ªå??´æ–°ï¼Œä??ç¤º?¨æˆ¶
-                      console.log('New Service Worker installed, updating...');
-                      newWorker.postMessage({ type: 'SKIP_WAITING' });
-                      window.location.reload();
-                    }
+                }
+
+                // è¨»å??‘å€‘ç??ªå?ç¾?Service Worker
+                navigator.serviceWorker.register('/service-worker.js?v=' + Date.now())
+                  .then(function(registration) {
+                    console.log('Service Worker registered successfully:', registration.scope);
+
+                    // ??½ Service Worker æ¶ˆæ¯
+                    navigator.serviceWorker.addEventListener('message', function(event) {
+                      console.log('Received Service Worker message:', event.data);
+
+                      // å°‡æ??¯å‚³?çµ¦ Flutter
+                      if (window.flutter_inappwebview) {
+                        window.flutter_inappwebview.callHandler('handleServiceWorkerMessage', event.data);
+                      } else if (window.registerMessageHandler) {
+                        window.registerMessageHandler(event.data);
+                      }
+                    });
+
+                    // æª¢æŸ¥?´æ–°
+                    registration.addEventListener('updatefound', function() {
+                      const newWorker = registration.installing;
+                      newWorker.addEventListener('statechange', function() {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                          // ?¨é²?¥ç®¡ï¼šä?ç«‹å³ skipWaiting/reloadï¼Œé¿?æ??·é€²è?ä¸­ç?è«‹æ?
+                          console.log('New Service Worker installed; deferring activation to next load');
+                        }
+                      });
+                    });
+
+                    // å®šæ?æª¢æŸ¥?´æ–°ï¼ˆæ?5?†é?ï¼?
+                    setInterval(function() {
+                      registration.update();
+                    }, 5 * 60 * 1000);
+
+                    // ?´éœ²å¼·åˆ¶?´æ–°?½æ•¸
+                    window.forceUpdate = function() {
+                      console.log('Force updating Service Worker...');
+                      if (navigator.serviceWorker.controller) {
+                        navigator.serviceWorker.controller.postMessage({ type: 'FORCE_UPDATE' });
+                      } else {
+                        console.log('No Service Worker controller found, trying to register...');
+                        navigator.serviceWorker.register('/service-worker.js?v=' + Date.now())
+                          .then(reg => {
+                            console.log('Service Worker registered for force update');
+                            reg.update();
+                          })
+                          .catch(err => console.error('Force update registration failed:', err));
+                      }
+                    };
+                  })
+                  .catch(function(error) {
+                    console.error('Custom Service Worker registration failed:', error);
+                    console.log('Falling back to Flutter Service Worker...');
                   });
-                });
-                
-                // å®šæ?æª¢æŸ¥?´æ–°ï¼ˆæ?5?†é?ï¼?
-                setInterval(function() {
-                  registration.update();
-                }, 5 * 60 * 1000);
-                
-                // ?´éœ²å¼·åˆ¶?´æ–°?½æ•¸
-                window.forceUpdate = function() {
-                  console.log('Force updating Service Worker...');
-                  if (navigator.serviceWorker.controller) {
-                    navigator.serviceWorker.controller.postMessage({ type: 'FORCE_UPDATE' });
-                  } else {
-                    console.log('No Service Worker controller found, trying to register...');
-                    navigator.serviceWorker.register('/service-worker.js?v=' + Date.now())
-                      .then(reg => {
-                        console.log('Service Worker registered for force update');
-                        reg.update();
-                      })
-                      .catch(err => console.error('Force update registration failed:', err));
-                  }
-                };
-              })
-              .catch(function(error) {
-                console.error('Custom Service Worker registration failed:', error);
-                console.log('Falling back to Flutter Service Worker...');
               });
+            }, 4000); // é¡å?å»¶æ? 4 ç§’ï??ä??‡é?å±?API ?„è?çª?
           });
-        }, 3000); // ç­‰å? 3 ç§’è? Flutter å®Œæ??å???
+        })();
       });
     }
 
@@ -960,13 +991,53 @@
       
       console.log('[SUCCESS] Showing registration success message');
       
-      // ç°¡å??‡å?é¡¯ç¤º
-      loadingText.textContent = 'Registration successful, logging in...';
-      
-      // ç°¡å??€?‹é¡¯ç¤?
-      if (versionDisplay) {
-        versionDisplay.textContent = 'Auto-logging in...';
+      // èªè?æª¢æ¸¬
+      function detectLang() {
+        const url = new URL(window.location.href);
+        const qpLang = url.searchParams.get('lang'); // e.g., zh-TW
+        if (qpLang) return qpLang;
+        if (document.documentElement && document.documentElement.lang) return document.documentElement.lang;
+        return navigator.language || navigator.userLanguage || 'en';
       }
+      
+      const lang = (detectLang() || 'en').toLowerCase();
+      
+      // å¤šè?å­—å…¸
+      const i18n = {
+        'en': {
+          loadingText: 'Registration successful, logging in...',
+          versionText: 'Auto-logging in...'
+        },
+        'zh-tw': {
+          loadingText: 'è¨»å??å?ï¼Œæ­£?¨ç™»?¥â€?,
+          versionText: '?ªå??»å…¥ä¸­â€?
+        },
+        'zh-hant': {
+          loadingText: 'è¨»å??å?ï¼Œæ­£?¨ç™»?¥â€?,
+          versionText: '?ªå??»å…¥ä¸­â€?
+        },
+        'zh': {
+          loadingText: 'æ³¨å??å?ï¼Œæ­£?¨ç™»å½•â€?,
+          versionText: '?ªåŠ¨?»å?ä¸­â€?
+        },
+        'zh-cn': {
+          loadingText: 'æ³¨å??å?ï¼Œæ­£?¨ç™»å½•â€?,
+          versionText: '?ªåŠ¨?»å?ä¸­â€?
+        }
+      };
+      
+      function resolveLocale(map, locale) {
+        if (map[locale]) return map[locale];
+        // ?—è©¦èªç³»?ç¶´?¹é?ï¼ˆå? zh-CN -> zhï¼?
+        const base = locale.split('-')[0];
+        if (map[base]) return map[base];
+        return map['en'];
+      }
+      
+      const t = resolveLocale(i18n, lang);
+      
+      // é¡¯ç¤º?¬åœ°?–æ?å­—ï??…ä¸»è¡Œè??¯ï?ä¸æ›´?°å‰¯è¡Œç??‹ï?
+      loadingText.textContent = t.loadingText;
       
       console.log('Registration success message displayed');
     }
@@ -988,6 +1059,7 @@
   </script>
 </body>
 </html>
+
 
 
 
