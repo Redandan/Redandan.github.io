@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?àÊú¨?ñÁ∑©Â≠òÊ?Ë≠?-->
-    <meta name="cache-version" content="1.0.392">
+    <meta name="cache-version" content="1.0.393">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -25,7 +25,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
-  <meta name="version" content="1.0.392+393">
+  <meta name="version" content="1.0.393+394">
 
   <script>
     // Early global error diagnostics to capture exact source of prod-only failures
@@ -52,6 +52,32 @@
       console.log('[DIAG] index.html diagnostics installed, version meta:', (document.querySelector('meta[name="version"]')||{}).content);
     })();
   </script>
+
+  <style>
+    #update-banner {
+      position: fixed;
+      left: 16px;
+      right: 16px;
+      bottom: 16px;
+      z-index: 10000;
+      display: none;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: rgba(0,0,0,0.85);
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    }
+    #update-banner button {
+      margin-left: 12px;
+      padding: 6px 10px;
+      border: 0;
+      border-radius: 6px;
+      background: #6A4C93;
+      color: #fff;
+      cursor: pointer;
+    }
+  </style>
 
   <!-- Cross-Origin Isolation Headers for SharedArrayBuffers -->
   
@@ -84,7 +110,7 @@
   <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.392">
+  <link rel="manifest" href="manifest.json?v=1.0.393">
 
   <!-- WASM Ê®°Â?Ë≠¶Â? -->
   <script>
@@ -553,7 +579,7 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.391</div>
+      <div class="loading-version" id="version-display">v1.0.392</div>
     </div>
   </div>
   
@@ -813,7 +839,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.392" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.393" async></script>
   
   <!-- Service Worker Ë®ªÂ?Ôºà‰Ωø??Flutter ?ßÂª∫ SWÔºõËá™ÂÆöÁæ© SW Â∑≤Â??®Ô? -->
   <script>
@@ -977,8 +1003,96 @@
       }, fallbackMs);
     })();
   </script>
+  
+  <script>
+    // Update flow optimization: version persistence, reset param, SW update prompt
+    (function() {
+      'use strict';
+      const qs = new URL(location.href).searchParams;
+      const versionMeta = (document.querySelector('meta[name="version"]')||{}).content || '';
+      const VERSION_KEY = 'app_version_meta';
+
+      // Self-clean routine via ?reset=1
+      if (qs.get('reset') === '1') {
+        (async () => {
+          try {
+            if ('serviceWorker' in navigator) {
+              const regs = await navigator.serviceWorker.getRegistrations();
+              await Promise.all(regs.map(r => r.unregister().catch(()=>{})));
+            }
+            if (window.caches) {
+              const keys = await caches.keys();
+              await Promise.all(keys.map(k => caches.delete(k).catch(()=>{})));
+            }
+            try { localStorage.clear(); } catch(_) {}
+            try { sessionStorage.clear(); } catch(_) {}
+          } finally {
+            const url = new URL(location.href);
+            url.searchParams.delete('reset');
+            location.replace(url.pathname + url.search + url.hash);
+          }
+        })();
+        return; // stop further init on this load
+      }
+
+      // Create update banner lazily
+      let bannerEl;
+      function showUpdateBanner() {
+        if (!bannerEl) {
+          bannerEl = document.createElement('div');
+          bannerEl.id = 'update-banner';
+          bannerEl.innerHTML = '<span>?âÊñ∞?àÊú¨?ØÁî®</span> <button id="update-reload-btn">Á´ãÂç≥?∑Êñ∞</button>';
+          document.body.appendChild(bannerEl);
+          const btn = bannerEl.querySelector('#update-reload-btn');
+          btn.addEventListener('click', function() {
+            try { navigator.serviceWorker && navigator.serviceWorker.getRegistration().then(r => r && r.update()); } catch(_) {}
+            location.reload();
+          });
+        }
+        bannerEl.style.display = 'block';
+      }
+
+      // Persist version and detect changes across visits
+      try {
+        const prev = localStorage.getItem(VERSION_KEY);
+        if (prev && prev !== versionMeta) {
+          // Version changed -> try to refresh SW and prompt user to reload
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistration().then(function(reg) {
+              if (reg) {
+                try { reg.update(); } catch(_) {}
+                if (reg.waiting) {
+                  try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch(_) {}
+                }
+                reg.addEventListener('updatefound', function() {
+                  const nw = reg.installing;
+                  if (nw) {
+                    nw.addEventListener('statechange', function() {
+                      if (nw.state === 'installed') {
+                        showUpdateBanner();
+                      }
+                    });
+                  }
+                });
+              }
+            });
+          }
+          showUpdateBanner();
+        }
+        localStorage.setItem(VERSION_KEY, versionMeta);
+      } catch(_) {}
+
+      // Auto-reload once updated SW takes control
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('controllerchange', function() {
+          location.reload();
+        });
+      }
+    })();
+  </script>
 </body>
 </html>
+
 
 
 
