@@ -3,7 +3,7 @@
 
 // 動態生成緩存名稱，包含版本號
 const getCacheName = () => {
-  const version = '1.0.383'; // 從 meta 標籤或環境變量獲取
+  const version = '1.0.384'; // 從 meta 標籤或環境變量獲取
   return `agora-market-v${version}`;
 };
 
@@ -287,6 +287,7 @@ self.addEventListener('error', function(event) {
 self.addEventListener('unhandledrejection', function(event) {
   console.error('Service Worker: 未處理的 Promise 拒絕', event.reason);
 });
+
 
 
 
