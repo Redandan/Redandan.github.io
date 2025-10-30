@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?ˆæœ¬?–ç·©å­˜æ?è­?-->
-    <meta name="cache-version" content="1.0.393">
+    <meta name="cache-version" content="1.0.394">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -25,7 +25,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
-  <meta name="version" content="1.0.393+394">
+  <meta name="version" content="1.0.394+395">
 
   <script>
     // Early global error diagnostics to capture exact source of prod-only failures
@@ -50,6 +50,35 @@
         } catch(_) {}
       });
       console.log('[DIAG] index.html diagnostics installed, version meta:', (document.querySelector('meta[name="version"]')||{}).content);
+    })();
+  </script>
+  
+  <button id="dev-reset-btn" aria-hidden="true" tabindex="-1" style="position:fixed; right:-9999px; bottom:-9999px; width:1px; height:1px; opacity:0; pointer-events:auto;">reset</button>
+  <script>
+    // Hidden developer reset button: clears SW, caches, storages then reloads
+    (function(){
+      const btn = document.getElementById('dev-reset-btn');
+      async function doReset(){
+        try {
+          if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(regs.map(r => r.unregister().catch(()=>{})));
+          }
+          if (window.caches) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(k => caches.delete(k).catch(()=>{})));
+          }
+          try { localStorage.clear(); } catch(_) {}
+          try { sessionStorage.clear(); } catch(_) {}
+        } finally {
+          location.reload();
+        }
+      }
+      if (btn) {
+        btn.addEventListener('click', doReset);
+      }
+      // Also expose for console-based manual trigger
+      window.__devReset = doReset;
     })();
   </script>
 
@@ -110,7 +139,7 @@
   <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.393">
+  <link rel="manifest" href="manifest.json?v=1.0.394">
 
   <!-- WASM æ¨¡å?è­¦å? -->
   <script>
@@ -579,7 +608,7 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.392</div>
+      <div class="loading-version" id="version-display">v1.0.393</div>
     </div>
   </div>
   
@@ -839,7 +868,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.393" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.394" async></script>
   
   <!-- Service Worker è¨»å?ï¼ˆä½¿??Flutter ?§å»º SWï¼›è‡ªå®šç¾© SW å·²å??¨ï? -->
   <script>
@@ -1092,6 +1121,7 @@
   </script>
 </body>
 </html>
+
 
 
 
