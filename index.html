@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?ˆæœ¬?–ç·©å­˜æ?è­?-->
-    <meta name="cache-version" content="1.0.404">
+    <meta name="cache-version" content="1.0.405">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -25,7 +25,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
-  <meta name="version" content="1.0.404+405">
+  <meta name="version" content="1.0.405+406">
 
   <script>
     // Early global error diagnostics to capture exact source of prod-only failures
@@ -139,7 +139,7 @@
   <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.404">
+  <link rel="manifest" href="manifest.json?v=1.0.405">
 
   <!-- WASM æ¨¡å?è­¦å? -->
   <script>
@@ -608,7 +608,7 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.403</div>
+      <div class="loading-version" id="version-display">v1.0.404</div>
     </div>
   </div>
   
@@ -868,7 +868,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.404" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.405" async></script>
   
   <!-- Service Worker è¨»å?ï¼ˆä½¿??Flutter ?§å»º SWï¼›è‡ªå®šç¾© SW å·²å??¨ï? -->
   <script>
@@ -1072,26 +1072,32 @@
       if (qs.get('reset') === '1') {
         (async () => {
           try {
-            console.log('[RESET] ?‹å?æ¸…é™¤?€?‰ç·©å­˜å? Service Worker...');
+            console.log('[RESET] \u958b\u59cb\u6e05\u9664\u6240\u6709\u7de8\u78bc\u548c Service Worker...'); // "?‹å?æ¸…é™¤?€?‰ç·©å­˜å? Service Worker..."
             if ('serviceWorker' in navigator) {
               const regs = await navigator.serviceWorker.getRegistrations();
-              console.log('[RESET] ?¾åˆ°', regs.length, '??Service Worker è¨»å?');
+              console.log('[RESET] \u627e\u5230', regs.length, '\u500b Service Worker \u8a3b\u518a'); // "?¾åˆ° X ??Service Worker è¨»å?"
               await Promise.all(regs.map(r => {
-                console.log('[RESET] ?–æ?è¨»å? Service Worker:', r.scope);
-                return r.unregister().catch(err => console.warn('[RESET] ?–æ?è¨»å?å¤±æ?:', err));
+                console.log('[RESET] \u53d6\u6d88\u8a3b\u518a Service Worker:', r.scope); // "?–æ?è¨»å? Service Worker:"
+                return r.unregister().catch(err => console.warn('[RESET] \u53d6\u6d88\u8a3b\u518a\u5931\u6557:', err)); // "?–æ?è¨»å?å¤±æ?:"
               }));
             }
             if (window.caches) {
               const keys = await caches.keys();
-              console.log('[RESET] ?¾åˆ°', keys.length, '?‹ç·©å­?);
+              console.log('[RESET] \u627e\u5230', keys.length, '\u500b\u7de8\u78bc'); // "?¾åˆ° X ?‹ç·©å­?
               await Promise.all(keys.map(k => {
-                console.log('[RESET] ?ªé™¤ç·©å?:', k);
-                return caches.delete(k).catch(err => console.warn('[RESET] ?ªé™¤ç·©å?å¤±æ?:', err));
+                console.log('[RESET] \u522a\u9664\u7de8\u78bc:', k); // "?ªé™¤ç·©å?:"
+                return caches.delete(k).catch(err => console.warn('[RESET] \u522a\u9664\u7de8\u78bc\u5931\u6557:', err)); // "?ªé™¤ç·©å?å¤±æ?:"
               }));
             }
-            try { localStorage.clear(); console.log('[RESET] localStorage å·²æ???); } catch(_) {}
-            try { sessionStorage.clear(); console.log('[RESET] sessionStorage å·²æ???); } catch(_) {}
-            console.log('[RESET] æ¸…é™¤å®Œæ?ï¼Œæ??™é??°è???..');
+            try { 
+              localStorage.clear(); 
+              console.log('[RESET] localStorage \u5df2\u6e05\u9664'); // "å·²æ???
+            } catch(_) {}
+            try { 
+              sessionStorage.clear(); 
+              console.log('[RESET] sessionStorage \u5df2\u6e05\u9664'); // "å·²æ???
+            } catch(_) {}
+            console.log('[RESET] \u6e05\u9664\u5b8c\u6210\uff0c\u6e96\u5099\u91cd\u65b0\u8f09\u5165...'); // "æ¸…é™¤å®Œæ?ï¼Œæ??™é??°è???.."
           } finally {
             const url = new URL(location.href);
             url.searchParams.delete('reset');
@@ -1126,7 +1132,7 @@
             // ?ˆæœ¬è®Šå?ï¼Œè¨­ç½®æ??¤æ?è¨?
             localStorage.setItem(VERSION_MARKER_KEY, versionMeta);
             if (storedVersion && storedVersion !== '') {
-              console.log('[CACHE_SYNC] æª¢æ¸¬?°ç??¬è???', storedVersion, '??, versionMeta);
+              console.log('[CACHE_SYNC] \u6aa2\u6e2c\u5230\u7248\u672c\u8b8a\u5316:', storedVersion, '\u2192', versionMeta); // "æª¢æ¸¬?°ç??¬è???"
               localStorage.setItem(CACHE_CLEAR_FLAG_KEY, currentTime.toString());
               notifyServiceWorkerToClearCache();
             }
@@ -1135,7 +1141,7 @@
           // è¨­ç½®æª¢æŸ¥?‚é?
           localStorage.setItem(LAST_CACHE_CHECK_KEY, currentTime.toString());
         } catch (error) {
-          console.warn('[CACHE_SYNC] ?å??–æ?è¨˜å¤±??', error);
+          console.warn('[CACHE_SYNC] \u521d\u59cb\u5316\u6a19\u8a18\u5931\u6557:', error); // "?å??–æ?è¨˜å¤±??"
         }
       }
       
@@ -1151,12 +1157,12 @@
           if (!lastCheck) {
             // ?‚é??³ä?å¤±ï??¯èƒ½?¯æ??¤ç·©å­?
             shouldClear = true;
-            reason = '?‚é??³ä?å¤?;
+            reason = '\u6642\u9593\u6233\u4e22\u5931'; // "?‚é??³ä?å¤?
           } else {
             const timeDiff = currentTime - parseInt(lastCheck, 10);
             if (timeDiff > DETECTION_THRESHOLD) {
               shouldClear = true;
-              reason = `?‚é?å·®ç•°å¸? ${Math.round(timeDiff / 1000)}ç§’`;
+              reason = `\u6642\u9593\u5dee\u7570\u5e38: ${Math.round(timeDiff / 1000)}\u79d2`; // "?‚é?å·®ç•°å¸? Xç§?
             }
           }
           
@@ -1165,7 +1171,7 @@
           if (!sessionMarker) {
             // ?ƒè©±æ¨™è?ä¸Ÿå¤±ï¼ˆsessionStorage è¢«æ??¤ï?
             shouldClear = true;
-            reason = reason ? reason + ', ?ƒè©±æ¨™è?ä¸Ÿå¤±' : '?ƒè©±æ¨™è?ä¸Ÿå¤±';
+            reason = reason ? reason + ', \u6703\u8a71\u6a19\u8a18\u4e22\u5931' : '\u6703\u8a71\u6a19\u8a18\u4e22\u5931'; // "?ƒè©±æ¨™è?ä¸Ÿå¤±"
           }
           
           // æª¢æ¸¬é»?3: æª¢æŸ¥?ˆæœ¬æ¨™è?
@@ -1173,7 +1179,7 @@
           const storedVersion = localStorage.getItem(VERSION_MARKER_KEY);
           if (storedVersion && storedVersion !== versionMeta) {
             shouldClear = true;
-            reason = reason ? reason + ', ?ˆæœ¬ä¸åŒ¹?? : '?ˆæœ¬ä¸åŒ¹??;
+            reason = reason ? reason + ', \u7248\u672c\u4e0d\u5339\u914d' : '\u7248\u672c\u4e0d\u5339\u914d'; // "?ˆæœ¬ä¸åŒ¹??
           }
           
           // æª¢æ¸¬é»?4: æª¢æŸ¥?¶ä??œéµ localStorage ?µï?å¦‚æ?å­˜åœ¨ï¼?
@@ -1182,11 +1188,11 @@
           // å¦‚æ?ä¹‹å??‰é€™ä??¸æ?ä½†ç¾?¨æ??‰ï?ä¸”æ??“æˆ³?°å¸¸ï¼Œå¯?½æ˜¯æ¸…é™¤ç·©å?
           if (shouldClear && (!accessToken && !userInfo)) {
             // ? å¼·?¤å?ï¼šå??‚æ»¿è¶³æ??“æˆ³?°å¸¸ä¸”é??µæ•¸?šä?å¤?
-            reason += ' (?œéµ?¸æ?ä¸Ÿå¤±)';
+            reason += ' (\u95dc\u9375\u6578\u64da\u4e22\u5931)'; // "?œéµ?¸æ?ä¸Ÿå¤±"
           }
           
           if (shouldClear) {
-            console.log('[CACHE_SYNC] æª¢æ¸¬?°ç·©å­˜æ???', reason);
+            console.log('[CACHE_SYNC] \u6aa2\u6e2c\u5230\u7de8\u78bc\u6e05\u9664:', reason); // "æª¢æ¸¬?°ç·©å­˜æ???"
             // è¨­ç½®æ¸…é™¤æ¨™è?
             localStorage.setItem(CACHE_CLEAR_FLAG_KEY, currentTime.toString());
             notifyServiceWorkerToClearCache();
@@ -1200,7 +1206,7 @@
           }
           
         } catch (error) {
-          console.warn('[CACHE_SYNC] æª¢æ¸¬ç·©å?æ¸…é™¤å¤±æ?:', error);
+          console.warn('[CACHE_SYNC] \u6aa2\u6e2c\u7de8\u78bc\u6e05\u9664\u5931\u6557:', error); // "æª¢æ¸¬ç·©å?æ¸…é™¤å¤±æ?:"
         }
       }
       
@@ -1212,10 +1218,10 @@
         if (!('serviceWorker' in navigator)) {
           if (clearCacheRetryCount < MAX_RETRIES) {
             clearCacheRetryCount++;
-            console.log(`[CACHE_SYNC] Service Worker ?ªå°±ç·’ï?${retryDelay}ms å¾Œé?è©?(${clearCacheRetryCount}/${MAX_RETRIES})`);
+            console.log(`[CACHE_SYNC] Service Worker \u672a\u5c31\u7e6e\uff0c${retryDelay}ms \u5f8c\u91cd\u8a66 (${clearCacheRetryCount}/${MAX_RETRIES})`); // "?ªå°±ç·’ï?Xms å¾Œé?è©?
             setTimeout(() => notifyServiceWorkerToClearCache(retryDelay * 2), retryDelay);
           } else {
-            console.warn('[CACHE_SYNC] Service Worker ?ªå°±ç·’ï?å·²é??°æ?å¤§é?è©¦æ¬¡??);
+            console.warn('[CACHE_SYNC] Service Worker \u672a\u5c31\u7e6e\uff0c\u5df2\u9054\u5230\u6700\u5927\u91cd\u8a66\u6b21\u6578'); // "?ªå°±ç·’ï?å·²é??°æ?å¤§é?è©¦æ¬¡??
           }
           return;
         }
@@ -1229,10 +1235,10 @@
                 timestamp: Date.now(),
                 reason: 'browser_cache_cleared'
               });
-              console.log('[CACHE_SYNC] ?šçŸ¥ Service Worker ?Œæ­¥æ¸…é™¤ç·©å?ï¼ˆé€šé? readyï¼?);
+              console.log('[CACHE_SYNC] \u901a\u77e5 Service Worker \u540c\u6b65\u6e05\u9664\u7de8\u78bc\uff08\u901a\u904e ready\uff09'); // "?šçŸ¥ Service Worker ?Œæ­¥æ¸…é™¤ç·©å?ï¼ˆé€šé? readyï¼?
             }
           }).catch(function(err) {
-            console.warn('[CACHE_SYNC] Service Worker ready å¤±æ?:', err);
+            console.warn('[CACHE_SYNC] Service Worker ready \u5931\u6557:', err); // "ready å¤±æ?:"
           });
           return;
         }
@@ -1240,7 +1246,7 @@
         // ?ç½®?è©¦è¨ˆæ•¸
         clearCacheRetryCount = 0;
         
-        console.log('[CACHE_SYNC] ?šçŸ¥ Service Worker ?Œæ­¥æ¸…é™¤ç·©å?');
+        console.log('[CACHE_SYNC] \u901a\u77e5 Service Worker \u540c\u6b65\u6e05\u9664\u7de8\u78bc'); // "?šçŸ¥ Service Worker ?Œæ­¥æ¸…é™¤ç·©å?"
         try {
           navigator.serviceWorker.controller.postMessage({
             type: 'SYNC_CLEAR_CACHE',
@@ -1248,7 +1254,7 @@
             reason: 'browser_cache_cleared'
           });
         } catch (error) {
-          console.error('[CACHE_SYNC] ?¼é€æ??¯å¤±??', error);
+          console.error('[CACHE_SYNC] \u767c\u9001\u6d88\u606f\u5931\u6557:', error); // "?¼é€æ??¯å¤±??"
           // å¤±æ??‚é?è©?
           if (clearCacheRetryCount < MAX_RETRIES) {
             clearCacheRetryCount++;
@@ -1271,7 +1277,7 @@
               case 'CHECK_CACHE_CLEAR_FLAG':
                 const clearFlag = localStorage.getItem(CACHE_CLEAR_FLAG_KEY);
                 if (clearFlag) {
-                  console.log('[CACHE_SYNC] Service Worker è©¢å?æ¸…é™¤æ¨™è?ï¼Œç™¼?¾æ?è¨˜å???);
+                  console.log('[CACHE_SYNC] Service Worker \u8a62\u554f\u6e05\u9664\u6a19\u8a18\uff0c\u767c\u73fe\u6a19\u8a18\u5b58\u5728'); // "è©¢å?æ¸…é™¤æ¨™è?ï¼Œç™¼?¾æ?è¨˜å???
                   // æ¸…é™¤æ¨™è?ä¸¦é€šçŸ¥ SW æ¸…é™¤ç·©å?
                   localStorage.removeItem(CACHE_CLEAR_FLAG_KEY);
                   notifyServiceWorkerToClearCache();
@@ -1279,19 +1285,19 @@
                 break;
                 
               case 'CACHES_SYNC_CLEARED':
-                console.log('[CACHE_SYNC] Service Worker å·²å?æ­¥æ??¤ç·©å­?, 
-                  'æ¸…é™¤?‚é?:', new Date(event.data.timestamp).toLocaleString());
+                console.log('[CACHE_SYNC] Service Worker \u5df2\u540c\u6b65\u6e05\u9664\u7de8\u78bc', // "å·²å?æ­¥æ??¤ç·©å­?
+                  '\u6e05\u9664\u6642\u9593:', new Date(event.data.timestamp).toLocaleString()); // "æ¸…é™¤?‚é?:"
                 // ?¯é¸ï¼šè‡ª?•é??°è??¥ï?å¦‚æ?è¶…é?30ç§’æœª?·æ–°ï¼?
                 const timeSinceLoad = Date.now() - performance.timing.navigationStart;
                 if (timeSinceLoad > 30000) {
-                  console.log('[CACHE_SYNC] å»ºè­°?æ–°è¼‰å…¥ä»¥ç²?–æ??°ç???);
+                  console.log('[CACHE_SYNC] \u5efa\u8b70\u91cd\u65b0\u8f09\u5165\u4ee5\u7372\u53d6\u6700\u65b0\u7248\u672c'); // "å»ºè­°?æ–°è¼‰å…¥ä»¥ç²?–æ??°ç???
                   // ?–æ?è¨»é?ä»¥å??¨è‡ª?•é??°è???
                   // setTimeout(() => location.reload(), 2000);
                 }
                 break;
                 
               case 'SW_ACTIVATED':
-                console.log('[CACHE_SYNC] Service Worker å·²æ?æ´»ï??ˆæœ¬:', event.data.version);
+                console.log('[CACHE_SYNC] Service Worker \u5df2\u6fc0\u6d3b\uff0c\u7248\u672c:', event.data.version); // "å·²æ?æ´»ï??ˆæœ¬:"
                 // Service Worker æ¿€æ´»å?ï¼Œé??°æª¢æ¸¬ä?æ¬?
                 setTimeout(detectBrowserCacheClear, 1000);
                 break;
@@ -1308,7 +1314,7 @@
           navigator.serviceWorker.ready.then(function() {
             attachMessageListener();
           }).catch(function(err) {
-            console.warn('[CACHE_SYNC] ?¡æ??„å?æ¶ˆæ¯??½??', err);
+            console.warn('[CACHE_SYNC] \u7121\u6cd5\u9644\u52a0\u6d88\u606f\u76e3\u807d\u5668:', err); // "?¡æ??„å?æ¶ˆæ¯??½??"
           });
         }
       }
@@ -1375,15 +1381,15 @@
       // å¼·åˆ¶?´æ–° Service Workerï¼ˆæ?æ¬¡é??¢è??¥éƒ½æª¢æŸ¥ï¼?
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(async function(regs) {
-          console.log('[SW_UPDATE] ?¾åˆ°', regs.length, '??Service Worker è¨»å?');
+          console.log('[SW_UPDATE] \u627e\u5230', regs.length, '\u500b Service Worker \u8a3b\u518a'); // "?¾åˆ° X ??Service Worker è¨»å?"
           for (const reg of regs) {
             try {
-              console.log('[SW_UPDATE] ?´æ–° Service Worker:', reg.scope);
+              console.log('[SW_UPDATE] \u66f4\u65b0 Service Worker:', reg.scope); // "?´æ–° Service Worker:"
               await reg.update();
               
               // å¦‚æ??‰ç?å¾…ä¸­??Service Workerï¼Œç??³æ?æ´?
               if (reg.waiting) {
-                console.log('[SW_UPDATE] ?¼ç¾ç­‰å?ä¸­ç? Service Workerï¼Œç™¼??SKIP_WAITING æ¶ˆæ¯');
+                console.log('[SW_UPDATE] \u767c\u73fe\u7b49\u5f85\u4e2d\u7684 Service Worker\uff0c\u767c\u9001 SKIP_WAITING \u6d88\u606f'); // "?¼ç¾ç­‰å?ä¸­ç? Service Workerï¼Œç™¼??SKIP_WAITING æ¶ˆæ¯"
                 reg.waiting.postMessage({ type: 'SKIP_WAITING' });
               }
               
@@ -1391,15 +1397,15 @@
               reg.addEventListener('updatefound', function() {
                 const newWorker = reg.installing;
                 if (newWorker) {
-                  console.log('[SW_UPDATE] ?¼ç¾?°ç? Service Workerï¼Œç???', newWorker.state);
+                  console.log('[SW_UPDATE] \u767c\u73fe\u65b0\u7684 Service Worker\uff0c\u72c0\u614b:', newWorker.state); // "?¼ç¾?°ç? Service Workerï¼Œç???"
                   newWorker.addEventListener('statechange', function() {
-                    console.log('[SW_UPDATE] Service Worker ?€?‹è???', newWorker.state);
+                    console.log('[SW_UPDATE] Service Worker \u72c0\u614b\u8b8a\u66f4:', newWorker.state); // "?€?‹è???"
                     if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                      console.log('[SW_UPDATE] ??Service Worker å·²å?è£ï?æº–å?æ¿€æ´?);
+                      console.log('[SW_UPDATE] \u65b0 Service Worker \u5df2\u5b89\u88dd\uff0c\u6e96\u5099\u6fc0\u6d3b'); // "??Service Worker å·²å?è£ï?æº–å?æ¿€æ´?
                       newWorker.postMessage({ type: 'SKIP_WAITING' });
                       // ?ªå??æ–°è¼‰å…¥
                       setTimeout(() => {
-                        console.log('[SW_UPDATE] ?ªå??æ–°è¼‰å…¥ä»¥æ??¨æ›´??);
+                        console.log('[SW_UPDATE] \u81ea\u52d5\u91cd\u65b0\u8f09\u5165\u4ee5\u61c9\u7528\u66f4\u65b0'); // "?ªå??æ–°è¼‰å…¥ä»¥æ??¨æ›´??
                         location.reload();
                       }, 1000);
                     }
@@ -1407,11 +1413,11 @@
                 }
               });
             } catch (err) {
-              console.warn('[SW_UPDATE] Service Worker ?´æ–°å¤±æ?:', err);
+              console.warn('[SW_UPDATE] Service Worker \u66f4\u65b0\u5931\u6557:', err); // "?´æ–°å¤±æ?:"
             }
           }
         }).catch(err => {
-          console.error('[SW_UPDATE] ?²å? Service Worker è¨»å?å¤±æ?:', err);
+          console.error('[SW_UPDATE] \u7372\u53d6 Service Worker \u8a3b\u518a\u5931\u6557:', err); // "?²å? Service Worker è¨»å?å¤±æ?:"
         });
       }
 
@@ -1481,6 +1487,7 @@
   </script>
 </body>
 </html>
+
 
 
 
