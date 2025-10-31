@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?ˆæœ¬?–ç·©å­˜æ?è­?-->
-    <meta name="cache-version" content="1.0.401">
+    <meta name="cache-version" content="1.0.402">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -25,7 +25,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
-  <meta name="version" content="1.0.401+402">
+  <meta name="version" content="1.0.402+403">
 
   <script>
     // Early global error diagnostics to capture exact source of prod-only failures
@@ -139,7 +139,7 @@
   <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.401">
+  <link rel="manifest" href="manifest.json?v=1.0.402">
 
   <!-- WASM æ¨¡å?è­¦å? -->
   <script>
@@ -608,7 +608,7 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.400</div>
+      <div class="loading-version" id="version-display">v1.0.401</div>
     </div>
   </div>
   
@@ -868,7 +868,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.401" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.402" async></script>
   
   <!-- Service Worker è¨»å?ï¼ˆä½¿??Flutter ?§å»º SWï¼›è‡ªå®šç¾© SW å·²å??¨ï? -->
   <script>
@@ -1070,13 +1070,22 @@
         if (!bannerEl) {
           bannerEl = document.createElement('div');
           bannerEl.id = 'update-banner';
-          bannerEl.innerHTML = '<span>?‰æ–°?ˆæœ¬?¯ç”¨</span> <button id="update-reload-btn">ç«‹å³?·æ–°</button>';
-          document.body.appendChild(bannerEl);
-          const btn = bannerEl.querySelector('#update-reload-btn');
+          
+          // ä½¿ç”¨ createElement ??textContent ?¿å?å­—ç¬¦ç·¨ç¢¼?é?
+          const span = document.createElement('span');
+          span.textContent = '\u6709\u65b0\u7248\u672c\u53ef\u7528'; // "?‰æ–°?ˆæœ¬?¯ç”¨"
+          
+          const btn = document.createElement('button');
+          btn.id = 'update-reload-btn';
+          btn.textContent = '\u7acb\u5373\u5237\u65b0'; // "ç«‹å³?·æ–°"
           btn.addEventListener('click', function() {
             try { navigator.serviceWorker && navigator.serviceWorker.getRegistration().then(r => r && r.update()); } catch(_) {}
             location.reload();
           });
+          
+          bannerEl.appendChild(span);
+          bannerEl.appendChild(btn);
+          document.body.appendChild(bannerEl);
         }
         bannerEl.style.display = 'block';
       }
@@ -1121,6 +1130,7 @@
   </script>
 </body>
 </html>
+
 
 
 
