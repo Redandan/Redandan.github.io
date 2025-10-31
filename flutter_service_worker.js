@@ -60,7 +60,7 @@ const RESOURCES = {"assets/AssetManifest.bin": "d71158da1c0b7cfc181c2f13eaaa95db
 "canvaskit/skwasm_heavy.wasm": "8034ad26ba2485dab2fd49bdd786837b",
 "favicon.png": "5dcef449791fa27946b3d35ad8803796",
 "flutter.js": "888483df48293866f9f41d3d9274a779",
-"flutter_bootstrap.js": "5321fb1934078e48900993eaa5855245",
+"flutter_bootstrap.js": "18c0f273804d1275c53153f186e02a5d",
 "icons/agora-market-icon.svg": "0809310c9c8ce8213a71b912864eb06c",
 "icons/android-icon-144x144.png": "63fa5dc585dccfddad1550ea018e4ce3",
 "icons/android-icon-192x192.png": "a5813fca5d400b7712cd910d9a868f31",
@@ -93,20 +93,20 @@ const RESOURCES = {"assets/AssetManifest.bin": "d71158da1c0b7cfc181c2f13eaaa95db
 "icons/ms-icon-150x150.png": "9223022b000ee835a7c091cefd0197a2",
 "icons/ms-icon-310x310.png": "0d56d3ab620dd4e6ace7b00bf4aaa962",
 "icons/ms-icon-70x70.png": "d950bf1443b00a5c8391e8ffc7ff3eeb",
-"index.html": "6bfbad5a669004d4b3cacc4e922472ae",
-"/": "6bfbad5a669004d4b3cacc4e922472ae",
+"index.html": "5f2d7f0a80a1dff0c724c408f53a4a50",
+"/": "5f2d7f0a80a1dff0c724c408f53a4a50",
 "main.dart.js": "2e0ed4c873bd80453f9605f26e82e33d",
 "main.dart.mjs": "285967187c6f24c5465eb4fbd67d9876",
 "main.dart.wasm": "daeed99f6c7a25d0131c4e3ebeeb3eb9",
 "manifest.json": "c918cd892f1180ef22cf86743676f02f",
 "official.html": "8d9f1ea643c08f7c8e25b200fa52e173",
 "register.html": "2d1fd710acdbde1488faad3f465589b1",
-"service-worker.js": "bbf9bb380d6a4681cbdc00c115ef21d2",
+"service-worker.js": "9173c65041f8ed78ff877a5504bf96cc",
 "splash/iPhone_14_Plus_portrait.png": "96e752610906ba2a93c65f8abe1645f1",
 "splash/iPhone_14_portrait.png": "96e752610906ba2a93c65f8abe1645f1",
 "splash/iPhone_14_Pro_Max_portrait.png": "96e752610906ba2a93c65f8abe1645f1",
 "splash/iPhone_14_Pro_portrait.png": "96e752610906ba2a93c65f8abe1645f1",
-"version.json": "5c4bd597aa2b5e2d3eafaf21cd2e4af9"};
+"version.json": "f01f5eb07e3a72901bb48d3ddcfe74a2"};
 // The application shell files that are downloaded before a service worker can
 // start.
 const CORE = ["main.dart.js",
