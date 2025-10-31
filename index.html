@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?ˆæœ¬?–ç·©å­˜æ?è­?-->
-    <meta name="cache-version" content="1.0.402">
+    <meta name="cache-version" content="1.0.403">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -25,7 +25,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
-  <meta name="version" content="1.0.402+403">
+  <meta name="version" content="1.0.403+404">
 
   <script>
     // Early global error diagnostics to capture exact source of prod-only failures
@@ -53,7 +53,7 @@
     })();
   </script>
   
-  <button id="dev-reset-btn" aria-hidden="true" tabindex="-1" style="position:fixed; right:-9999px; bottom:-9999px; width:1px; height:1px; opacity:0; pointer-events:auto;">reset</button>
+  <button id="dev-reset-btn" aria-hidden="true" tabindex="-1" style="position:absolute; left:-9999px; top:-9999px; width:1px; height:1px; opacity:0; pointer-events:auto; visibility:hidden; overflow:hidden;">reset</button>
   <script>
     // Hidden developer reset button: clears SW, caches, storages then reloads
     (function(){
@@ -139,7 +139,7 @@
   <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.402">
+  <link rel="manifest" href="manifest.json?v=1.0.403">
 
   <!-- WASM æ¨¡å?è­¦å? -->
   <script>
@@ -608,7 +608,7 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.401</div>
+      <div class="loading-version" id="version-display">v1.0.402</div>
     </div>
   </div>
   
@@ -868,7 +868,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.402" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.403" async></script>
   
   <!-- Service Worker è¨»å?ï¼ˆä½¿??Flutter ?§å»º SWï¼›è‡ªå®šç¾© SW å·²å??¨ï? -->
   <script>
@@ -1012,22 +1012,49 @@
     }
     
     // Hide loading screen when Flutter is ready
+    let loadingScreenHidden = false;
+    
+    function hideLoadingScreen() {
+      if (loadingScreenHidden) return;
+      loadingScreenHidden = true;
+      document.body.classList.add('flutter-ready');
+      console.log('[LOADING] Loading screen hidden');
+    }
+    
     window.addEventListener('flutter-first-frame', function () {
+      console.log('[LOADING] Flutter first frame event received');
       // ?¥å???auto-login å¼·ä¿¡?Ÿï?localStorage ??access_tokenï¼‰ï?å»¶é•·?±è?å»¶é²ä»¥å¹³æ»‘è·³è½?
       const hasAutoLogin = !!(window.localStorage && window.localStorage.getItem('access_token'));
       const delayMs = hasAutoLogin ? 1500 : 800;
       setTimeout(() => {
-        document.body.classList.add('flutter-ready');
+        hideLoadingScreen();
       }, delayMs);
+    });
+    
+    // æª¢æ¸¬ Flutter ? è??¯èª¤
+    window.addEventListener('error', function(event) {
+      if (event.message && (
+        event.message.includes('flutter') || 
+        event.message.includes('dart') ||
+        event.message.includes('main.dart')
+      )) {
+        console.error('[LOADING] Flutter loading error detected:', event.message);
+        // ?³ä½¿?ºéŒ¯ä¹Ÿå?è©¦éš±?å?è¼‰å?å¹?
+        setTimeout(() => {
+          hideLoadingScreen();
+        }, 2000);
+      }
     });
     
     // Fallback: hide loading screen if event doesn't fire
     (function(){
       const hasAutoLogin = !!(window.localStorage && window.localStorage.getItem('access_token'));
-      const fallbackMs = hasAutoLogin ? 3000 : 2500;
+      const fallbackMs = hasAutoLogin ? 4000 : 3500; // ç¨å¾®å»¶é•·ä»¥ç?å¾?Flutter ?Ÿå?
+      
       setTimeout(() => {
-        if (!document.body.classList.contains('flutter-ready')) {
-          document.body.classList.add('flutter-ready');
+        if (!loadingScreenHidden) {
+          console.warn('[LOADING] Fallback: Hiding loading screen after timeout');
+          hideLoadingScreen();
         }
       }, fallbackMs);
     })();
@@ -1130,6 +1157,7 @@
   </script>
 </body>
 </html>
+
 
 
 
