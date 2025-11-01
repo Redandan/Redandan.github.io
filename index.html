@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?ˆæœ¬?–ç·©å­˜æ?è­?-->
-    <meta name="cache-version" content="1.0.412">
+    <meta name="cache-version" content="1.0.414">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -25,7 +25,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
-  <meta name="version" content="1.0.412+413">
+  <meta name="version" content="1.0.414+415">
 
   <script>
     // Early global error diagnostics to capture exact source of prod-only failures
@@ -139,7 +139,7 @@
   <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.412">
+  <link rel="manifest" href="manifest.json?v=1.0.414">
 
   <!-- WASM æ¨¡å?è­¦å? -->
   <script>
@@ -597,6 +597,21 @@
       visibility: hidden;
       transform: scale(0.95);
       transition: opacity 0.8s ease-out, visibility 0.8s ease-out, transform 0.8s ease-out;
+      pointer-events: none;
+    }
+    
+    /* Ensure Flutter app is visible after loading screen is hidden */
+    .flutter-ready flt-scene-host,
+    .flutter-ready flt-glass-pane,
+    .flutter-ready canvas {
+      opacity: 1 !important;
+      visibility: visible !important;
+      display: block !important;
+    }
+    
+    /* Debug: Add visible border when Flutter is ready (can be removed in production) */
+    .flutter-ready body {
+      background: transparent;
     }
   </style>
 </head>
@@ -608,7 +623,7 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.411</div>
+      <div class="loading-version" id="version-display">v1.0.413</div>
     </div>
   </div>
   
@@ -868,7 +883,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.412" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.414" async></script>
   
   <!-- Service Worker è¨»å?ï¼ˆä½¿??Flutter ?§å»º SWï¼›è‡ªå®šç¾© SW å·²å??¨ï? -->
   <script>
@@ -1023,11 +1038,36 @@
     
     window.addEventListener('flutter-first-frame', function () {
       console.log('[LOADING] Flutter first frame event received');
+      
+      // æª¢æŸ¥ Flutter ?‰ç”¨?¯å¦å·²æ?è¼?
+      const flutterElements = document.querySelectorAll('flt-scene-host, flt-glass-pane, canvas');
+      console.log('[LOADING] Flutter elements found:', flutterElements.length);
+      
       // ?¥å???auto-login å¼·ä¿¡?Ÿï?localStorage ??access_tokenï¼‰ï?å»¶é•·?±è?å»¶é²ä»¥å¹³æ»‘è·³è½?
       const hasAutoLogin = !!(window.localStorage && window.localStorage.getItem('access_token'));
       const delayMs = hasAutoLogin ? 1500 : 800;
       setTimeout(() => {
         hideLoadingScreen();
+        
+        // ç¢ºä? Flutter ?‰ç”¨?¯è?
+        flutterElements.forEach(el => {
+          if (el) {
+            el.style.opacity = '1';
+            el.style.visibility = 'visible';
+            el.style.display = 'block';
+          }
+        });
+        
+        // æª¢æŸ¥?¯å¦?‰è·¯?±å?é¡Œç?è·¡è±¡
+        setTimeout(() => {
+          const bodyContent = document.body.innerHTML;
+          const hasFlutterContent = document.querySelector('flt-scene-host') || 
+                                   document.querySelector('flt-glass-pane') || 
+                                   document.querySelector('canvas');
+          if (!hasFlutterContent) {
+            console.error('[LOADING] è­¦å?ï¼šFlutter ?§å®¹?ªæ‰¾?°ï??¯èƒ½è·¯ç”±?å??–å¤±??);
+          }
+        }, 500);
       }, delayMs);
     });
     
@@ -1055,6 +1095,27 @@
         if (!loadingScreenHidden) {
           console.warn('[LOADING] Fallback: Hiding loading screen after timeout');
           hideLoadingScreen();
+          
+          // å¼·åˆ¶é¡¯ç¤º Flutter ?‰ç”¨ï¼ˆå??œå??¨ç?è©±ï?
+          const flutterElements = document.querySelectorAll('flt-scene-host, flt-glass-pane, canvas');
+          flutterElements.forEach(el => {
+            if (el) {
+              el.style.opacity = '1';
+              el.style.visibility = 'visible';
+              el.style.display = 'block';
+            }
+          });
+          
+          // å¦‚æ?ä»ç„¶æ²’æ? Flutter ?§å®¹ï¼Œè??„è­¦??
+          setTimeout(() => {
+            const hasFlutterContent = document.querySelector('flt-scene-host') || 
+                                     document.querySelector('flt-glass-pane') || 
+                                     document.querySelector('canvas');
+            if (!hasFlutterContent) {
+              console.error('[LOADING] ?´é?è­¦å?ï¼šFlutter ?‰ç”¨?ªæ­£ç¢ºè???);
+              console.error('[LOADING] å»ºè­°ï¼šæª¢?¥æ§?¶å°?¯å¦?‰éŒ¯èª¤ï??–å?è©¦åˆ·?°é???);
+            }
+          }, 500);
         }
       }, fallbackMs);
     })();
@@ -1109,399 +1170,18 @@
         return; // stop further init on this load
       }
       
-      // ç·©å?æ¸…é™¤æª¢æ¸¬?ç½®
-      const CACHE_CLEAR_FLAG_KEY = 'browser_cache_cleared_flag';
-      const LAST_CACHE_CHECK_KEY = 'last_cache_check_time';
-      const SESSION_MARKER_KEY = 'session_marker'; // ?ƒè©±æ¨™è?
-      const VERSION_MARKER_KEY = 'version_marker'; // ?ˆæœ¬æ¨™è?
-      const DETECTION_THRESHOLD = 2 * 60 * 1000; // 2?†é??¾å€¼ï??´ç²¾ç¢ºï?
+      // ç°¡å??ˆæœ¬ï¼šFlutter ?§ç½® Service Worker ?ƒè‡ª?•è??†ç·©å­?
+      // ?ªä??™å?è¦ç??ˆæœ¬æª¢æ¸¬?Œæ›´?°æ?ç¤ºå???
       
-      // ?å??–æª¢æ¸¬æ?è¨?
-      function initializeDetectionMarkers() {
-        try {
-          const currentTime = Date.now();
-          const versionMeta = (document.querySelector('meta[name="version"]')||{}).content || '';
-          
-          // è¨­ç½®?ƒè©±æ¨™è?ï¼ˆæ?æ¬¡é??¢è??¥éƒ½ä¸å?ï¼?
-          const sessionMarker = `${currentTime}-${Math.random().toString(36).substr(2, 9)}`;
-          sessionStorage.setItem(SESSION_MARKER_KEY, sessionMarker);
-          
-          // æª¢æŸ¥?ˆæœ¬æ¨™è?
-          const storedVersion = localStorage.getItem(VERSION_MARKER_KEY);
-          if (storedVersion !== versionMeta) {
-            // ?ˆæœ¬è®Šå?ï¼Œè¨­ç½®æ??¤æ?è¨?
-            localStorage.setItem(VERSION_MARKER_KEY, versionMeta);
-            if (storedVersion && storedVersion !== '') {
-              console.log('[CACHE_SYNC] \u6aa2\u6e2c\u5230\u7248\u672c\u8b8a\u5316:', storedVersion, '\u2192', versionMeta); // "æª¢æ¸¬?°ç??¬è???"
-              localStorage.setItem(CACHE_CLEAR_FLAG_KEY, currentTime.toString());
-              notifyServiceWorkerToClearCache();
-            }
-          }
-          
-          // è¨­ç½®æª¢æŸ¥?‚é?
-          localStorage.setItem(LAST_CACHE_CHECK_KEY, currentTime.toString());
-        } catch (error) {
-          console.warn('[CACHE_SYNC] \u521d\u59cb\u5316\u6a19\u8a18\u5931\u6557:', error); // "?å??–æ?è¨˜å¤±??"
-        }
-      }
-      
-      // å¼·åˆ¶æ¸…é™¤?€?‰ç·©å­˜å? Service Workerï¼ˆç”¨?¼æª¢æ¸¬åˆ°ç·©å?æ¸…é™¤?‚ï?
-      async function forceClearAllCachesAndReload() {
-        console.log('[CACHE_SYNC] \u5f37\u5236\u6e05\u9664\u6240\u6709\u7de8\u78bc\u548c Service Worker'); // "å¼·åˆ¶æ¸…é™¤?€?‰ç·©å­˜å? Service Worker"
-        
-        try {
-          // 1. ?¸è??€??Service Worker
-          if ('serviceWorker' in navigator) {
-            const regs = await navigator.serviceWorker.getRegistrations();
-            console.log('[CACHE_SYNC] \u627e\u5230', regs.length, '\u500b Service Worker\uff0c\u6b63\u5728\u53d6\u6d88\u8a3b\u518a...'); // "?¾åˆ° X ??Service Workerï¼Œæ­£?¨å?æ¶ˆè¨»??.."
-            await Promise.all(regs.map(r => {
-              console.log('[CACHE_SYNC] \u53d6\u6d88\u8a3b\u518a Service Worker:', r.scope); // "?–æ?è¨»å? Service Worker:"
-              return r.unregister().catch(err => console.warn('[CACHE_SYNC] \u53d6\u6d88\u8a3b\u518a\u5931\u6557:', err)); // "?–æ?è¨»å?å¤±æ?:"
-            }));
-          }
-          
-          // 2. æ¸…é™¤?€?‰ç·©å­?
-          if ('caches' in window) {
-            const cacheKeys = await caches.keys();
-            console.log('[CACHE_SYNC] \u627e\u5230', cacheKeys.length, '\u500b\u7de8\u78bc\uff0c\u6b63\u5728\u522a\u9664...'); // "?¾åˆ° X ?‹ç·©å­˜ï?æ­?œ¨?ªé™¤..."
-            await Promise.all(cacheKeys.map(k => {
-              console.log('[CACHE_SYNC] \u522a\u9664\u7de8\u78bc:', k); // "?ªé™¤ç·©å?:"
-              return caches.delete(k).catch(err => console.warn('[CACHE_SYNC] \u522a\u9664\u7de8\u78bc\u5931\u6557:', err)); // "?ªé™¤ç·©å?å¤±æ?:"
-            }));
-          }
-          
-          // 3. æ¸…é™¤æ¨™è?
-          try {
-            localStorage.removeItem(CACHE_CLEAR_FLAG_KEY);
-          } catch (e) {}
-          
-          console.log('[CACHE_SYNC] \u6e05\u9664\u5b8c\u6210\uff0c\u5f37\u5236\u91cd\u65b0\u8f09\u5165...'); // "æ¸…é™¤å®Œæ?ï¼Œå¼·?¶é??°è???.."
-          
-          // 4. å¼·åˆ¶?æ–°è¼‰å…¥ï¼ˆä½¿??replace ç¢ºä?ä¸æ??é€€ï¼?
-          const url = new URL(location.href);
-          url.searchParams.set('_nocache', Date.now().toString());
-          location.replace(url.href);
-          
-        } catch (error) {
-          console.error('[CACHE_SYNC] \u5f37\u5236\u6e05\u9664\u5931\u6557:', error); // "å¼·åˆ¶æ¸…é™¤å¤±æ?:"
-          // ?³ä½¿å¤±æ?ä¹Ÿå?è©¦é??°è???
-          location.reload(true);
-        }
-      }
-      
-      // ?ªå??„ç·©å­˜æ??¤æª¢æ¸¬ï?å¤šé?æª¢æ¸¬é»ï?
-      function detectBrowserCacheClear(forceReload = false) {
-        try {
-          const currentTime = Date.now();
-          let shouldClear = false;
-          let reason = '';
-          
-          // æª¢æ¸¬é»?1: æª¢æŸ¥?‚é???
-          const lastCheck = localStorage.getItem(LAST_CACHE_CHECK_KEY);
-          if (!lastCheck) {
-            // ?‚é??³ä?å¤±ï??¯èƒ½?¯æ??¤ç·©å­?
-            shouldClear = true;
-            reason = '\u6642\u9593\u6233\u4e22\u5931'; // "?‚é??³ä?å¤?
-          } else {
-            const timeDiff = currentTime - parseInt(lastCheck, 10);
-            if (timeDiff > DETECTION_THRESHOLD) {
-              shouldClear = true;
-              reason = `\u6642\u9593\u5dee\u7570\u5e38: ${Math.round(timeDiff / 1000)}\u79d2`; // "?‚é?å·®ç•°å¸? Xç§?
-            }
-          }
-          
-          // æª¢æ¸¬é»?2: æª¢æŸ¥?ƒè©±æ¨™è?ï¼ˆæ›´?¯é?ï¼?
-          const sessionMarker = sessionStorage.getItem(SESSION_MARKER_KEY);
-          if (!sessionMarker) {
-            // ?ƒè©±æ¨™è?ä¸Ÿå¤±ï¼ˆsessionStorage è¢«æ??¤ï?
-            shouldClear = true;
-            reason = reason ? reason + ', \u6703\u8a71\u6a19\u8a18\u4e22\u5931' : '\u6703\u8a71\u6a19\u8a18\u4e22\u5931'; // "?ƒè©±æ¨™è?ä¸Ÿå¤±"
-          }
-          
-          // æª¢æ¸¬é»?3: æª¢æŸ¥?ˆæœ¬æ¨™è?
-          const versionMeta = (document.querySelector('meta[name="version"]')||{}).content || '';
-          const storedVersion = localStorage.getItem(VERSION_MARKER_KEY);
-          if (storedVersion && storedVersion !== versionMeta) {
-            shouldClear = true;
-            reason = reason ? reason + ', \u7248\u672c\u4e0d\u5339\u914d' : '\u7248\u672c\u4e0d\u5339\u914d'; // "?ˆæœ¬ä¸åŒ¹??
-          }
-          
-          // æª¢æ¸¬é»?4: æª¢æŸ¥?¶ä??œéµ localStorage ?µï?å¦‚æ?å­˜åœ¨ï¼?
-          const accessToken = localStorage.getItem('access_token');
-          const userInfo = localStorage.getItem('user_info');
-          // å¦‚æ?ä¹‹å??‰é€™ä??¸æ?ä½†ç¾?¨æ??‰ï?ä¸”æ??“æˆ³?°å¸¸ï¼Œå¯?½æ˜¯æ¸…é™¤ç·©å?
-          if (shouldClear && (!accessToken && !userInfo)) {
-            // ? å¼·?¤å?ï¼šå??‚æ»¿è¶³æ??“æˆ³?°å¸¸ä¸”é??µæ•¸?šä?å¤?
-            reason += ' (\u95dc\u9375\u6578\u64da\u4e22\u5931)'; // "?œéµ?¸æ?ä¸Ÿå¤±"
-          }
-          
-          if (shouldClear) {
-            console.log('[CACHE_SYNC] \u6aa2\u6e2c\u5230\u7de8\u78bc\u6e05\u9664:', reason); // "æª¢æ¸¬?°ç·©å­˜æ???"
-            
-            // å¦‚æ?å¼·åˆ¶?æ–°è¼‰å…¥æ¨™è???trueï¼Œæ?æª¢æ¸¬?°æ?é¡¯ç?æ¸…é™¤ç·©å?è¡Œç‚ºï¼Œç??³åŸ·è¡Œå¼·?¶æ???
-            if (forceReload || !lastCheck || !sessionMarker) {
-              console.log('[CACHE_SYNC] \u767c\u73fe\u660e\u986f\u7684\u7de8\u78bc\u6e05\u9664\u8a8d\u5f97\uff0c\u5f37\u5236\u6e05\u9664\u5e76\u91cd\u65b0\u8f09\u5165'); // "?¼ç¾?é¡¯?„ç·©å­˜æ??¤è??ºï?å¼·åˆ¶æ¸…é™¤ä¸¦é??°è???
-              forceClearAllCachesAndReload();
-              return; // ç«‹å³è¿”å?ï¼Œä??·è?å¾Œç??è¼¯
-            }
-            
-            // è¨­ç½®æ¸…é™¤æ¨™è?
-            localStorage.setItem(CACHE_CLEAR_FLAG_KEY, currentTime.toString());
-            notifyServiceWorkerToClearCache();
-          }
-          
-          // ?´æ–°æª¢æŸ¥?‚é??Œæ?è¨?
-          localStorage.setItem(LAST_CACHE_CHECK_KEY, currentTime.toString());
-          if (!sessionMarker) {
-            const newSessionMarker = `${currentTime}-${Math.random().toString(36).substr(2, 9)}`;
-            sessionStorage.setItem(SESSION_MARKER_KEY, newSessionMarker);
-          }
-          
-        } catch (error) {
-          console.warn('[CACHE_SYNC] \u6aa2\u6e2c\u7de8\u78bc\u6e05\u9664\u5931\u6557:', error); // "æª¢æ¸¬ç·©å?æ¸…é™¤å¤±æ?:"
-        }
-      }
-      
-      // ?šçŸ¥ Service Worker æ¸…é™¤ç·©å?ï¼ˆå„ª?–ç???- ?è©¦æ©Ÿåˆ¶ï¼?
-      let clearCacheRetryCount = 0;
-      const MAX_RETRIES = 3;
-      
-      function notifyServiceWorkerToClearCache(retryDelay = 1000) {
-        if (!('serviceWorker' in navigator)) {
-          if (clearCacheRetryCount < MAX_RETRIES) {
-            clearCacheRetryCount++;
-            console.log(`[CACHE_SYNC] Service Worker \u672a\u5c31\u7e6e\uff0c${retryDelay}ms \u5f8c\u91cd\u8a66 (${clearCacheRetryCount}/${MAX_RETRIES})`); // "?ªå°±ç·’ï?Xms å¾Œé?è©?
-            setTimeout(() => notifyServiceWorkerToClearCache(retryDelay * 2), retryDelay);
-          } else {
-            console.warn('[CACHE_SYNC] Service Worker \u672a\u5c31\u7e6e\uff0c\u5df2\u9054\u5230\u6700\u5927\u91cd\u8a66\u6b21\u6578'); // "?ªå°±ç·’ï?å·²é??°æ?å¤§é?è©¦æ¬¡??
-          }
-          return;
-        }
-        
-        if (!navigator.serviceWorker.controller) {
-          // ç­‰å? Service Worker å°±ç?
-          navigator.serviceWorker.ready.then(function(registration) {
-            if (registration.active) {
-              registration.active.postMessage({
-                type: 'SYNC_CLEAR_CACHE',
-                timestamp: Date.now(),
-                reason: 'browser_cache_cleared'
-              });
-              console.log('[CACHE_SYNC] \u901a\u77e5 Service Worker \u540c\u6b65\u6e05\u9664\u7de8\u78bc\uff08\u901a\u904e ready\uff09'); // "?šçŸ¥ Service Worker ?Œæ­¥æ¸…é™¤ç·©å?ï¼ˆé€šé? readyï¼?
-            }
-          }).catch(function(err) {
-            console.warn('[CACHE_SYNC] Service Worker ready \u5931\u6557:', err); // "ready å¤±æ?:"
-          });
-          return;
-        }
-        
-        // ?ç½®?è©¦è¨ˆæ•¸
-        clearCacheRetryCount = 0;
-        
-        console.log('[CACHE_SYNC] \u901a\u77e5 Service Worker \u540c\u6b65\u6e05\u9664\u7de8\u78bc'); // "?šçŸ¥ Service Worker ?Œæ­¥æ¸…é™¤ç·©å?"
-        try {
-          navigator.serviceWorker.controller.postMessage({
-            type: 'SYNC_CLEAR_CACHE',
-            timestamp: Date.now(),
-            reason: 'browser_cache_cleared'
-          });
-        } catch (error) {
-          console.error('[CACHE_SYNC] \u767c\u9001\u6d88\u606f\u5931\u6557:', error); // "?¼é€æ??¯å¤±??"
-          // å¤±æ??‚é?è©?
-          if (clearCacheRetryCount < MAX_RETRIES) {
-            clearCacheRetryCount++;
-            setTimeout(() => notifyServiceWorkerToClearCache(retryDelay * 2), retryDelay);
-          }
-        }
-      }
-      
-      // ??½ä¾†è‡ª Service Worker ?„æ??¯ï??ªå??ˆæœ¬ï¼?
+      // ç°¡å???Service Worker ?´æ–°æª¢æŸ¥ï¼ˆFlutter ?ƒè‡ª?•è??†å¤§?¨å??è¼¯ï¼?
       if ('serviceWorker' in navigator) {
-        let messageHandlerAttached = false;
-        
-        function attachMessageListener() {
-          if (messageHandlerAttached) return;
-          
-          navigator.serviceWorker.addEventListener('message', function(event) {
-            if (!event.data) return;
-            
-            switch (event.data.type) {
-              case 'CHECK_CACHE_CLEAR_FLAG':
-                const clearFlag = localStorage.getItem(CACHE_CLEAR_FLAG_KEY);
-                if (clearFlag) {
-                  console.log('[CACHE_SYNC] Service Worker \u8a62\u554f\u6e05\u9664\u6a19\u8a18\uff0c\u767c\u73fe\u6a19\u8a18\u5b58\u5728'); // "è©¢å?æ¸…é™¤æ¨™è?ï¼Œç™¼?¾æ?è¨˜å???
-                  // æ¸…é™¤æ¨™è?ä¸¦é€šçŸ¥ SW æ¸…é™¤ç·©å?
-                  localStorage.removeItem(CACHE_CLEAR_FLAG_KEY);
-                  notifyServiceWorkerToClearCache();
-                }
-                break;
-                
-              case 'CACHES_SYNC_CLEARED':
-                console.log('[CACHE_SYNC] Service Worker \u5df2\u540c\u6b65\u6e05\u9664\u7de8\u78bc', // "å·²å?æ­¥æ??¤ç·©å­?
-                  '\u6e05\u9664\u6642\u9593:', new Date(event.data.timestamp).toLocaleString()); // "æ¸…é™¤?‚é?:"
-                // ?¯é¸ï¼šè‡ª?•é??°è??¥ï?å¦‚æ?è¶…é?30ç§’æœª?·æ–°ï¼?
-                const timeSinceLoad = Date.now() - performance.timing.navigationStart;
-                if (timeSinceLoad > 30000) {
-                  console.log('[CACHE_SYNC] \u5efa\u8b70\u91cd\u65b0\u8f09\u5165\u4ee5\u7372\u53d6\u6700\u65b0\u7248\u672c'); // "å»ºè­°?æ–°è¼‰å…¥ä»¥ç²?–æ??°ç???
-                  // ?–æ?è¨»é?ä»¥å??¨è‡ª?•é??°è???
-                  // setTimeout(() => location.reload(), 2000);
-                }
-                break;
-                
-              case 'SW_ACTIVATED':
-                console.log('[CACHE_SYNC] Service Worker \u5df2\u6fc0\u6d3b\uff0c\u7248\u672c:', event.data.version); // "å·²æ?æ´»ï??ˆæœ¬:"
-                // Service Worker æ¿€æ´»å?ï¼Œé??°æª¢æ¸¬ä?æ¬?
-                setTimeout(detectBrowserCacheClear, 1000);
-                break;
-            }
-          });
-          
-          messageHandlerAttached = true;
-        }
-        
-        // ç«‹å³?—è©¦?„å?ï¼Œå???Service Worker ?ªå°±ç·’å?å»¶é²
-        if (navigator.serviceWorker.controller) {
-          attachMessageListener();
-        } else {
-          navigator.serviceWorker.ready.then(function() {
-            attachMessageListener();
-          }).catch(function(err) {
-            console.warn('[CACHE_SYNC] \u7121\u6cd5\u9644\u52a0\u6d88\u606f\u76e3\u807d\u5668:', err); // "?¡æ??„å?æ¶ˆæ¯??½??"
-          });
-        }
-      }
-      
-      // ?¨è¨­ç½®æ?è¨˜ä??å?æª¢æ¸¬ï¼ˆé¿?æ?è¨˜è¢«?æ–°è¨­ç½®?Œæ©?‹å?é¡Œï?
-      // ç«‹å³æª¢æ¸¬ï¼ˆå?æ­¥æª¢æ¸¬ï?ä¸ç?å¾…æ?è¨˜å?å§‹å?ï¼?
-      (function immediateDetection() {
-        try {
-          const hasLastCheck = !!localStorage.getItem(LAST_CACHE_CHECK_KEY);
-          const hasSessionMarker = !!sessionStorage.getItem(SESSION_MARKER_KEY);
-          
-          // å¦‚æ??©è€…éƒ½ä¸å??¨ï?å¼·ç??·ç??¯æ??¤ç·©å­?
-          if (!hasLastCheck && !hasSessionMarker) {
-            console.log('[CACHE_SYNC] \u5728\u521d\u59cb\u5316\u524d\u6aa2\u6e2c\u5230\u7de8\u78bc\u6e05\u9664\uff0c\u5f37\u5236\u6e05\u9664\u5e76\u91cd\u65b0\u8f09\u5165'); // "?¨å?å§‹å??æª¢æ¸¬åˆ°ç·©å?æ¸…é™¤ï¼Œå¼·?¶æ??¤ä¸¦?æ–°è¼‰å…¥"
-            forceClearAllCachesAndReload();
-            return; // ?»æ­¢å¾Œç??å???
+        navigator.serviceWorker.getRegistration().then(function(reg) {
+          if (reg) {
+            // ?—è©¦æª¢æŸ¥?´æ–°ï¼ˆFlutter SW ?ƒè‡ª?•è??†ï?
+            try { reg.update(); } catch(_) {}
           }
-        } catch (error) {
-          console.warn('[CACHE_SYNC] \u521d\u59cb\u5316\u524d\u6aa2\u6e2c\u5931\u6557:', error); // "?å??–å?æª¢æ¸¬å¤±æ?:"
-        }
-      })();
-      
-      // ?å??–æª¢æ¸¬æ?è¨˜ï??é¢è¼‰å…¥?‚ï?
-      initializeDetectionMarkers();
-      
-      // ç«‹å³æª¢æ¸¬ï¼ˆä?å»¶é²ï¼‰ï?å¦‚æ?æª¢æ¸¬?°æ?é¡¯ç?ç·©å?æ¸…é™¤è¡Œç‚ºï¼Œç??³å¼·?¶æ???
-      // ä½¿ç”¨ requestIdleCallback ??setTimeout ç¢ºä?ä¸é˜»å¡é??¢æ¸²??
-      if (window.requestIdleCallback) {
-        requestIdleCallback(function() {
-          detectBrowserCacheClear(true); // ?³å…¥ true è¡¨ç¤ºå¼·åˆ¶?æ–°è¼‰å…¥æ¨¡å?
-        }, { timeout: 100 });
-      } else {
-        setTimeout(function() {
-          detectBrowserCacheClear(true); // ?³å…¥ true è¡¨ç¤ºå¼·åˆ¶?æ–°è¼‰å…¥æ¨¡å?
-        }, 100);
-      }
-      
-      // é¡å??„æª¢æ¸¬ï?å»¶é²ä¸€å°æ®µ?‚é?ï¼Œä??ºå??¨æª¢æ¸¬ï?
-      setTimeout(function() {
-        detectBrowserCacheClear(false); // ?®é€šæª¢æ¸¬æ¨¡å¼?
-      }, 1000);
-      
-      // ?ªå??„å??Ÿæª¢æ¸¬ï?ä½¿ç”¨?•æ??“é?ï¼Œæ?å°‘ä?å¿…è??„æª¢?¥ï?
-      let lastCheckTime = Date.now();
-      let checkInterval = 15000; // ?å?15ç§?
-      
-      function scheduleNextCheck() {
-        const timeSinceLastCheck = Date.now() - lastCheckTime;
-        // å¦‚æ?è·é›¢ä¸Šæ¬¡æª¢æŸ¥è¶…é??¾å€¼ï?ç«‹å³æª¢æŸ¥ï¼›å¦?‡æ??“é?æª¢æŸ¥
-        if (timeSinceLastCheck >= DETECTION_THRESHOLD) {
-          detectBrowserCacheClear();
-          lastCheckTime = Date.now();
-          checkInterval = 15000; // ?ç½®??5ç§?
-        } else {
-          checkInterval = Math.min(checkInterval * 1.5, 60000); // æ¼¸é€²å?? åˆ°?€å¤?0ç§?
-        }
-        
-        setTimeout(scheduleNextCheck, checkInterval);
-      }
-      
-      // ?Ÿå??•æ?æª¢æ¸¬
-      scheduleNextCheck();
-      
-      // ??½?é¢?¯è??§è??–ï??‡æ?æ¨™ç±¤?æ?æª¢æ¸¬ï¼?
-      let visibilityCheckTimeout = null;
-      document.addEventListener('visibilitychange', function() {
-        if (!document.hidden) {
-          // ?²æ?ï¼šé¿?é »ç¹æª¢??
-          if (visibilityCheckTimeout) clearTimeout(visibilityCheckTimeout);
-          visibilityCheckTimeout = setTimeout(function() {
-            detectBrowserCacheClear();
-            lastCheckTime = Date.now();
-          }, 1000); // 1ç§’å?æª¢æŸ¥
-        }
-      });
-      
-      // ??½ focus äº‹ä»¶ï¼ˆç???²å¾—ç„¦é»æ?æª¢æ¸¬ï¼Œé˜²?–è??†ï?
-      let focusCheckTimeout = null;
-      window.addEventListener('focus', function() {
-        if (focusCheckTimeout) clearTimeout(focusCheckTimeout);
-        focusCheckTimeout = setTimeout(function() {
-          detectBrowserCacheClear();
-          lastCheckTime = Date.now();
-        }, 500); // 0.5ç§’å?æª¢æŸ¥
-      });
-      
-      // ??½ beforeunloadï¼ˆé??¢é??‰å?ä¿å??€?‹ï?
-      window.addEventListener('beforeunload', function() {
-        try {
-          localStorage.setItem(LAST_CACHE_CHECK_KEY, Date.now().toString());
-        } catch (e) {
-          // å¿½ç•¥?¯èª¤
-        }
-      });
-      
-      // å¼·åˆ¶?´æ–° Service Workerï¼ˆæ?æ¬¡é??¢è??¥éƒ½æª¢æŸ¥ï¼?
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(async function(regs) {
-          console.log('[SW_UPDATE] \u627e\u5230', regs.length, '\u500b Service Worker \u8a3b\u518a'); // "?¾åˆ° X ??Service Worker è¨»å?"
-          for (const reg of regs) {
-            try {
-              console.log('[SW_UPDATE] \u66f4\u65b0 Service Worker:', reg.scope); // "?´æ–° Service Worker:"
-              await reg.update();
-              
-              // å¦‚æ??‰ç?å¾…ä¸­??Service Workerï¼Œç??³æ?æ´?
-              if (reg.waiting) {
-                console.log('[SW_UPDATE] \u767c\u73fe\u7b49\u5f85\u4e2d\u7684 Service Worker\uff0c\u767c\u9001 SKIP_WAITING \u6d88\u606f'); // "?¼ç¾ç­‰å?ä¸­ç? Service Workerï¼Œç™¼??SKIP_WAITING æ¶ˆæ¯"
-                reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-              }
-              
-              // ??½?´æ–°äº‹ä»¶
-              reg.addEventListener('updatefound', function() {
-                const newWorker = reg.installing;
-                if (newWorker) {
-                  console.log('[SW_UPDATE] \u767c\u73fe\u65b0\u7684 Service Worker\uff0c\u72c0\u614b:', newWorker.state); // "?¼ç¾?°ç? Service Workerï¼Œç???"
-                  newWorker.addEventListener('statechange', function() {
-                    console.log('[SW_UPDATE] Service Worker \u72c0\u614b\u8b8a\u66f4:', newWorker.state); // "?€?‹è???"
-                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                      console.log('[SW_UPDATE] \u65b0 Service Worker \u5df2\u5b89\u88dd\uff0c\u6e96\u5099\u6fc0\u6d3b'); // "??Service Worker å·²å?è£ï?æº–å?æ¿€æ´?
-                      newWorker.postMessage({ type: 'SKIP_WAITING' });
-                      // ?ªå??æ–°è¼‰å…¥
-                      setTimeout(() => {
-                        console.log('[SW_UPDATE] \u81ea\u52d5\u91cd\u65b0\u8f09\u5165\u4ee5\u61c9\u7528\u66f4\u65b0'); // "?ªå??æ–°è¼‰å…¥ä»¥æ??¨æ›´??
-                        location.reload();
-                      }, 1000);
-                    }
-                  });
-                }
-              });
-            } catch (err) {
-              console.warn('[SW_UPDATE] Service Worker \u66f4\u65b0\u5931\u6557:', err); // "?´æ–°å¤±æ?:"
-            }
-          }
-        }).catch(err => {
-          console.error('[SW_UPDATE] \u7372\u53d6 Service Worker \u8a3b\u518a\u5931\u6557:', err); // "?²å? Service Worker è¨»å?å¤±æ?:"
+        }).catch(function(err) {
+          // å¿½ç•¥?¯èª¤ï¼ŒFlutter ?ƒè‡ª?•è???
         });
       }
 
@@ -1571,6 +1251,8 @@
   </script>
 </body>
 </html>
+
+
 
 
 
