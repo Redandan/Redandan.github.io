@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?ˆæœ¬?–ç·©å­˜æ?è­?-->
-    <meta name="cache-version" content="1.0.415">
+    <meta name="cache-version" content="1.0.416">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -25,7 +25,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
-  <meta name="version" content="1.0.415+416">
+  <meta name="version" content="1.0.416+417">
 
   <script>
     // Early global error diagnostics to capture exact source of prod-only failures
@@ -139,7 +139,7 @@
   <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.415">
+  <link rel="manifest" href="manifest.json?v=1.0.416">
 
   <!-- WASM æ¨¡å?è­¦å? -->
   <script>
@@ -603,15 +603,34 @@
     /* Ensure Flutter app is visible after loading screen is hidden */
     .flutter-ready flt-scene-host,
     .flutter-ready flt-glass-pane,
-    .flutter-ready canvas {
+    .flutter-ready canvas,
+    flt-scene-host,
+    flt-glass-pane,
+    canvas {
       opacity: 1 !important;
       visibility: visible !important;
       display: block !important;
+      position: relative !important;
+      z-index: 1 !important;
+      width: 100% !important;
+      height: 100% !important;
+      min-height: 100vh !important;
     }
     
-    /* Debug: Add visible border when Flutter is ready (can be removed in production) */
+    /* Ensure body has proper background */
     .flutter-ready body {
       background: transparent;
+      overflow: auto;
+    }
+    
+    /* Debug: Show Flutter container explicitly */
+    body > flt-scene-host,
+    body > flt-glass-pane {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
     }
   </style>
 </head>
@@ -623,7 +642,7 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.414</div>
+      <div class="loading-version" id="version-display">v1.0.415</div>
     </div>
   </div>
   
@@ -883,7 +902,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.415" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.416" async></script>
   
   <!-- Service Worker è¨»å?ï¼ˆä½¿??Flutter ?§å»º SWï¼›è‡ªå®šç¾© SW å·²å??¨ï? -->
   <script>
@@ -1083,6 +1102,49 @@
       }
     });
     
+    // é¡å?èª¿è©¦ï¼šå??Ÿæª¢??Flutter ?‰ç”¨?€??
+    setTimeout(function() {
+      const flutterApp = document.querySelector('flt-scene-host');
+      const canvas = document.querySelector('canvas');
+      const glassPane = document.querySelector('flt-glass-pane');
+      
+      console.log('[DEBUG] Flutter app elements check:', {
+        fltSceneHost: !!flutterApp,
+        canvas: !!canvas,
+        glassPane: !!glassPane,
+        loadingScreenHidden: loadingScreenHidden,
+        bodyClasses: document.body.className
+      });
+      
+      // å¦‚æ??¾åˆ°?ƒç?ä½†ä??¯è?ï¼Œå¼·?¶é¡¯ç¤?
+      if (flutterApp || canvas || glassPane) {
+        const elements = [flutterApp, canvas, glassPane].filter(Boolean);
+        elements.forEach(el => {
+          const style = window.getComputedStyle(el);
+          console.log('[DEBUG] Element styles:', {
+            tag: el.tagName,
+            opacity: style.opacity,
+            visibility: style.visibility,
+            display: style.display,
+            width: style.width,
+            height: style.height
+          });
+          
+          // å¦‚æ??ƒç?å­˜åœ¨ä½†ä??¯è?ï¼Œå¼·?¶é¡¯ç¤?
+          if (style.opacity === '0' || style.visibility === 'hidden' || style.display === 'none') {
+            console.warn('[DEBUG] Forcing element to be visible:', el.tagName);
+            el.style.setProperty('opacity', '1', 'important');
+            el.style.setProperty('visibility', 'visible', 'important');
+            el.style.setProperty('display', 'block', 'important');
+            el.style.setProperty('position', 'relative', 'important');
+            el.style.setProperty('z-index', '1', 'important');
+          }
+        });
+      } else {
+        console.warn('[DEBUG] No Flutter elements found after 3 seconds');
+      }
+    }, 3000);
+    
     // Fallback: hide loading screen if event doesn't fire
     (function(){
       const hasAutoLogin = !!(window.localStorage && window.localStorage.getItem('access_token'));
@@ -1246,6 +1308,7 @@
   </script>
 </body>
 </html>
+
 
 
 
