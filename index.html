@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?àÊú¨?ñÁ∑©Â≠òÊ?Ë≠?-->
-    <meta name="cache-version" content="1.0.414">
+    <meta name="cache-version" content="1.0.415">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -25,7 +25,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
-  <meta name="version" content="1.0.414+415">
+  <meta name="version" content="1.0.415+416">
 
   <script>
     // Early global error diagnostics to capture exact source of prod-only failures
@@ -139,7 +139,7 @@
   <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.414">
+  <link rel="manifest" href="manifest.json?v=1.0.415">
 
   <!-- WASM Ê®°Â?Ë≠¶Â? -->
   <script>
@@ -623,7 +623,7 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.413</div>
+      <div class="loading-version" id="version-display">v1.0.414</div>
     </div>
   </div>
   
@@ -883,7 +883,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.414" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.415" async></script>
   
   <!-- Service Worker Ë®ªÂ?Ôºà‰Ωø??Flutter ?ßÂª∫ SWÔºõËá™ÂÆöÁæ© SW Â∑≤Â??®Ô? -->
   <script>
@@ -1060,12 +1060,9 @@
         
         // Ê™¢Êü•?ØÂê¶?âË∑Ø?±Â?È°åÁ?Ë∑°Ë±°
         setTimeout(() => {
-          const bodyContent = document.body.innerHTML;
-          const hasFlutterContent = document.querySelector('flt-scene-host') || 
-                                   document.querySelector('flt-glass-pane') || 
-                                   document.querySelector('canvas');
+          const hasFlutterContent = document.querySelector('flt-scene-host') || document.querySelector('flt-glass-pane') || document.querySelector('canvas');
           if (!hasFlutterContent) {
-            console.error('[LOADING] Ë≠¶Â?ÔºöFlutter ?ßÂÆπ?™Êâæ?∞Ô??ØËÉΩË∑ØÁî±?ùÂ??ñÂ§±??);
+            console.error('[LOADING] Warning: Flutter content not found, possible route initialization failure');
           }
         }, 500);
       }, delayMs);
@@ -1108,12 +1105,10 @@
           
           // Â¶ÇÊ?‰ªçÁÑ∂Ê≤íÊ? Flutter ?ßÂÆπÔºåË??ÑË≠¶??
           setTimeout(() => {
-            const hasFlutterContent = document.querySelector('flt-scene-host') || 
-                                     document.querySelector('flt-glass-pane') || 
-                                     document.querySelector('canvas');
+            const hasFlutterContent = document.querySelector('flt-scene-host') || document.querySelector('flt-glass-pane') || document.querySelector('canvas');
             if (!hasFlutterContent) {
-              console.error('[LOADING] ?¥È?Ë≠¶Â?ÔºöFlutter ?âÁî®?™Ê≠£Á¢∫Ë???);
-              console.error('[LOADING] Âª∫Ë≠∞ÔºöÊ™¢?•Êéß?∂Âè∞?ØÂê¶?âÈåØË™§Ô??ñÂ?Ë©¶Âà∑?∞È???);
+              console.error('[LOADING] Critical Warning: Flutter app not loaded correctly');
+              console.error('[LOADING] Suggestion: Check console for errors or try refreshing the page');
             }
           }, 500);
         }
@@ -1251,6 +1246,7 @@
   </script>
 </body>
 </html>
+
 
 
 
