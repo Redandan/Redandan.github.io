@@ -8,7 +8,7 @@ const RESOURCES = {"assets/AssetManifest.bin": "d71158da1c0b7cfc181c2f13eaaa95db
 "assets/AssetManifest.json": "18e14113b8152f3a496aa0a6d6cb5bf3",
 "assets/assets/icons/app_icon.svg": "6492dc8b5846efeb8beea5b43a08e4db",
 "assets/FontManifest.json": "dc3d03800ccca4601324923c0b1d6d57",
-"assets/fonts/MaterialIcons-Regular.otf": "d4106ee6856593ebf8e714ba1d96b52d",
+"assets/fonts/MaterialIcons-Regular.otf": "4d9b83c56c2c64fbfd8d7d8c4304e196",
 "assets/NOTICES": "586fee2725969cdb8da1ae6357a6768c",
 "assets/packages/cupertino_icons/assets/CupertinoIcons.ttf": "33b7d9392238c04c131b6ce224e13711",
 "assets/packages/flutter_map/lib/assets/flutter_map_logo.png": "208d63cc917af9713fc9572bd5c09362",
@@ -60,7 +60,7 @@ const RESOURCES = {"assets/AssetManifest.bin": "d71158da1c0b7cfc181c2f13eaaa95db
 "canvaskit/skwasm_heavy.wasm": "8034ad26ba2485dab2fd49bdd786837b",
 "favicon.png": "5dcef449791fa27946b3d35ad8803796",
 "flutter.js": "888483df48293866f9f41d3d9274a779",
-"flutter_bootstrap.js": "140301273eace6aa8a8ea476e232a81c",
+"flutter_bootstrap.js": "6e799ce1948949c910c4e15cc6f4a4db",
 "icons/agora-market-icon.svg": "0809310c9c8ce8213a71b912864eb06c",
 "icons/android-icon-144x144.png": "63fa5dc585dccfddad1550ea018e4ce3",
 "icons/android-icon-192x192.png": "a5813fca5d400b7712cd910d9a868f31",
@@ -93,11 +93,11 @@ const RESOURCES = {"assets/AssetManifest.bin": "d71158da1c0b7cfc181c2f13eaaa95db
 "icons/ms-icon-150x150.png": "9223022b000ee835a7c091cefd0197a2",
 "icons/ms-icon-310x310.png": "0d56d3ab620dd4e6ace7b00bf4aaa962",
 "icons/ms-icon-70x70.png": "d950bf1443b00a5c8391e8ffc7ff3eeb",
-"index.html": "a6be0b5007d27bc9eb44a41098994207",
-"/": "a6be0b5007d27bc9eb44a41098994207",
-"main.dart.js": "9c7715413e631a30a6021d64656ceab2",
+"index.html": "2a9ff73a92818147baa5db2871793469",
+"/": "2a9ff73a92818147baa5db2871793469",
+"main.dart.js": "5d0943d58c2a05e657806813cb13bddd",
 "main.dart.mjs": "55fe6f6bdb3315e28a04b73b2fabee78",
-"main.dart.wasm": "eec8321def535c770675e571c7616a2e",
+"main.dart.wasm": "3500dbc13ae52de070c4fd89d7d4cf46",
 "manifest.json": "c918cd892f1180ef22cf86743676f02f",
 "official.html": "8d9f1ea643c08f7c8e25b200fa52e173",
 "register.html": "2d1fd710acdbde1488faad3f465589b1",
@@ -105,7 +105,7 @@ const RESOURCES = {"assets/AssetManifest.bin": "d71158da1c0b7cfc181c2f13eaaa95db
 "splash/iPhone_14_portrait.png": "96e752610906ba2a93c65f8abe1645f1",
 "splash/iPhone_14_Pro_Max_portrait.png": "96e752610906ba2a93c65f8abe1645f1",
 "splash/iPhone_14_Pro_portrait.png": "96e752610906ba2a93c65f8abe1645f1",
-"version.json": "558770591e9fe0a2c913f1579feeb262"};
+"version.json": "e494f4d50befc7d2af9593c01dc80bf2"};
 // The application shell files that are downloaded before a service worker can
 // start.
 const CORE = ["main.dart.js",
