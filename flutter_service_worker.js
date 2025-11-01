@@ -60,7 +60,7 @@ const RESOURCES = {"assets/AssetManifest.bin": "d71158da1c0b7cfc181c2f13eaaa95db
 "canvaskit/skwasm_heavy.wasm": "8034ad26ba2485dab2fd49bdd786837b",
 "favicon.png": "5dcef449791fa27946b3d35ad8803796",
 "flutter.js": "888483df48293866f9f41d3d9274a779",
-"flutter_bootstrap.js": "4d3b08ad7af9b9529aec837f8bd06b71",
+"flutter_bootstrap.js": "419d69f031734bc30a45644271a877b7",
 "icons/agora-market-icon.svg": "0809310c9c8ce8213a71b912864eb06c",
 "icons/android-icon-144x144.png": "63fa5dc585dccfddad1550ea018e4ce3",
 "icons/android-icon-192x192.png": "a5813fca5d400b7712cd910d9a868f31",
@@ -93,11 +93,11 @@ const RESOURCES = {"assets/AssetManifest.bin": "d71158da1c0b7cfc181c2f13eaaa95db
 "icons/ms-icon-150x150.png": "9223022b000ee835a7c091cefd0197a2",
 "icons/ms-icon-310x310.png": "0d56d3ab620dd4e6ace7b00bf4aaa962",
 "icons/ms-icon-70x70.png": "d950bf1443b00a5c8391e8ffc7ff3eeb",
-"index.html": "f83846341391f773e7efd2b31ec5fe54",
-"/": "f83846341391f773e7efd2b31ec5fe54",
-"main.dart.js": "8b76570fe9f9d49b667fb2145312b1c0",
+"index.html": "e0a73e8981642cc0e464a929ca908368",
+"/": "e0a73e8981642cc0e464a929ca908368",
+"main.dart.js": "da5576a684adce154108a3771766fc5d",
 "main.dart.mjs": "285967187c6f24c5465eb4fbd67d9876",
-"main.dart.wasm": "d7051424204f11ad650936ea7dcb106c",
+"main.dart.wasm": "3ec1c5e1c5f6e6c4a1cb2f8b10d2cb44",
 "manifest.json": "c918cd892f1180ef22cf86743676f02f",
 "official.html": "8d9f1ea643c08f7c8e25b200fa52e173",
 "register.html": "2d1fd710acdbde1488faad3f465589b1",
@@ -105,7 +105,7 @@ const RESOURCES = {"assets/AssetManifest.bin": "d71158da1c0b7cfc181c2f13eaaa95db
 "splash/iPhone_14_portrait.png": "96e752610906ba2a93c65f8abe1645f1",
 "splash/iPhone_14_Pro_Max_portrait.png": "96e752610906ba2a93c65f8abe1645f1",
 "splash/iPhone_14_Pro_portrait.png": "96e752610906ba2a93c65f8abe1645f1",
-"version.json": "822880a2ea5161c2449e6609e9c75144"};
+"version.json": "df4b556204230ff2e213d00cf56dae0a"};
 // The application shell files that are downloaded before a service worker can
 // start.
 const CORE = ["main.dart.js",
