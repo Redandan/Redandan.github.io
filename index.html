@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?àÊú¨?ñÁ∑©Â≠òÊ?Ë≠?-->
-    <meta name="cache-version" content="1.0.448">
+    <meta name="cache-version" content="1.0.449">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -28,7 +28,7 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.448+449">
+  <meta name="version" content="1.0.449+450">
 
   <script>
     // Early global error diagnostics to capture exact source of prod-only failures
@@ -153,30 +153,22 @@
   <link rel="shortcut icon" href="icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.448">
+  <link rel="manifest" href="manifest.json?v=1.0.449">
   
   <!-- PWA ÂÆâË??êÁ§∫?ØÊ? -->
   <meta name="application-name" content="Agora Market">
   <meta name="msapplication-TileColor" content="#2196F3">
   <meta name="msapplication-tap-highlight" content="no">
 
-  <!-- WASM Ê®°Â?Ë≠¶Â? -->
+  <!-- Web Push ??PWA ?üËÉΩ?ØÊ?ÔºàÊ???JavaScript Ê®°Â?Ôº?-->
   <script>
-    // Ê™¢Ê∏¨ WASM Ê®°Â?‰∏¶È°ØÁ§∫Ë≠¶??    if (window.location.search.includes('wasm=true') || 
+    // Ê£ÄÊµãË?Ë°åÊ®°ÂºèÔ??®‰?Ë∞ÉË??åÊó•ÂøóÔ?
+    if (window.location.search.includes('wasm=true') || 
         window.location.href.includes('wasm') ||
-        typeof WebAssembly !== 'undefined' && window.location.pathname.includes('main.dart.wasm')) {
-      console.warn('WASM mode: Web Push functionality limited');
-      console.warn('Recommend using standard Web mode for full functionality');
-      
-      // ?®È??¢Ë??•Â?È°ØÁ§∫Ë≠¶Â?
-      window.addEventListener('load', function() {
-        setTimeout(function() {
-          if (window.UnifiedPushManager) {
-            console.warn('Web Push requires manual setup in WASM mode');
-            console.warn('Please execute in console: window.UnifiedPushManager.completePushSubscription()');
-          }
-        }, 2000);
-      });
+        (typeof WebAssembly !== 'undefined' && window.location.pathname.includes('main.dart.wasm'))) {
+      console.info('[MODE] Running in WASM mode');
+    } else {
+      console.info('[MODE] Running in standard JavaScript mode - Full Web Push and PWA support available');
     }
   </script>
   
@@ -413,7 +405,7 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.444</div>
+      <div class="loading-version" id="version-display">v1.0.448</div>
     </div>
   </div>
   
@@ -663,7 +655,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.448" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.449" async></script>
   
   <!-- Service Worker Ë®ªÂ?Ôºà‰Ωø??Flutter ?ßÂª∫ SWÔºõËá™ÂÆöÁæ© SW Â∑≤Â??®Ô? -->
   <!-- Ë®ªÔ?PWA ÂÆâË??êÁ§∫?ÅË®ª?äÊ??üÊ™¢Ê∏¨„ÄÅÁ??¨È°ØÁ§∫Á??üËÉΩÂ∑≤ÈÅ∑ÁßªÂà∞ Dart -->
@@ -679,7 +671,7 @@
       }
     };
     
-    // ??Dart ?ê‰??çÊñ∞?†Ë??ÅÈù¢?ÑÂáΩ?∏Ô?WASM ?ºÂÆπÔº?    window.reloadPage = function() {
+    // ‰∏?Dart ?ê‰??çÊñ∞?†ËΩΩÈ°µÈù¢?ÑÂáΩ?∞Ô??áÂ?Ê®°Â??ºÂÆπÔº?    window.reloadPage = function() {
       window.location.reload();
     };
   </script>
@@ -835,93 +827,4 @@
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
