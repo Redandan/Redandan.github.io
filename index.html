@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?àÊú¨?ñÁ∑©Â≠òÊ?Ë≠?-->
-    <meta name="cache-version" content="1.0.444">
+    <meta name="cache-version" content="1.0.445">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -28,7 +28,7 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.444+445">
+  <meta name="version" content="1.0.445+446">
 
   <script>
     // Early global error diagnostics to capture exact source of prod-only failures
@@ -153,7 +153,7 @@
   <link rel="shortcut icon" href="icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.444">
+  <link rel="manifest" href="manifest.json?v=1.0.445">
   
   <!-- PWA ÂÆâË??êÁ§∫?ØÊ? -->
   <meta name="application-name" content="Agora Market">
@@ -181,172 +181,16 @@
     }
   </script>
   
-  <!-- Flutter Web ?°È?Á§ôËá™?ïË??ÜËÖ≥??-->
-  <script>
-    // Auto-accessibility handler for Flutter Web
-    (function() {
-      'use strict';
-      
-      console.log('Auto-accessibility handler loading...');
-      
-      // Ê™¢Ê∏¨?åÈ??äÁÑ°?úÁ??âÈ?
-      function autoClickAccessibility() {
-        const selectors = [
-          'flt-semantics-placeholder[aria-label="Enable accessibility"]', // Most reliable
-          'flt-semantics-placeholder[role="button"]',                        // Second option
-          '[aria-label="Enable accessibility"]',                            // Broad search
-          'button[aria-label="Enable accessibility"]',                     // Standard button
-          'button[aria-label*="Enable"]'                                   // Broader button search
-        ];
-        
-        for (const selector of selectors) {
-          const element = document.querySelector(selector);
-          if (element && isElementVisible(element)) {
-            console.log('Auto-clicking accessibility button found via:', selector);
-            
-            try {
-              element.click();
-              return true;
-            } catch (e) {
-              console.warn('Error clicking accessibility button:', e);
-              // ?óË©¶ dispatchEvent ‰ΩúÁÇ∫?ôÁî®?πÊ?
-              try {
-                const event = new Event('click', { bubbles: true, cancelable: true });
-                element.dispatchEvent(event);
-                return true;
-              } catch (e2) {
-                console.warn('Alternative click method also failed:', e2);
-              }
-            }
-          }
-        }
-        return false;
-      }
-      
-      // Ê™¢Êü•?ÉÁ??ØÂê¶?ØË?‰∏îÂèØÈªûÊ?
-      function isElementVisible(element) {
-        if (!element) return false;
-        
-        const style = window.getComputedStyle(element);
-        
-        // ?¥ÂØ¨È¨ÜÁ??ØË??ßÊ™¢??- ?™Ë??ÉÁ?‰∏çÂú® DOM ‰∏≠Èö±?èÂ∞±?Ø‰ª•?óË©¶ÈªûÊ?
-        return style.display !== 'none' && 
-               style.visibility !== 'hidden' &&
-               style.opacity !== '0' &&
-               !element.disabled &&
-               element.tagName !== 'NOSCRIPT'; // Á¢∫‰?‰∏çÊòØ noscript
-            
-        // ÁßªÈô§?¥Ê†º?Ñ‰?ÁΩÆÂ?Â∞∫ÂØ∏Ê™¢Êü•ÔºåÂ??∫ÁÑ°?úÁ??âÈ??ØËÉΩ?´Ê??®Ë????
-      }
-      
-      // ?™Â??ïÁ??°È?Á§ôÊ???
-      function startAutoHandler() {
-        let attempts = 0;
-        const maxAttempts = 20; // ?™Â?ÔºöÊ?Â∞ëÂà∞ 20 Ê¨°Â?Ë©?(10 Áß?
-        const interval = 500;   // ÊØ?500ms Ê™¢Êü•‰∏ÄÊ¨?
-        
-        const startTime = Date.now();
-        
-        function tryClickNow() {
-          attempts++;
-          console.log('Attempt', attempts, 'to detect accessibility button...');
-          
-          // Ê™¢Êü•?ØÂê¶?êÂ?ÈªûÊ?
-          if (autoClickAccessibility()) {
-            const elapsed = Date.now() - startTime;
-            console.log('Accessibility auto-click successful on attempt', attempts, '(' + elapsed + 'ms)');
-            return;
-          }
-          
-          // Ê™¢Êü•?ØÂê¶?ÅÈù¢Â∑≤Á?ËºâÂÖ•ÔºàÊ??âÁÑ°?úÁ??âÈ?Ôº?
-          const hasAccessibilityButton = document.querySelector('flt-semantics-placeholder[aria-label="Enable accessibility"]') ||
-                                       document.querySelector('button[aria-label*="Enable"]') ||
-                                       document.querySelector('[aria-label="Enable accessibility"]');
-          const hasLoginForm = document.querySelector('input[type="text"]') &&
-                             document.querySelector('input[type="password"]');
-          const hasFlutterContent = document.querySelector('flt-scene-host') || 
-                                   document.querySelector('flt-glass-pane') ||
-                                   document.querySelector('canvas');
-          
-          // ?™Â?ÔºöÊõ¥?∫ËÉΩ?ÑÊ??çÁ?Ê≠¢Ê?‰ª?
-          if (!hasAccessibilityButton && (hasLoginForm || hasFlutterContent)) {
-            const elapsed = Date.now() - startTime;
-            console.log('No accessibility button found, page seems loaded (' + elapsed + 'ms)');
-            return;
-          }
-          
-          // ?™Â?ÔºöÂ??úÂ?Ë©¶Ë???10 Ê¨°‰?Ê≤íÊ??æÂà∞?âÈ?ÔºåÊ??çÁ?Ê≠?
-          if (attempts > 10 && !hasAccessibilityButton) {
-            const elapsed = Date.now() - startTime;
-            console.log('Early termination: No accessibility button detected after', attempts, 'attempts (' + elapsed + 'ms)');
-            return;
-          }
-          
-          // ?πÂà•?™Â?ÔºöÂú®Á¨?20 Ê¨°Â?Ë©¶Â?Â¢ûÂ?Ë™øË©¶‰ø°ÊÅØ
-          if (attempts === 20) {
-            const element = document.querySelector('flt-semantics-placeholder[aria-label="Enable accessibility"]');
-            console.log('Mid-point check - Element exists:', !!element);
-            if (element) {
-              console.log('Element details:', {
-                visible: isElementVisible(element),
-                tagName: element.tagName,
-                ariaLabel: element.getAttribute('aria-label')
-              });
-            }
-          }
-          
-          // ÁπºÁ??óË©¶
-          if (attempts < maxAttempts) {
-            setTimeout(tryClickNow, interval);
-          } else {
-            const elapsed = Date.now() - startTime;
-            console.log('Accessibility auto-click failed after', attempts, 'attempts over', elapsed + 'ms');
-            console.log('Manual trigger available: autoClickAccessibility() or window.manualAccessibilityTrigger()');
-            
-            // Ëº∏Âá∫?ÄÁµÇÁ??ãÁµ±Ë®?
-            console.log('Final stats:', {
-              attempts: attempts,
-              totalTime: elapsed + 'ms',
-              documentReady: document.readyState,
-              hasAccessibilityButton: hasAccessibilityButton,
-              hasLoginForm: hasLoginForm
-            });
-          }
-        }
-        
-        // ?ãÂ??óË©¶
-        console.log('Starting accessibility auto-handler...');
-        tryClickNow();
-      }
-      
-      // DOM ËºâÂÖ•ÂÆåÊ?ÂæåÈ?ÂßãË???
-      function initAutoHandler() {
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', startAutoHandler);
-        } else {
-          // DOM Â∑≤Á?ËºâÂÖ•ÂÆåÊ?ÔºåÂª∂?≤Â??ï‰ª•Á≠âÂ? Flutter
-          setTimeout(startAutoHandler, 100);
-        }
-      }
-      
-      // Á´ãÂç≥?ùÂ???
-      initAutoHandler();
-      
-      console.log('Auto-accessibility handler initialized');
-      
-      // ?¥Èú≤?ãÂ?Ëß∏Áôº?ΩÊï∏?∞ÂÖ®Â±ÄÔºåÊñπ‰æøË™øË©?
-      window.manualAccessibilityTrigger = autoClickAccessibility;
-    })();
-  </script>
-  
   <style>
-    /* Loading screen styles */
+    :root {
+      --color-primary: 170, 149, 220;
+      --color-secondary: 123, 95, 184;
+      --color-accent: 106, 76, 147;
+    }
+
     #loading-screen {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      inset: 0;
       background: linear-gradient(135deg, #1A1A1A 0%, #2D2D2D 100%);
       display: flex;
       flex-direction: column;
@@ -359,7 +203,6 @@
       overflow: hidden;
     }
 
-    /* Animated background */
     #loading-screen::before {
       content: '';
       position: absolute;
@@ -368,47 +211,32 @@
       width: 200%;
       height: 200%;
       background: 
-        radial-gradient(circle at 20% 20%, rgba(170, 149, 220, 0.3) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(123, 95, 184, 0.2) 0%, transparent 50%),
-        radial-gradient(circle at 40% 60%, rgba(106, 76, 147, 0.25) 0%, transparent 50%);
-      animation: intensePulse 2s ease-in-out infinite;
+        radial-gradient(circle at 20% 20%, rgba(var(--color-primary), 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(var(--color-secondary), 0.2) 0%, transparent 50%),
+        radial-gradient(circle at 40% 60%, rgba(var(--color-accent), 0.25) 0%, transparent 50%);
+      animation: pulse 2s ease-in-out infinite;
     }
     
     #loading-screen::after {
       content: '';
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      inset: 0;
       background: 
-        linear-gradient(45deg, transparent 30%, rgba(170, 149, 220, 0.1) 50%, transparent 70%),
-        linear-gradient(-45deg, transparent 30%, rgba(123, 95, 184, 0.1) 50%, transparent 70%);
-      animation: shimmerWave 3s linear infinite;
+        linear-gradient(45deg, transparent 30%, rgba(var(--color-primary), 0.1) 50%, transparent 70%),
+        linear-gradient(-45deg, transparent 30%, rgba(var(--color-secondary), 0.1) 50%, transparent 70%);
+      animation: shimmer 3s linear infinite;
     }
     
-    @keyframes intensePulse {
-      0%, 100% { 
-        transform: scale(1) rotate(0deg); 
-        opacity: 0.6; 
-      }
-      25% { 
-        transform: scale(1.2) rotate(90deg); 
-        opacity: 0.8; 
-      }
-      50% { 
-        transform: scale(1.1) rotate(180deg); 
-        opacity: 1; 
-      }
-      75% { 
-        transform: scale(1.3) rotate(270deg); 
-        opacity: 0.7; 
-      }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.6; }
+      25% { transform: scale(1.2) rotate(90deg); opacity: 0.8; }
+      50% { transform: scale(1.1) rotate(180deg); opacity: 1; }
+      75% { transform: scale(1.3) rotate(270deg); opacity: 0.7; }
     }
     
-    @keyframes shimmerWave {
-      0% { transform: translateX(-100%) translateY(-100%); }
-      100% { transform: translateX(100%) translateY(100%); }
+    @keyframes shimmer {
+      0% { transform: translate(-100%, -100%); }
+      100% { transform: translate(100%, 100%); }
     }
     
     .loading-container {
@@ -429,15 +257,15 @@
       align-items: center;
       justify-content: center;
       box-shadow: 
-        0 12px 40px rgba(170, 149, 220, 0.4),
-        0 6px 20px rgba(123, 95, 184, 0.3),
-        0 3px 10px rgba(106, 76, 147, 0.2),
+        0 12px 40px rgba(var(--color-primary), 0.4),
+        0 6px 20px rgba(var(--color-secondary), 0.3),
+        0 3px 10px rgba(var(--color-accent), 0.2),
         inset 0 2px 0 rgba(255, 255, 255, 0.2),
         inset 0 -2px 0 rgba(0, 0, 0, 0.1);
-      animation: intenseFloat 1.5s ease-in-out infinite;
+      animation: float 1.5s ease-in-out infinite;
       position: relative;
       overflow: hidden;
-      border: 2px solid rgba(170, 149, 220, 0.3);
+      border: 2px solid rgba(var(--color-primary), 0.3);
     }
     
     .loading-logo::before {
@@ -450,43 +278,32 @@
       background: 
         conic-gradient(from 0deg, transparent, rgba(255, 255, 255, 0.3), transparent),
         radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-      animation: intenseShimmer 2s linear infinite;
+      animation: rotate 2s linear infinite;
     }
     
     .loading-logo::after {
       content: '';
       position: absolute;
-      top: 10px;
-      left: 10px;
-      right: 10px;
-      bottom: 10px;
+      inset: 10px;
       background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
       border-radius: 20px;
-      animation: innerGlow 2.5s ease-in-out infinite;
+      animation: glow 2.5s ease-in-out infinite;
     }
     
-    @keyframes intenseFloat {
-      0%, 100% { 
-        transform: translateY(0px) scale(1) rotate(0deg); 
-      }
-      25% { 
-        transform: translateY(-15px) scale(1.05) rotate(1deg); 
-      }
-      50% { 
-        transform: translateY(-20px) scale(1.1) rotate(0deg); 
-      }
-      75% { 
-        transform: translateY(-10px) scale(1.05) rotate(-1deg); 
-      }
+    @keyframes float {
+      0%, 100% { transform: translateY(0) scale(1) rotate(0deg); }
+      25% { transform: translateY(-15px) scale(1.05) rotate(1deg); }
+      50% { transform: translateY(-20px) scale(1.1); }
+      75% { transform: translateY(-10px) scale(1.05) rotate(-1deg); }
     }
     
-    @keyframes intenseShimmer {
+    @keyframes rotate {
       0% { transform: rotate(0deg) scale(1); opacity: 0.3; }
       50% { transform: rotate(180deg) scale(1.2); opacity: 0.8; }
       100% { transform: rotate(360deg) scale(1); opacity: 0.3; }
     }
     
-    @keyframes innerGlow {
+    @keyframes glow {
       0%, 100% { opacity: 0.1; transform: scale(1); }
       50% { opacity: 0.3; transform: scale(1.1); }
     }
@@ -494,49 +311,25 @@
     .loading-logo img {
       width: 70px;
       height: 70px;
-      image-rendering: -webkit-optimize-contrast;
       image-rendering: crisp-edges;
       object-fit: contain;
       filter: 
-        drop-shadow(0 6px 12px rgba(170, 149, 220, 0.5)) 
-        drop-shadow(0 3px 6px rgba(123, 95, 184, 0.3))
-        brightness(1.2) 
-        contrast(1.3) 
-        saturate(1.4)
-        hue-rotate(10deg);
-      transition: all 0.3s ease;
+        drop-shadow(0 6px 12px rgba(var(--color-primary), 0.5)) 
+        drop-shadow(0 3px 6px rgba(var(--color-secondary), 0.3))
+        brightness(1.2) contrast(1.3) saturate(1.4) hue-rotate(10deg);
       position: relative;
       z-index: 3;
       animation: iconPulse 2s ease-in-out infinite;
     }
     
-    .loading-logo:hover img {
-      filter: 
-        drop-shadow(0 8px 16px rgba(170, 149, 220, 0.7)) 
-        drop-shadow(0 4px 8px rgba(123, 95, 184, 0.5))
-        brightness(1.4) 
-        contrast(1.5) 
-        saturate(1.6)
-        hue-rotate(20deg);
-      transform: scale(1.1);
-    }
-    
     @keyframes iconPulse {
       0%, 100% { 
-        transform: scale(1) rotate(0deg); 
-        filter: 
-          drop-shadow(0 6px 12px rgba(170, 149, 220, 0.5)) 
-          brightness(1.2) 
-          contrast(1.3) 
-          saturate(1.4);
+        transform: scale(1); 
+        filter: drop-shadow(0 6px 12px rgba(var(--color-primary), 0.5)) brightness(1.2) contrast(1.3) saturate(1.4);
       }
       50% { 
         transform: scale(1.05) rotate(2deg); 
-        filter: 
-          drop-shadow(0 8px 16px rgba(170, 149, 220, 0.6)) 
-          brightness(1.3) 
-          contrast(1.4) 
-          saturate(1.5);
+        filter: drop-shadow(0 8px 16px rgba(var(--color-primary), 0.6)) brightness(1.3) contrast(1.4) saturate(1.5);
       }
     }
     
@@ -545,40 +338,29 @@
       font-weight: 700;
       color: white;
       margin-top: 20px;
-      text-shadow: 
-        0 3px 6px rgba(0, 0, 0, 0.4),
-        0 1px 3px rgba(170, 149, 220, 0.3),
-        0 0 20px rgba(170, 149, 220, 0.2);
-      animation: textGlow 3s ease-in-out infinite;
+      text-shadow: 0 3px 6px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(var(--color-primary), 0.3), 0 0 20px rgba(var(--color-primary), 0.2);
       letter-spacing: 2px;
       text-transform: uppercase;
       background: linear-gradient(45deg, #ffffff, #f0f0f0, #ffffff);
       background-size: 200% 200%;
       -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
       background-clip: text;
+      -webkit-text-fill-color: transparent;
       animation: textGlow 3s ease-in-out infinite, textShimmer 2s linear infinite;
     }
     
     @keyframes textGlow {
       0%, 100% { 
-        text-shadow: 
-          0 3px 6px rgba(0, 0, 0, 0.4),
-          0 1px 3px rgba(170, 149, 220, 0.3),
-          0 0 20px rgba(170, 149, 220, 0.2);
+        text-shadow: 0 3px 6px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(var(--color-primary), 0.3), 0 0 20px rgba(var(--color-primary), 0.2);
       }
       50% { 
-        text-shadow: 
-          0 4px 8px rgba(0, 0, 0, 0.5),
-          0 2px 4px rgba(170, 149, 220, 0.5),
-          0 0 30px rgba(170, 149, 220, 0.4);
+        text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(var(--color-primary), 0.5), 0 0 30px rgba(var(--color-primary), 0.4);
       }
     }
     
     @keyframes textShimmer {
-      0% { background-position: 0% 50%; }
+      0%, 100% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
     }
     
     .loading-version {
@@ -586,9 +368,7 @@
       font-weight: 500;
       color: rgba(255, 255, 255, 0.8);
       margin-top: 8px;
-      text-shadow: 
-        0 2px 4px rgba(0, 0, 0, 0.3),
-        0 1px 2px rgba(170, 149, 220, 0.2);
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(var(--color-primary), 0.2);
       letter-spacing: 1px;
       opacity: 0.9;
       animation: versionGlow 4s ease-in-out infinite;
@@ -597,20 +377,14 @@
     @keyframes versionGlow {
       0%, 100% { 
         opacity: 0.7;
-        text-shadow: 
-          0 2px 4px rgba(0, 0, 0, 0.3),
-          0 1px 2px rgba(170, 149, 220, 0.2);
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(var(--color-primary), 0.2);
       }
       50% { 
         opacity: 1;
-        text-shadow: 
-          0 3px 6px rgba(0, 0, 0, 0.4),
-          0 2px 4px rgba(170, 149, 220, 0.3),
-          0 0 15px rgba(170, 149, 220, 0.2);
+        text-shadow: 0 3px 6px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(var(--color-primary), 0.3), 0 0 15px rgba(var(--color-primary), 0.2);
       }
     }
     
-    /* Hide loading screen when Flutter is ready */
     .flutter-ready #loading-screen {
       opacity: 0;
       visibility: hidden;
@@ -619,7 +393,6 @@
       pointer-events: none;
     }
     
-    /* Ensure Flutter app is visible after loading screen is hidden */
     .flutter-ready flt-scene-host,
     .flutter-ready flt-glass-pane,
     .flutter-ready canvas {
@@ -628,7 +401,6 @@
       display: block !important;
     }
     
-    /* Debug: Add visible border when Flutter is ready (can be removed in production) */
     .flutter-ready body {
       background: transparent;
     }
@@ -642,7 +414,7 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.443</div>
+      <div class="loading-version" id="version-display">v1.0.444</div>
     </div>
   </div>
   
@@ -902,97 +674,10 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.444" async></script>
-  
-  <!-- PWA ÂÆâË??êÁ§∫Â§ÑÁ? -->
-  <script>
-    // ?ïËé∑ beforeinstallprompt ‰∫ã‰ª∂
-    let deferredPrompt;
-    
-    window.addEventListener('beforeinstallprompt', (e) => {
-      console.log('[PWA] beforeinstallprompt event fired');
-      // ?ªÊ≠¢ÈªòËÆ§?ÑÂ?Ë£ÖÊ?Á§?
-      e.preventDefault();
-      // ‰øùÂ?‰∫ã‰ª∂‰ª•‰æøÁ®çÂ?‰ΩøÁî®
-      deferredPrompt = e;
-      
-      // ?æÁ§∫?™Â?‰πâÂ?Ë£ÖÊ??ÆÔ??ØÈÄâÔ?
-      showInstallButton();
-    });
-    
-    // ?æÁ§∫ÂÆâË??âÈíÆ?ÑÂáΩ??
-    function showInstallButton() {
-      // Ê£Ä?•ÊòØ?¶Â∑≤?âÂ?Ë£ÖÊ???
-      if (document.getElementById('pwa-install-button')) {
-        return;
-      }
-      
-      // ?õÂª∫ÂÆâË??âÈíÆ
-      const installButton = document.createElement('button');
-      installButton.id = 'pwa-install-button';
-      installButton.textContent = 'ÂÆâË?Â∫îÁî®';
-      installButton.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 10000;
-        padding: 12px 24px;
-        background: #2196F3;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: bold;
-        cursor: pointer;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        display: none;
-      `;
-      
-      installButton.addEventListener('click', async () => {
-        if (!deferredPrompt) {
-          console.log('[PWA] No deferred prompt available');
-          return;
-        }
-        
-        // ?æÁ§∫ÂÆâË??êÁ§∫
-        deferredPrompt.prompt();
-        
-        // Á≠âÂ??®Êà∑?çÂ?
-        const { outcome } = await deferredPrompt.userChoice;
-        console.log('[PWA] User response:', outcome);
-        
-        // Ê∏ÖÈô§‰øùÂ??ÑÊ?Á§?
-        deferredPrompt = null;
-        
-        // ?êË??âÈíÆ
-        installButton.style.display = 'none';
-      });
-      
-      document.body.appendChild(installButton);
-      
-      // ?æÁ§∫?âÈíÆÔºàÂª∂ËøüÊòæÁ§∫‰ª•‰æøÁî®?∑Á??∞Ô?
-      setTimeout(() => {
-        installButton.style.display = 'block';
-      }, 3000);
-    }
-    
-    // ?ëÂê¨Â∫îÁî®Â∑≤Â?Ë£Ö‰?‰ª?
-    window.addEventListener('appinstalled', () => {
-      console.log('[PWA] App installed successfully');
-      deferredPrompt = null;
-      const installButton = document.getElementById('pwa-install-button');
-      if (installButton) {
-        installButton.style.display = 'none';
-      }
-    });
-    
-    // Ê£Ä?•ÊòØ?¶Â∑≤ÂÆâË?
-    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
-      console.log('[PWA] App is running in standalone mode');
-    }
-  </script>
+  <script src="flutter_bootstrap.js?v=1.0.445" async></script>
   
   <!-- Service Worker Ë®ªÂ?Ôºà‰Ωø??Flutter ?ßÂª∫ SWÔºõËá™ÂÆöÁæ© SW Â∑≤Â??®Ô? -->
+  <!-- Ë®ªÔ?PWA ÂÆâË??êÁ§∫?ÅË®ª?äÊ??üÊ™¢Ê∏¨„ÄÅÁ??¨È°ØÁ§∫Á??üËÉΩÂ∑≤ÈÅ∑ÁßªÂà∞ Dart -->
   <script>
     // Ë®ªÂ?Ê∂àÊÅØ?ïÁ??®‰? Flutter Ë™øÁî®
     window.registerMessageHandler = function(callback) {
@@ -1008,7 +693,7 @@
   </script>
   
   <script>
-    // Update version display from meta tag
+    // Á∞°Â??ÑÁ??¨È°ØÁ§∫Ô??ÖÁî®?ºÂ?ËºâÂ?ÂπïÔ?ÂØ¶È??àÊú¨??Flutter ÁÆ°Á?Ôº?
     document.addEventListener('DOMContentLoaded', function() {
       console.log('[DEBUG] index.html DOMContentLoaded event triggered');
       
@@ -1021,117 +706,7 @@
         versionDisplay.textContent = 'v' + displayVersion;
         console.log('[SUCCESS] Version number set:', displayVersion);
       }
-      
-      // Ê™¢Ê∏¨ localStorage ‰∏≠Á? JWT ‰∏¶È°ØÁ§∫Ë®ª?äÊ??üÊ?Á§?
-      console.log('[DEBUG] Starting registration success check...');
-      checkRegistrationSuccess();
-      
-      // ??ÅΩË®ªÂ??ÅÈù¢?ÑÊ???
-      window.addEventListener('message', function(event) {
-        console.log('[MESSAGE] Received message from registration page:', event.data);
-        
-        if (event.data.type === 'register_page_log') {
-        } else if (event.data.type === 'register_success') {
-          
-          // Ê™¢Êü• JWT ?ØÂê¶?üÁ?‰øùÂ?‰∫?
-          const accessToken = localStorage.getItem('access_token');
-          const refreshToken = localStorage.getItem('refresh_token');
-          const userInfo = localStorage.getItem('user_info');
-          
-        }
-      });
     });
-    
-    // Ê™¢Ê∏¨Ë®ªÂ??êÂ??Ä??
-    function checkRegistrationSuccess() {
-      try {
-        console.log('[DEBUG] Starting localStorage status check...');
-        
-        // Ê™¢Êü•?Ä??localStorage ?ÖÁõÆ
-        const allKeys = Object.keys(localStorage);
-        console.log('[DEBUG] All keys in localStorage:', allKeys);
-        
-        const accessToken = localStorage.getItem('access_token');
-        const refreshToken = localStorage.getItem('refresh_token');
-        const userInfo = localStorage.getItem('user_info');
-        
-        console.log('[DEBUG] Checking localStorage status:');
-        console.log('  - access_token:', accessToken ? 'exists (' + accessToken.substring(0, 20) + '...)' : 'not found');
-        console.log('  - refresh_token:', refreshToken ? 'exists (' + refreshToken.substring(0, 20) + '...)' : 'not found');
-        console.log('  - user_info:', userInfo ? 'exists (' + userInfo.substring(0, 50) + '...)' : 'not found');
-        
-        // Ê™¢Êü•?ØÂê¶?â‰ªª‰ΩïÂ???'token' ?ÑÈçµ
-        const tokenKeys = allKeys.filter(key => key.toLowerCase().includes('token'));
-        console.log('[DEBUG] Keys containing "token":', tokenKeys);
-        
-        if (accessToken || refreshToken || userInfo) {
-          console.log('[SUCCESS] Detected successful registration JWT token, showing success message');
-          showRegistrationSuccessMessage();
-        } 
-      } catch (error) {
-        console.warn('[ERROR] Error occurred while checking registration status:', error);
-      }
-    }
-    
-    // È°ØÁ§∫Ë®ªÂ??êÂ??êÁ§∫
-    function showRegistrationSuccessMessage() {
-      const loadingText = document.getElementById('loading-text');
-      const versionDisplay = document.getElementById('version-display');
-      
-      if (!loadingText) return;
-      
-      console.log('[SUCCESS] Showing registration success message');
-      
-      // Ë™ûË?Ê™¢Ê∏¨
-      function detectLang() {
-        const url = new URL(window.location.href);
-        const qpLang = url.searchParams.get('lang'); // e.g., zh-TW
-        if (qpLang) return qpLang;
-        if (document.documentElement && document.documentElement.lang) return document.documentElement.lang;
-        return navigator.language || navigator.userLanguage || 'en';
-      }
-      
-      const lang = (detectLang() || 'en').toLowerCase();
-      
-      // Â§öË?Â≠óÂÖ∏
-      const i18n = {
-        'en': {
-          loadingText: 'Registration successful, logging in...',
-          versionText: 'Auto-logging in...'
-        },
-        'zh-tw': {
-          loadingText: 'Ë®ªÂ??êÂ?ÔºåÊ≠£?®Áôª?•\u2026',
-          versionText: '?™Â??ªÂÖ•‰∏≠\u2026'
-        },
-        'zh-hant': {
-          loadingText: 'Ë®ªÂ??êÂ?ÔºåÊ≠£?®Áôª?•\u2026',
-          versionText: '?™Â??ªÂÖ•‰∏≠\u2026'
-        },
-        'zh': {
-          loadingText: '\u6ce8\u518c\u6210\u529f\uff0c\u6b63\u5728\u767b\u5f55\u2026',
-          versionText: '\u81ea\u52a8\u767b\u5f55\u4e2d\u2026'
-        },
-        'zh-cn': {
-          loadingText: '\u6ce8\u518c\u6210\u529f\uff0c\u6b63\u5728\u767b\u5f55\u2026',
-          versionText: '\u81ea\u52a8\u767b\u5f55\u4e2d\u2026'
-        }
-      };
-      
-      function resolveLocale(map, locale) {
-        if (map[locale]) return map[locale];
-        // ?óË©¶Ë™ûÁ≥ª?çÁ∂¥?πÈ?ÔºàÂ? zh-CN -> zhÔº?
-        const base = locale.split('-')[0];
-        if (map[base]) return map[base];
-        return map['en'];
-      }
-      
-      const t = resolveLocale(i18n, lang);
-      
-      // È°ØÁ§∫?¨Âú∞?ñÊ?Â≠óÔ??Ö‰∏ªË°åË??ØÔ?‰∏çÊõ¥?∞ÂâØË°åÁ??ãÔ?
-      loadingText.textContent = t.loadingText;
-      
-      console.log('Registration success message displayed');
-    }
     
     // Hide loading screen when Flutter is ready
     let loadingScreenHidden = false;
@@ -1224,12 +799,11 @@
   </script>
   
   <script>
-    // Update flow optimization: version persistence, reset param, SW update prompt
+    // Reset utility: Ê∏ÖÈô§?Ä?âÁ∑©Â≠òÂ? Service Worker (Ë™øË©¶Â∑•ÂÖ∑)
+    // Ë®ªÔ??àÊú¨?¥Êñ∞Ê™¢Ê∏¨Â∑≤ÈÅ∑ÁßªÂà∞ Dart VersionUpdateService
     (function() {
       'use strict';
       const qs = new URL(location.href).searchParams;
-      const versionMeta = (document.querySelector('meta[name="version"]')||{}).content || '';
-      const VERSION_KEY = 'app_version_meta';
 
       // Self-clean routine via ?reset=1
       if (qs.get('reset') === '1') {
@@ -1271,88 +845,11 @@
         })();
         return; // stop further init on this load
       }
-      
-      // Á∞°Â??àÊú¨ÔºöFlutter ?ßÁΩÆ Service Worker ?ÉËá™?ïË??ÜÁ∑©Â≠?
-      // ?™‰??ôÂ?Ë¶ÅÁ??àÊú¨Ê™¢Ê∏¨?åÊõ¥?∞Ê?Á§∫Â???
-      
-      // Á∞°Â???Service Worker ?¥Êñ∞Ê™¢Êü•ÔºàFlutter ?ÉËá™?ïË??ÜÂ§ß?®Â??èËºØÔº?
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistration().then(function(reg) {
-          if (reg) {
-            // ?óË©¶Ê™¢Êü•?¥Êñ∞ÔºàFlutter SW ?ÉËá™?ïË??ÜÔ?
-            try { reg.update(); } catch(_) {}
-          }
-        }).catch(function(err) {
-          // ÂøΩÁï•?ØË™§ÔºåFlutter ?ÉËá™?ïË???
-        });
-      }
-
-      // Create update banner lazily
-      let bannerEl;
-      function showUpdateBanner() {
-        if (!bannerEl) {
-          bannerEl = document.createElement('div');
-          bannerEl.id = 'update-banner';
-          
-          // ‰ΩøÁî® createElement ??textContent ?øÂ?Â≠óÁ¨¶Á∑®Á¢º?èÈ?
-          const span = document.createElement('span');
-          span.textContent = '\u6709\u65b0\u7248\u672c\u53ef\u7528'; // "?âÊñ∞?àÊú¨?ØÁî®"
-          
-          const btn = document.createElement('button');
-          btn.id = 'update-reload-btn';
-          btn.textContent = '\u7acb\u5373\u5237\u65b0'; // "Á´ãÂç≥?∑Êñ∞"
-          btn.addEventListener('click', function() {
-            try { navigator.serviceWorker && navigator.serviceWorker.getRegistration().then(r => r && r.update()); } catch(_) {}
-            location.reload();
-          });
-          
-          bannerEl.appendChild(span);
-          bannerEl.appendChild(btn);
-          document.body.appendChild(bannerEl);
-        }
-        bannerEl.style.display = 'block';
-      }
-
-      // Persist version and detect changes across visits
-      try {
-        const prev = localStorage.getItem(VERSION_KEY);
-        if (prev && prev !== versionMeta) {
-          // Version changed -> try to refresh SW and prompt user to reload
-          if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistration().then(function(reg) {
-              if (reg) {
-                try { reg.update(); } catch(_) {}
-                if (reg.waiting) {
-                  try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch(_) {}
-                }
-                reg.addEventListener('updatefound', function() {
-                  const nw = reg.installing;
-                  if (nw) {
-                    nw.addEventListener('statechange', function() {
-                      if (nw.state === 'installed') {
-                        showUpdateBanner();
-                      }
-                    });
-                  }
-                });
-              }
-            });
-          }
-          showUpdateBanner();
-        }
-        localStorage.setItem(VERSION_KEY, versionMeta);
-      } catch(_) {}
-
-      // Auto-reload once updated SW takes control
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.addEventListener('controllerchange', function() {
-          location.reload();
-        });
-      }
     })();
   </script>
 </body>
 </html>
+
 
 
 
