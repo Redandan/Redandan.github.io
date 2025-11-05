@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?ˆæœ¬?–ç·©å­˜æ?è­?-->
-    <meta name="cache-version" content="1.0.443">
+    <meta name="cache-version" content="1.0.444">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -28,7 +28,7 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.443+444">
+  <meta name="version" content="1.0.444+445">
 
   <script>
     // Early global error diagnostics to capture exact source of prod-only failures
@@ -153,7 +153,7 @@
   <link rel="shortcut icon" href="icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.443">
+  <link rel="manifest" href="manifest.json?v=1.0.444">
   
   <!-- PWA å®‰è??ç¤º?¯æ? -->
   <meta name="application-name" content="Agora Market">
@@ -162,8 +162,7 @@
 
   <!-- WASM æ¨¡å?è­¦å? -->
   <script>
-    // æª¢æ¸¬ WASM æ¨¡å?ä¸¦é¡¯ç¤ºè­¦??
-    if (window.location.search.includes('wasm=true') || 
+    // æª¢æ¸¬ WASM æ¨¡å?ä¸¦é¡¯ç¤ºè­¦??    if (window.location.search.includes('wasm=true') || 
         window.location.href.includes('wasm') ||
         typeof WebAssembly !== 'undefined' && window.location.pathname.includes('main.dart.wasm')) {
       console.warn('WASM mode: Web Push functionality limited');
@@ -239,11 +238,15 @@
         // ç§»é™¤?´æ ¼?„ä?ç½®å?å°ºå¯¸æª¢æŸ¥ï¼Œå??ºç„¡?œç??‰é??¯èƒ½?«æ??¨è????
       }
       
-      // ?ªå??•ç??¡é?ç¤™æ???
-      function startAutoHandler() {
+      // ?ªå??•ç??¡é?ç¤™æ???      function startAutoHandler() {
+        const ACCESSIBILITY_CONFIG = {
+          MAX_ATTEMPTS: 20,
+          INTERVAL_MS: 500
+        };
+        
         let attempts = 0;
-        const maxAttempts = 20; // ?ªå?ï¼šæ?å°‘åˆ° 20 æ¬¡å?è©?(10 ç§?
-        const interval = 500;   // æ¯?500ms æª¢æŸ¥ä¸€æ¬?
+        const maxAttempts = ACCESSIBILITY_CONFIG.MAX_ATTEMPTS;
+        const interval = ACCESSIBILITY_CONFIG.INTERVAL_MS;
         
         const startTime = Date.now();
         
@@ -258,25 +261,20 @@
             return;
           }
           
-          // æª¢æŸ¥?¯å¦?é¢å·²ç?è¼‰å…¥ï¼ˆæ??‰ç„¡?œç??‰é?ï¼?
-          const hasAccessibilityButton = document.querySelector('flt-semantics-placeholder[aria-label="Enable accessibility"]') ||
+          // æª¢æŸ¥?¯å¦?é¢å·²ç?è¼‰å…¥ï¼ˆæ??‰ç„¡?œç??‰é?ï¼?          const hasAccessibilityButton = document.querySelector('flt-semantics-placeholder[aria-label="Enable accessibility"]') ||
                                        document.querySelector('button[aria-label*="Enable"]') ||
                                        document.querySelector('[aria-label="Enable accessibility"]');
           const hasLoginForm = document.querySelector('input[type="text"]') &&
                              document.querySelector('input[type="password"]');
-          const hasFlutterContent = document.querySelector('flt-scene-host') || 
-                                   document.querySelector('flt-glass-pane') ||
-                                   document.querySelector('canvas');
+          const hasFlutterContent = document.querySelector('flt-scene-host, flt-glass-pane, canvas');
           
-          // ?ªå?ï¼šæ›´?ºèƒ½?„æ??ç?æ­¢æ?ä»?
-          if (!hasAccessibilityButton && (hasLoginForm || hasFlutterContent)) {
+          // ?ªå?ï¼šæ›´?ºèƒ½?„æ??ç?æ­¢æ?ä»?          if (!hasAccessibilityButton && (hasLoginForm || hasFlutterContent)) {
             const elapsed = Date.now() - startTime;
             console.log('No accessibility button found, page seems loaded (' + elapsed + 'ms)');
             return;
           }
           
-          // ?ªå?ï¼šå??œå?è©¦è???10 æ¬¡ä?æ²’æ??¾åˆ°?‰é?ï¼Œæ??ç?æ­?
-          if (attempts > 10 && !hasAccessibilityButton) {
+          // ?ªå?ï¼šå??œå?è©¦è???10 æ¬¡ä?æ²’æ??¾åˆ°?‰é?ï¼Œæ??ç?æ­?          if (attempts > 10 && !hasAccessibilityButton) {
             const elapsed = Date.now() - startTime;
             console.log('Early termination: No accessibility button detected after', attempts, 'attempts (' + elapsed + 'ms)');
             return;
@@ -303,8 +301,7 @@
             console.log('Accessibility auto-click failed after', attempts, 'attempts over', elapsed + 'ms');
             console.log('Manual trigger available: autoClickAccessibility() or window.manualAccessibilityTrigger()');
             
-            // è¼¸å‡º?€çµ‚ç??‹çµ±è¨?
-            console.log('Final stats:', {
+            // è¼¸å‡º?€çµ‚ç??‹çµ±è¨?            console.log('Final stats:', {
               attempts: attempts,
               totalTime: elapsed + 'ms',
               documentReady: document.readyState,
@@ -319,8 +316,7 @@
         tryClickNow();
       }
       
-      // DOM è¼‰å…¥å®Œæ?å¾Œé?å§‹è???
-      function initAutoHandler() {
+      // DOM è¼‰å…¥å®Œæ?å¾Œé?å§‹è???      function initAutoHandler() {
         if (document.readyState === 'loading') {
           document.addEventListener('DOMContentLoaded', startAutoHandler);
         } else {
@@ -329,13 +325,11 @@
         }
       }
       
-      // ç«‹å³?å???
-      initAutoHandler();
+      // ç«‹å³?å???      initAutoHandler();
       
       console.log('Auto-accessibility handler initialized');
       
-      // ?´éœ²?‹å?è§¸ç™¼?½æ•¸?°å…¨å±€ï¼Œæ–¹ä¾¿èª¿è©?
-      window.manualAccessibilityTrigger = autoClickAccessibility;
+      // ?´éœ²?‹å?è§¸ç™¼?½æ•¸?°å…¨å±€ï¼Œæ–¹ä¾¿èª¿è©?      window.manualAccessibilityTrigger = autoClickAccessibility;
     })();
   </script>
   
@@ -642,7 +636,7 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.442</div>
+      <div class="loading-version" id="version-display">v1.0.443</div>
     </div>
   </div>
   
@@ -671,8 +665,7 @@
           console.log('[WEB_PUSH_API] Token:', token ? 'provided' : 'not provided');
           
           try {
-            // 1. æª¢æŸ¥?è¦½?¨æ”¯??
-            if (!this.checkBrowserSupport()) {
+            // 1. æª¢æŸ¥?è¦½?¨æ”¯??            if (!this.checkBrowserSupport()) {
               throw new Error('Browser does not support Web Push');
             }
             
@@ -688,8 +681,7 @@
               };
             }
             
-            // 3. ?µå»º?Ÿå¯¦?¨é€è???
-            const subscriptionData = await this.createPushSubscription(vapidKey);
+            // 3. ?µå»º?Ÿå¯¦?¨é€è???            const subscriptionData = await this.createPushSubscription(vapidKey);
             console.log('[WEB_PUSH_API] Push subscription created successfully');
             
             // è¿”å? JSON å­—ç¬¦ä¸²ï??¿å?é¡å?è½‰æ??é?
@@ -714,8 +706,7 @@
         },
         
         /**
-         * æª¢æŸ¥?è¦½?¨æ”¯??
-         * @returns {boolean} ?¯å¦?¯æ´
+         * æª¢æŸ¥?è¦½?¨æ”¯??         * @returns {boolean} ?¯å¦?¯æ´
          */
         checkBrowserSupport() {
           const hasServiceWorker = 'serviceWorker' in navigator;
@@ -732,8 +723,7 @@
         
         /**
          * è«‹æ??šçŸ¥æ¬Šé?
-         * @returns {Promise<string>} æ¬Šé??€??
-         */
+         * @returns {Promise<string>} æ¬Šé??€??         */
         async requestPermission() {
           console.log('[WEB_PUSH_API] Requesting notification permission...');
           
@@ -755,8 +745,7 @@
         },
         
         /**
-         * ?µå»º?¨é€è???
-         * @param {string} vapidKey - VAPID ?¬é‘°
+         * ?µå»º?¨é€è???         * @param {string} vapidKey - VAPID ?¬é‘°
          * @returns {Promise<Object>} è¨‚é–±?¸æ?
          */
         async createPushSubscription(vapidKey) {
@@ -767,8 +756,7 @@
             const registration = await navigator.serviceWorker.ready;
             console.log('[WEB_PUSH_API] Using existing Service Worker registration');
             
-            // 2. ?µå»º?¨é€è???
-            const subscription = await registration.pushManager.subscribe({
+            // 2. ?µå»º?¨é€è???            const subscription = await registration.pushManager.subscribe({
               userVisibleOnly: true,
               applicationServerKey: this.urlBase64ToUint8Array(vapidKey)
             });
@@ -776,8 +764,7 @@
             console.log('[WEB_PUSH_API] Push subscription created successfully');
             console.log('[WEB_PUSH_API] Subscription endpoint:', subscription.endpoint);
             
-            // 3. è½‰æ??ºå¯?³è¼¸?„æ ¼å¼?
-            const deviceInfo = this.generateDeviceInfo();
+            // 3. è½‰æ??ºå¯?³è¼¸?„æ ¼å¼?            const deviceInfo = this.generateDeviceInfo();
             const subscriptionData = {
               endpoint: subscription.endpoint,
               keys: {
@@ -852,16 +839,14 @@
           for (let i = 0; i < fingerprint.length; i++) {
             const char = fingerprint.charCodeAt(i);
             hash = ((hash << 5) - hash) + char;
-            hash = hash & hash; // è½‰æ???32 ä½æ•´??
-          }
+            hash = hash & hash; // è½‰æ???32 ä½æ•´??          }
           
           return Math.abs(hash).toString(36);
         },
         
         /**
          * å°?VAPID ?¬é‘°è½‰æ???Uint8Array
-         * @param {string} base64String - Base64 å­—ç¬¦ä¸?
-         * @returns {Uint8Array} Uint8Array
+         * @param {string} base64String - Base64 å­—ç¬¦ä¸?         * @returns {Uint8Array} Uint8Array
          */
         urlBase64ToUint8Array(base64String) {
           const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -882,8 +867,7 @@
         /**
          * å°?ArrayBuffer è½‰æ???Base64
          * @param {ArrayBuffer} buffer - ArrayBuffer
-         * @returns {string} Base64 å­—ç¬¦ä¸?
-         */
+         * @returns {string} Base64 å­—ç¬¦ä¸?         */
         arrayBufferToBase64(buffer) {
           const bytes = new Uint8Array(buffer);
           let binary = '';
@@ -902,17 +886,163 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.443" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.444" async></script>
   
   <!-- PWA å®‰è??ç¤ºå¤„ç? -->
   <script>
+    // PWA è¨ºæ–·?ŒéŒ¯èª¤è???    (function() {
+      'use strict';
+      
+      // æª¢æŸ¥ PWA ?¯æ´
+      function checkPWASupport() {
+        const checks = {
+          serviceWorker: 'serviceWorker' in navigator,
+          manifest: document.querySelector('link[rel="manifest"]') !== null,
+          https: window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1',
+          installPrompt: 'onbeforeinstallprompt' in window
+        };
+        
+        console.log('[PWA] Support check:', checks);
+        
+        if (!checks.serviceWorker) {
+          console.warn('[PWA] Service Worker not supported in this browser');
+        }
+        if (!checks.manifest) {
+          console.warn('[PWA] Manifest not found');
+        }
+        if (!checks.https) {
+          console.warn('[PWA] HTTPS required for PWA (except localhost)');
+        }
+        
+        return checks;
+      }
+      
+      // æª¢æŸ¥ manifest.json ?¯å¦?¯è¨ª??      async function checkManifest() {
+        try {
+          const manifestLink = document.querySelector('link[rel="manifest"]');
+          if (!manifestLink) {
+            console.warn('[PWA] Manifest link not found');
+            return false;
+          }
+          
+          const manifestUrl = manifestLink.getAttribute('href');
+          const response = await fetch(manifestUrl);
+          
+          if (!response.ok) {
+            console.error('[PWA] Manifest file not accessible:', response.status);
+            return false;
+          }
+          
+          const manifest = await response.json();
+          console.log('[PWA] Manifest loaded successfully:', manifest.name);
+          
+          // æª¢æŸ¥å¿…è??„å?æ¨?          if (!manifest.icons || manifest.icons.length === 0) {
+            console.warn('[PWA] No icons found in manifest');
+          }
+          
+          return true;
+        } catch (error) {
+          console.error('[PWA] Error loading manifest:', error);
+          return false;
+        }
+      }
+      
+      // æª¢æŸ¥ Service Worker è¨»å??€?‹ï??¹é€²ç?ï¼šå??Ÿæª¢?¥ç›´?°è¨»?Šå??ï?
+      const MAX_SW_CHECK_ATTEMPTS = 10; // ?€å¤šæª¢??10 æ¬?      const SW_CHECK_INTERVAL = 1000; // æ¯ç?æª¢æŸ¥ä¸€æ¬?      let swCheckAttempts = 0;
+      let swCheckIntervalId = null;
+      
+      async function checkServiceWorker() {
+        if (!('serviceWorker' in navigator)) {
+          console.warn('[PWA] Service Worker API not available');
+          return false;
+        }
+        
+        try {
+          const registration = await navigator.serviceWorker.getRegistration();
+          if (registration) {
+            console.log('[PWA] ??Service Worker registered:', registration.scope);
+            console.log('[PWA] Service Worker state:', registration.active?.state || registration.installing?.state || registration.waiting?.state);
+            console.log('[PWA] Service Worker script URL:', registration.active?.scriptURL || registration.installing?.scriptURL || registration.waiting?.scriptURL);
+            
+            // ?œæ­¢å®šæ?æª¢æŸ¥
+            if (swCheckIntervalId) {
+              clearTimeout(swCheckIntervalId);
+              swCheckIntervalId = null;
+            }
+            
+            return true;
+          } else {
+            swCheckAttempts++;
+            if (swCheckAttempts < MAX_SW_CHECK_ATTEMPTS) {
+              console.log(`[PWA] Service Worker not yet registered (attempt ${swCheckAttempts}/${MAX_SW_CHECK_ATTEMPTS}), checking again...`);
+              return false; // ç¹¼ç?æª¢æŸ¥
+            } else {
+              console.warn('[PWA] ? ï? Service Worker not registered after', MAX_SW_CHECK_ATTEMPTS, 'attempts');
+              console.warn('[PWA] This may be normal if Flutter is still loading or if Service Worker registration failed');
+              
+              // ?œæ­¢å®šæ?æª¢æŸ¥
+              if (swCheckIntervalId) {
+                clearTimeout(swCheckIntervalId);
+                swCheckIntervalId = null;
+              }
+              
+              return false;
+            }
+          }
+        } catch (error) {
+          console.error('[PWA] ??Error checking Service Worker:', error);
+          return false;
+        }
+      }
+      
+      // ??½ Service Worker è¨»å?äº‹ä»¶
+      function setupServiceWorkerListener() {
+        if (!('serviceWorker' in navigator)) {
+          return;
+        }
+        
+        // ??½ controllerchange äº‹ä»¶ï¼ˆç•¶?°ç? Service Worker ?¥ç®¡?‚ï?
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          console.log('[PWA] ??Service Worker controller changed');
+          checkServiceWorker();
+        });
+        
+        // ??½ message äº‹ä»¶ï¼ˆå? Service Worker ?¥æ”¶æ¶ˆæ¯ï¼?        navigator.serviceWorker.addEventListener('message', (event) => {
+          console.log('[PWA] Message from Service Worker:', event.data);
+        });
+      }
+      
+      // å®šæ?æª¢æŸ¥ Service Worker ?€??      async function checkServiceWorkerPeriodically() {
+        const result = await checkServiceWorker();
+        
+        if (!result && swCheckAttempts < MAX_SW_CHECK_ATTEMPTS) {
+          swCheckIntervalId = setTimeout(checkServiceWorkerPeriodically, SW_CHECK_INTERVAL);
+        } else if (result) {
+          console.log('[PWA] ??Service Worker check completed successfully');
+        } else {
+          console.warn('[PWA] ? ï? Service Worker check completed but registration not found');
+        }
+      }
+      
+      // ?·è?æª¢æŸ¥
+      window.addEventListener('load', async () => {
+        // è¨­ç½® Service Worker äº‹ä»¶??½??        setupServiceWorkerListener();
+        
+        // ç«‹å³?·è?ä¸€æ¬¡åŸº?¬æª¢??        checkPWASupport();
+        await checkManifest();
+        
+        // ç­‰å? Flutter ?å??–å??‹å?å®šæ?æª¢æŸ¥
+        setTimeout(() => {
+          checkServiceWorkerPeriodically();
+        }, 2000); // ç­‰å? Flutter ?å??–å???      });
+    })();
+    
     // ?•è· beforeinstallprompt äº‹ä»¶
     let deferredPrompt;
     
     window.addEventListener('beforeinstallprompt', (e) => {
       console.log('[PWA] beforeinstallprompt event fired');
-      // ?»æ­¢é»˜è®¤?„å?è£…æ?ç¤?
-      e.preventDefault();
+      // ?»æ­¢é»˜è®¤?„å?è£…æ?ç¤?      e.preventDefault();
       // ä¿å?äº‹ä»¶ä»¥ä¾¿ç¨å?ä½¿ç”¨
       deferredPrompt = e;
       
@@ -920,10 +1050,8 @@
       showInstallButton();
     });
     
-    // ?¾ç¤ºå®‰è??‰é’®?„å‡½??
-    function showInstallButton() {
-      // æ£€?¥æ˜¯?¦å·²?‰å?è£…æ???
-      if (document.getElementById('pwa-install-button')) {
+    // ?¾ç¤ºå®‰è??‰é’®?„å‡½??    function showInstallButton() {
+      // æ£€?¥æ˜¯?¦å·²?‰å?è£…æ???      if (document.getElementById('pwa-install-button')) {
         return;
       }
       
@@ -961,8 +1089,7 @@
         const { outcome } = await deferredPrompt.userChoice;
         console.log('[PWA] User response:', outcome);
         
-        // æ¸…é™¤ä¿å??„æ?ç¤?
-        deferredPrompt = null;
+        // æ¸…é™¤ä¿å??„æ?ç¤?        deferredPrompt = null;
         
         // ?è??‰é’®
         installButton.style.display = 'none';
@@ -976,8 +1103,7 @@
       }, 3000);
     }
     
-    // ?‘å¬åº”ç”¨å·²å?è£…ä?ä»?
-    window.addEventListener('appinstalled', () => {
+    // ?‘å¬åº”ç”¨å·²å?è£…ä?ä»?    window.addEventListener('appinstalled', () => {
       console.log('[PWA] App installed successfully');
       deferredPrompt = null;
       const installButton = document.getElementById('pwa-install-button');
@@ -999,8 +1125,7 @@
       window._messageHandler = callback;
     };
 
-    // ?•ç?ä¾†è‡ª Service Worker ?„æ???
-    window.handleServiceWorkerMessage = function(data) {
+    // ?•ç?ä¾†è‡ª Service Worker ?„æ???    window.handleServiceWorkerMessage = function(data) {
       if (window._messageHandler) {
         window._messageHandler(data);
       }
@@ -1009,41 +1134,41 @@
   
   <script>
     // Update version display from meta tag
+    // ============================================
+    // ?ˆæœ¬?¾ç¤ºå·¥å…·?½æ•°
+    // ============================================
+    function getVersionDisplay() {
+      const versionMeta = document.querySelector('meta[name="version"]');
+      if (!versionMeta) return '1.0.0';
+      
+      const fullVersion = versionMeta.getAttribute('content');
+      return fullVersion ? fullVersion.split('+')[0] : '1.0.0';
+    }
+    
     document.addEventListener('DOMContentLoaded', function() {
       console.log('[DEBUG] index.html DOMContentLoaded event triggered');
       
-      const versionMeta = document.querySelector('meta[name="version"]');
       const versionDisplay = document.getElementById('version-display');
-      
-      if (versionMeta && versionDisplay) {
-        const fullVersion = versionMeta.getAttribute('content'); // e.g., "1.0.293+294"
-        const displayVersion = fullVersion ? fullVersion.split('+')[0] : '1.0.0'; // e.g., "1.0.293"
+      if (versionDisplay) {
+        const displayVersion = getVersionDisplay();
         versionDisplay.textContent = 'v' + displayVersion;
         console.log('[SUCCESS] Version number set:', displayVersion);
       }
       
-      // æª¢æ¸¬ localStorage ä¸­ç? JWT ä¸¦é¡¯ç¤ºè¨»?Šæ??Ÿæ?ç¤?
-      console.log('[DEBUG] Starting registration success check...');
+      // æª¢æ¸¬ localStorage ä¸­ç? JWT ä¸¦é¡¯ç¤ºè¨»?Šæ??Ÿæ?ç¤?      console.log('[DEBUG] Starting registration success check...');
       checkRegistrationSuccess();
       
-      // ??½è¨»å??é¢?„æ???
-      window.addEventListener('message', function(event) {
+      // ??½è¨»å??é¢?„æ???      window.addEventListener('message', function(event) {
         console.log('[MESSAGE] Received message from registration page:', event.data);
         
-        if (event.data.type === 'register_page_log') {
-        } else if (event.data.type === 'register_success') {
-          
-          // æª¢æŸ¥ JWT ?¯å¦?Ÿç?ä¿å?äº?
-          const accessToken = localStorage.getItem('access_token');
-          const refreshToken = localStorage.getItem('refresh_token');
-          const userInfo = localStorage.getItem('user_info');
-          
+        if (event.data.type === 'register_success') {
+          // è¨»å??å??•ç???checkRegistrationSuccess() çµ±ä??•ç?
+          checkRegistrationSuccess();
         }
       });
     });
     
-    // æª¢æ¸¬è¨»å??å??€??
-    function checkRegistrationSuccess() {
+    // æª¢æ¸¬è¨»å??å??€??    function checkRegistrationSuccess() {
       try {
         console.log('[DEBUG] Starting localStorage status check...');
         
@@ -1119,8 +1244,7 @@
       
       function resolveLocale(map, locale) {
         if (map[locale]) return map[locale];
-        // ?—è©¦èªç³»?ç¶´?¹é?ï¼ˆå? zh-CN -> zhï¼?
-        const base = locale.split('-')[0];
+        // ?—è©¦èªç³»?ç¶´?¹é?ï¼ˆå? zh-CN -> zhï¼?        const base = locale.split('-')[0];
         if (map[base]) return map[base];
         return map['en'];
       }
@@ -1134,6 +1258,46 @@
     }
     
     // Hide loading screen when Flutter is ready
+    // ============================================
+    // Flutter ?å??–å·¥?·å‡½?°å??ç½®
+    // ============================================
+    const FLUTTER_CONFIG = {
+      SELECTORS: 'flt-scene-host, flt-glass-pane, canvas',
+      LOADING: {
+        DELAY_AUTO_LOGIN_MS: 1500,
+        DELAY_NORMAL_MS: 800,
+        FALLBACK_AUTO_LOGIN_MS: 4000,
+        FALLBACK_NORMAL_MS: 3500,
+        ERROR_TIMEOUT_MS: 2000,
+        CHECK_DELAY_MS: 500
+      }
+    };
+    
+    // Flutter ?ƒç?å·¥å…·?½æ•°
+    function getFlutterElements() {
+      return document.querySelectorAll(FLUTTER_CONFIG.SELECTORS);
+    }
+    
+    function hasFlutterContent() {
+      return document.querySelector(FLUTTER_CONFIG.SELECTORS) !== null;
+    }
+    
+    function showFlutterElements() {
+      getFlutterElements().forEach(el => {
+        if (el) {
+          el.style.opacity = '1';
+          el.style.visibility = 'visible';
+          el.style.display = 'block';
+        }
+      });
+    }
+    
+    // æ£€?¥æ˜¯?¦æ??ªåŠ¨?»å?
+    function hasAutoLogin() {
+      return !!(window.localStorage && window.localStorage.getItem('access_token'));
+    }
+    
+    // ? è½½å±å?ç®¡ç?
     let loadingScreenHidden = false;
     
     function hideLoadingScreen() {
@@ -1143,35 +1307,28 @@
       console.log('[LOADING] Loading screen hidden');
     }
     
-    window.addEventListener('flutter-first-frame', function () {
+    // æ£€??Flutter ?…å®¹?¯å¦? è½½
+    function checkFlutterContentLoaded() {
+      setTimeout(() => {
+        if (!hasFlutterContent()) {
+          console.error('[LOADING] Warning: Flutter content not found, possible route initialization failure');
+        }
+      }, FLUTTER_CONFIG.LOADING.CHECK_DELAY_MS);
+    }
+    
+    // ?‘å¬ Flutter ç¬¬ä?å¸§ä?ä»?    window.addEventListener('flutter-first-frame', function () {
       console.log('[LOADING] Flutter first frame event received');
       
-      // æª¢æŸ¥ Flutter ?‰ç”¨?¯å¦å·²æ?è¼?
-      const flutterElements = document.querySelectorAll('flt-scene-host, flt-glass-pane, canvas');
+      const flutterElements = getFlutterElements();
       console.log('[LOADING] Flutter elements found:', flutterElements.length);
       
-      // ?¥å???auto-login å¼·ä¿¡?Ÿï?localStorage ??access_tokenï¼‰ï?å»¶é•·?±è?å»¶é²ä»¥å¹³æ»‘è·³è½?
-      const hasAutoLogin = !!(window.localStorage && window.localStorage.getItem('access_token'));
-      const delayMs = hasAutoLogin ? 1500 : 800;
+      const config = FLUTTER_CONFIG.LOADING;
+      const delayMs = hasAutoLogin() ? config.DELAY_AUTO_LOGIN_MS : config.DELAY_NORMAL_MS;
+      
       setTimeout(() => {
         hideLoadingScreen();
-        
-        // ç¢ºä? Flutter ?‰ç”¨?¯è?
-        flutterElements.forEach(el => {
-          if (el) {
-            el.style.opacity = '1';
-            el.style.visibility = 'visible';
-            el.style.display = 'block';
-          }
-        });
-        
-        // æª¢æŸ¥?¯å¦?‰è·¯?±å?é¡Œç?è·¡è±¡
-        setTimeout(() => {
-          const hasFlutterContent = document.querySelector('flt-scene-host') || document.querySelector('flt-glass-pane') || document.querySelector('canvas');
-          if (!hasFlutterContent) {
-            console.error('[LOADING] Warning: Flutter content not found, possible route initialization failure');
-          }
-        }, 500);
+        showFlutterElements();
+        checkFlutterContentLoaded();
       }, delayMs);
     });
     
@@ -1183,41 +1340,29 @@
         event.message.includes('main.dart')
       )) {
         console.error('[LOADING] Flutter loading error detected:', event.message);
-        // ?³ä½¿?ºéŒ¯ä¹Ÿå?è©¦éš±?å?è¼‰å?å¹?
         setTimeout(() => {
           hideLoadingScreen();
-        }, 2000);
+        }, FLUTTER_CONFIG.LOADING.ERROR_TIMEOUT_MS);
       }
     });
     
     // Fallback: hide loading screen if event doesn't fire
     (function(){
-      const hasAutoLogin = !!(window.localStorage && window.localStorage.getItem('access_token'));
-      const fallbackMs = hasAutoLogin ? 4000 : 3500; // ç¨å¾®å»¶é•·ä»¥ç?å¾?Flutter ?Ÿå?
+      const config = FLUTTER_CONFIG.LOADING;
+      const fallbackMs = hasAutoLogin() ? config.FALLBACK_AUTO_LOGIN_MS : config.FALLBACK_NORMAL_MS;
       
       setTimeout(() => {
         if (!loadingScreenHidden) {
           console.warn('[LOADING] Fallback: Hiding loading screen after timeout');
           hideLoadingScreen();
+          showFlutterElements();
           
-          // å¼·åˆ¶é¡¯ç¤º Flutter ?‰ç”¨ï¼ˆå??œå??¨ç?è©±ï?
-          const flutterElements = document.querySelectorAll('flt-scene-host, flt-glass-pane, canvas');
-          flutterElements.forEach(el => {
-            if (el) {
-              el.style.opacity = '1';
-              el.style.visibility = 'visible';
-              el.style.display = 'block';
-            }
-          });
-          
-          // å¦‚æ?ä»ç„¶æ²’æ? Flutter ?§å®¹ï¼Œè??„è­¦??
           setTimeout(() => {
-            const hasFlutterContent = document.querySelector('flt-scene-host') || document.querySelector('flt-glass-pane') || document.querySelector('canvas');
-            if (!hasFlutterContent) {
+            if (!hasFlutterContent()) {
               console.error('[LOADING] Critical Warning: Flutter app not loaded correctly');
               console.error('[LOADING] Suggestion: Check console for errors or try refreshing the page');
             }
-          }, 500);
+          }, config.CHECK_DELAY_MS);
         }
       }, fallbackMs);
     })();
@@ -1264,28 +1409,32 @@
           } finally {
             const url = new URL(location.href);
             url.searchParams.delete('reset');
-            // æ·»å??‚é??³ç¢ºä¿ä??ƒä½¿?¨ç·©å­?
-            url.searchParams.set('_t', Date.now().toString());
+            // æ·»å??‚é??³ç¢ºä¿ä??ƒä½¿?¨ç·©å­?            url.searchParams.set('_t', Date.now().toString());
             location.replace(url.pathname + url.search + url.hash);
           }
         })();
         return; // stop further init on this load
       }
       
-      // ç°¡å??ˆæœ¬ï¼šFlutter ?§ç½® Service Worker ?ƒè‡ª?•è??†ç·©å­?
-      // ?ªä??™å?è¦ç??ˆæœ¬æª¢æ¸¬?Œæ›´?°æ?ç¤ºå???
-      
-      // ç°¡å???Service Worker ?´æ–°æª¢æŸ¥ï¼ˆFlutter ?ƒè‡ª?•è??†å¤§?¨å??è¼¯ï¼?
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistration().then(function(reg) {
-          if (reg) {
-            // ?—è©¦æª¢æŸ¥?´æ–°ï¼ˆFlutter SW ?ƒè‡ª?•è??†ï?
-            try { reg.update(); } catch(_) {}
-          }
-        }).catch(function(err) {
-          // å¿½ç•¥?¯èª¤ï¼ŒFlutter ?ƒè‡ª?•è???
-        });
+      // ç°¡å??ˆæœ¬ï¼šFlutter ?§ç½® Service Worker ?ƒè‡ª?•è??†ç·©å­?      // ?ªä??™å?è¦ç??ˆæœ¬æª¢æ¸¬?Œæ›´?°æ?ç¤ºå???      
+      // Service Worker ?´æ–°æ£€?¥å·¥?·å‡½??      function checkServiceWorkerUpdate() {
+        if (!('serviceWorker' in navigator)) return;
+        
+        navigator.serviceWorker.getRegistration()
+          .then(reg => {
+            if (reg) {
+              try { 
+                reg.update(); 
+              } catch(e) {
+                // ?™é?å¤±è´¥
+              }
+            }
+          })
+          .catch(() => {
+            // å¿½ç•¥?¯èª¤ï¼ŒFlutter ?ƒè‡ª?•è???          });
       }
+      
+      // ç°¡å???Service Worker ?´æ–°æª¢æŸ¥ï¼ˆFlutter ?ƒè‡ª?•è??†å¤§?¨å??è¼¯ï¼?      checkServiceWorkerUpdate();
 
       // Create update banner lazily
       let bannerEl;
@@ -1321,7 +1470,7 @@
           if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistration().then(function(reg) {
               if (reg) {
-                try { reg.update(); } catch(_) {}
+                checkServiceWorkerUpdate();
                 if (reg.waiting) {
                   try { reg.waiting.postMessage({ type: 'SKIP_WAITING' }); } catch(_) {}
                 }
@@ -1353,6 +1502,7 @@
   </script>
 </body>
 </html>
+
 
 
 
