@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?ˆæœ¬?–ç·©å­˜æ?è­?-->
-    <meta name="cache-version" content="1.0.454">
+    <meta name="cache-version" content="1.0.455">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -33,7 +33,7 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.454+455">
+  <meta name="version" content="1.0.455+456">
 
   <script>
     // Early global error diagnostics to capture exact source of prod-only failures
@@ -136,7 +136,7 @@
   <link rel="shortcut icon" href="icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.454">
+  <link rel="manifest" href="manifest.json?v=1.0.455">
   
   <!-- PWA å®‰è??ç¤º?¯æ? -->
   <meta name="application-name" content="Agora Market">
@@ -157,7 +157,55 @@
       width: 100%;
       height: 100%;
       background: #1A1A1A !important;
-      overflow: hidden;
+      /* ç§»é™¤ overflow: hiddenï¼Œè®© Flutter æ­?¸¸å¤„ç?æ»šåŠ¨ */
+      overflow: visible;
+      /* ç¡®ä?ä½ç½®?‚è€ƒæ­£ç¡?*/
+      position: relative;
+    }
+
+    /* ç¡®ä? Flutter å®¹å™¨æ­?¡®è¦†ç??´ä¸ªè§†å£ï¼Œæ²¡?‰å?ç§?*/
+    flt-scene-host {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      /* ç¡®ä?æ²¡æ? transform å½±å??æ? */
+      transform: none !important;
+      /* ç¡®ä?è¦†ç??´ä¸ªå±å?ï¼Œå??¬å??¨åŒº??*/
+      z-index: 1;
+    }
+
+    flt-glass-pane {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      transform: none !important;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* ç¡®ä? canvas æ­?¡®æ¸²æ? */
+    flt-scene-host canvas {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      transform: none !important;
+      touch-action: none;
     }
 
     #loading-screen {
@@ -385,12 +433,48 @@
       background: transparent;
       /* ç§»é™¤å®‰å…¨?ºå? paddingï¼Œè®© Flutter åº”ç”¨å¤„ç? */
       padding: 0 !important;
+      /* ç¡®ä? body ?¯ä»¥æ»šåŠ¨ï¼ˆå??œé?è¦ï? */
+      overflow: auto;
     }
 
-    /* ç¡®ä? Flutter åº”ç”¨ä¹Ÿè??–å??¨åŒº??*/
-    flt-scene-host,
-    flt-glass-pane {
+    /* ç¡®ä? Flutter åº”ç”¨æ­?¡®è¦†ç??´ä¸ªè§†å£ï¼Œæ²¡?‰å?ç§?*/
+    .flutter-ready flt-scene-host {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      transform: none !important;
       background: transparent !important;
+    }
+
+    .flutter-ready flt-glass-pane {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      transform: none !important;
+      background: transparent !important;
+    }
+
+    .flutter-ready flt-scene-host canvas {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      transform: none !important;
     }
   </style>
 </head>
@@ -402,7 +486,7 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.454</div>
+      <div class="loading-version" id="version-display">v1.0.455</div>
     </div>
   </div>
   
@@ -662,7 +746,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.454" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.455" async></script>
   
   <!-- Service Worker è¨»å?ï¼ˆä½¿??Flutter ?§å»º SWï¼›è‡ªå®šç¾© SW å·²å??¨ï? -->
   <!-- è¨»ï?PWA å®‰è??ç¤º?è¨»?Šæ??Ÿæª¢æ¸¬ã€ç??¬é¡¯ç¤ºã€å?è¼‰å?å¹•ç®¡?†ç??Ÿèƒ½å·²é·ç§»åˆ° Dart -->
@@ -681,6 +765,7 @@
   </script>
 </body>
 </html>
+
 
 
 
