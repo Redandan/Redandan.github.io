@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?ˆæœ¬?–ç·©å­˜æ?è­?-->
-    <meta name="cache-version" content="1.0.453">
+    <meta name="cache-version" content="1.0.454">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -33,7 +33,7 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.453+454">
+  <meta name="version" content="1.0.454+455">
 
   <script>
     // Early global error diagnostics to capture exact source of prod-only failures
@@ -94,7 +94,10 @@
   <!-- Viewport meta tags for proper mobile scaling -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="mobile-web-app-capable" content="yes">
-  <!-- theme-color: è®¾ç½®ä¸ºæ·±?²ä»¥?¹é?? è½½å±å?ï¼Œæ?ä½¿ç”¨ transparentï¼ˆæ³¨?ï?æµè??¨å¯?½å¿½?¥é€æ?åº¦ï? -->
+  
+  <!-- theme-color: è®¾ç½®ä¸ºæ·±?²ä»¥?¹é?? è½½å±å?ï¼Œç??³å??¨ï?ä¸ä½¿??media query ä»¥ç¡®ä¿ç??³ç??ˆï? -->
+  <meta name="theme-color" content="#1A1A1A">
+  <!-- ?Œæ—¶ä¸ºæ·±?²æ¨¡å¼æ?ä¾›æ?ç¡®ç?ä¸»é???-->
   <meta name="theme-color" content="#1A1A1A" media="(prefers-color-scheme: dark)">
   <meta name="theme-color" content="#2196F3" media="(prefers-color-scheme: light)">
 
@@ -103,6 +106,7 @@
 
   <!-- iOS meta tags & icons -->
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <!-- ä½¿ç”¨ black-translucent ç¡®ä??¶æ€æ??…å®¹ä¸ºç™½?²ï??Œæ™¯?æ?ï¼ˆé??ˆæ·±?²è??¯ï? -->
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Agora Market">
   
@@ -132,7 +136,7 @@
   <link rel="shortcut icon" href="icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.453">
+  <link rel="manifest" href="manifest.json?v=1.0.454">
   
   <!-- PWA å®‰è??ç¤º?¯æ? -->
   <meta name="application-name" content="Agora Market">
@@ -146,9 +150,22 @@
       --color-accent: 106, 76, 147;
     }
 
+    /* ç«‹å³è®¾ç½® body ??html ?Œæ™¯ï¼Œé˜²æ­¢ç™½?²é—ª??*/
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #1A1A1A !important;
+      overflow: hidden;
+    }
+
     #loading-screen {
       position: fixed;
+      /* è¦†ç??´ä¸ªå±å? */
       inset: 0;
+      /* ?©å??°å??¨åŒº?Ÿä?å¤–ä»¥ç¡®ä?å®Œå…¨è¦†ç? */
+      margin: 0;
       background: linear-gradient(135deg, #1A1A1A 0%, #2D2D2D 100%);
       display: flex;
       flex-direction: column;
@@ -159,6 +176,17 @@
       color: white;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       overflow: hidden;
+    }
+    
+    /* ä¸ºå?è½½å®¹?¨æ·»? å??¨åŒº??paddingï¼Œç¡®ä¿å?å®¹ä?è¢«çŠ¶?æ??®æŒ¡ */
+    .loading-container {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding-top: env(safe-area-inset-top, 0);
+      padding-bottom: env(safe-area-inset-bottom, 0);
+      padding-left: env(safe-area-inset-left, 0);
+      padding-right: env(safe-area-inset-right, 0);
     }
 
     #loading-screen::before {
@@ -195,12 +223,6 @@
     @keyframes shimmer {
       0% { transform: translate(-100%, -100%); }
       100% { transform: translate(100%, 100%); }
-    }
-    
-    .loading-container {
-      position: relative;
-      z-index: 1;
-      text-align: center;
     }
     
     .loading-logo {
@@ -361,6 +383,14 @@
     
     .flutter-ready body {
       background: transparent;
+      /* ç§»é™¤å®‰å…¨?ºå? paddingï¼Œè®© Flutter åº”ç”¨å¤„ç? */
+      padding: 0 !important;
+    }
+
+    /* ç¡®ä? Flutter åº”ç”¨ä¹Ÿè??–å??¨åŒº??*/
+    flt-scene-host,
+    flt-glass-pane {
+      background: transparent !important;
     }
   </style>
 </head>
@@ -372,7 +402,7 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.453</div>
+      <div class="loading-version" id="version-display">v1.0.454</div>
     </div>
   </div>
   
@@ -632,7 +662,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.453" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.454" async></script>
   
   <!-- Service Worker è¨»å?ï¼ˆä½¿??Flutter ?§å»º SWï¼›è‡ªå®šç¾© SW å·²å??¨ï? -->
   <!-- è¨»ï?PWA å®‰è??ç¤º?è¨»?Šæ??Ÿæª¢æ¸¬ã€ç??¬é¡¯ç¤ºã€å?è¼‰å?å¹•ç®¡?†ç??Ÿèƒ½å·²é·ç§»åˆ° Dart -->
@@ -651,6 +681,7 @@
   </script>
 </body>
 </html>
+
 
 
 
