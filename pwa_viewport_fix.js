@@ -20,8 +20,6 @@
     return; // 非 PWA 模式，不需要修复
   }
   
-  console.log('[PWA_FIX] Standalone mode detected, applying viewport fix...');
-  
   // 设置真实的视口高度（CSS 变量方法）
   function setRealViewportHeight() {
     // 获取实际视口高度
@@ -29,9 +27,6 @@
     
     // 设置 CSS 变量 --vh (1vh = 1% of viewport height)
     document.documentElement.style.setProperty('--vh', `${vh}px`);
-    
-    console.log('[PWA_FIX] Viewport height set:', window.innerHeight, 'px');
-    console.log('[PWA_FIX] CSS variable --vh set to:', vh, 'px');
   }
   
   // 初始设置
@@ -63,7 +58,6 @@
       // 检查并修复 Canvas 位置
       const canvasRect = canvas.getBoundingClientRect();
       if (canvasRect.top !== 0) {
-        console.log('[PWA_FIX] Canvas position offset detected:', canvasRect.top);
         // 强制 Canvas 位置为 top: 0
         canvas.style.position = 'absolute';
         canvas.style.top = '0px';
@@ -74,7 +68,6 @@
       if (sceneHost.style.height !== actualHeight + 'px') {
         sceneHost.style.height = actualHeight + 'px';
         canvas.style.height = actualHeight + 'px';
-        console.log('[PWA_FIX] Flutter container height set to:', actualHeight + 'px');
       }
     } else {
       // 如果 Flutter 还没加载，等待一下
@@ -84,7 +77,6 @@
   
   // 监听 Flutter 第一帧
   window.addEventListener('flutter-first-frame', function() {
-    console.log('[PWA_FIX] Flutter first frame detected');
     setTimeout(ensureFlutterViewport, 200);
   });
   

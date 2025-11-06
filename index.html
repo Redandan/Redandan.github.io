@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?ˆæœ¬?–ç·©å­˜æ?è­?-->
-    <meta name="cache-version" content="1.0.457">
+    <meta name="cache-version" content="1.0.458">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -29,11 +29,14 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   
+  <!-- Permissions Policy -->
+  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(self), notifications=(self), payment=()">
+  
   <meta name="description" content="Agora Market - Your Trading Community">
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.457+458">
+  <meta name="version" content="1.0.458+459">
 
   <script>
     // Early global error diagnostics to capture exact source of prod-only failures
@@ -136,12 +139,33 @@
   <link rel="shortcut icon" href="icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.457">
+  <link rel="manifest" href="manifest.json?v=1.0.458">
   
   <!-- PWA å®‰è??ç¤º?¯æ? -->
   <meta name="application-name" content="Agora Market">
   <meta name="msapplication-TileColor" content="#2196F3">
   <meta name="msapplication-tap-highlight" content="no">
+  
+  <!-- ?§èƒ½ä¼˜å?ï¼šé?? è½½?³é”®èµ„æ? -->
+  <link rel="preload" href="flutter_bootstrap.js?v=1.0.458" as="script">
+  <link rel="preload" href="pwa_viewport_fix.js" as="script">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+  
+  <!-- SEO ?Œç¤¾äº¤å?äº«ï?Open Graph -->
+  <meta property="og:title" content="Agora Market">
+  <meta property="og:description" content="Agora Market - Your Trading Community">
+  <meta property="og:image" content="/icons/Icon-512.png">
+  <meta property="og:url" content="https://redandan.github.io">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="zh_TW">
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Agora Market">
+  <meta name="twitter:description" content="Agora Market - Your Trading Community">
+  <meta name="twitter:image" content="/icons/Icon-512.png">
   
   <style>
     :root {
@@ -490,7 +514,7 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.457</div>
+      <div class="loading-version" id="version-display">v1.0.458</div>
     </div>
   </div>
   
@@ -750,10 +774,16 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.457" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.458" async></script>
   
   <!-- PWA è§†å£é«˜åº¦ä¿®å??šæœ¬ - è§?†³ standalone æ¨¡å?ä¸‹ç?è§¦æ‘¸?æ??ç§»?®é? -->
   <script src="pwa_viewport_fix.js"></script>
+  
+  <!-- Web Vitals ?§èƒ½?‘æŽ§ -->
+  <script src="web_vitals.js"></script>
+  
+  <!-- ç¦»çº¿é¡µé¢å¤„ç? -->
+  <script src="offline_handler.js"></script>
   
   <!-- Service Worker è¨»å?ï¼ˆä½¿??Flutter ?§å»º SWï¼›è‡ªå®šç¾© SW å·²å??¨ï? -->
   <!-- è¨»ï?PWA å®‰è??ç¤º?è¨»?Šæ??Ÿæª¢æ¸¬ã€ç??¬é¡¯ç¤ºã€å?è¼‰å?å¹•ç®¡?†ç??Ÿèƒ½å·²é·ç§»åˆ° Dart -->
@@ -772,6 +802,7 @@
   </script>
 </body>
 </html>
+
 
 
 
