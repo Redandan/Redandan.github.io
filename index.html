@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?àÊú¨?ñÁ∑©Â≠òÊ?Ë≠?-->
-    <meta name="cache-version" content="1.0.450">
+    <meta name="cache-version" content="1.0.451">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -24,11 +24,16 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <!-- ÁºìÂ??ßÂà∂ÔºöÁ°Æ‰øùÊ?ËßàÂô®?™Âä®?∑Â??Ä??HTML -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  
   <meta name="description" content="Agora Market - Your Trading Community">
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.450+451">
+  <meta name="version" content="1.0.451+452">
 
   <script>
     // Early global error diagnostics to capture exact source of prod-only failures
@@ -53,19 +58,6 @@
         } catch(_) {}
       });
       console.log('[DIAG] index.html diagnostics installed, version meta:', (document.querySelector('meta[name="version"]')||{}).content);
-    })();
-  </script>
-  
-  <script>
-    // Á´ãÂç≥?¥Êñ∞?àÊú¨?æÁ§∫ÔºåÈÅø?çÈó™??
-    (function() {
-      const versionMeta = document.querySelector('meta[name="version"]');
-      const versionDisplay = document.getElementById('version-display');
-      if (versionMeta && versionDisplay) {
-        const fullVersion = versionMeta.getAttribute('content') || '1.0.0';
-        const displayVersion = fullVersion.split('+')[0]; // ?ªÊ??ÑÂª∫??
-        versionDisplay.textContent = 'v' + displayVersion;
-      }
     })();
   </script>
   
@@ -140,7 +132,7 @@
   <link rel="shortcut icon" href="icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.450">
+  <link rel="manifest" href="manifest.json?v=1.0.451">
   
   <!-- PWA ÂÆâË??êÁ§∫?ØÊ? -->
   <meta name="application-name" content="Agora Market">
@@ -380,7 +372,7 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display"></div>
+      <div class="loading-version" id="version-display">v1.0.450</div>
     </div>
   </div>
   
@@ -640,7 +632,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.450" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.451" async></script>
   
   <!-- Service Worker Ë®ªÂ?Ôºà‰Ωø??Flutter ?ßÂª∫ SWÔºõËá™ÂÆöÁæ© SW Â∑≤Â??®Ô? -->
   <!-- Ë®ªÔ?PWA ÂÆâË??êÁ§∫?ÅË®ª?äÊ??üÊ™¢Ê∏¨„ÄÅÁ??¨È°ØÁ§∫„ÄÅÂ?ËºâÂ?ÂπïÁÆ°?ÜÁ??üËÉΩÂ∑≤ÈÅ∑ÁßªÂà∞ Dart -->
@@ -659,6 +651,7 @@
   </script>
 </body>
 </html>
+
 
 
 
