@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?ˆæœ¬?–ç·©å­˜æ?è­?-->
-    <meta name="cache-version" content="1.0.464">
+    <meta name="cache-version" content="1.0.465">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -36,8 +36,78 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.464+465">
+  <meta name="version" content="1.0.465+466">
 
+  <script>
+    // iOS PWA è§†å£ä¿®å? - å¿…é¡»?¨æ??©æ??§è?ï¼Œé˜²æ­¢ç™½æ¡†å??»é¢è·³åŠ¨
+    (function() {
+      'use strict';
+      
+      // æ£€æµ‹æ˜¯?¦åœ¨ iOS PWA Standalone æ¨¡å?
+      function isIOSStandalone() {
+        try {
+          return (window.navigator.standalone === true) ||
+                 (window.matchMedia('(display-mode: standalone)').matches && 
+                  /iPad|iPhone|iPod|iOS/.test(navigator.userAgent));
+        } catch (e) {
+          return false;
+        }
+      }
+      
+      // ç«‹å³è®¾ç½®è§†å£é«˜åº¦ï¼Œé˜²æ­¢å?å§‹ç™½æ¡†å?è·³åŠ¨
+      function setViewportHeightImmediate() {
+        // ä½¿ç”¨å®é?è§†å£é«˜åº¦ï¼Œè€Œä???100vh
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+        
+        // ç«‹å³è®¾ç½® body ??html ?„é?åº¦ï??²æ­¢?½æ?
+        if (document.documentElement) {
+          document.documentElement.style.height = window.innerHeight + 'px';
+          document.documentElement.style.overflow = 'hidden';
+        }
+        if (document.body) {
+          document.body.style.height = window.innerHeight + 'px';
+          document.body.style.overflow = 'hidden';
+          document.body.style.margin = '0';
+          document.body.style.padding = '0';
+        }
+      }
+      
+      // å¦‚æ???iOS standalone æ¨¡å?ï¼Œç??³æ‰§è¡?
+      if (isIOSStandalone()) {
+        // ç«‹å³?§è?ä¸€æ¬¡ï???DOM ? è½½?ï?
+        setViewportHeightImmediate();
+        
+        // ?‘å¬ DOMContentLoaded
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', setViewportHeightImmediate);
+        } else {
+          setViewportHeightImmediate();
+        }
+        
+        // ?‘å¬çª—å£å¤§å??˜å?ï¼ˆå??¬çŠ¶?æ??¾ç¤º/?è?ï¼?
+        let resizeTimer;
+        window.addEventListener('resize', function() {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(setViewportHeightImmediate, 50);
+        });
+        
+        // ?‘å¬ visualViewport APIï¼ˆiOS Safari ?¯æ?ï¼?
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener('resize', setViewportHeightImmediate);
+          window.visualViewport.addEventListener('scroll', setViewportHeightImmediate);
+        }
+        
+        // ?¨é¡µ?¢å¯è§æ€§å??–æ—¶ä¹Ÿæ›´?°ï?å¤„ç?ä»å??°æ¢å¤ç??…å†µï¼?
+        document.addEventListener('visibilitychange', function() {
+          if (!document.hidden) {
+            setTimeout(setViewportHeightImmediate, 100);
+          }
+        });
+      }
+    })();
+  </script>
+  
   <script>
     // Early global error diagnostics to capture exact source of prod-only failures
     (function(){
@@ -139,7 +209,7 @@
   <link rel="shortcut icon" href="icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.464">
+  <link rel="manifest" href="manifest.json?v=1.0.465">
   
   <!-- PWA å®‰è??ç¤º?¯æ? -->
   <meta name="application-name" content="Agora Market">
@@ -147,7 +217,7 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ?§èƒ½ä¼˜å?ï¼šé?? è½½?³é”®èµ„æ? -->
-  <link rel="preload" href="flutter_bootstrap.js?v=1.0.464" as="script">
+  <link rel="preload" href="flutter_bootstrap.js?v=1.0.465" as="script">
   <link rel="preload" href="pwa_viewport_fix.js" as="script">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -181,11 +251,30 @@
       width: 100%;
       /* ä½¿ç”¨ CSS ?˜é? --vh ?¿ä»£ 100vhï¼Œè§£??PWA æ¨¡å?ä¸‹ç?è§†å£é«˜åº¦?®é? */
       height: calc(var(--vh, 1vh) * 100);
+      /* iOS standalone æ¨¡å?ä¸‹ï?ä½¿ç”¨å®é?è§†å£é«˜åº¦ */
+      min-height: calc(var(--vh, 1vh) * 100);
+      max-height: calc(var(--vh, 1vh) * 100);
       background: #1A1A1A !important;
-      /* ç§»é™¤ overflow: hiddenï¼Œè®© Flutter æ­?¸¸å¤„ç?æ»šåŠ¨ */
-      overflow: visible;
+      /* iOS standalone æ¨¡å?ä¸‹ï??å??¶é??æº¢?ºï??²æ­¢?½æ? */
+      overflow: hidden;
       /* ç¡®ä?ä½ç½®?‚è€ƒæ­£ç¡?*/
-      position: relative;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
+    
+    /* iOS standalone æ¨¡å?ä¸‹ç??¹æ?å¤„ç? */
+    @supports (-webkit-touch-callout: none) {
+      html, body {
+        /* iOS Safari ?¹æ?å¤„ç? */
+        position: fixed;
+        width: 100vw;
+        height: 100vh;
+        height: calc(var(--vh, 1vh) * 100);
+        overflow: hidden;
+      }
     }
 
     /* ç¡®ä? Flutter å®¹å™¨æ­?¡®è¦†ç??´ä¸ªè§†å£ï¼Œæ²¡?‰å?ç§?*/
@@ -461,8 +550,20 @@
       background: transparent;
       /* ç§»é™¤å®‰å…¨?ºå? paddingï¼Œè®© Flutter åº”ç”¨å¤„ç? */
       padding: 0 !important;
+      /* iOS standalone æ¨¡å?ä¸‹ä???fixedï¼Œé˜²æ­¢è·³??*/
+      position: fixed !important;
       /* ç¡®ä? body ?¯ä»¥æ»šåŠ¨ï¼ˆå??œé?è¦ï? */
-      overflow: auto;
+      overflow: hidden;
+    }
+    
+    /* iOS standalone æ¨¡å?ä¸‹ï?ç¡®ä? Flutter ? è½½?ä?ä¼šè·³??*/
+    @supports (-webkit-touch-callout: none) {
+      .flutter-ready html,
+      .flutter-ready body {
+        position: fixed !important;
+        height: calc(var(--vh, 1vh) * 100) !important;
+        overflow: hidden !important;
+      }
     }
 
     /* ç¡®ä? Flutter åº”ç”¨æ­?¡®è¦†ç??´ä¸ªè§†å£ï¼Œæ²¡?‰å?ç§?*/
@@ -514,7 +615,7 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.464</div>
+      <div class="loading-version" id="version-display">v1.0.465</div>
     </div>
   </div>
   
@@ -774,7 +875,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.464" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.465" async></script>
   
   <!-- PWA è§†å£é«˜åº¦ä¿®å??šæœ¬ - è§?†³ standalone æ¨¡å?ä¸‹ç?è§¦æ‘¸?æ??ç§»?®é? -->
   <script src="pwa_viewport_fix.js"></script>
@@ -802,6 +903,7 @@
   </script>
 </body>
 </html>
+
 
 
 
