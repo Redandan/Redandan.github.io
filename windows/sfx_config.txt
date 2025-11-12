@@ -1,0 +1,8 @@
+﻿;!@Install@!UTF-8!
+Title="Agora Market Installer"
+BeginPrompt="This will install Agora Market to your computer.
+
+Click OK to continue."
+ExecuteFile="install.bat"
+ExecuteParameters=""
+;!@InstallEnd@!
