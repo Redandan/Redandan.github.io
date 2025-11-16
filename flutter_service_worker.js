@@ -64,7 +64,7 @@ const RESOURCES = {"assets/AssetManifest.bin": "409c83c8ea3222382671240279559b9b
 "canvaskit/skwasm_heavy.wasm": "8034ad26ba2485dab2fd49bdd786837b",
 "favicon.png": "5dcef449791fa27946b3d35ad8803796",
 "flutter.js": "888483df48293866f9f41d3d9274a779",
-"flutter_bootstrap.js": "62c9a9b73d5ea05e5188f5c97e5b341d",
+"flutter_bootstrap.js": "a9d88adcfcf55bd313d3959a2f22cc98",
 "icons/agora-market-icon.svg": "0809310c9c8ce8213a71b912864eb06c",
 "icons/android-icon-144x144.png": "63fa5dc585dccfddad1550ea018e4ce3",
 "icons/android-icon-192x192.png": "a5813fca5d400b7712cd910d9a868f31",
@@ -97,9 +97,9 @@ const RESOURCES = {"assets/AssetManifest.bin": "409c83c8ea3222382671240279559b9b
 "icons/ms-icon-150x150.png": "9223022b000ee835a7c091cefd0197a2",
 "icons/ms-icon-310x310.png": "0d56d3ab620dd4e6ace7b00bf4aaa962",
 "icons/ms-icon-70x70.png": "d950bf1443b00a5c8391e8ffc7ff3eeb",
-"index.html": "7d56ba85cfad2a62acd81d429c88d22d",
-"/": "7d56ba85cfad2a62acd81d429c88d22d",
-"main.dart.js": "20209a9a5a6f3b1f2abfd12457ce11c0",
+"index.html": "8a04ba01da0135785663a8c7511b00e1",
+"/": "8a04ba01da0135785663a8c7511b00e1",
+"main.dart.js": "f63e076a0e1c757c13da8d2db2478e5d",
 "manifest.json": "295fdc01af0bb2a5299af31d35118ea3",
 "official.html": "8d9f1ea643c08f7c8e25b200fa52e173",
 "offline.html": "b087704827a6d51f6dc2d77948b1dd5c",
@@ -110,7 +110,7 @@ const RESOURCES = {"assets/AssetManifest.bin": "409c83c8ea3222382671240279559b9b
 "splash/iPhone_14_portrait.png": "96e752610906ba2a93c65f8abe1645f1",
 "splash/iPhone_14_Pro_Max_portrait.png": "96e752610906ba2a93c65f8abe1645f1",
 "splash/iPhone_14_Pro_portrait.png": "96e752610906ba2a93c65f8abe1645f1",
-"version.json": "9ef272b4c81543ab0138e28ae0270cb5",
+"version.json": "b6e05038807320a97daaee5f8f0e26e8",
 "web_vitals.js": "7c0c4e6144e1544cdd6cf55db9a4f6c4"};
 // The application shell files that are downloaded before a service worker can
 // start.
