@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?ˆæœ¬?–ç·©å­˜æ?è­?-->
-    <meta name="cache-version" content="1.0.491">
+    <meta name="cache-version" content="1.0.493">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -36,7 +36,7 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.491+492">
+  <meta name="version" content="1.0.493+494">
 
   <script>
     // iOS PWA è§†å£ä¿®å? - å¿…é¡»?¨æ??©æ??§è?ï¼Œé˜²æ­¢ç™½æ¡†å??»é¢è·³åŠ¨
@@ -209,7 +209,7 @@
   <link rel="shortcut icon" href="icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.491">
+  <link rel="manifest" href="manifest.json?v=1.0.493">
   
   <!-- PWA å®‰è??ç¤º?¯æ? -->
   <meta name="application-name" content="Agora Market">
@@ -217,7 +217,7 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ?§èƒ½ä¼˜å?ï¼šé?? è½½?³é”®èµ„æ? -->
-  <link rel="preload" href="flutter_bootstrap.js?v=1.0.491" as="script">
+  <link rel="preload" href="flutter_bootstrap.js?v=1.0.493" as="script">
   <link rel="preload" href="pwa_viewport_fix.js" as="script">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -615,7 +615,7 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.491</div>
+      <div class="loading-version" id="version-display">v1.0.493</div>
     </div>
   </div>
   
@@ -875,76 +875,7 @@
     })();
   </script>
   
-  <!-- OAuth2 ?è?å¤„ç? - å¿…é¡»??Flutter ? è½½?æ‰§è¡?-->
-  <script>
-    // æ£€æµ‹å¹¶å¤„ç? OAuth2 ?è?è¿”å???JSON
-    (function() {
-      'use strict';
-      
-      // æ£€?¥å???URL ?¯å¦?¯å?ç«?OAuth2 ?è?ç«¯ç‚¹
-      const currentPath = window.location.pathname;
-      const isOAuth2Callback = currentPath.includes('/login/oauth2/code/google') || 
-                              currentPath.includes('/oauth2/code/google');
-      
-      if (isOAuth2Callback) {
-        console.log('[OAuth2] æ£€æµ‹åˆ° OAuth2 ?è? URL:', currentPath);
-        
-        // ç­‰å? DOM ? è½½å®Œæ?
-        function handleOAuth2Callback() {
-          try {
-            // å°è?ä»é¡µ?¢å?å®¹ä¸­?å? JSON
-            const bodyText = document.body?.textContent?.trim() || '';
-            
-            if (bodyText && bodyText.startsWith('{') && bodyText.endsWith('}')) {
-              console.log('[OAuth2] æ£€æµ‹åˆ° JSON ?å?ï¼Œå?è¯•è§£??);
-              
-              try {
-                const jsonData = JSON.parse(bodyText);
-                
-                // æ£€?¥æ˜¯?¦å???token
-                if (jsonData.token) {
-                  console.log('[OAuth2] ?å??å? Tokenï¼Œå??¨åˆ° localStorage');
-                  
-                  // å­˜å‚¨ OAuth2 ?è??°æ®??localStorage
-                  localStorage.setItem('oauth2_result', JSON.stringify({
-                    token: jsonData.token,
-                    refreshToken: jsonData.refreshToken || null,
-                    userId: jsonData.userId,
-                    username: jsonData.username || null,
-                    userRole: jsonData.userInfo?.role || 'USER',
-                    tokenIssuedAt: jsonData.tokenIssuedAt || null,
-                    tokenExpiration: jsonData.tokenExpiration || null,
-                    refreshTokenExpiration: jsonData.refreshTokenExpiration || null,
-                    timestamp: Date.now()
-                  }));
-                  
-                  // ?å??‘åˆ°?ç«¯?è?é¡µé¢
-                  const frontendCallbackUrl = '/oauth2-callback';
-                  console.log('[OAuth2] ?å??‘åˆ°?ç«¯?è?é¡µé¢:', frontendCallbackUrl);
-                  window.location.href = frontendCallbackUrl;
-                  return;
-                }
-              } catch (e) {
-                console.error('[OAuth2] è§?? JSON å¤±è´¥:', e);
-              }
-            }
-          } catch (e) {
-            console.error('[OAuth2] å¤„ç??è?å¤±è´¥:', e);
-          }
-        }
-        
-        // å¦‚æ? DOM å·²å?è½½ï?ç«‹å³?§è?ï¼›å¦?™ç?å¾?DOMContentLoaded
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', handleOAuth2Callback);
-        } else {
-          // DOM å·²å?è½½ï?ä½†å¯??JSON è¿˜æ²¡å®Œå…¨æ¸²æ?ï¼Œç?å¾…ä?å°æ®µ?¶é—´
-          setTimeout(handleOAuth2Callback, 100);
-        }
-      }
-    })();
-  </script>
-  
-  <script src="flutter_bootstrap.js?v=1.0.491" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.493" async></script>
   
   <!-- PWA è§†å£é«˜åº¦ä¿®å??šæœ¬ - è§?†³ standalone æ¨¡å?ä¸‹ç?è§¦æ‘¸?æ??ç§»?®é? -->
   <script src="pwa_viewport_fix.js"></script>
@@ -972,6 +903,8 @@
   </script>
 </body>
 </html>
+
+
 
 
 
