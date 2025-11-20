@@ -11,30 +11,37 @@
       var search = window.location.search;
       var hash = window.location.hash;
       
-      // 如果路径已经是 /index.html，避免循环重定向
-      if (path === '/index.html' || path === '/index.html/') {
+      // 防止循环重定向：检查是否已经包含 /index.html
+      if (path.indexOf('/index.html') !== -1) {
+        // 如果路径已经包含 index.html，说明已经重定向过了
+        // 提取原始路径（去掉 /index.html 前缀）
+        var originalPath = path.replace(/\/index\.html/g, '');
+        if (!originalPath) {
+          originalPath = '/';
+        }
+        
+        // 保存原始路径到 sessionStorage，供 Flutter 应用使用
+        try {
+          sessionStorage.setItem('_404_redirect_path', originalPath + search + hash);
+        } catch (e) {
+          console.error('Failed to save redirect path:', e);
+        }
+        
+        // 直接重定向到 /index.html，不带任何路径
+        window.location.replace('/index.html');
         return;
       }
       
-      // 构建重定向 URL：保留原始路径、查询参数和 hash
-      // 注意：GitHub Pages 的 404.html 会保留原始 URL 的路径
-      var redirectUrl = '/index.html';
-      
-      // 如果当前路径不是根路径，添加到重定向 URL
-      if (path && path !== '/' && path !== '/index.html') {
-        redirectUrl = '/index.html' + path;
+      // 第一次访问：保存原始路径和查询参数
+      try {
+        var fullPath = path + search + hash;
+        sessionStorage.setItem('_404_redirect_path', fullPath);
+      } catch (e) {
+        console.error('Failed to save redirect path:', e);
       }
       
-      // 添加查询参数和 hash
-      if (search) {
-        redirectUrl += search;
-      }
-      if (hash) {
-        redirectUrl += hash;
-      }
-      
-      // 使用 replace 而不是 assign，避免在历史记录中留下 404 页面
-      window.location.replace(redirectUrl);
+      // 直接重定向到 /index.html（不带路径，避免循环）
+      window.location.replace('/index.html');
     })();
   </script>
   <meta http-equiv="refresh" content="0; url=/index.html">

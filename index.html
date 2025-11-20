@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?ˆæœ¬?–ç·©å­˜æ?è­?-->
-    <meta name="cache-version" content="1.0.507">
+    <meta name="cache-version" content="1.0.508">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -36,7 +36,7 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.507+508">
+  <meta name="version" content="1.0.508+509">
 
   <script>
     // iOS PWA è§†å£ä¿®å? - å¿…é¡»?¨æ??©æ??§è?ï¼Œé˜²æ­¢ç™½æ¡†å??»é¢è·³åŠ¨
@@ -209,7 +209,7 @@
   <link rel="shortcut icon" href="icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.507">
+  <link rel="manifest" href="manifest.json?v=1.0.508">
   
   <!-- PWA å®‰è??ç¤º?¯æ? -->
   <meta name="application-name" content="Agora Market">
@@ -217,7 +217,7 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ?§èƒ½ä¼˜å?ï¼šé?? è½½?³é”®èµ„æ? -->
-  <link rel="preload" href="flutter_bootstrap.js?v=1.0.507" as="script">
+  <link rel="preload" href="flutter_bootstrap.js?v=1.0.508" as="script">
   <link rel="preload" href="pwa_viewport_fix.js" as="script">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -615,7 +615,7 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.507</div>
+      <div class="loading-version" id="version-display">v1.0.508</div>
     </div>
   </div>
   
@@ -875,7 +875,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.507" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.508" async></script>
   
   <!-- PWA è§†å£é«˜åº¦ä¿®å??šæœ¬ - è§?†³ standalone æ¨¡å?ä¸‹ç?è§¦æ‘¸?æ??ç§»?®é? -->
   <script src="pwa_viewport_fix.js"></script>
@@ -885,6 +885,31 @@
   
   <!-- ç¦»çº¿é¡µé¢å¤„ç? -->
   <script src="offline_handler.js"></script>
+  
+  <!-- GitHub Pages 404 ?å??‘æ¢å¤?-->
+  <script>
+    // ?¢å?ä»?404.html ?å??‘ç??Ÿå?è·¯å?
+    (function() {
+      try {
+        var savedPath = sessionStorage.getItem('_404_redirect_path');
+        if (savedPath) {
+          // æ¸…é™¤ä¿å??„è·¯å¾?
+          sessionStorage.removeItem('_404_redirect_path');
+          
+          // å¦‚æ?å½“å?è·¯å?ä¸æ˜¯ä¿å??„è·¯å¾„ï??™æ¢å¤?
+          var currentPath = window.location.pathname + window.location.search + window.location.hash;
+          if (currentPath !== savedPath && savedPath !== '/index.html') {
+            // ä½¿ç”¨ replaceState ?´æ–° URLï¼Œä?è§¦å?é¡µé¢?·æ–°
+            // è¿™æ · Flutter è·¯ç”±ç³»ç??¯ä»¥?¹æ®?°ç? URL å¤„ç?è·¯ç”±
+            window.history.replaceState(null, '', savedPath);
+            console.log('[404_REDIRECT] Restored path:', savedPath);
+          }
+        }
+      } catch (e) {
+        console.error('[404_REDIRECT] Failed to restore path:', e);
+      }
+    })();
+  </script>
   
   <!-- Service Worker è¨»å?ï¼ˆä½¿??Flutter ?§å»º SWï¼›è‡ªå®šç¾© SW å·²å??¨ï? -->
   <!-- è¨»ï?PWA å®‰è??ç¤º?è¨»?Šæ??Ÿæª¢æ¸¬ã€ç??¬é¡¯ç¤ºã€å?è¼‰å?å¹•ç®¡?†ç??Ÿèƒ½å·²é·ç§»åˆ° Dart -->
@@ -903,6 +928,7 @@
   </script>
 </body>
 </html>
+
 
 
 
