@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Redirecting...</title>
+  <script>
+    // GitHub Pages SPA 路由支持
+    // 将所有 404 请求重定向到 index.html，让 Flutter 路由系统处理
+    (function() {
+      var path = window.location.pathname;
+      var search = window.location.search;
+      var hash = window.location.hash;
+      
+      // 如果路径已经是 /index.html，避免循环重定向
+      if (path === '/index.html' || path === '/index.html/') {
+        return;
+      }
+      
+      // 构建重定向 URL：保留原始路径、查询参数和 hash
+      // 注意：GitHub Pages 的 404.html 会保留原始 URL 的路径
+      var redirectUrl = '/index.html';
+      
+      // 如果当前路径不是根路径，添加到重定向 URL
+      if (path && path !== '/' && path !== '/index.html') {
+        redirectUrl = '/index.html' + path;
+      }
+      
+      // 添加查询参数和 hash
+      if (search) {
+        redirectUrl += search;
+      }
+      if (hash) {
+        redirectUrl += hash;
+      }
+      
+      // 使用 replace 而不是 assign，避免在历史记录中留下 404 页面
+      window.location.replace(redirectUrl);
+    })();
+  </script>
+  <meta http-equiv="refresh" content="0; url=/index.html">
+</head>
+<body>
+  <p>Redirecting to <a href="/index.html">home page</a>...</p>
+</body>
+</html>
+

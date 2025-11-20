@@ -3,7 +3,8 @@ const MANIFEST = 'flutter-app-manifest';
 const TEMP = 'flutter-temp-cache';
 const CACHE_NAME = 'flutter-app-cache';
 
-const RESOURCES = {"assets/AssetManifest.bin": "409c83c8ea3222382671240279559b9b",
+const RESOURCES = {"404.html": "73f8fd9503be017d7e770ba2fc074e25",
+"assets/AssetManifest.bin": "409c83c8ea3222382671240279559b9b",
 "assets/AssetManifest.bin.json": "f19bd32d8141b166a2771dd57f92b924",
 "assets/AssetManifest.json": "9fae96b3073c2003bd29c967a298e8b9",
 "assets/assets/icons/app_icon.svg": "6492dc8b5846efeb8beea5b43a08e4db",
@@ -64,7 +65,7 @@ const RESOURCES = {"assets/AssetManifest.bin": "409c83c8ea3222382671240279559b9b
 "canvaskit/skwasm_heavy.wasm": "8034ad26ba2485dab2fd49bdd786837b",
 "favicon.png": "5dcef449791fa27946b3d35ad8803796",
 "flutter.js": "888483df48293866f9f41d3d9274a779",
-"flutter_bootstrap.js": "79fe4b16940be30a931338118425780c",
+"flutter_bootstrap.js": "6fddc64fddf2047d8beccc0f218c975d",
 "icons/agora-market-icon.svg": "0809310c9c8ce8213a71b912864eb06c",
 "icons/android-icon-144x144.png": "63fa5dc585dccfddad1550ea018e4ce3",
 "icons/android-icon-192x192.png": "a5813fca5d400b7712cd910d9a868f31",
@@ -97,8 +98,8 @@ const RESOURCES = {"assets/AssetManifest.bin": "409c83c8ea3222382671240279559b9b
 "icons/ms-icon-150x150.png": "9223022b000ee835a7c091cefd0197a2",
 "icons/ms-icon-310x310.png": "0d56d3ab620dd4e6ace7b00bf4aaa962",
 "icons/ms-icon-70x70.png": "d950bf1443b00a5c8391e8ffc7ff3eeb",
-"index.html": "cc03ea046256638bb4315e3456d8774f",
-"/": "cc03ea046256638bb4315e3456d8774f",
+"index.html": "ff7a55dd1bee680ca06b6da837c6799d",
+"/": "ff7a55dd1bee680ca06b6da837c6799d",
 "main.dart.js": "e836fd6a4609b542029a32673ac2e189",
 "manifest.json": "295fdc01af0bb2a5299af31d35118ea3",
 "official.html": "8d9f1ea643c08f7c8e25b200fa52e173",
@@ -110,7 +111,7 @@ const RESOURCES = {"assets/AssetManifest.bin": "409c83c8ea3222382671240279559b9b
 "splash/iPhone_14_portrait.png": "96e752610906ba2a93c65f8abe1645f1",
 "splash/iPhone_14_Pro_Max_portrait.png": "96e752610906ba2a93c65f8abe1645f1",
 "splash/iPhone_14_Pro_portrait.png": "96e752610906ba2a93c65f8abe1645f1",
-"version.json": "59e92c948118432e4e41ec1d4dcbdc93",
+"version.json": "e02cfa9e734fd25e5cca7f88be69db29",
 "web_vitals.js": "7c0c4e6144e1544cdd6cf55db9a4f6c4"};
 // The application shell files that are downloaded before a service worker can
 // start.
