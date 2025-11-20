@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?ˆæœ¬?–ç·©å­˜æ?è­?-->
-    <meta name="cache-version" content="1.0.508">
+    <meta name="cache-version" content="1.0.509">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -36,7 +36,7 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.508+509">
+  <meta name="version" content="1.0.509+510">
 
   <script>
     // iOS PWA è§†å£ä¿®å? - å¿…é¡»?¨æ??©æ??§è?ï¼Œé˜²æ­¢ç™½æ¡†å??»é¢è·³åŠ¨
@@ -73,8 +73,7 @@
         }
       }
       
-      // å¦‚æ???iOS standalone æ¨¡å?ï¼Œç??³æ‰§è¡?
-      if (isIOSStandalone()) {
+      // å¦‚æ???iOS standalone æ¨¡å?ï¼Œç??³æ‰§è¡?      if (isIOSStandalone()) {
         // ç«‹å³?§è?ä¸€æ¬¡ï???DOM ? è½½?ï?
         setViewportHeightImmediate();
         
@@ -85,21 +84,18 @@
           setViewportHeightImmediate();
         }
         
-        // ?‘å¬çª—å£å¤§å??˜å?ï¼ˆå??¬çŠ¶?æ??¾ç¤º/?è?ï¼?
-        let resizeTimer;
+        // ?‘å¬çª—å£å¤§å??˜å?ï¼ˆå??¬çŠ¶?æ??¾ç¤º/?è?ï¼?        let resizeTimer;
         window.addEventListener('resize', function() {
           clearTimeout(resizeTimer);
           resizeTimer = setTimeout(setViewportHeightImmediate, 50);
         });
         
-        // ?‘å¬ visualViewport APIï¼ˆiOS Safari ?¯æ?ï¼?
-        if (window.visualViewport) {
+        // ?‘å¬ visualViewport APIï¼ˆiOS Safari ?¯æ?ï¼?        if (window.visualViewport) {
           window.visualViewport.addEventListener('resize', setViewportHeightImmediate);
           window.visualViewport.addEventListener('scroll', setViewportHeightImmediate);
         }
         
-        // ?¨é¡µ?¢å¯è§æ€§å??–æ—¶ä¹Ÿæ›´?°ï?å¤„ç?ä»å??°æ¢å¤ç??…å†µï¼?
-        document.addEventListener('visibilitychange', function() {
+        // ?¨é¡µ?¢å¯è§æ€§å??–æ—¶ä¹Ÿæ›´?°ï?å¤„ç?ä»å??°æ¢å¤ç??…å†µï¼?        document.addEventListener('visibilitychange', function() {
           if (!document.hidden) {
             setTimeout(setViewportHeightImmediate, 100);
           }
@@ -209,7 +205,7 @@
   <link rel="shortcut icon" href="icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.508">
+  <link rel="manifest" href="manifest.json?v=1.0.509">
   
   <!-- PWA å®‰è??ç¤º?¯æ? -->
   <meta name="application-name" content="Agora Market">
@@ -217,7 +213,7 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ?§èƒ½ä¼˜å?ï¼šé?? è½½?³é”®èµ„æ? -->
-  <link rel="preload" href="flutter_bootstrap.js?v=1.0.508" as="script">
+  <link rel="preload" href="flutter_bootstrap.js?v=1.0.509" as="script">
   <link rel="preload" href="pwa_viewport_fix.js" as="script">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -615,7 +611,7 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.508</div>
+      <div class="loading-version" id="version-display">v1.0.509</div>
     </div>
   </div>
   
@@ -644,8 +640,7 @@
           console.log('[WEB_PUSH_API] Token:', token ? 'provided' : 'not provided');
           
           try {
-            // 1. æª¢æŸ¥?è¦½?¨æ”¯??
-            if (!this.checkBrowserSupport()) {
+            // 1. æª¢æŸ¥?è¦½?¨æ”¯??            if (!this.checkBrowserSupport()) {
               throw new Error('Browser does not support Web Push');
             }
             
@@ -661,8 +656,7 @@
               };
             }
             
-            // 3. ?µå»º?Ÿå¯¦?¨é€è???
-            const subscriptionData = await this.createPushSubscription(vapidKey);
+            // 3. ?µå»º?Ÿå¯¦?¨é€è???            const subscriptionData = await this.createPushSubscription(vapidKey);
             console.log('[WEB_PUSH_API] Push subscription created successfully');
             
             // è¿”å? JSON å­—ç¬¦ä¸²ï??¿å?é¡å?è½‰æ??é?
@@ -687,8 +681,7 @@
         },
         
         /**
-         * æª¢æŸ¥?è¦½?¨æ”¯??
-         * @returns {boolean} ?¯å¦?¯æ´
+         * æª¢æŸ¥?è¦½?¨æ”¯??         * @returns {boolean} ?¯å¦?¯æ´
          */
         checkBrowserSupport() {
           const hasServiceWorker = 'serviceWorker' in navigator;
@@ -705,8 +698,7 @@
         
         /**
          * è«‹æ??šçŸ¥æ¬Šé?
-         * @returns {Promise<string>} æ¬Šé??€??
-         */
+         * @returns {Promise<string>} æ¬Šé??€??         */
         async requestPermission() {
           console.log('[WEB_PUSH_API] Requesting notification permission...');
           
@@ -728,8 +720,7 @@
         },
         
         /**
-         * ?µå»º?¨é€è???
-         * @param {string} vapidKey - VAPID ?¬é‘°
+         * ?µå»º?¨é€è???         * @param {string} vapidKey - VAPID ?¬é‘°
          * @returns {Promise<Object>} è¨‚é–±?¸æ?
          */
         async createPushSubscription(vapidKey) {
@@ -740,8 +731,7 @@
             const registration = await navigator.serviceWorker.ready;
             console.log('[WEB_PUSH_API] Using existing Service Worker registration');
             
-            // 2. ?µå»º?¨é€è???
-            const subscription = await registration.pushManager.subscribe({
+            // 2. ?µå»º?¨é€è???            const subscription = await registration.pushManager.subscribe({
               userVisibleOnly: true,
               applicationServerKey: this.urlBase64ToUint8Array(vapidKey)
             });
@@ -749,8 +739,7 @@
             console.log('[WEB_PUSH_API] Push subscription created successfully');
             console.log('[WEB_PUSH_API] Subscription endpoint:', subscription.endpoint);
             
-            // 3. è½‰æ??ºå¯?³è¼¸?„æ ¼å¼?
-            const deviceInfo = this.generateDeviceInfo();
+            // 3. è½‰æ??ºå¯?³è¼¸?„æ ¼å¼?            const deviceInfo = this.generateDeviceInfo();
             const subscriptionData = {
               endpoint: subscription.endpoint,
               keys: {
@@ -825,16 +814,14 @@
           for (let i = 0; i < fingerprint.length; i++) {
             const char = fingerprint.charCodeAt(i);
             hash = ((hash << 5) - hash) + char;
-            hash = hash & hash; // è½‰æ???32 ä½æ•´??
-          }
+            hash = hash & hash; // è½‰æ???32 ä½æ•´??          }
           
           return Math.abs(hash).toString(36);
         },
         
         /**
          * å°?VAPID ?¬é‘°è½‰æ???Uint8Array
-         * @param {string} base64String - Base64 å­—ç¬¦ä¸?
-         * @returns {Uint8Array} Uint8Array
+         * @param {string} base64String - Base64 å­—ç¬¦ä¸?         * @returns {Uint8Array} Uint8Array
          */
         urlBase64ToUint8Array(base64String) {
           const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -855,8 +842,7 @@
         /**
          * å°?ArrayBuffer è½‰æ???Base64
          * @param {ArrayBuffer} buffer - ArrayBuffer
-         * @returns {string} Base64 å­—ç¬¦ä¸?
-         */
+         * @returns {string} Base64 å­—ç¬¦ä¸?         */
         arrayBufferToBase64(buffer) {
           const bytes = new Uint8Array(buffer);
           let binary = '';
@@ -875,7 +861,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.508" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.509" async></script>
   
   <!-- PWA è§†å£é«˜åº¦ä¿®å??šæœ¬ - è§?†³ standalone æ¨¡å?ä¸‹ç?è§¦æ‘¸?æ??ç§»?®é? -->
   <script src="pwa_viewport_fix.js"></script>
@@ -890,23 +876,31 @@
   <script>
     // ?¢å?ä»?404.html ?å??‘ç??Ÿå?è·¯å?
     (function() {
+      'use strict';
+      
+      const STORAGE_KEY = '_404_redirect_path';
+      const REDIRECT_COUNT_KEY = '_404_redirect_count';
+      
       try {
-        var savedPath = sessionStorage.getItem('_404_redirect_path');
+        const savedPath = sessionStorage.getItem(STORAGE_KEY);
         if (savedPath) {
-          // æ¸…é™¤ä¿å??„è·¯å¾?
-          sessionStorage.removeItem('_404_redirect_path');
+          // æ¸…é™¤ä¿å??„è·¯å¾„å??å??‘è®¡??          sessionStorage.removeItem(STORAGE_KEY);
+          sessionStorage.removeItem(REDIRECT_COUNT_KEY);
           
-          // å¦‚æ?å½“å?è·¯å?ä¸æ˜¯ä¿å??„è·¯å¾„ï??™æ¢å¤?
-          var currentPath = window.location.pathname + window.location.search + window.location.hash;
+          // å¦‚æ?å½“å?è·¯å?ä¸æ˜¯ä¿å??„è·¯å¾„ï??™æ¢å¤?          const currentPath = window.location.pathname + window.location.search + window.location.hash;
           if (currentPath !== savedPath && savedPath !== '/index.html') {
             // ä½¿ç”¨ replaceState ?´æ–° URLï¼Œä?è§¦å?é¡µé¢?·æ–°
             // è¿™æ · Flutter è·¯ç”±ç³»ç??¯ä»¥?¹æ®?°ç? URL å¤„ç?è·¯ç”±
             window.history.replaceState(null, '', savedPath);
-            console.log('[404_REDIRECT] Restored path:', savedPath);
+            if (window.console && window.console.log) {
+              console.log('[404_REDIRECT] Restored path:', savedPath);
+            }
           }
         }
       } catch (e) {
-        console.error('[404_REDIRECT] Failed to restore path:', e);
+        if (window.console && window.console.error) {
+          console.error('[404_REDIRECT] Failed to restore path:', e);
+        }
       }
     })();
   </script>
@@ -919,8 +913,7 @@
       window._messageHandler = callback;
     };
 
-    // ?•ç?ä¾†è‡ª Service Worker ?„æ???
-    window.handleServiceWorkerMessage = function(data) {
+    // ?•ç?ä¾†è‡ª Service Worker ?„æ???    window.handleServiceWorkerMessage = function(data) {
       if (window._messageHandler) {
         window._messageHandler(data);
       }
@@ -928,6 +921,7 @@
   </script>
 </body>
 </html>
+
 
 
 
