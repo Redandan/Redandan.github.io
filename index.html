@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?àÊú¨?ñÁ∑©Â≠òÊ?Ë≠?-->
-    <meta name="cache-version" content="1.0.512">
+    <meta name="cache-version" content="1.0.513">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -36,7 +36,7 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.512+513">
+  <meta name="version" content="1.0.513+514">
 
   <script>
     // iOS PWA ËßÜÂè£‰øÆÂ? - ÂøÖÈ°ª?®Ê??©Ê??ßË?ÔºåÈò≤Ê≠¢ÁôΩÊ°ÜÂ??ªÈù¢Ë∑≥Âä®
@@ -209,7 +209,7 @@
   <link rel="shortcut icon" href="icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.512">
+  <link rel="manifest" href="manifest.json?v=1.0.513">
   
   <!-- PWA ÂÆâË??êÁ§∫?ØÊ? -->
   <meta name="application-name" content="Agora Market">
@@ -217,7 +217,7 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ?ßËÉΩ‰ºòÂ?ÔºöÈ??†ËΩΩ?≥ÈîÆËµÑÊ? -->
-  <link rel="preload" href="flutter_bootstrap.js?v=1.0.512" as="script">
+  <link rel="preload" href="flutter_bootstrap.js?v=1.0.513" as="script">
   <link rel="preload" href="pwa_viewport_fix.js" as="script">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -615,7 +615,7 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.512</div>
+      <div class="loading-version" id="version-display">v1.0.513</div>
     </div>
   </div>
   
@@ -875,7 +875,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.512" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.513" async></script>
   
   <!-- PWA ËßÜÂè£È´òÂ∫¶‰øÆÂ??öÊú¨ - Ëß?Ü≥ standalone Ê®°Â?‰∏ãÁ?Ëß¶Êë∏?êÊ??èÁßª?ÆÈ? -->
   <script src="pwa_viewport_fix.js"></script>
@@ -911,6 +911,30 @@
     })();
   </script>
   
+  <!-- OAuth ?ªÂ?Ê£ÄÊµãÔ??¥Êñ∞?†ËΩΩÂ±èÂ??êÁ§∫ -->
+  <script>
+    // Detect OAuth callback and update loading screen
+    (function() {
+      try {
+        var urlParams = new URLSearchParams(window.location.search);
+        var savedPath = sessionStorage.getItem('_404_redirect_path') || '';
+        var isOAuth = urlParams.has('tokenId') || 
+                     window.location.pathname.includes('/oauth2-callback') ||
+                     savedPath.includes('tokenId=') ||
+                     savedPath.includes('/oauth2-callback');
+        
+        if (isOAuth) {
+          var loadingText = document.getElementById('loading-text');
+          var versionDisplay = document.getElementById('version-display');
+          if (loadingText) loadingText.textContent = 'Processing login...';
+          if (versionDisplay) versionDisplay.textContent = 'Please wait...';
+        }
+      } catch (e) {
+        // Silent fail, don't block
+      }
+    })();
+  </script>
+  
   <!-- Service Worker Ë®ªÂ?Ôºà‰Ωø??Flutter ?ßÂª∫ SWÔºõËá™ÂÆöÁæ© SW Â∑≤Â??®Ô? -->
   <!-- Ë®ªÔ?PWA ÂÆâË??êÁ§∫?ÅË®ª?äÊ??üÊ™¢Ê∏¨„ÄÅÁ??¨È°ØÁ§∫„ÄÅÂ?ËºâÂ?ÂπïÁÆ°?ÜÁ??üËÉΩÂ∑≤ÈÅ∑ÁßªÂà∞ Dart -->
   <script>
@@ -928,6 +952,7 @@
   </script>
 </body>
 </html>
+
 
 
 
