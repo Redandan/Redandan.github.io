@@ -886,12 +886,56 @@
   <!-- ç¦»çº¿é¡µé¢å¤„ç? -->
   <script src="offline_handler.js"></script>
   
-  <!-- GitHub Pages 404 ?å??‘æ¢å¤?-->
+  <!-- GitHub Pages 404 ?å??‘æ¢å¤?+ OAuth ?»å?æ£€æµ?-->
   <script>
-    // ?¢å?ä»?404.html ?å??‘ç??Ÿå?è·¯å?
+    // ?¢å?ä»?404.html ?å??‘ç??Ÿå?è·¯å?ï¼Œå¹¶æ£€æµ?OAuth ?è?
     (function() {
       try {
         var savedPath = sessionStorage.getItem('_404_redirect_path');
+        var hasOAuthCallback = false;
+        var hasError = false;
+        
+        // ?¨æ??¤ä??å?æ£€?¥æ˜¯?¦æ? OAuth ?è?
+        if (savedPath) {
+          hasOAuthCallback = savedPath.includes('tokenId=') || savedPath.includes('/oauth2-callback');
+          hasError = savedPath.includes('error=');
+        }
+        
+        // æ£€?¥å???URL ?‚æ•°
+        var urlParams = new URLSearchParams(window.location.search);
+        if (!hasOAuthCallback) {
+          hasOAuthCallback = urlParams.has('tokenId') || window.location.pathname.includes('/oauth2-callback');
+        }
+        if (!hasError) {
+          hasError = urlParams.has('error');
+        }
+        
+        // å¦‚æ?æ£€æµ‹åˆ° OAuth ?è?ï¼Œæ›´?°å?è½½å?å¹•æ?ç¤?
+        if (hasOAuthCallback || hasError) {
+          console.log('[OAUTH_LOADING] OAuth callback detected, updating loading screen');
+          
+          // ?´æ–°? è½½?‡æœ¬
+          var loadingText = document.getElementById('loading-text');
+          if (loadingText) {
+            loadingText.textContent = 'æ­?œ¨å¤„ç??»å?...';
+            loadingText.style.animation = 'none'; // ?ç½®?¨ç”»
+            setTimeout(function() {
+              loadingText.style.animation = 'textGlow 3s ease-in-out infinite, textShimmer 2s linear infinite';
+            }, 10);
+          }
+          
+          // ?´æ–°?ˆæœ¬?¾ç¤ºä¸ºæ?ç¤ºä¿¡??
+          var versionDisplay = document.getElementById('version-display');
+          if (versionDisplay) {
+            if (hasError) {
+              versionDisplay.textContent = '?»å?éªŒè?ä¸?..';
+            } else {
+              versionDisplay.textContent = 'æ­?œ¨å®Œæ??»å?...';
+            }
+          }
+        }
+        
+        // ?¢å?è·¯å?ï¼ˆåœ¨æ£€æµ‹ä??ï?
         if (savedPath) {
           // æ¸…é™¤ä¿å??„è·¯å¾?
           sessionStorage.removeItem('_404_redirect_path');
@@ -903,10 +947,16 @@
             // è¿™æ · Flutter è·¯ç”±ç³»ç??¯ä»¥?¹æ®?°ç? URL å¤„ç?è·¯ç”±
             window.history.replaceState(null, '', savedPath);
             console.log('[404_REDIRECT] Restored path:', savedPath);
+            
+            // ?¢å?è·¯å??ï??æ¬¡æ£€??URL ?‚æ•°ï¼ˆå?ä¸ºè·¯å¾„å·²?¢å?ï¼?
+            var restoredUrlParams = new URLSearchParams(window.location.search);
+            if (restoredUrlParams.has('tokenId') || restoredUrlParams.has('error')) {
+              console.log('[OAUTH_LOADING] OAuth callback confirmed after path restoration');
+            }
           }
         }
       } catch (e) {
-        console.error('[404_REDIRECT] Failed to restore path:', e);
+        console.error('[404_REDIRECT] Failed to restore path or detect OAuth:', e);
       }
     })();
   </script>
