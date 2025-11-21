@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?ˆæœ¬?–ç·©å­˜æ?è­?-->
-    <meta name="cache-version" content="1.0.512">
+    <meta name="cache-version" content="1.0.513">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -36,7 +36,7 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.512+513">
+  <meta name="version" content="1.0.513+514">
 
   <script>
     // iOS PWA è§†å£ä¿®å? - å¿…é¡»?¨æ??©æ??§è?ï¼Œé˜²æ­¢ç™½æ¡†å??»é¢è·³åŠ¨
@@ -209,7 +209,7 @@
   <link rel="shortcut icon" href="icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.512">
+  <link rel="manifest" href="manifest.json?v=1.0.513">
   
   <!-- PWA å®‰è??ç¤º?¯æ? -->
   <meta name="application-name" content="Agora Market">
@@ -217,7 +217,7 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ?§èƒ½ä¼˜å?ï¼šé?? è½½?³é”®èµ„æ? -->
-  <link rel="preload" href="flutter_bootstrap.js?v=1.0.512" as="script">
+  <link rel="preload" href="flutter_bootstrap.js?v=1.0.513" as="script">
   <link rel="preload" href="pwa_viewport_fix.js" as="script">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -615,7 +615,7 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.512</div>
+      <div class="loading-version" id="version-display">v1.0.513</div>
     </div>
   </div>
   
@@ -875,7 +875,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.512" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.513" async></script>
   
   <!-- PWA è§†å£é«˜åº¦ä¿®å??šæœ¬ - è§?†³ standalone æ¨¡å?ä¸‹ç?è§¦æ‘¸?æ??ç§»?®é? -->
   <script src="pwa_viewport_fix.js"></script>
@@ -888,75 +888,42 @@
   
   <!-- GitHub Pages 404 ?å??‘æ¢å¤?+ OAuth ?»å?æ£€æµ?-->
   <script>
-    // ?¢å?ä»?404.html ?å??‘ç??Ÿå?è·¯å?ï¼Œå¹¶æ£€æµ?OAuth ?è?
+    // Restore path from 404.html redirect and detect OAuth callback
     (function() {
       try {
         var savedPath = sessionStorage.getItem('_404_redirect_path');
-        var hasOAuthCallback = false;
-        var hasError = false;
+        var isOAuth = false;
         
-        // ?¨æ??¤ä??å?æ£€?¥æ˜¯?¦æ? OAuth ?è?
-        if (savedPath) {
-          hasOAuthCallback = savedPath.includes('tokenId=') || savedPath.includes('/oauth2-callback');
-          hasError = savedPath.includes('error=');
+        // Check for OAuth callback before clearing sessionStorage
+        if (savedPath && (savedPath.includes('tokenId=') || savedPath.includes('/oauth2-callback'))) {
+          isOAuth = true;
+        } else {
+          var urlParams = new URLSearchParams(window.location.search);
+          isOAuth = urlParams.has('tokenId') || window.location.pathname.includes('/oauth2-callback');
         }
         
-        // æ£€?¥å???URL ?‚æ•°
-        var urlParams = new URLSearchParams(window.location.search);
-        if (!hasOAuthCallback) {
-          hasOAuthCallback = urlParams.has('tokenId') || window.location.pathname.includes('/oauth2-callback');
-        }
-        if (!hasError) {
-          hasError = urlParams.has('error');
-        }
-        
-        // å¦‚æ?æ£€æµ‹åˆ° OAuth ?è?ï¼Œæ›´?°å?è½½å?å¹•æ?ç¤?
-        if (hasOAuthCallback || hasError) {
-          console.log('[OAUTH_LOADING] OAuth callback detected, updating loading screen');
-          
-          // ?´æ–°? è½½?‡æœ¬
+        // Update loading screen text if OAuth detected (non-blocking)
+        if (isOAuth) {
           var loadingText = document.getElementById('loading-text');
           if (loadingText) {
-            loadingText.textContent = 'æ­?œ¨å¤„ç??»å?...';
-            loadingText.style.animation = 'none'; // ?ç½®?¨ç”»
-            setTimeout(function() {
-              loadingText.style.animation = 'textGlow 3s ease-in-out infinite, textShimmer 2s linear infinite';
-            }, 10);
+            loadingText.textContent = 'Processing login...';
           }
-          
-          // ?´æ–°?ˆæœ¬?¾ç¤ºä¸ºæ?ç¤ºä¿¡??
           var versionDisplay = document.getElementById('version-display');
           if (versionDisplay) {
-            if (hasError) {
-              versionDisplay.textContent = '?»å?éªŒè?ä¸?..';
-            } else {
-              versionDisplay.textContent = 'æ­?œ¨å®Œæ??»å?...';
-            }
+            versionDisplay.textContent = 'Please wait...';
           }
         }
         
-        // ?¢å?è·¯å?ï¼ˆåœ¨æ£€æµ‹ä??ï?
+        // Restore path (original 404 redirect logic)
         if (savedPath) {
-          // æ¸…é™¤ä¿å??„è·¯å¾?
           sessionStorage.removeItem('_404_redirect_path');
-          
-          // å¦‚æ?å½“å?è·¯å?ä¸æ˜¯ä¿å??„è·¯å¾„ï??™æ¢å¤?
           var currentPath = window.location.pathname + window.location.search + window.location.hash;
           if (currentPath !== savedPath && savedPath !== '/index.html') {
-            // ä½¿ç”¨ replaceState ?´æ–° URLï¼Œä?è§¦å?é¡µé¢?·æ–°
-            // è¿™æ · Flutter è·¯ç”±ç³»ç??¯ä»¥?¹æ®?°ç? URL å¤„ç?è·¯ç”±
             window.history.replaceState(null, '', savedPath);
-            console.log('[404_REDIRECT] Restored path:', savedPath);
-            
-            // ?¢å?è·¯å??ï??æ¬¡æ£€??URL ?‚æ•°ï¼ˆå?ä¸ºè·¯å¾„å·²?¢å?ï¼?
-            var restoredUrlParams = new URLSearchParams(window.location.search);
-            if (restoredUrlParams.has('tokenId') || restoredUrlParams.has('error')) {
-              console.log('[OAUTH_LOADING] OAuth callback confirmed after path restoration');
-            }
           }
         }
       } catch (e) {
-        console.error('[404_REDIRECT] Failed to restore path or detect OAuth:', e);
+        console.error('[404_REDIRECT] Error:', e);
       }
     })();
   </script>
@@ -978,6 +945,7 @@
   </script>
 </body>
 </html>
+
 
 
 
