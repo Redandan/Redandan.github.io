@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
@@ -132,33 +132,36 @@
     </script>
 </head>
 <body class="bg-[#1F2937] text-gray-300 font-sans">
-    
+    <!-- Navigation Controls -->
     <div class="fixed top-4 z-50 flex gap-2">
-        
+        <!-- Back Button -->
         <button onclick="goBack()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center">
             <i class="fas fa-arrow-left mr-2"></i>
             <span data-i18n="backToApp">回到應用</span>
         </button>
-        
+        <!-- Language Switcher -->
         <div class="flex">
             <button onclick="setLanguage('zh')" class="bg-blue-500 text-white px-3 py-1 rounded-l hover:bg-blue-600">中文</button>
             <button onclick="setLanguage('en')" class="bg-blue-500 text-white px-3 py-1 rounded-r hover:bg-blue-600">EN</button>
         </div>
     </div>
 
-<header class="bg-[#1A2C5A] text-white py-8 text-center shadow-lg">
+    <!-- Header -->
+    <header class="bg-[#1A2C5A] text-white py-8 text-center shadow-lg">
         <h1 class="text-4xl font-bold" data-i18n="title"></h1>
         <p class="text-lg mt-2" data-i18n="subtitle"></p>
     </header>
-
-<main class="max-w-5xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
-        
+    
+    <!-- Main Content -->
+    <main class="max-w-5xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
+        <!-- Agora Introduction -->
         <section class="mb-16 bg-[#374151] rounded-lg p-6 shadow-md">
             <h2 class="text-3xl font-bold mb-6 section-header" data-i18n="whatIs"></h2>
             <p class="text-lg leading-relaxed text-gray-300" data-i18n="description"></p>
         </section>
-
-<section class="mb-16 bg-[#374151] rounded-lg p-6 shadow-md">
+        
+        <!-- Agora Coin Usage -->
+        <section class="mb-16 bg-[#374151] rounded-lg p-6 shadow-md">
             <h2 class="text-3xl font-bold mb-6 section-header" data-i18n="coinUsage"></h2>
            
             <ul class="list-none space-y-3">
@@ -180,11 +183,12 @@
                 </li>
             </ul>
         </section>
-
-<section class="mb-16">
+        
+        <!-- Membership Tiers -->
+        <section class="mb-16">
             <h2 class="text-3xl font-bold mb-6 section-header" data-i18n="memberTiers"></h2>
             <div class="grid md:grid-cols-3 gap-6">
-                
+                <!-- Bronze -->
                 <div class="tier-card bg-[#374151] p-6 rounded-lg shadow-md text-center">
                     <div id="bronze-icon" class="text-5xl mb-4 glow-effect">
                         <i class="fas fa-medal text-[#CD7F32] medal-pulse"></i>
@@ -192,7 +196,7 @@
                     <h3 class="text-xl font-bold mb-3 text-white" data-i18n="bronze"></h3>
                     <ul class="list-disc pl-4 text-left text-gray-300 space-y-2" data-i18n="bronzeFeatures"></ul>
                 </div>
-                
+                <!-- Silver -->
                 <div class="tier-card bg-[#374151] p-6 rounded-lg shadow-md text-center">
                     <div id="silver-icon" class="text-5xl mb-4 glow-effect">
                         <i class="fas fa-medal text-[#C0C0C0] medal-pulse"></i>
@@ -200,7 +204,7 @@
                     <h3 class="text-xl font-bold mb-3 text-white" data-i18n="silver"></h3>
                     <ul class="list-disc pl-4 text-left text-gray-300 space-y-2" data-i18n="silverFeatures"></ul>
                 </div>
-                
+                <!-- Gold -->
                 <div class="tier-card bg-[#374151] p-6 rounded-lg shadow-md text-center">
                     <div id="gold-icon" class="text-5xl mb-4 glow-effect">
                         <i class="fas fa-medal text-[#FFD700] medal-pulse"></i>
@@ -210,15 +214,17 @@
                 </div>
             </div>
         </section>
-
-<section class="text-center">
+        
+        <!-- Contact Us -->
+        <section class="text-center">
             <h2 class="text-3xl font-bold mb-4 section-header" data-i18n="joinTitle"></h2>
             <p class="text-lg leading-relaxed text-gray-300 mb-6" data-i18n="contactUs"></p>
             <a href="mailto:contact@agoramarket.com" class="inline-block bg-[#3B82F6] text-white py-3 px-8 rounded-lg shadow-lg hover:bg-[#60A5FA] transition-colors" data-i18n="contactButton"></a>
         </section>
     </main>
-
-<footer class="bg-[#1A2C5A] text-white text-center py-6">
+    
+    <!-- Footer -->
+    <footer class="bg-[#1A2C5A] text-white text-center py-6">
         <p data-i18n="footer"></p>
     </footer>
 </body>

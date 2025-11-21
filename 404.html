@@ -7,54 +7,37 @@
     // GitHub Pages SPA 路由支持
     // 将所有 404 请求重定向到 index.html，让 Flutter 路由系统处理
     (function() {
-      'use strict';
-      
-      const path = window.location.pathname;
-      const search = window.location.search;
-      const hash = window.location.hash;
-      const STORAGE_KEY = '_404_redirect_path';
-      const MAX_REDIRECTS = 3;
-      
-      // 防止循环重定向：检查重定向次数
-      let redirectCount = 0;
-      try {
-        const count = sessionStorage.getItem('_404_redirect_count');
-        redirectCount = count ? parseInt(count, 10) : 0;
-        
-        if (redirectCount >= MAX_REDIRECTS) {
-          console.error('[404] Too many redirects, stopping to prevent loop');
-          return;
-        }
-      } catch (e) {
-        console.error('[404] Failed to check redirect count:', e);
-      }
+      var path = window.location.pathname;
+      var search = window.location.search;
+      var hash = window.location.hash;
       
       // 防止循环重定向：检查是否已经包含 /index.html
-      if (path.includes('/index.html')) {
-        // 提取原始路径（去掉所有 /index.html 前缀）
-        const originalPath = path.replace(/\/index\.html/g, '') || '/';
-        const fullPath = originalPath + search + hash;
-        
-        // 保存原始路径到 sessionStorage
-        try {
-          sessionStorage.setItem(STORAGE_KEY, fullPath);
-          sessionStorage.setItem('_404_redirect_count', String(redirectCount + 1));
-        } catch (e) {
-          console.error('[404] Failed to save redirect path:', e);
+      if (path.indexOf('/index.html') !== -1) {
+        // 如果路径已经包含 index.html，说明已经重定向过了
+        // 提取原始路径（去掉 /index.html 前缀）
+        var originalPath = path.replace(/\/index\.html/g, '');
+        if (!originalPath) {
+          originalPath = '/';
         }
         
-        // 直接重定向到 /index.html
+        // 保存原始路径到 sessionStorage，供 Flutter 应用使用
+        try {
+          sessionStorage.setItem('_404_redirect_path', originalPath + search + hash);
+        } catch (e) {
+          console.error('Failed to save redirect path:', e);
+        }
+        
+        // 直接重定向到 /index.html，不带任何路径
         window.location.replace('/index.html');
         return;
       }
       
       // 第一次访问：保存原始路径和查询参数
       try {
-        const fullPath = path + search + hash;
-        sessionStorage.setItem(STORAGE_KEY, fullPath);
-        sessionStorage.setItem('_404_redirect_count', '1');
+        var fullPath = path + search + hash;
+        sessionStorage.setItem('_404_redirect_path', fullPath);
       } catch (e) {
-        console.error('[404] Failed to save redirect path:', e);
+        console.error('Failed to save redirect path:', e);
       }
       
       // 直接重定向到 /index.html（不带路径，避免循环）
