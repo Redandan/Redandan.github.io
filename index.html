@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?ˆæœ¬?–ç·©å­˜æ?è­?-->
-    <meta name="cache-version" content="1.0.512">
+    <meta name="cache-version" content="1.0.513">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -36,7 +36,7 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.512+513">
+  <meta name="version" content="1.0.513+514">
 
   <script>
     // iOS PWA è§†å£ä¿®å? - å¿…é¡»?¨æ??©æ??§è?ï¼Œé˜²æ­¢ç™½æ¡†å??»é¢è·³åŠ¨
@@ -205,7 +205,7 @@
   <link rel="shortcut icon" href="icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.512">
+  <link rel="manifest" href="manifest.json?v=1.0.513">
   
   <!-- PWA å®‰è??ç¤º?¯æ? -->
   <meta name="application-name" content="Agora Market">
@@ -213,7 +213,7 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ?§èƒ½ä¼˜å?ï¼šé?? è½½?³é”®èµ„æ? -->
-  <link rel="preload" href="flutter_bootstrap.js?v=1.0.512" as="script">
+  <link rel="preload" href="flutter_bootstrap.js?v=1.0.513" as="script">
   <link rel="preload" href="pwa_viewport_fix.js" as="script">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -611,7 +611,7 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.512</div>
+      <div class="loading-version" id="version-display">v1.0.513</div>
     </div>
   </div>
   
@@ -861,7 +861,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.512" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.513" async></script>
   
   <!-- PWA è§†å£é«˜åº¦ä¿®å??šæœ¬ - è§?†³ standalone æ¨¡å?ä¸‹ç?è§¦æ‘¸?æ??ç§»?®é? -->
   <script src="pwa_viewport_fix.js"></script>
@@ -880,26 +880,32 @@
       
       const STORAGE_KEY = '_404_redirect_path';
       const REDIRECT_COUNT_KEY = '_404_redirect_count';
+      const logger = window.console || { error: function() {}, log: function() {} };
       
       try {
-        const savedPath = sessionStorage.getItem(STORAGE_KEY);
+        var savedPath = sessionStorage.getItem(STORAGE_KEY);
         if (savedPath) {
           // æ¸…é™¤ä¿å??„è·¯å¾„å??å??‘è®¡??          sessionStorage.removeItem(STORAGE_KEY);
           sessionStorage.removeItem(REDIRECT_COUNT_KEY);
           
-          // å¦‚æ?å½“å?è·¯å?ä¸æ˜¯ä¿å??„è·¯å¾„ï??™æ¢å¤?          const currentPath = window.location.pathname + window.location.search + window.location.hash;
-          if (currentPath !== savedPath && savedPath !== '/index.html') {
+          // å¦‚æ?å½“å?è·¯å?ä¸æ˜¯ä¿å??„è·¯å¾„ï??™æ¢å¤?          var currentPath = window.location.pathname + window.location.search + window.location.hash;
+          if (currentPath !== savedPath && savedPath !== '/index.html' && savedPath !== '/index.html/') {
             // ä½¿ç”¨ replaceState ?´æ–° URLï¼Œä?è§¦å?é¡µé¢?·æ–°
             // è¿™æ · Flutter è·¯ç”±ç³»ç??¯ä»¥?¹æ®?°ç? URL å¤„ç?è·¯ç”±
             window.history.replaceState(null, '', savedPath);
-            if (window.console && window.console.log) {
-              console.log('[404_REDIRECT] Restored path:', savedPath);
-            }
+            logger.log('[404_REDIRECT] Restored path:', savedPath);
+          } else {
+            logger.log('[404_REDIRECT] No specific path to restore or already at target:', savedPath);
           }
         }
       } catch (e) {
-        if (window.console && window.console.error) {
-          console.error('[404_REDIRECT] Failed to restore path:', e);
+        logger.error('[404_REDIRECT] Failed to restore path:', e);
+        // Fallback: å¦‚æ??¢å?å¤±è´¥ï¼Œè‡³å°‘æ???sessionStorage
+        try {
+          sessionStorage.removeItem(STORAGE_KEY);
+          sessionStorage.removeItem(REDIRECT_COUNT_KEY);
+        } catch (cleanupError) {
+          // å¿½ç•¥æ¸…ç??™è¯¯
         }
       }
     })();
@@ -921,23 +927,6 @@
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
