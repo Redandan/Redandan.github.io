@@ -13,6 +13,8 @@ function convert(sourceData, params) {
   const exchangeRate = params.exchangeRate || 31.0;  // 汇率，默认 31.0
   const profitMargin = params.profitMargin || 0.0;   // 利润率（%），默认 0.0
   const defaultStock = params.stock || 100;          // 默认库存，默认 100
+  // 🔧 簡化：始終從源數據讀取幣種，不支持則回退到 USDT
+  const defaultCurrency = 'USDT'; // 最终回退币种（仅在不支持时使用）
   
   // 提取商品信息（优先使用 name，否则使用 englishName）
   const name = sourceData.name || null;
@@ -36,6 +38,65 @@ function convert(sourceData, params) {
     price = sourceData.basePrice.value;
   } else if (sourceData.price != null) {
     price = sourceData.price;
+  }
+  
+  // 🔧 新增：币种处理（从源数据读取，如果没有则使用默认值）
+  // 支持的币种列表（用于验证）
+  const supportedCurrencies = {
+    'TWD': 'TWD',
+    'USD': 'USD',
+    'CNY': 'CNY',
+    'JPY': 'JPY',
+    'EUR': 'EUR',
+    'GBP': 'GBP',
+    'KRW': 'KRW',
+    'SGD': 'SGD',
+    'HKD': 'HKD',
+    'AUD': 'AUD',
+    'USDT': 'USDT'
+  };
+  
+  // 检查币种是否支持的辅助函数
+  function isCurrencySupported(currencyStr) {
+    if (!currencyStr) return false;
+    return supportedCurrencies.hasOwnProperty(currencyStr.toUpperCase());
+  }
+  
+  // 获取支持的币种（转换为大写并验证）
+  function getSupportedCurrency(currencyStr) {
+    if (!currencyStr) return null;
+    const upperCurrency = currencyStr.toUpperCase();
+    return supportedCurrencies[upperCurrency] || null;
+  }
+  
+  // 🔧 簡化：始終從源數據讀取幣種
+  let currency = defaultCurrency;
+  
+  // 优先从 basePrice.currencyIso 读取币种
+  if (sourceData.basePrice && sourceData.basePrice.currencyIso) {
+    const sourceCurrency = sourceData.basePrice.currencyIso;
+    const supportedCurrency = getSupportedCurrency(sourceCurrency);
+    if (supportedCurrency) {
+      currency = supportedCurrency;
+    } else {
+      // 币种不支持，回退到 USDT
+      currency = defaultCurrency;
+    }
+  } else if (sourceData.currency) {
+    // 如果源数据中有 currency 字段，也尝试使用（但需要验证）
+    const supportedCurrency = getSupportedCurrency(sourceData.currency);
+    if (supportedCurrency) {
+      currency = supportedCurrency;
+    } else {
+      // 币种不支持，回退到 USDT
+      currency = defaultCurrency;
+    }
+  }
+  // 如果源数据中没有币种信息，使用默认币种 USDT
+  
+  // 🔧 最终验证：确保币种是支持的，如果不支持则使用 USDT
+  if (!isCurrencySupported(currency)) {
+    currency = 'USDT';
   }
   
   // 计算最终价格（应用汇率和利润率）
@@ -282,7 +343,7 @@ function convert(sourceData, params) {
     title: productTitle,
     description: description,
     price: finalPrice,
-    currency: 'USDT',
+    currency: currency, // 🔧 修復：使用從源數據讀取的幣種，而不是硬編碼 'USDT'
     stock: stockValue,
     category: category,
     skus: Array.from(skus),
