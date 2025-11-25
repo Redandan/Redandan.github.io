@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?ˆæœ¬?–ç·©å­˜æ?è­?-->
-    <meta name="cache-version" content="1.0.522">
+    <meta name="cache-version" content="1.0.523">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -36,7 +36,7 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.522+523">
+  <meta name="version" content="1.0.523+524">
 
   <script>
     // iOS PWA è§†å£ä¿®å? - å¿…é¡»?¨æ??©æ??§è?ï¼Œé˜²æ­¢ç™½æ¡†å??»é¢è·³åŠ¨
@@ -209,7 +209,7 @@
   <link rel="shortcut icon" href="icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.522">
+  <link rel="manifest" href="manifest.json?v=1.0.523">
   
   <!-- PWA å®‰è??ç¤º?¯æ? -->
   <meta name="application-name" content="Agora Market">
@@ -217,7 +217,7 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ?§èƒ½ä¼˜å?ï¼šé?? è½½?³é”®èµ„æ? -->
-  <link rel="preload" href="flutter_bootstrap.js?v=1.0.522" as="script">
+  <link rel="preload" href="flutter_bootstrap.js?v=1.0.523" as="script">
   <link rel="preload" href="pwa_viewport_fix.js" as="script">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -538,6 +538,15 @@
       pointer-events: none;
     }
     
+    /* ç«‹å³?è?æ¨¡å?ï¼šç”¨äºå¿«?Ÿå??¢ï?è·³è??¨ç”»ï¼?*/
+    .flutter-ready.immediate #loading-screen {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      display: none !important;
+      transition: none !important;
+      pointer-events: none !important;
+    }
+    
     .flutter-ready flt-scene-host,
     .flutter-ready flt-glass-pane,
     .flutter-ready canvas {
@@ -615,9 +624,92 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.522</div>
+      <div class="loading-version" id="version-display">v1.0.523</div>
     </div>
   </div>
+  
+  <!-- å¿«é€Ÿæ?æµ‹ï?å¦‚æ? Flutter å·²ç??†å?å¥½ï?ç«‹å³?è?? è½½å±å?ï¼ˆè·³è¿‡åŠ¨?»ï? -->
+  <script>
+    (function() {
+      'use strict';
+      
+      // æ£€??Flutter ?¯å¦å·²ç??†å?å¥?
+      function checkFlutterReady() {
+        // æ£€??Flutter ?ƒç??¯å¦å·²ç?å­˜åœ¨
+        const hasFlutterElements = document.querySelector('flt-scene-host') !== null ||
+                                  document.querySelector('flt-glass-pane') !== null ||
+                                  document.querySelector('canvas') !== null;
+        
+        // æ£€??body ?¯å¦å·²ç???flutter-ready ç±»ï?ä»ä??ç?ä¼šè?ï¼?
+        const isAlreadyReady = document.body && document.body.classList.contains('flutter-ready');
+        
+        if (hasFlutterElements || isAlreadyReady) {
+          console.log('[LOADING_SCREEN] Flutter already ready, hiding loading screen immediately (skipping animation)');
+          
+          // ç«‹å³?è?? è½½å±å?ï¼Œè·³è¿‡åŠ¨??
+          if (document.body) {
+            document.body.classList.add('flutter-ready', 'immediate');
+          }
+          
+          // ç¡®ä? Flutter ?ƒç??¯è?
+          const flutterElements = document.querySelectorAll('flt-scene-host, flt-glass-pane, canvas');
+          flutterElements.forEach(function(element) {
+            element.style.opacity = '1';
+            element.style.visibility = 'visible';
+            element.style.display = 'block';
+          });
+          
+          return true;
+        }
+        
+        return false;
+      }
+      
+      // ç«‹å³?§è?ä¸€æ¬¡æ??¥ï?DOM ?¯èƒ½å·²ç?? è½½ï¼?
+      // ä½¿ç”¨ requestAnimationFrame ç¡®ä??¨ä?ä¸€å¸§æ??¥ï?ç»?Flutter ?ƒç?æ¸²æ??¶é—´
+      function scheduleCheck() {
+        if (window.requestAnimationFrame) {
+          requestAnimationFrame(function() {
+            requestAnimationFrame(checkFlutterReady);
+          });
+        } else {
+          setTimeout(checkFlutterReady, 50);
+        }
+      }
+      
+      if (document.readyState === 'loading') {
+        // DOM è¿˜åœ¨? è½½ï¼Œç?å¾?DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', scheduleCheck);
+      } else {
+        // DOM å·²ç?? è½½ï¼Œç??³æ???
+        scheduleCheck();
+      }
+      
+      // ä¹Ÿç???load äº‹ä»¶ï¼ˆæ??‰è?æºå?è½½å??ï?
+      window.addEventListener('load', function() {
+        setTimeout(checkFlutterReady, 100);
+      }, { once: true });
+      
+      // ?ç»­?‘å¬ Flutter ?ƒç??„å‡º?°ï?ä½¿ç”¨ MutationObserverï¼?
+      if (document.body) {
+        const observer = new MutationObserver(function(mutations) {
+          if (checkFlutterReady()) {
+            observer.disconnect(); // ?¾åˆ°?å?æ­¢è?å¯?
+          }
+        });
+        
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true
+        });
+        
+        // 5 ç§’å??ªåŠ¨?­å?è§‚å?ï¼ˆé¿?å?å­˜æ?æ¼ï?
+        setTimeout(function() {
+          observer.disconnect();
+        }, 5000);
+      }
+    })();
+  </script>
   
   <!-- Reverted: remove external scripts that caused production errors -->
   
@@ -875,7 +967,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.522" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.523" async></script>
   
   <!-- PWA è§†å£é«˜åº¦ä¿®å??šæœ¬ - è§?†³ standalone æ¨¡å?ä¸‹ç?è§¦æ‘¸?æ??ç§»?®é? -->
   <script src="pwa_viewport_fix.js"></script>
@@ -952,6 +1044,7 @@
   </script>
 </body>
 </html>
+
 
 
 
