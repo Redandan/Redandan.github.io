@@ -166,11 +166,25 @@
       <span id="statusText">正在初始化...</span>
     </div>
 
-    <div id="qrcode"></div>
+    <div id="browserExtensionSection" style="display: none;">
+      <h3 style="margin-bottom: 20px; color: #333;">瀏覽器擴充功能</h3>
+      <button id="metamaskBtn" class="deep-link-btn" onclick="connectBrowserExtension()" style="display: none;">
+        <span style="margin-right: 8px;">🦊</span>
+        連接 MetaMask
+      </button>
+      <button id="otherExtensionBtn" class="deep-link-btn" onclick="connectBrowserExtension()" style="display: none; margin-top: 10px;">
+        <span style="margin-right: 8px;">🔌</span>
+        連接瀏覽器擴充功能
+      </button>
+    </div>
 
-    <button id="deepLinkBtn" class="deep-link-btn" onclick="openDeepLink()">
-      在錢包中打開
-    </button>
+    <div id="walletconnectSection" style="display: none;">
+      <h3 style="margin-bottom: 20px; color: #333; margin-top: 20px;">移動錢包</h3>
+      <div id="qrcode"></div>
+      <button id="deepLinkBtn" class="deep-link-btn" onclick="openDeepLink()">
+        在錢包中打開
+      </button>
+    </div>
 
     <div id="walletInfo" class="wallet-info">
       <div>已連接錢包：</div>
@@ -192,6 +206,8 @@
     let currentUri = null;
     let nonceData = null;
     let SignClient = null; // WalletConnect SignClient
+    let isBrowserExtension = false; // 是否使用浏览器扩展
+    let ethereumProvider = null; // 浏览器扩展提供者
 
     // 等待脚本加载完成并获取 SignClient
     function waitForSignClient() {
@@ -250,10 +266,55 @@
       });
     }
 
+    // 检测浏览器扩展
+    function detectBrowserExtension() {
+      // 检测 window.ethereum（MetaMask 等）
+      if (typeof window.ethereum !== 'undefined') {
+        ethereumProvider = window.ethereum;
+        console.log('✅ 检测到浏览器扩展:', ethereumProvider.isMetaMask ? 'MetaMask' : '其他扩展');
+        return true;
+      }
+      return false;
+    }
+
     // 初始化
     async function init() {
       try {
+        updateStatus('info', '正在檢測可用錢包...');
+        
+        // 检测浏览器扩展
+        const hasExtension = detectBrowserExtension();
+        
+        if (hasExtension) {
+          // 显示浏览器扩展选项
+          document.getElementById('browserExtensionSection').style.display = 'block';
+          if (ethereumProvider.isMetaMask) {
+            document.getElementById('metamaskBtn').style.display = 'block';
+          } else {
+            document.getElementById('otherExtensionBtn').style.display = 'block';
+          }
+        }
+        
+        // 同时初始化 WalletConnect（用于移动钱包）
+        await initWalletConnect();
+        
+        if (hasExtension) {
+          updateStatus('info', '請選擇連接方式：瀏覽器擴充功能或移動錢包');
+        }
+      } catch (error) {
+        console.error('初始化失败:', error);
+        updateStatus('error', '初始化失败: ' + error.message);
+        sendEventToFlutter('error', { error: error.message });
+      }
+    }
+
+    // 初始化 WalletConnect
+    async function initWalletConnect() {
+      try {
         updateStatus('info', '正在初始化 WalletConnect...');
+        
+        // 显示 WalletConnect 选项
+        document.getElementById('walletconnectSection').style.display = 'block';
         
         // 等待 SignClient 加载
         await waitForSignClient();
@@ -278,15 +339,74 @@
         // 开始连接流程
         await connect();
       } catch (error) {
-        console.error('初始化失败:', error);
-        updateStatus('error', '初始化失败: ' + error.message);
+        console.error('WalletConnect 初始化失败:', error);
+        updateStatus('error', 'WalletConnect 初始化失败: ' + error.message);
         sendEventToFlutter('error', { error: error.message });
       }
     }
 
-    // 连接钱包
+    // 连接浏览器扩展
+    async function connectBrowserExtension() {
+      try {
+        if (!ethereumProvider) {
+          throw new Error('未檢測到瀏覽器擴充功能');
+        }
+
+        updateStatus('info', '正在連接瀏覽器擴充功能...');
+        isBrowserExtension = true;
+
+        // 隐藏 WalletConnect 选项
+        document.getElementById('walletconnectSection').style.display = 'none';
+
+        // 请求连接
+        const accounts = await ethereumProvider.request({
+          method: 'eth_requestAccounts'
+        });
+
+        if (!accounts || accounts.length === 0) {
+          throw new Error('用戶拒絕連接或未選擇帳戶');
+        }
+
+        const walletAddress = accounts[0];
+        console.log('✅ 浏览器扩展连接成功:', walletAddress);
+
+        updateStatus('success', '錢包連接成功！');
+        showWalletInfo(walletAddress);
+        
+        sendEventToFlutter('connected', { 
+          walletAddress: walletAddress,
+          isBrowserExtension: true
+        });
+
+        // 继续登录流程
+        await performLogin(walletAddress);
+      } catch (error) {
+        console.error('連接瀏覽器擴充功能失敗:', error);
+        // 如果是用户拒绝，不显示错误
+        if (error.code === 4001 || error.message.includes('rejected') || error.message.includes('denied')) {
+          updateStatus('info', '已取消連接');
+          // 重新显示选项
+          document.getElementById('walletconnectSection').style.display = 'block';
+          return;
+        }
+        updateStatus('error', '連接失敗: ' + error.message);
+        sendEventToFlutter('error', { error: error.message });
+      }
+    }
+
+    // 连接钱包（WalletConnect）
     async function connect() {
       try {
+        // 如果已经通过浏览器扩展连接，不执行 WalletConnect 连接
+        if (isBrowserExtension) {
+          console.log('⏭️ 已使用浏览器扩展连接，跳过 WalletConnect');
+          return;
+        }
+
+        if (!signClient) {
+          throw new Error('WalletConnect 未初始化');
+        }
+
         updateStatus('info', '正在生成連接請求...');
 
         const { uri, approval } = await signClient.connect({
@@ -321,9 +441,13 @@
           updateStatus('success', '錢包連接成功！');
           showWalletInfo(walletAddress);
           
+          // 隐藏浏览器扩展选项
+          document.getElementById('browserExtensionSection').style.display = 'none';
+          
           sendEventToFlutter('connected', { 
             walletAddress: walletAddress,
-            session: session
+            session: session,
+            isBrowserExtension: false
           });
 
           // 继续登录流程
@@ -331,6 +455,11 @@
         }
       } catch (error) {
         console.error('連接失敗:', error);
+        // 如果是用户取消，不显示错误
+        if (error.message && (error.message.includes('User rejected') || error.message.includes('rejected'))) {
+          updateStatus('info', '已取消連接');
+          return;
+        }
         updateStatus('error', '連接失敗: ' + error.message);
         sendEventToFlutter('error', { error: error.message });
       }
@@ -430,20 +559,44 @@
         sendEventToFlutter('nonce_received', { nonce: nonceData.nonce });
 
         // 2. 签名消息
-        const chainId = 'eip155:1'; // 使用 Ethereum Mainnet
-        const account = session.namespaces.eip155.accounts[0];
-
-        const signature = await signClient.request({
-          topic: session.topic,
-          chainId: chainId,
-          request: {
-            method: 'personal_sign',
-            params: {
-              message: nonceData.message,
-              account: account
-            }
+        let signature;
+        
+        if (isBrowserExtension && ethereumProvider) {
+          // 使用浏览器扩展签名
+          updateStatus('info', '請在瀏覽器擴充功能中確認簽名...');
+          
+          // 获取当前账户
+          const accounts = await ethereumProvider.request({ method: 'eth_accounts' });
+          if (!accounts || accounts.length === 0) {
+            throw new Error('未找到連接的帳戶');
           }
-        });
+          const account = accounts[0];
+          
+          // 使用 personal_sign
+          signature = await ethereumProvider.request({
+            method: 'personal_sign',
+            params: [
+              nonceData.message,
+              account
+            ]
+          });
+        } else {
+          // 使用 WalletConnect 签名
+          const chainId = 'eip155:1'; // 使用 Ethereum Mainnet
+          const account = session.namespaces.eip155.accounts[0];
+
+          signature = await signClient.request({
+            topic: session.topic,
+            chainId: chainId,
+            request: {
+              method: 'personal_sign',
+              params: {
+                message: nonceData.message,
+                account: account
+              }
+            }
+          });
+        }
 
         updateStatus('info', '簽名成功，正在驗證...');
         sendEventToFlutter('signature_received', {
