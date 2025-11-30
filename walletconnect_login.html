@@ -153,8 +153,41 @@
   </style>
   <!-- QRCode.js for generating QR codes (local) -->
   <script src="qrcode.min.js"></script>
-  <!-- WalletConnect Sign Client v2 (local) -->
-  <script src="walletconnect-sign-client.js"></script>
+  <!-- WalletConnect Sign Client v2 (官方 CDN - UMD 构建) -->
+  <script src="https://unpkg.com/@walletconnect/sign-client@2.14.1/dist/index.umd.js"></script>
+  <script>
+    // 等待 WalletConnect SDK 加载
+    (function() {
+      function checkWalletConnect() {
+        // UMD 构建将模块导出到 window.WalletConnectSignClient
+        if (window.WalletConnectSignClient && window.WalletConnectSignClient.SignClient) {
+          window.WalletConnectSignClient = window.WalletConnectSignClient.SignClient;
+          console.log('✅ WalletConnect SignClient 已加载');
+          window.dispatchEvent(new Event('walletconnect-loaded'));
+        } else if (window.WalletConnectSignClient) {
+          // 如果已经是 SignClient，直接触发
+          console.log('✅ WalletConnect SignClient 已加载');
+          window.dispatchEvent(new Event('walletconnect-loaded'));
+        }
+      }
+      
+      // 立即检查一次
+      checkWalletConnect();
+      
+      // 如果还没加载，监听 script 加载完成
+      if (!window.WalletConnectSignClient) {
+        const scripts = document.getElementsByTagName('script');
+        for (let script of scripts) {
+          if (script.src && script.src.includes('walletconnect')) {
+            script.onload = function() {
+              setTimeout(checkWalletConnect, 100);
+            };
+            break;
+          }
+        }
+      }
+    })();
+  </script>
 </head>
 <body>
   <div class="container">
@@ -213,58 +246,49 @@
     let isBrowserExtension = false; // 是否使用浏览器扩展
     let ethereumProvider = null; // 浏览器扩展提供者
 
-    // 等待脚本加载完成并获取 SignClient
+    // 等待 WalletConnect v2 SDK 加载完成
     function waitForSignClient() {
       return new Promise((resolve, reject) => {
         // 检查是否已经加载
-        const checkSignClient = () => {
-          try {
-            // UMD 构建将模块导出到 window['@walletconnect/sign-client']
-            const wcModule = window['@walletconnect/sign-client'];
-            if (wcModule) {
-              // 根据 UMD 构建，SignClient 在 re.SignClient 和 re.default
-              SignClient = wcModule.SignClient || wcModule.default;
-              
-              if (SignClient && typeof SignClient.init === 'function') {
-                console.log('✅ SignClient 已找到');
-                return SignClient;
-              } else {
-                console.warn('⚠️ SignClient 对象存在但没有 init 方法:', SignClient);
-              }
-            } else {
-              console.log('⏳ 等待 WalletConnect 模块加载...');
-            }
-            return null;
-          } catch (e) {
-            console.error('检查 SignClient 时出错:', e);
-            return null;
+        const checkLoaded = () => {
+          if (window.WalletConnectSignClient) {
+            SignClient = window.WalletConnectSignClient;
+            console.log('✅ WalletConnect SignClient 已找到');
+            return true;
           }
+          return false;
         };
 
-        // 立即检查一次
-        const client = checkSignClient();
-        if (client) {
-          resolve(client);
+        if (checkLoaded()) {
+          resolve(SignClient);
           return;
         }
 
-        // 如果还没加载，等待一下
+        // 监听加载事件
+        const onLoaded = () => {
+          if (checkLoaded()) {
+            window.removeEventListener('walletconnect-loaded', onLoaded);
+            resolve(SignClient);
+          }
+        };
+
+        window.addEventListener('walletconnect-loaded', onLoaded);
+
+        // 轮询检查（备用方案）
         let attempts = 0;
-        const maxAttempts = 100; // 等待最多 10 秒
+        const maxAttempts = 100; // 10 秒
         const checkInterval = setInterval(() => {
           attempts++;
-          const client = checkSignClient();
-          if (client) {
+          if (checkLoaded()) {
             clearInterval(checkInterval);
-            resolve(client);
+            window.removeEventListener('walletconnect-loaded', onLoaded);
+            resolve(SignClient);
           } else if (attempts >= maxAttempts) {
             clearInterval(checkInterval);
-            console.error('❌ SignClient 加载超时');
-            console.error('可用的 window 对象:', Object.keys(window).filter(k => k.includes('wallet') || k.includes('connect') || k.includes('@')));
-            if (window['@walletconnect/sign-client']) {
-              console.error('模块内容:', Object.keys(window['@walletconnect/sign-client']));
-            }
-            reject(new Error('WalletConnect SignClient 加载超时。请检查 walletconnect-sign-client.js 是否正确加载。'));
+            window.removeEventListener('walletconnect-loaded', onLoaded);
+            console.error('❌ WalletConnect SignClient 加载超时');
+            console.error('可用的 window 对象:', Object.keys(window).filter(k => k.toLowerCase().includes('wallet') || k.toLowerCase().includes('connect')));
+            reject(new Error('WalletConnect SignClient 加载超时。请检查网络连接或 CDN 是否可访问。'));
           }
         }, 100);
       });
@@ -327,7 +351,7 @@
           throw new Error('SignClient 未找到，请检查 walletconnect-sign-client.js 是否正确加载');
         }
         
-        // 初始化 Sign Client
+        // 初始化 Sign Client (WalletConnect v2 标准方式)
         signClient = await SignClient.init({
           projectId: CONFIG.projectId,
           metadata: {
@@ -335,8 +359,14 @@
             description: 'Agora Market DApp',
             url: window.location.origin,
             icons: [window.location.origin + '/favicon.png']
-          }
+          },
+          relayUrl: 'wss://relay.walletconnect.com'
         });
+
+        console.log('✅ WalletConnect SignClient 初始化成功');
+        
+        // 设置事件监听器
+        setupSessionListeners();
 
         updateStatus('info', 'WalletConnect 初始化成功，請點擊按鈕連接錢包');
         
@@ -780,12 +810,18 @@
       }
     }
 
-    // 监听会话更新
+    // 监听会话更新 (WalletConnect v2 标准事件)
     function setupSessionListeners() {
-      if (!signClient) return;
+      if (!signClient) {
+        console.warn('⚠️ signClient 未初始化，无法设置事件监听器');
+        return;
+      }
 
+      console.log('📡 设置 WalletConnect 事件监听器');
+
+      // 监听会话更新
       signClient.on('session_update', ({ topic, params }) => {
-        console.log('Session updated:', params);
+        console.log('📨 Session updated:', topic, params);
         if (session && session.topic === topic) {
           session = { ...session, ...params };
           const walletAddress = getWalletAddress();
@@ -798,20 +834,31 @@
         }
       });
 
+      // 监听会话删除
       signClient.on('session_delete', ({ topic }) => {
-        console.log('Session deleted:', topic);
+        console.log('📨 Session deleted:', topic);
         if (session && session.topic === topic) {
           session = null;
           sendEventToFlutter('session_disconnected', {});
           updateStatus('warning', '錢包連接已斷開');
         }
       });
+
+      // 监听会话事件 (WalletConnect v2 新特性)
+      signClient.on('session_event', ({ event, chainId }) => {
+        console.log('📨 Session event:', event, chainId);
+      });
+
+      // 监听会话提议 (WalletConnect v2 新特性)
+      signClient.on('session_proposal', ({ id, params }) => {
+        console.log('📨 Session proposal:', id, params);
+      });
     }
 
     // 页面加载完成后初始化
     window.addEventListener('DOMContentLoaded', async () => {
+      console.log('🚀 页面加载完成，开始初始化...');
       await init();
-      setupSessionListeners();
     });
 
     // 错误处理
