@@ -996,46 +996,94 @@
         // 2. 签名消息
         let signature;
         
+        console.log('🔐 [PERFORM_LOGIN] 开始签名流程...');
+        console.log('🔐 [PERFORM_LOGIN] isBrowserExtension:', isBrowserExtension);
+        console.log('🔐 [PERFORM_LOGIN] ethereumProvider:', !!ethereumProvider);
+        
         if (isBrowserExtension && ethereumProvider) {
           // 使用浏览器扩展签名
+          console.log('🔐 [PERFORM_LOGIN] 使用浏览器扩展签名');
           updateStatus('info', '請在瀏覽器擴充功能中確認簽名...');
           
-          // 获取当前账户
-          const accounts = await ethereumProvider.request({ method: 'eth_accounts' });
-          if (!accounts || accounts.length === 0) {
-            throw new Error('未找到連接的帳戶');
+          try {
+            // 获取当前账户
+            console.log('🔐 [PERFORM_LOGIN] 获取账户...');
+            const accounts = await ethereumProvider.request({ method: 'eth_accounts' });
+            console.log('🔐 [PERFORM_LOGIN] 账户列表:', accounts);
+            
+            if (!accounts || accounts.length === 0) {
+              throw new Error('未找到連接的帳戶');
+            }
+            const account = accounts[0];
+            console.log('🔐 [PERFORM_LOGIN] 使用账户:', account);
+            
+            // 使用 personal_sign
+            console.log('🔐 [PERFORM_LOGIN] 调用 personal_sign...');
+            console.log('🔐 [PERFORM_LOGIN] Message 长度:', nonceData.message.length);
+            console.log('🔐 [PERFORM_LOGIN] Message 前50字符:', nonceData.message.substring(0, 50));
+            
+            signature = await ethereumProvider.request({
+              method: 'personal_sign',
+              params: [
+                nonceData.message,
+                account
+              ]
+            });
+            
+            console.log('✅ [PERFORM_LOGIN] 签名成功');
+            console.log('🔐 [PERFORM_LOGIN] Signature 长度:', signature?.length);
+            console.log('🔐 [PERFORM_LOGIN] Signature 前20字符:', signature?.substring(0, 20));
+          } catch (signError) {
+            console.error('❌ [PERFORM_LOGIN] 签名失败:', signError);
+            console.error('❌ [PERFORM_LOGIN] 错误代码:', signError.code);
+            console.error('❌ [PERFORM_LOGIN] 错误消息:', signError.message);
+            
+            // 如果是用户拒绝，不显示错误
+            if (signError.code === 4001 || signError.message?.includes('rejected') || signError.message?.includes('denied') || signError.message?.includes('User rejected')) {
+              updateStatus('info', '簽名已取消');
+              sendEventToFlutter('error', { error: '用戶取消簽名' });
+              return;
+            }
+            
+            throw signError;
           }
-          const account = accounts[0];
-          
-          // 使用 personal_sign
-          signature = await ethereumProvider.request({
-            method: 'personal_sign',
-            params: [
-              nonceData.message,
-              account
-            ]
-          });
         } else {
           // 使用 WalletConnect 签名
+          console.log('🔐 [PERFORM_LOGIN] 使用 WalletConnect 签名');
           // ⚠️ 重要：必须使用后端返回的 message 直接进行签名，不要做任何修改！
           // message 包含换行符 \n，必须保持原样
           const chainId = 'eip155:1'; // 使用 Ethereum Mainnet
           const account = session.namespaces.eip155.accounts[0];
 
+          console.log('🔐 [PERFORM_LOGIN] Session topic:', session.topic);
+          console.log('🔐 [PERFORM_LOGIN] Chain ID:', chainId);
+          console.log('🔐 [PERFORM_LOGIN] Account:', account);
+
           // ⚠️ personal_sign 的参数格式必须是数组 [message, account]，符合 EIP-1193 标准
-          signature = await signClient.request({
-            topic: session.topic,
-            chainId: chainId,
-            request: {
-              method: 'personal_sign',
-              params: [
-                nonceData.message,  // 直接使用后端返回的完整 message（包含所有换行符）
-                account
-              ]
-            }
-          });
+          try {
+            signature = await signClient.request({
+              topic: session.topic,
+              chainId: chainId,
+              request: {
+                method: 'personal_sign',
+                params: [
+                  nonceData.message,  // 直接使用后端返回的完整 message（包含所有换行符）
+                  account
+                ]
+              }
+            });
+            console.log('✅ [PERFORM_LOGIN] WalletConnect 签名成功');
+          } catch (signError) {
+            console.error('❌ [PERFORM_LOGIN] WalletConnect 签名失败:', signError);
+            throw signError;
+          }
         }
 
+        if (!signature) {
+          throw new Error('簽名結果為空');
+        }
+
+        console.log('✅ [PERFORM_LOGIN] 签名完成，开始验证...');
         updateStatus('info', '簽名成功，正在驗證...');
         sendEventToFlutter('signature_received', {
           signature: signature,
@@ -1043,6 +1091,12 @@
         });
 
         // 3. 验证签名并登录（根据新文档，使用 /auth/wallet-connect/login）
+        console.log('🔐 [PERFORM_LOGIN] 开始验证签名并登录...');
+        console.log('🔐 [PERFORM_LOGIN] 请求 URL:', `${CONFIG.apiBaseUrl}/auth/wallet-connect/login`);
+        console.log('🔐 [PERFORM_LOGIN] Wallet Address:', walletAddress);
+        console.log('🔐 [PERFORM_LOGIN] Nonce:', nonceData.nonce);
+        console.log('🔐 [PERFORM_LOGIN] Signature 长度:', signature.length);
+        
         const loginResponse = await fetch(`${CONFIG.apiBaseUrl}/auth/wallet-connect/login`, {
           method: 'POST',
           headers: {
@@ -1056,27 +1110,43 @@
           })
         });
 
+        console.log('🔐 [PERFORM_LOGIN] 登录响应状态:', loginResponse.status, loginResponse.statusText);
+
         if (!loginResponse.ok) {
-          const errorData = await loginResponse.json();
+          const errorData = await loginResponse.json().catch(() => ({ message: loginResponse.statusText }));
+          console.error('❌ [PERFORM_LOGIN] 登录失败:', errorData);
           throw new Error(errorData.message || '登錄失敗: ' + loginResponse.statusText);
         }
 
         const loginData = await loginResponse.json();
+        console.log('✅ [PERFORM_LOGIN] 登录响应接收成功');
+        console.log('🔐 [PERFORM_LOGIN] Login data keys:', Object.keys(loginData));
+        console.log('🔐 [PERFORM_LOGIN] Login data success:', loginData.success);
+        console.log('🔐 [PERFORM_LOGIN] Token present:', !!loginData.token);
+        console.log('🔐 [PERFORM_LOGIN] RefreshToken present:', !!loginData.refreshToken);
+        console.log('🔐 [PERFORM_LOGIN] User present:', !!loginData.user);
         
-        if (!loginData.success) {
-          throw new Error(loginData.message || '登錄失敗');
+        // 只要有 token 和 refreshToken 就算成功，不检查 success 字段
+        if (!loginData.token || !loginData.refreshToken) {
+          console.error('❌ [PERFORM_LOGIN] 登录响应中缺少 token');
+          throw new Error(loginData.message || '登錄響應中缺少 token');
         }
 
-        // 登录成功
+        console.log('✅ [PERFORM_LOGIN] 登录成功，发送 verified 事件');
         updateStatus('success', '登入成功！');
         sendEventToFlutter('verified', {
           token: loginData.token,
           refreshToken: loginData.refreshToken,
           user: loginData.user
         });
+        console.log('✅ [PERFORM_LOGIN] verified 事件已发送');
 
       } catch (error) {
-        console.error('登錄失敗:', error);
+        console.error('❌ [PERFORM_LOGIN] ========== 登录流程失败 ==========');
+        console.error('❌ [PERFORM_LOGIN] Error:', error);
+        console.error('❌ [PERFORM_LOGIN] Error message:', error.message);
+        console.error('❌ [PERFORM_LOGIN] Error stack:', error.stack);
+        console.error('❌ [PERFORM_LOGIN] Error code:', error.code);
         updateStatus('error', '登錄失敗: ' + error.message);
         sendEventToFlutter('error', { error: error.message });
       }
