@@ -1021,18 +1021,45 @@
             console.log('🔐 [PERFORM_LOGIN] 调用 personal_sign...');
             console.log('🔐 [PERFORM_LOGIN] Message 长度:', nonceData.message.length);
             console.log('🔐 [PERFORM_LOGIN] Message 前50字符:', nonceData.message.substring(0, 50));
+            console.log('🔐 [PERFORM_LOGIN] 等待用户在钱包中确认签名...');
+            console.log('🔐 [PERFORM_LOGIN] Provider 类型:', ethereumProvider.constructor.name);
+            console.log('🔐 [PERFORM_LOGIN] Provider 方法:', typeof ethereumProvider.request);
             
-            signature = await ethereumProvider.request({
-              method: 'personal_sign',
-              params: [
-                nonceData.message,
-                account
-              ]
-            });
+            // 添加进度提示
+            let progressInterval = setInterval(() => {
+              console.log('⏳ [PERFORM_LOGIN] 仍在等待用户确认签名...');
+            }, 5000); // 每5秒提示一次
             
-            console.log('✅ [PERFORM_LOGIN] 签名成功');
-            console.log('🔐 [PERFORM_LOGIN] Signature 长度:', signature?.length);
-            console.log('🔐 [PERFORM_LOGIN] Signature 前20字符:', signature?.substring(0, 20));
+            try {
+              // 添加超时处理（60秒）
+              const signPromise = ethereumProvider.request({
+                method: 'personal_sign',
+                params: [
+                  nonceData.message,
+                  account
+                ]
+              });
+              
+              const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => {
+                  reject(new Error('簽名請求超時（60秒），請檢查錢包是否彈出確認窗口'));
+                }, 60000); // 60秒超时
+              });
+              
+              signature = await Promise.race([signPromise, timeoutPromise]);
+              
+              // 清除进度提示
+              clearInterval(progressInterval);
+              
+              console.log('✅ [PERFORM_LOGIN] 签名成功');
+              console.log('🔐 [PERFORM_LOGIN] Signature 类型:', typeof signature);
+              console.log('🔐 [PERFORM_LOGIN] Signature 长度:', signature?.length);
+              console.log('🔐 [PERFORM_LOGIN] Signature 前20字符:', signature?.substring(0, 20));
+            } catch (signRequestError) {
+              // 清除进度提示
+              clearInterval(progressInterval);
+              throw signRequestError;
+            }
           } catch (signError) {
             console.error('❌ [PERFORM_LOGIN] 签名失败:', signError);
             console.error('❌ [PERFORM_LOGIN] 错误代码:', signError.code);
