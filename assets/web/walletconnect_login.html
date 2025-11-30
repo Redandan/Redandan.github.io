@@ -144,13 +144,6 @@
       100% { transform: rotate(360deg); }
     }
 
-    .error-details {
-      margin-top: 10px;
-      font-size: 12px;
-      color: #999;
-      text-align: left;
-    }
-
     /* 钱包选择器样式 (Uniswap 风格) */
     .wallet-grid {
       display: grid;
@@ -216,17 +209,6 @@
       transform: none;
       border-color: #e0e0e0;
       background: white;
-    }
-
-    .wallet-icon-img {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      margin-bottom: 8px;
-      object-fit: contain;
-      background: white;
-      padding: 4px;
-      box-sizing: border-box;
     }
 
     .wallet-icon-emoji {
@@ -298,39 +280,11 @@
       </div>
     </div>
 
-    <!-- 浏览器扩展钱包 -->
-    <div id="browserExtensionSection" style="display: none;">
-      <h3 style="margin-bottom: 20px; color: #333;">瀏覽器擴充功能</h3>
-      <button id="metamaskBtn" class="wallet-btn" onclick="connectWallet('metamask')" style="display: none;">
-        <span class="wallet-icon">🦊</span>
-        <span class="wallet-name">MetaMask</span>
-      </button>
-      <button id="coinbaseBtn" class="wallet-btn" onclick="connectWallet('coinbase')" style="display: none;">
-        <span class="wallet-icon">🔷</span>
-        <span class="wallet-name">Coinbase Wallet</span>
-      </button>
-      <button id="trustBtn" class="wallet-btn" onclick="connectWallet('trust')" style="display: none;">
-        <span class="wallet-icon">🛡️</span>
-        <span class="wallet-name">Trust Wallet</span>
-      </button>
-      <button id="otherExtensionBtn" class="wallet-btn" onclick="connectBrowserExtension()" style="display: none;">
-        <span class="wallet-icon">🔌</span>
-        <span class="wallet-name">其他瀏覽器擴充功能</span>
-      </button>
-    </div>
-
-    <!-- WalletConnect 移动钱包 -->
-    <div id="walletconnectSection" style="display: none;">
-      <h3 style="margin-bottom: 20px; color: #333; margin-top: 20px;">移動錢包</h3>
-      <button id="connectWalletBtn" class="wallet-btn" onclick="connectWallet('walletconnect')" style="display: block; margin-bottom: 20px;">
-        <span class="wallet-icon">📱</span>
-        <span class="wallet-name">WalletConnect</span>
-      </button>
-      <div id="qrcode" style="display: none;"></div>
-      <button id="deepLinkBtn" class="deep-link-btn" onclick="openDeepLink()" style="display: none;">
-        在錢包中打開
-      </button>
-    </div>
+    <!-- QR Code 和 Deep Link (WalletConnect) -->
+    <div id="qrcode" style="display: none;"></div>
+    <button id="deepLinkBtn" class="deep-link-btn" onclick="openDeepLink()" style="display: none;">
+      在錢包中打開
+    </button>
 
     <div id="walletInfo" class="wallet-info">
       <div>已連接錢包：</div>
@@ -346,11 +300,31 @@
       supportedChains: ['eip155:1', 'eip155:137', 'eip155:56'], // Ethereum, Polygon, BSC
     };
 
+    // 日志级别控制（生产环境设为 false）
+    const DEBUG = true; // 开发环境：true，生产环境：false
+    
+    // 统一的日志函数
+    function debugLog(...args) {
+      if (DEBUG) {
+        console.log(...args);
+      }
+    }
+    
+    function debugError(...args) {
+      // 错误日志始终输出
+      console.error(...args);
+    }
+    
+    function debugWarn(...args) {
+      if (DEBUG) {
+        console.warn(...args);
+      }
+    }
+
     // 全局变量
     let signClient = null;
     let session = null;
     let currentUri = null;
-    let nonceData = null;
     let SignClient = null; // WalletConnect SignClient
     let isBrowserExtension = false; // 是否使用浏览器扩展
     let ethereumProvider = null; // 浏览器扩展提供者
@@ -368,18 +342,18 @@
               SignClient = wcModule.SignClient || wcModule.default || wcModule;
               
               if (SignClient && typeof SignClient.init === 'function') {
-                console.log('✅ SignClient 已找到');
+                debugLog('✅ SignClient 已找到');
                 return SignClient;
               } else {
-                console.warn('⚠️ SignClient 对象存在但没有 init 方法:', SignClient);
-                console.warn('⚠️ wcModule 内容:', Object.keys(wcModule));
+                debugWarn('⚠️ SignClient 对象存在但没有 init 方法:', SignClient);
+                debugWarn('⚠️ wcModule 内容:', Object.keys(wcModule));
               }
             } else {
-              console.log('⏳ 等待 WalletConnect 模块加载...');
+              debugLog('⏳ 等待 WalletConnect 模块加载...');
             }
             return null;
           } catch (e) {
-            console.error('检查 SignClient 时出错:', e);
+            debugError('检查 SignClient 时出错:', e);
             return null;
           }
         };
@@ -402,10 +376,10 @@
             resolve(client);
           } else if (attempts >= maxAttempts) {
             clearInterval(checkInterval);
-            console.error('❌ SignClient 加载超时');
-            console.error('可用的 window 对象:', Object.keys(window).filter(k => k.includes('wallet') || k.includes('connect') || k.includes('@')));
+            debugError('❌ SignClient 加载超时');
+            debugError('可用的 window 对象:', Object.keys(window).filter(k => k.includes('wallet') || k.includes('connect') || k.includes('@')));
             if (window['@walletconnect/sign-client']) {
-              console.error('模块内容:', Object.keys(window['@walletconnect/sign-client']));
+              debugError('模块内容:', Object.keys(window['@walletconnect/sign-client']));
             }
             reject(new Error('WalletConnect SignClient 加载超时。请检查 walletconnect-sign-client.js 是否正确加载。'));
           }
@@ -540,12 +514,6 @@
       return installed;
     }
 
-    // 检测浏览器扩展（兼容旧代码）
-    function detectBrowserExtension() {
-      const installed = getInstalledWallets();
-      return installed.metamask || installed.coinbase || installed.trust || installed.other;
-    }
-
     // 显示钱包选择器 (Uniswap 风格)
     function showWalletSelector() {
       const installed = getInstalledWallets();
@@ -633,12 +601,12 @@
           await connectBrowserExtension();
         } else if (walletType === 'walletconnect') {
           isBrowserExtension = false;
-          await connectWalletConnect();
+          await connect();
         } else {
           throw new Error('該錢包需要通過 WalletConnect 連接');
         }
       } catch (error) {
-        console.error('連接錢包失敗:', error);
+        debugError('連接錢包失敗:', error);
         // 重新显示选择器
         showWalletSelector();
         updateStatus('error', '連接失敗: ' + error.message);
@@ -656,7 +624,7 @@
         // 显示钱包选择器
         showWalletSelector();
       } catch (error) {
-        console.error('初始化失败:', error);
+        debugError('初始化失败:', error);
         updateStatus('error', '初始化失败: ' + error.message);
         sendEventToFlutter('error', { error: error.message });
       }
@@ -666,9 +634,6 @@
     async function initWalletConnect() {
       try {
         updateStatus('info', '正在初始化 WalletConnect...');
-        
-        // 显示 WalletConnect 选项
-        document.getElementById('walletconnectSection').style.display = 'block';
         
         // 等待 SignClient 加载
         await waitForSignClient();
@@ -688,17 +653,14 @@
           }
         });
 
-        console.log('✅ WalletConnect SignClient 初始化成功');
+        debugLog('✅ WalletConnect SignClient 初始化成功');
         
         // 设置事件监听器
         setupSessionListeners();
 
         updateStatus('info', 'WalletConnect 初始化成功');
-        
-        // 不自动开始连接，等待用户点击按钮
-        // await connect();
       } catch (error) {
-        console.error('WalletConnect 初始化失败:', error);
+        debugError('WalletConnect 初始化失败:', error);
         updateStatus('error', 'WalletConnect 初始化失败: ' + error.message);
         sendEventToFlutter('error', { error: error.message });
       }
@@ -727,7 +689,7 @@
         }
 
         const walletAddress = accounts[0];
-        console.log('✅ 浏览器扩展连接成功:', walletAddress);
+        debugLog('✅ 浏览器扩展连接成功:', walletAddress);
 
         updateStatus('success', '錢包連接成功！');
         showWalletInfo(walletAddress);
@@ -740,7 +702,7 @@
         // 继续登录流程
         await performLogin(walletAddress);
       } catch (error) {
-        console.error('連接瀏覽器擴充功能失敗:', error);
+        debugError('連接瀏覽器擴充功能失敗:', error);
         // 如果是用户拒绝，不显示错误
         if (error.code === 4001 || error.message.includes('rejected') || error.message.includes('denied')) {
           updateStatus('info', '已取消連接');
@@ -753,18 +715,12 @@
       }
     }
 
-    // 连接钱包（WalletConnect）- 手动触发
-    async function connectWalletConnect() {
-      // 调用实际的连接函数
-      await connect();
-    }
-
-    // 连接钱包（WalletConnect）- 实际连接逻辑
+    // 连接钱包（WalletConnect）
     async function connect() {
       try {
         // 如果已经通过浏览器扩展连接，不执行 WalletConnect 连接
         if (isBrowserExtension) {
-          console.log('⏭️ 已使用浏览器扩展连接，跳过 WalletConnect');
+          debugLog('⏭️ 已使用浏览器扩展连接，跳过 WalletConnect');
           return;
         }
 
@@ -821,15 +777,12 @@
           await performLogin(walletAddress);
         }
       } catch (error) {
-        console.error('連接失敗:', error);
+        debugError('連接失敗:', error);
         // 如果是用户取消，不显示错误
         if (error.message && (error.message.includes('User rejected') || error.message.includes('rejected'))) {
           updateStatus('info', '已取消連接');
-          // 重新显示连接按钮
-          const connectBtn = document.getElementById('connectWalletBtn');
-          if (connectBtn) {
-            connectBtn.style.display = 'block';
-          }
+          // 重新显示钱包选择器
+          showWalletSelector();
           // 隐藏 QR Code
           document.getElementById('qrcode').style.display = 'none';
           document.getElementById('deepLinkBtn').style.display = 'none';
@@ -837,12 +790,8 @@
         }
         updateStatus('error', '連接失敗: ' + error.message);
         sendEventToFlutter('error', { error: error.message });
-        // 重新显示连接按钮，允许重试
-        const connectBtn = document.getElementById('connectWalletBtn');
-        if (connectBtn) {
-          connectBtn.style.display = 'block';
-          connectBtn.textContent = '重試連接';
-        }
+        // 重新显示钱包选择器，允许重试
+        showWalletSelector();
         // 隐藏 QR Code
         document.getElementById('qrcode').style.display = 'none';
         document.getElementById('deepLinkBtn').style.display = 'none';
@@ -881,7 +830,7 @@
           correctLevel: QRCode.CorrectLevel.H
         });
       } catch (error) {
-        console.error('生成 QR Code 失败:', error);
+        debugError('生成 QR Code 失败:', error);
         qrcodeDiv.innerHTML = '<p>無法生成 QR Code: ' + error.message + '</p>';
       }
     }
@@ -913,270 +862,333 @@
       walletAddress.textContent = address;
     }
 
-    // 执行登录流程
+    // 执行登录流程（优化版：拆分成小函数）
     async function performLogin(walletAddress) {
       try {
-        updateStatus('info', '正在獲取驗證信息...');
-
-        // 1. 获取 nonce（根据新文档，使用 POST 方法）
-        const nonceResponse = await fetch(`${CONFIG.apiBaseUrl}/auth/wallet-connect/nonce`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            walletAddress: walletAddress
-          })
-        });
-
-        if (!nonceResponse.ok) {
-          throw new Error('獲取 nonce 失敗: ' + nonceResponse.statusText);
-        }
-
-        nonceData = await nonceResponse.json();
+        showStepIndicator(1); // 步骤 1/4: 获取验证信息
         
-        // 调试：打印完整的响应结构
-        console.log('📦 后端返回的完整响应:', JSON.stringify(nonceData, null, 2));
-        console.log('📦 nonceData.nonce:', nonceData.nonce);
-        console.log('📦 nonceData.message:', nonceData.message);
-        console.log('📦 nonceData.timestamp:', nonceData.timestamp);
-        console.log('📦 nonceData 的所有键:', Object.keys(nonceData));
-        
-        // 如果 message 存在但 nonce 不存在，尝试从 message 中提取
-        if (nonceData.message && (!nonceData.nonce || nonceData.nonce === '')) {
-          console.warn('⚠️ nonce 字段不存在，尝试从 message 中提取');
-          if (nonceData.message.includes('Nonce:')) {
-            const nonceMatch = nonceData.message.match(/Nonce:\s*([^\n]+)/);
-            if (nonceMatch && nonceMatch[1]) {
-              console.log('✅ 从 message 中提取 nonce:', nonceMatch[1].trim());
-              nonceData.nonce = nonceMatch[1].trim();
-            }
-          }
-        }
-        
-        // 如果 message 存在但 timestamp 不存在，尝试从 message 中提取
-        if (nonceData.message && !nonceData.timestamp) {
-          console.warn('⚠️ timestamp 字段不存在，尝试从 message 中提取');
-          if (nonceData.message.includes('Timestamp:')) {
-            const timestampMatch = nonceData.message.match(/Timestamp:\s*([^\n]+)/);
-            if (timestampMatch && timestampMatch[1]) {
-              const timestamp = parseInt(timestampMatch[1].trim());
-              if (!isNaN(timestamp)) {
-                console.log('✅ 从 message 中提取 timestamp:', timestamp);
-                nonceData.timestamp = timestamp;
-              }
-            }
-          }
-        }
-        
-        // 验证必要的字段：只要有 message 就可以继续（因为可以从 message 中提取其他信息）
-        if (!nonceData.message || nonceData.message === '') {
-          throw new Error('獲取 nonce 失敗：缺少 message 字段。响应: ' + JSON.stringify(nonceData));
-        }
-        
-        // 如果还是没有 nonce，抛出错误
-        if (!nonceData.nonce || nonceData.nonce === '') {
-          throw new Error('獲取 nonce 失敗：缺少 nonce 字段，且无法从 message 中提取。响应: ' + JSON.stringify(nonceData));
-        }
-        
-        // timestamp 是可选的，如果没有就从 message 中提取，如果还是提取不到就使用当前时间戳
-        if (!nonceData.timestamp) {
-          console.warn('⚠️ timestamp 不存在，使用当前时间戳');
-          nonceData.timestamp = Math.floor(Date.now() / 1000);
-        }
-
-        // 调试：检查 message 格式（包含换行符）
-        console.log('📝 后端返回的 message:', nonceData.message);
-        console.log('📝 Message 长度:', nonceData.message?.length);
-        console.log('📝 Message 包含换行符:', nonceData.message?.includes('\n'));
-
-        updateStatus('info', '請在錢包中簽名消息...');
-        sendEventToFlutter('nonce_received', { nonce: nonceData.nonce });
-
-        // 2. 签名消息
-        let signature;
-        
-        console.log('🔐 [PERFORM_LOGIN] 开始签名流程...');
-        console.log('🔐 [PERFORM_LOGIN] isBrowserExtension:', isBrowserExtension);
-        console.log('🔐 [PERFORM_LOGIN] ethereumProvider:', !!ethereumProvider);
-        
-        if (isBrowserExtension && ethereumProvider) {
-          // 使用浏览器扩展签名
-          console.log('🔐 [PERFORM_LOGIN] 使用浏览器扩展签名');
-          updateStatus('info', '請在瀏覽器擴充功能中確認簽名...');
-          
-          try {
-            // 获取当前账户
-            console.log('🔐 [PERFORM_LOGIN] 获取账户...');
-            const accounts = await ethereumProvider.request({ method: 'eth_accounts' });
-            console.log('🔐 [PERFORM_LOGIN] 账户列表:', accounts);
-            
-            if (!accounts || accounts.length === 0) {
-              throw new Error('未找到連接的帳戶');
-            }
-            const account = accounts[0];
-            console.log('🔐 [PERFORM_LOGIN] 使用账户:', account);
-            
-            // 使用 personal_sign
-            console.log('🔐 [PERFORM_LOGIN] 调用 personal_sign...');
-            console.log('🔐 [PERFORM_LOGIN] Message 长度:', nonceData.message.length);
-            console.log('🔐 [PERFORM_LOGIN] Message 前50字符:', nonceData.message.substring(0, 50));
-            console.log('🔐 [PERFORM_LOGIN] 等待用户在钱包中确认签名...');
-            console.log('🔐 [PERFORM_LOGIN] Provider 类型:', ethereumProvider.constructor.name);
-            console.log('🔐 [PERFORM_LOGIN] Provider 方法:', typeof ethereumProvider.request);
-            
-            // 添加进度提示
-            let progressInterval = setInterval(() => {
-              console.log('⏳ [PERFORM_LOGIN] 仍在等待用户确认签名...');
-            }, 5000); // 每5秒提示一次
-            
-            try {
-              // 添加超时处理（60秒）
-              const signPromise = ethereumProvider.request({
-                method: 'personal_sign',
-                params: [
-                  nonceData.message,
-                  account
-                ]
-              });
-              
-              const timeoutPromise = new Promise((_, reject) => {
-                setTimeout(() => {
-                  reject(new Error('簽名請求超時（60秒），請檢查錢包是否彈出確認窗口'));
-                }, 60000); // 60秒超时
-              });
-              
-              signature = await Promise.race([signPromise, timeoutPromise]);
-              
-              // 清除进度提示
-              clearInterval(progressInterval);
-              
-              console.log('✅ [PERFORM_LOGIN] 签名成功');
-              console.log('🔐 [PERFORM_LOGIN] Signature 类型:', typeof signature);
-              console.log('🔐 [PERFORM_LOGIN] Signature 长度:', signature?.length);
-              console.log('🔐 [PERFORM_LOGIN] Signature 前20字符:', signature?.substring(0, 20));
-            } catch (signRequestError) {
-              // 清除进度提示
-              clearInterval(progressInterval);
-              throw signRequestError;
-            }
-          } catch (signError) {
-            console.error('❌ [PERFORM_LOGIN] 签名失败:', signError);
-            console.error('❌ [PERFORM_LOGIN] 错误代码:', signError.code);
-            console.error('❌ [PERFORM_LOGIN] 错误消息:', signError.message);
-            
-            // 如果是用户拒绝，不显示错误
-            if (signError.code === 4001 || signError.message?.includes('rejected') || signError.message?.includes('denied') || signError.message?.includes('User rejected')) {
-              updateStatus('info', '簽名已取消');
-              sendEventToFlutter('error', { error: '用戶取消簽名' });
-              return;
-            }
-            
-            throw signError;
-          }
-        } else {
-          // 使用 WalletConnect 签名
-          console.log('🔐 [PERFORM_LOGIN] 使用 WalletConnect 签名');
-          // ⚠️ 重要：必须使用后端返回的 message 直接进行签名，不要做任何修改！
-          // message 包含换行符 \n，必须保持原样
-          const chainId = 'eip155:1'; // 使用 Ethereum Mainnet
-          const account = session.namespaces.eip155.accounts[0];
-
-          console.log('🔐 [PERFORM_LOGIN] Session topic:', session.topic);
-          console.log('🔐 [PERFORM_LOGIN] Chain ID:', chainId);
-          console.log('🔐 [PERFORM_LOGIN] Account:', account);
-
-          // ⚠️ personal_sign 的参数格式必须是数组 [message, account]，符合 EIP-1193 标准
-          try {
-            signature = await signClient.request({
-              topic: session.topic,
-              chainId: chainId,
-              request: {
-                method: 'personal_sign',
-                params: [
-                  nonceData.message,  // 直接使用后端返回的完整 message（包含所有换行符）
-                  account
-                ]
-              }
-            });
-            console.log('✅ [PERFORM_LOGIN] WalletConnect 签名成功');
-          } catch (signError) {
-            console.error('❌ [PERFORM_LOGIN] WalletConnect 签名失败:', signError);
-            throw signError;
-          }
-        }
-
-        if (!signature) {
-          throw new Error('簽名結果為空');
-        }
-
-        console.log('✅ [PERFORM_LOGIN] 签名完成，开始验证...');
-        updateStatus('info', '簽名成功，正在驗證...');
-        sendEventToFlutter('signature_received', {
-          signature: signature,
-          walletAddress: walletAddress
-        });
-
-        // 3. 验证签名并登录（根据新文档，使用 /auth/wallet-connect/login）
-        console.log('🔐 [PERFORM_LOGIN] 开始验证签名并登录...');
-        console.log('🔐 [PERFORM_LOGIN] 请求 URL:', `${CONFIG.apiBaseUrl}/auth/wallet-connect/login`);
-        console.log('🔐 [PERFORM_LOGIN] Wallet Address:', walletAddress);
-        console.log('🔐 [PERFORM_LOGIN] Nonce:', nonceData.nonce);
-        console.log('🔐 [PERFORM_LOGIN] Signature 长度:', signature.length);
-        
-        const loginResponse = await fetch(`${CONFIG.apiBaseUrl}/auth/wallet-connect/login`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            walletAddress: walletAddress,
-            signature: signature,
-            nonce: nonceData.nonce,
-            timestamp: nonceData.timestamp
-          })
-        });
-
-        console.log('🔐 [PERFORM_LOGIN] 登录响应状态:', loginResponse.status, loginResponse.statusText);
-
-        if (!loginResponse.ok) {
-          const errorData = await loginResponse.json().catch(() => ({ message: loginResponse.statusText }));
-          console.error('❌ [PERFORM_LOGIN] 登录失败:', errorData);
-          throw new Error(errorData.message || '登錄失敗: ' + loginResponse.statusText);
-        }
-
-        const loginData = await loginResponse.json();
-        console.log('✅ [PERFORM_LOGIN] 登录响应接收成功');
-        console.log('🔐 [PERFORM_LOGIN] Login data keys:', Object.keys(loginData));
-        console.log('🔐 [PERFORM_LOGIN] Login data success:', loginData.success);
-        console.log('🔐 [PERFORM_LOGIN] Token present:', !!loginData.token);
-        console.log('🔐 [PERFORM_LOGIN] RefreshToken present:', !!loginData.refreshToken);
-        console.log('🔐 [PERFORM_LOGIN] User present:', !!loginData.user);
-        
-        // 只要有 token 和 refreshToken 就算成功，不检查 success 字段
-        if (!loginData.token || !loginData.refreshToken) {
-          console.error('❌ [PERFORM_LOGIN] 登录响应中缺少 token');
-          throw new Error(loginData.message || '登錄響應中缺少 token');
-        }
-
-        console.log('✅ [PERFORM_LOGIN] 登录成功，发送 verified 事件');
-        updateStatus('success', '登入成功！');
-        sendEventToFlutter('verified', {
-          token: loginData.token,
-          refreshToken: loginData.refreshToken,
-          user: loginData.user
-        });
-        console.log('✅ [PERFORM_LOGIN] verified 事件已发送');
-
+        const nonceData = await getNonce(walletAddress);
+        const signature = await signMessage(nonceData, walletAddress);
+        const loginData = await verifyAndLogin(walletAddress, signature, nonceData);
+        await handleLoginSuccess(loginData);
       } catch (error) {
-        console.error('❌ [PERFORM_LOGIN] ========== 登录流程失败 ==========');
-        console.error('❌ [PERFORM_LOGIN] Error:', error);
-        console.error('❌ [PERFORM_LOGIN] Error message:', error.message);
-        console.error('❌ [PERFORM_LOGIN] Error stack:', error.stack);
-        console.error('❌ [PERFORM_LOGIN] Error code:', error.code);
-        updateStatus('error', '登錄失敗: ' + error.message);
-        sendEventToFlutter('error', { error: error.message });
+        handleLoginError(error);
       }
+    }
+
+    // 步骤指示器
+    function showStepIndicator(step) {
+      const steps = ['連接錢包', '獲取驗證信息', '簽名消息', '驗證登錄'];
+      updateStatus('info', `步驟 ${step}/4: ${steps[step - 1]}`);
+    }
+
+    // 1. 获取 nonce
+    async function getNonce(walletAddress) {
+      updateStatus('info', '正在獲取驗證信息...');
+      
+      const nonceResponse = await fetch(`${CONFIG.apiBaseUrl}/auth/wallet-connect/nonce`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          walletAddress: walletAddress
+        })
+      });
+
+      if (!nonceResponse.ok) {
+        throw new Error('獲取 nonce 失敗: ' + nonceResponse.statusText);
+      }
+
+      const data = await nonceResponse.json();
+      
+      debugLog('📦 后端返回的完整响应:', JSON.stringify(data, null, 2));
+      debugLog('📦 nonceData.nonce:', data.nonce);
+      debugLog('📦 nonceData.message:', data.message);
+      debugLog('📦 nonceData.timestamp:', data.timestamp);
+      debugLog('📦 nonceData 的所有键:', Object.keys(data));
+      // 如果 message 存在但 nonce 不存在，尝试从 message 中提取
+      if (data.message && (!data.nonce || data.nonce === '')) {
+        debugWarn('⚠️ nonce 字段不存在，尝试从 message 中提取');
+        if (data.message.includes('Nonce:')) {
+          const nonceMatch = data.message.match(/Nonce:\s*([^\n]+)/);
+          if (nonceMatch && nonceMatch[1]) {
+            debugLog('✅ 从 message 中提取 nonce:', nonceMatch[1].trim());
+            data.nonce = nonceMatch[1].trim();
+          }
+        }
+      }
+      
+      // 如果 message 存在但 timestamp 不存在，尝试从 message 中提取
+      if (data.message && !data.timestamp) {
+        debugWarn('⚠️ timestamp 字段不存在，尝试从 message 中提取');
+        if (data.message.includes('Timestamp:')) {
+          const timestampMatch = data.message.match(/Timestamp:\s*([^\n]+)/);
+          if (timestampMatch && timestampMatch[1]) {
+            const timestamp = parseInt(timestampMatch[1].trim());
+            if (!isNaN(timestamp)) {
+              debugLog('✅ 从 message 中提取 timestamp:', timestamp);
+              data.timestamp = timestamp;
+            }
+          }
+        }
+      }
+      
+      // 验证必要的字段
+      if (!data.message || data.message === '') {
+        throw new Error('獲取 nonce 失敗：缺少 message 字段');
+      }
+      
+      if (!data.nonce || data.nonce === '') {
+        throw new Error('獲取 nonce 失敗：缺少 nonce 字段');
+      }
+      
+      // timestamp 是可选的
+      if (!data.timestamp) {
+        debugWarn('⚠️ timestamp 不存在，使用当前时间戳');
+        data.timestamp = Math.floor(Date.now() / 1000);
+      }
+
+      debugLog('📝 Message 长度:', data.message?.length);
+      debugLog('📝 Message 包含换行符:', data.message?.includes('\n'));
+
+      sendEventToFlutter('nonce_received', { nonce: data.nonce });
+      return data;
+    }
+
+    // 2. 签名消息
+    async function signMessage(nonceData, walletAddress) {
+      showStepIndicator(2); // 步骤 2/4: 签名消息
+      updateStatus('info', '請在錢包中簽名消息...');
+      
+      debugLog('🔐 [SIGN] 开始签名流程...');
+      debugLog('🔐 [SIGN] isBrowserExtension:', isBrowserExtension);
+      debugLog('🔐 [SIGN] ethereumProvider:', !!ethereumProvider);
+
+      if (isBrowserExtension && ethereumProvider) {
+        return await signWithBrowserExtension(nonceData);
+      } else {
+        return await signWithWalletConnect(nonceData);
+      }
+    }
+
+    // 使用浏览器扩展签名
+    async function signWithBrowserExtension(nonceData) {
+      debugLog('🔐 [SIGN] 使用浏览器扩展签名');
+      updateStatus('info', '請在瀏覽器擴充功能中確認簽名...');
+      
+      try {
+        const accounts = await ethereumProvider.request({ method: 'eth_accounts' });
+        debugLog('🔐 [SIGN] 账户列表:', accounts);
+        
+        if (!accounts || accounts.length === 0) {
+          throw new Error('未找到連接的帳戶');
+        }
+        
+        const account = accounts[0];
+        debugLog('🔐 [SIGN] 使用账户:', account);
+        debugLog('🔐 [SIGN] Message 长度:', nonceData.message.length);
+        
+        // 显示钱包弹窗提示
+        showWalletPopupHint();
+        
+        // 添加进度提示
+        let progressCount = 0;
+        const progressInterval = setInterval(() => {
+          progressCount++;
+          debugLog(`⏳ [SIGN] 仍在等待用户确认签名... (${progressCount * 5}秒)`);
+          if (progressCount % 2 === 0) {
+            updateStatus('info', `請在錢包彈窗中確認簽名... (已等待 ${progressCount * 5}秒)`);
+          }
+        }, 5000);
+        
+        try {
+          const signPromise = ethereumProvider.request({
+            method: 'personal_sign',
+            params: [nonceData.message, account]
+          });
+          
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => {
+              debugError('❌ [SIGN] 签名请求超时（60秒）');
+              reject(new Error('簽名請求超時（60秒），請檢查錢包是否彈出確認窗口'));
+            }, 60000);
+          });
+          
+          const signature = await Promise.race([signPromise, timeoutPromise]);
+          clearInterval(progressInterval);
+          
+          debugLog('✅ [SIGN] 签名成功');
+          return signature;
+        } catch (signRequestError) {
+          clearInterval(progressInterval);
+          throw signRequestError;
+        }
+      } catch (signError) {
+        debugError('❌ [SIGN] 签名失败:', signError);
+        debugError('❌ [SIGN] 错误代码:', signError.code);
+        debugError('❌ [SIGN] 错误消息:', signError.message);
+        
+        // 用户拒绝
+        if (signError.code === 4001 || 
+            signError.message?.includes('rejected') || 
+            signError.message?.includes('denied') || 
+            signError.message?.includes('User rejected')) {
+          updateStatus('info', '簽名已取消');
+          sendEventToFlutter('error', { error: '用戶取消簽名' });
+          throw new Error('USER_CANCELLED');
+        }
+        
+        throw signError;
+      }
+    }
+
+    // 使用 WalletConnect 签名
+    async function signWithWalletConnect(nonceData) {
+      debugLog('🔐 [SIGN] 使用 WalletConnect 签名');
+      
+      const chainId = 'eip155:1';
+      const account = session.namespaces.eip155.accounts[0];
+      
+      debugLog('🔐 [SIGN] Session topic:', session.topic);
+      debugLog('🔐 [SIGN] Chain ID:', chainId);
+      debugLog('🔐 [SIGN] Account:', account);
+      
+      try {
+        const signature = await signClient.request({
+          topic: session.topic,
+          chainId: chainId,
+          request: {
+            method: 'personal_sign',
+            params: [nonceData.message, account]
+          }
+        });
+        
+        debugLog('✅ [SIGN] WalletConnect 签名成功');
+        return signature;
+      } catch (signError) {
+        debugError('❌ [SIGN] WalletConnect 签名失败:', signError);
+        throw signError;
+      }
+    }
+
+    // 显示钱包弹窗提示
+    function showWalletPopupHint() {
+      const existingHint = document.getElementById('wallet-popup-hint');
+      if (existingHint) {
+        existingHint.remove();
+      }
+      
+      const hint = document.createElement('div');
+      hint.id = 'wallet-popup-hint';
+      hint.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #667eea;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10000;
+        font-size: 14px;
+        max-width: 300px;
+      `;
+      hint.textContent = '請檢查瀏覽器右上角是否有錢包彈窗';
+      document.body.appendChild(hint);
+      
+      setTimeout(() => {
+        if (hint.parentNode) {
+          hint.remove();
+        }
+      }, 10000);
+    }
+
+    // 3. 验证签名并登录
+    async function verifyAndLogin(walletAddress, signature, nonceData) {
+      showStepIndicator(3); // 步骤 3/4: 验证登录
+      updateStatus('info', '簽名成功，正在驗證...');
+      
+      sendEventToFlutter('signature_received', {
+        signature: signature,
+        walletAddress: walletAddress
+      });
+      
+      debugLog('🔐 [VERIFY] 开始验证签名并登录...');
+      debugLog('🔐 [VERIFY] 请求 URL:', `${CONFIG.apiBaseUrl}/auth/wallet-connect/login`);
+      
+      const loginResponse = await fetch(`${CONFIG.apiBaseUrl}/auth/wallet-connect/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          walletAddress: walletAddress,
+          signature: signature,
+          nonce: nonceData.nonce,
+          timestamp: nonceData.timestamp
+        })
+      });
+
+      debugLog('🔐 [VERIFY] 登录响应状态:', loginResponse.status);
+
+      if (!loginResponse.ok) {
+        const errorData = await loginResponse.json().catch(() => ({ message: loginResponse.statusText }));
+        debugError('❌ [VERIFY] 登录失败:', errorData);
+        throw new Error(errorData.message || '登錄失敗: ' + loginResponse.statusText);
+      }
+
+      const loginData = await loginResponse.json();
+      
+      debugLog('✅ [VERIFY] 登录响应接收成功');
+      debugLog('🔐 [VERIFY] Login data keys:', Object.keys(loginData));
+      
+      // 验证响应数据
+      if (!loginData.token || !loginData.refreshToken) {
+        debugError('❌ [VERIFY] 登录响应中缺少 token');
+        throw new Error(loginData.message || '登錄響應中缺少 token');
+      }
+
+      return loginData;
+    }
+
+    // 4. 处理登录成功
+    async function handleLoginSuccess(loginData) {
+      showStepIndicator(4); // 步骤 4/4: 完成
+      updateStatus('success', '登入成功！');
+      
+      debugLog('✅ [LOGIN] 登录成功，发送 verified 事件');
+      sendEventToFlutter('verified', {
+        token: loginData.token,
+        refreshToken: loginData.refreshToken,
+        user: loginData.user
+      });
+      debugLog('✅ [LOGIN] verified 事件已发送');
+    }
+
+    // 统一错误处理
+    function handleLoginError(error) {
+      debugError('❌ [LOGIN] ========== 登录流程失败 ==========');
+      debugError('❌ [LOGIN] Error:', error);
+      debugError('❌ [LOGIN] Error message:', error.message);
+      debugError('❌ [LOGIN] Error stack:', error.stack);
+      debugError('❌ [LOGIN] Error code:', error.code);
+      
+      // 用户取消不显示错误
+      if (error.message === 'USER_CANCELLED') {
+        return;
+      }
+      
+      // 用户友好的错误消息
+      const userFriendlyMessages = {
+        'timeout': '操作超时，请重试',
+        'network': '网络错误，请检查连接',
+        'User rejected': '您已取消操作'
+      };
+      
+      const message = userFriendlyMessages[error.message] || error.message || '发生未知错误';
+      updateStatus('error', '登錄失敗: ' + message);
+      sendEventToFlutter('error', { error: message });
     }
 
 
@@ -1205,7 +1217,7 @@
             event: event,
             data: data
           }, window.location.origin);
-          console.log('📤 通过 postMessage 发送事件:', event, data);
+          debugLog('📤 通过 postMessage 发送事件:', event, data);
         } else if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
           // 移动平台：使用 flutter_inappwebview.callHandler
           window.flutter_inappwebview.callHandler('walletConnectEvent', {
@@ -1219,25 +1231,25 @@
             data: data
           });
         } else {
-          console.warn('⚠️ Flutter handler not available, event:', event, data);
+          debugWarn('⚠️ Flutter handler not available, event:', event, data);
         }
       } catch (error) {
-        console.error('❌ 发送事件到 Flutter 失败:', error);
+        debugError('❌ 发送事件到 Flutter 失败:', error);
       }
     }
 
     // 监听会话更新 (WalletConnect v2 标准事件)
     function setupSessionListeners() {
       if (!signClient) {
-        console.warn('⚠️ signClient 未初始化，无法设置事件监听器');
+        debugWarn('⚠️ signClient 未初始化，无法设置事件监听器');
         return;
       }
 
-      console.log('📡 设置 WalletConnect 事件监听器');
+      debugLog('📡 设置 WalletConnect 事件监听器');
 
       // 监听会话更新
       signClient.on('session_update', ({ topic, params }) => {
-        console.log('📨 Session updated:', topic, params);
+        debugLog('📨 Session updated:', topic, params);
         if (session && session.topic === topic) {
           session = { ...session, ...params };
           const walletAddress = getWalletAddress();
@@ -1252,7 +1264,7 @@
 
       // 监听会话删除
       signClient.on('session_delete', ({ topic }) => {
-        console.log('📨 Session deleted:', topic);
+        debugLog('📨 Session deleted:', topic);
         if (session && session.topic === topic) {
           session = null;
           sendEventToFlutter('session_disconnected', {});
@@ -1262,31 +1274,31 @@
 
       // 监听会话事件 (WalletConnect v2 新特性)
       signClient.on('session_event', ({ event, chainId }) => {
-        console.log('📨 Session event:', event, chainId);
+        debugLog('📨 Session event:', event, chainId);
       });
 
       // 监听会话提议 (WalletConnect v2 新特性)
       signClient.on('session_proposal', ({ id, params }) => {
-        console.log('📨 Session proposal:', id, params);
+        debugLog('📨 Session proposal:', id, params);
       });
     }
 
     // 页面加载完成后初始化
     window.addEventListener('DOMContentLoaded', async () => {
-      console.log('🚀 页面加载完成，开始初始化...');
+      debugLog('🚀 页面加载完成，开始初始化...');
       await init();
     });
 
     // 错误处理
     window.addEventListener('error', (event) => {
-      console.error('全局错误:', event.error);
+      debugError('全局错误:', event.error);
       updateStatus('error', '發生錯誤: ' + (event.error?.message || '未知錯誤'));
       sendEventToFlutter('error', { error: event.error?.message || '未知錯誤' });
     });
 
     // 未处理的 Promise 拒绝
     window.addEventListener('unhandledrejection', (event) => {
-      console.error('未处理的 Promise 拒绝:', event.reason);
+      debugError('未处理的 Promise 拒绝:', event.reason);
       updateStatus('error', '發生錯誤: ' + (event.reason?.message || '未知錯誤'));
       sendEventToFlutter('error', { error: event.reason?.message || '未知錯誤' });
     });
