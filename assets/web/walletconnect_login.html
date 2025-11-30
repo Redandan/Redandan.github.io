@@ -508,8 +508,18 @@
     // 发送事件到 Flutter
     function sendEventToFlutter(event, data) {
       try {
-        // 尝试使用 flutter_inappwebview.callHandler
-        if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
+        // 检查是否在 iframe 中（Web 平台）
+        const isInIframe = window.self !== window.top;
+        
+        if (isInIframe && window.parent && window.parent.postMessage) {
+          // Web 平台：使用 postMessage 发送到父窗口
+          window.parent.postMessage({
+            event: event,
+            data: data
+          }, window.location.origin);
+          console.log('📤 通过 postMessage 发送事件:', event, data);
+        } else if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
+          // 移动平台：使用 flutter_inappwebview.callHandler
           window.flutter_inappwebview.callHandler('walletConnectEvent', {
             event: event,
             data: data
@@ -520,17 +530,11 @@
             event: event,
             data: data
           });
-        } else if (window.parent && window.parent.postMessage) {
-          // 备用方案：使用 postMessage
-          window.parent.postMessage({
-            event: event,
-            data: data
-          }, '*');
         } else {
-          console.log('Flutter handler not available, event:', event, data);
+          console.warn('⚠️ Flutter handler not available, event:', event, data);
         }
       } catch (error) {
-        console.error('发送事件到 Flutter 失败:', error);
+        console.error('❌ 发送事件到 Flutter 失败:', error);
       }
     }
 
