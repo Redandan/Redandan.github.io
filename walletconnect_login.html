@@ -586,8 +586,19 @@
 
         nonceData = await nonceResponse.json();
         
-        if (!nonceData.success) {
-          throw new Error(nonceData.message || '獲取 nonce 失敗');
+        // 只要有 nonce 就算通过，不检查 success 字段
+        // 因为后端可能返回 success: false 但实际有 nonce 的情况
+        if (!nonceData.nonce) {
+          throw new Error(nonceData.message || '獲取 nonce 失敗：缺少 nonce 字段');
+        }
+        
+        // 验证必要的字段
+        if (!nonceData.message) {
+          throw new Error('獲取 nonce 失敗：缺少 message 字段');
+        }
+        
+        if (!nonceData.timestamp) {
+          throw new Error('獲取 nonce 失敗：缺少 timestamp 字段');
         }
 
         // 调试：检查 message 格式（包含换行符）
