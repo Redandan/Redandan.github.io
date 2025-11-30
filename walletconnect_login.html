@@ -150,44 +150,119 @@
       color: #999;
       text-align: left;
     }
+
+    /* 钱包选择器样式 (Uniswap 风格) */
+    .wallet-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+      padding: 4px;
+    }
+
+    .wallet-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 12px;
+      background: white;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      position: relative;
+    }
+
+    .wallet-item:hover {
+      border-color: #667eea;
+      background: #f5f7ff;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    }
+
+    .wallet-item:active {
+      transform: translateY(0);
+    }
+
+    .wallet-item.installed {
+      border-color: #4caf50;
+    }
+
+    .wallet-item.installed::after {
+      content: '✓';
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 20px;
+      height: 20px;
+      background: #4caf50;
+      color: white;
+      border-radius: 50%;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    .wallet-item.disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .wallet-item.disabled:hover {
+      transform: none;
+      border-color: #e0e0e0;
+      background: white;
+    }
+
+    .wallet-icon-img {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      margin-bottom: 8px;
+      object-fit: contain;
+      background: white;
+      padding: 4px;
+      box-sizing: border-box;
+    }
+
+    .wallet-icon-emoji {
+      font-size: 48px;
+      margin-bottom: 8px;
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .wallet-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+      margin-top: 4px;
+      word-break: break-word;
+    }
+
+    .wallet-status {
+      font-size: 11px;
+      color: #999;
+      margin-top: 4px;
+    }
+
+    /* 搜索框样式 */
+    #walletSearch:focus {
+      outline: none;
+      border-color: #667eea;
+    }
   </style>
   <!-- QRCode.js for generating QR codes (local) -->
   <script src="qrcode.min.js"></script>
-  <!-- WalletConnect Sign Client v2 (官方 CDN - UMD 构建) -->
-  <script src="https://unpkg.com/@walletconnect/sign-client@2.14.1/dist/index.umd.js"></script>
-  <script>
-    // 等待 WalletConnect SDK 加载
-    (function() {
-      function checkWalletConnect() {
-        // UMD 构建将模块导出到 window.WalletConnectSignClient
-        if (window.WalletConnectSignClient && window.WalletConnectSignClient.SignClient) {
-          window.WalletConnectSignClient = window.WalletConnectSignClient.SignClient;
-          console.log('✅ WalletConnect SignClient 已加载');
-          window.dispatchEvent(new Event('walletconnect-loaded'));
-        } else if (window.WalletConnectSignClient) {
-          // 如果已经是 SignClient，直接触发
-          console.log('✅ WalletConnect SignClient 已加载');
-          window.dispatchEvent(new Event('walletconnect-loaded'));
-        }
-      }
-      
-      // 立即检查一次
-      checkWalletConnect();
-      
-      // 如果还没加载，监听 script 加载完成
-      if (!window.WalletConnectSignClient) {
-        const scripts = document.getElementsByTagName('script');
-        for (let script of scripts) {
-          if (script.src && script.src.includes('walletconnect')) {
-            script.onload = function() {
-              setTimeout(checkWalletConnect, 100);
-            };
-            break;
-          }
-        }
-      }
-    })();
-  </script>
+  <!-- WalletConnect Sign Client v2 (本地文件) -->
+  <script src="walletconnect-sign-client.js"></script>
 </head>
 <body>
   <div class="container">
@@ -199,23 +274,57 @@
       <span id="statusText">正在初始化...</span>
     </div>
 
+    <!-- 钱包选择器 (Uniswap 风格) -->
+    <div id="walletSelector" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="margin: 0; color: #333; font-size: 20px; font-weight: 600;">選擇錢包</h3>
+        <button onclick="closeWalletSelector()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">&times;</button>
+      </div>
+      
+      <!-- 搜索框 -->
+      <div style="position: relative; margin-bottom: 20px;">
+        <input type="text" id="walletSearch" placeholder="搜索錢包" 
+               style="width: 100%; padding: 12px 40px 12px 16px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; box-sizing: border-box;"
+               oninput="filterWallets()">
+        <span style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: #999;">🔍</span>
+      </div>
+
+      <!-- 钱包网格 -->
+      <div id="walletList" class="wallet-grid"></div>
+      
+      <!-- 空状态 -->
+      <div id="noWalletsFound" style="display: none; text-align: center; padding: 40px; color: #999;">
+        未找到匹配的錢包
+      </div>
+    </div>
+
+    <!-- 浏览器扩展钱包 -->
     <div id="browserExtensionSection" style="display: none;">
       <h3 style="margin-bottom: 20px; color: #333;">瀏覽器擴充功能</h3>
-      <button id="metamaskBtn" class="deep-link-btn" onclick="connectBrowserExtension()" style="display: none;">
-        <span style="margin-right: 8px;">🦊</span>
-        連接 MetaMask
+      <button id="metamaskBtn" class="wallet-btn" onclick="connectWallet('metamask')" style="display: none;">
+        <span class="wallet-icon">🦊</span>
+        <span class="wallet-name">MetaMask</span>
       </button>
-      <button id="otherExtensionBtn" class="deep-link-btn" onclick="connectBrowserExtension()" style="display: none; margin-top: 10px;">
-        <span style="margin-right: 8px;">🔌</span>
-        連接瀏覽器擴充功能
+      <button id="coinbaseBtn" class="wallet-btn" onclick="connectWallet('coinbase')" style="display: none;">
+        <span class="wallet-icon">🔷</span>
+        <span class="wallet-name">Coinbase Wallet</span>
+      </button>
+      <button id="trustBtn" class="wallet-btn" onclick="connectWallet('trust')" style="display: none;">
+        <span class="wallet-icon">🛡️</span>
+        <span class="wallet-name">Trust Wallet</span>
+      </button>
+      <button id="otherExtensionBtn" class="wallet-btn" onclick="connectBrowserExtension()" style="display: none;">
+        <span class="wallet-icon">🔌</span>
+        <span class="wallet-name">其他瀏覽器擴充功能</span>
       </button>
     </div>
 
+    <!-- WalletConnect 移动钱包 -->
     <div id="walletconnectSection" style="display: none;">
       <h3 style="margin-bottom: 20px; color: #333; margin-top: 20px;">移動錢包</h3>
-      <button id="connectWalletBtn" class="deep-link-btn" onclick="connectWalletConnect()" style="display: block; margin-bottom: 20px;">
-        <span style="margin-right: 8px;">📱</span>
-        連接移動錢包
+      <button id="connectWalletBtn" class="wallet-btn" onclick="connectWallet('walletconnect')" style="display: block; margin-bottom: 20px;">
+        <span class="wallet-icon">📱</span>
+        <span class="wallet-name">WalletConnect</span>
       </button>
       <div id="qrcode" style="display: none;"></div>
       <button id="deepLinkBtn" class="deep-link-btn" onclick="openDeepLink()" style="display: none;">
@@ -246,63 +355,294 @@
     let isBrowserExtension = false; // 是否使用浏览器扩展
     let ethereumProvider = null; // 浏览器扩展提供者
 
-    // 等待 WalletConnect v2 SDK 加载完成
+    // 等待 WalletConnect v2 SDK 加载完成（本地文件版本）
     function waitForSignClient() {
       return new Promise((resolve, reject) => {
         // 检查是否已经加载
-        const checkLoaded = () => {
-          if (window.WalletConnectSignClient) {
-            SignClient = window.WalletConnectSignClient;
-            console.log('✅ WalletConnect SignClient 已找到');
-            return true;
+        const checkSignClient = () => {
+          try {
+            // UMD 构建将模块导出到 window['@walletconnect/sign-client']
+            const wcModule = window['@walletconnect/sign-client'];
+            if (wcModule) {
+              // 根据 UMD 构建，SignClient 可能在多个位置
+              SignClient = wcModule.SignClient || wcModule.default || wcModule;
+              
+              if (SignClient && typeof SignClient.init === 'function') {
+                console.log('✅ SignClient 已找到');
+                return SignClient;
+              } else {
+                console.warn('⚠️ SignClient 对象存在但没有 init 方法:', SignClient);
+                console.warn('⚠️ wcModule 内容:', Object.keys(wcModule));
+              }
+            } else {
+              console.log('⏳ 等待 WalletConnect 模块加载...');
+            }
+            return null;
+          } catch (e) {
+            console.error('检查 SignClient 时出错:', e);
+            return null;
           }
-          return false;
         };
 
-        if (checkLoaded()) {
-          resolve(SignClient);
+        // 立即检查一次
+        const client = checkSignClient();
+        if (client) {
+          resolve(client);
           return;
         }
 
-        // 监听加载事件
-        const onLoaded = () => {
-          if (checkLoaded()) {
-            window.removeEventListener('walletconnect-loaded', onLoaded);
-            resolve(SignClient);
-          }
-        };
-
-        window.addEventListener('walletconnect-loaded', onLoaded);
-
-        // 轮询检查（备用方案）
+        // 如果还没加载，等待一下
         let attempts = 0;
-        const maxAttempts = 100; // 10 秒
+        const maxAttempts = 100; // 等待最多 10 秒
         const checkInterval = setInterval(() => {
           attempts++;
-          if (checkLoaded()) {
+          const client = checkSignClient();
+          if (client) {
             clearInterval(checkInterval);
-            window.removeEventListener('walletconnect-loaded', onLoaded);
-            resolve(SignClient);
+            resolve(client);
           } else if (attempts >= maxAttempts) {
             clearInterval(checkInterval);
-            window.removeEventListener('walletconnect-loaded', onLoaded);
-            console.error('❌ WalletConnect SignClient 加载超时');
-            console.error('可用的 window 对象:', Object.keys(window).filter(k => k.toLowerCase().includes('wallet') || k.toLowerCase().includes('connect')));
-            reject(new Error('WalletConnect SignClient 加载超时。请检查网络连接或 CDN 是否可访问。'));
+            console.error('❌ SignClient 加载超时');
+            console.error('可用的 window 对象:', Object.keys(window).filter(k => k.includes('wallet') || k.includes('connect') || k.includes('@')));
+            if (window['@walletconnect/sign-client']) {
+              console.error('模块内容:', Object.keys(window['@walletconnect/sign-client']));
+            }
+            reject(new Error('WalletConnect SignClient 加载超时。请检查 walletconnect-sign-client.js 是否正确加载。'));
           }
         }, 100);
       });
     }
 
-    // 检测浏览器扩展
-    function detectBrowserExtension() {
-      // 检测 window.ethereum（MetaMask 等）
-      if (typeof window.ethereum !== 'undefined') {
-        ethereumProvider = window.ethereum;
-        console.log('✅ 检测到浏览器扩展:', ethereumProvider.isMetaMask ? 'MetaMask' : '其他扩展');
-        return true;
+    // 支持的钱包列表 (Uniswap 风格)
+    const SUPPORTED_WALLETS = [
+      {
+        id: 'metamask',
+        name: 'MetaMask',
+        icon: '🦊',
+        type: 'extension',
+        installUrl: 'https://metamask.io/download/',
+        detect: () => window.ethereum?.isMetaMask
+      },
+      {
+        id: 'coinbase',
+        name: 'Coinbase Wallet',
+        icon: '🔷',
+        type: 'extension',
+        installUrl: 'https://www.coinbase.com/wallet',
+        detect: () => window.ethereum?.isCoinbaseWallet
+      },
+      {
+        id: 'trust',
+        name: 'Trust Wallet',
+        icon: '🛡️',
+        type: 'extension',
+        installUrl: 'https://trustwallet.com/browser-extension',
+        detect: () => window.ethereum?.isTrust
+      },
+      {
+        id: 'walletconnect',
+        name: 'WalletConnect',
+        icon: '📱',
+        type: 'walletconnect',
+        installUrl: null,
+        detect: () => signClient !== null
+      },
+      {
+        id: 'rainbow',
+        name: 'Rainbow',
+        icon: '🌈',
+        type: 'extension',
+        installUrl: 'https://rainbow.me/',
+        detect: () => window.ethereum?.isRainbow
+      },
+      {
+        id: 'argent',
+        name: 'Argent',
+        icon: '🅰️',
+        type: 'walletconnect',
+        installUrl: 'https://www.argent.xyz/',
+        detect: () => false
+      },
+      {
+        id: 'imtoken',
+        name: 'imToken',
+        icon: '💎',
+        type: 'walletconnect',
+        installUrl: 'https://token.im/',
+        detect: () => false
+      },
+      {
+        id: 'ledger',
+        name: 'Ledger',
+        icon: '🔐',
+        type: 'walletconnect',
+        installUrl: 'https://www.ledger.com/',
+        detect: () => false
+      },
+      {
+        id: 'trezor',
+        name: 'Trezor',
+        icon: '🔒',
+        type: 'walletconnect',
+        installUrl: 'https://trezor.io/',
+        detect: () => false
+      },
+      {
+        id: 'binance',
+        name: 'Binance Wallet',
+        icon: '💛',
+        type: 'walletconnect',
+        installUrl: 'https://www.binance.com/en/web3wallet',
+        detect: () => false
+      },
+      {
+        id: 'okx',
+        name: 'OKX Wallet',
+        icon: '🟢',
+        type: 'extension',
+        installUrl: 'https://www.okx.com/web3',
+        detect: () => window.okxwallet
+      },
+      {
+        id: 'tokenpocket',
+        name: 'TokenPocket',
+        icon: '🎯',
+        type: 'walletconnect',
+        installUrl: 'https://www.tokenpocket.pro/',
+        detect: () => false
+      },
+      {
+        id: 'bitget',
+        name: 'Bitget Wallet',
+        icon: '💼',
+        type: 'extension',
+        installUrl: 'https://web3.bitget.com/',
+        detect: () => window.bitkeep
+      },
+      {
+        id: 'other',
+        name: '其他錢包',
+        icon: '🔌',
+        type: 'extension',
+        installUrl: null,
+        detect: () => window.ethereum && !window.ethereum.isMetaMask && !window.ethereum.isCoinbaseWallet && !window.ethereum.isTrust
       }
-      return false;
+    ];
+
+    // 检测已安装的钱包
+    function getInstalledWallets() {
+      const installed = {};
+      SUPPORTED_WALLETS.forEach(wallet => {
+        if (wallet.detect && wallet.detect()) {
+          installed[wallet.id] = true;
+        }
+      });
+      return installed;
+    }
+
+    // 检测浏览器扩展（兼容旧代码）
+    function detectBrowserExtension() {
+      const installed = getInstalledWallets();
+      return installed.metamask || installed.coinbase || installed.trust || installed.other;
+    }
+
+    // 显示钱包选择器 (Uniswap 风格)
+    function showWalletSelector() {
+      const installed = getInstalledWallets();
+      renderWalletList(SUPPORTED_WALLETS, installed);
+      document.getElementById('walletSelector').style.display = 'block';
+      document.getElementById('walletSearch').value = '';
+      updateStatus('info', '請選擇要連接的錢包');
+    }
+
+    // 关闭钱包选择器
+    function closeWalletSelector() {
+      document.getElementById('walletSelector').style.display = 'none';
+    }
+
+    // 渲染钱包列表
+    function renderWalletList(wallets, installed) {
+      const walletList = document.getElementById('walletList');
+      const noWalletsFound = document.getElementById('noWalletsFound');
+      walletList.innerHTML = '';
+
+      wallets.forEach(wallet => {
+        const isInstalled = installed[wallet.id] || false;
+        const item = createWalletItem(wallet, isInstalled);
+        walletList.appendChild(item);
+      });
+
+      // 显示/隐藏空状态
+      if (wallets.length === 0) {
+        noWalletsFound.style.display = 'block';
+        walletList.style.display = 'none';
+      } else {
+        noWalletsFound.style.display = 'none';
+        walletList.style.display = 'grid';
+      }
+    }
+
+    // 创建钱包项 (Uniswap 风格)
+    function createWalletItem(wallet, isInstalled) {
+      const item = document.createElement('div');
+      item.className = `wallet-item ${isInstalled ? 'installed' : ''}`;
+      item.onclick = () => {
+        if (!isInstalled && wallet.installUrl) {
+          window.open(wallet.installUrl, '_blank');
+          return;
+        }
+        connectWallet(wallet.id);
+      };
+
+      item.innerHTML = `
+        <div class="wallet-icon-emoji">${wallet.icon}</div>
+        <div class="wallet-name">${wallet.name}</div>
+        <div class="wallet-status">${isInstalled ? '已安裝' : wallet.installUrl ? '點擊安裝' : '通過 WalletConnect 連接'}</div>
+      `;
+
+      return item;
+    }
+
+    // 过滤钱包
+    function filterWallets() {
+      const searchTerm = document.getElementById('walletSearch').value.toLowerCase();
+      const installed = getInstalledWallets();
+      
+      const filtered = SUPPORTED_WALLETS.filter(wallet => 
+        wallet.name.toLowerCase().includes(searchTerm)
+      );
+      
+      renderWalletList(filtered, installed);
+    }
+
+    // 统一的钱包连接函数
+    async function connectWallet(walletType) {
+      try {
+        // 隐藏钱包选择器
+        closeWalletSelector();
+        
+        const wallet = SUPPORTED_WALLETS.find(w => w.id === walletType);
+        if (!wallet) {
+          throw new Error('未知的錢包類型');
+        }
+
+        // 设置对应的 provider
+        if (wallet.type === 'extension' && window.ethereum) {
+          ethereumProvider = window.ethereum;
+          isBrowserExtension = true;
+          await connectBrowserExtension();
+        } else if (walletType === 'walletconnect') {
+          isBrowserExtension = false;
+          await connectWalletConnect();
+        } else {
+          throw new Error('該錢包需要通過 WalletConnect 連接');
+        }
+      } catch (error) {
+        console.error('連接錢包失敗:', error);
+        // 重新显示选择器
+        showWalletSelector();
+        updateStatus('error', '連接失敗: ' + error.message);
+      }
     }
 
     // 初始化
@@ -310,25 +650,11 @@
       try {
         updateStatus('info', '正在檢測可用錢包...');
         
-        // 检测浏览器扩展
-        const hasExtension = detectBrowserExtension();
-        
-        if (hasExtension) {
-          // 显示浏览器扩展选项
-          document.getElementById('browserExtensionSection').style.display = 'block';
-          if (ethereumProvider.isMetaMask) {
-            document.getElementById('metamaskBtn').style.display = 'block';
-          } else {
-            document.getElementById('otherExtensionBtn').style.display = 'block';
-          }
-        }
-        
-        // 同时初始化 WalletConnect（用于移动钱包）
+        // 初始化 WalletConnect（用于移动钱包）
         await initWalletConnect();
         
-        if (hasExtension) {
-          updateStatus('info', '請選擇連接方式：瀏覽器擴充功能或移動錢包');
-        }
+        // 显示钱包选择器
+        showWalletSelector();
       } catch (error) {
         console.error('初始化失败:', error);
         updateStatus('error', '初始化失败: ' + error.message);
@@ -359,8 +685,7 @@
             description: 'Agora Market DApp',
             url: window.location.origin,
             icons: [window.location.origin + '/favicon.png']
-          },
-          relayUrl: 'wss://relay.walletconnect.com'
+          }
         });
 
         console.log('✅ WalletConnect SignClient 初始化成功');
@@ -368,7 +693,7 @@
         // 设置事件监听器
         setupSessionListeners();
 
-        updateStatus('info', 'WalletConnect 初始化成功，請點擊按鈕連接錢包');
+        updateStatus('info', 'WalletConnect 初始化成功');
         
         // 不自动开始连接，等待用户点击按钮
         // await connect();
@@ -389,8 +714,8 @@
         updateStatus('info', '正在連接瀏覽器擴充功能...');
         isBrowserExtension = true;
 
-        // 隐藏 WalletConnect 选项
-        document.getElementById('walletconnectSection').style.display = 'none';
+        // 隐藏钱包选择器
+        document.getElementById('walletSelector').style.display = 'none';
 
         // 请求连接
         const accounts = await ethereumProvider.request({
@@ -419,8 +744,8 @@
         // 如果是用户拒绝，不显示错误
         if (error.code === 4001 || error.message.includes('rejected') || error.message.includes('denied')) {
           updateStatus('info', '已取消連接');
-          // 重新显示选项
-          document.getElementById('walletconnectSection').style.display = 'block';
+          // 重新显示钱包选择器
+          showWalletSelector();
           return;
         }
         updateStatus('error', '連接失敗: ' + error.message);
@@ -430,12 +755,6 @@
 
     // 连接钱包（WalletConnect）- 手动触发
     async function connectWalletConnect() {
-      // 隐藏连接按钮
-      const connectBtn = document.getElementById('connectWalletBtn');
-      if (connectBtn) {
-        connectBtn.style.display = 'none';
-      }
-      
       // 调用实际的连接函数
       await connect();
     }
@@ -489,8 +808,8 @@
           updateStatus('success', '錢包連接成功！');
           showWalletInfo(walletAddress);
           
-          // 隐藏浏览器扩展选项
-          document.getElementById('browserExtensionSection').style.display = 'none';
+          // 隐藏钱包选择器
+          document.getElementById('walletSelector').style.display = 'none';
           
           sendEventToFlutter('connected', { 
             walletAddress: walletAddress,
