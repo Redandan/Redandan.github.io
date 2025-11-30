@@ -586,19 +586,54 @@
 
         nonceData = await nonceResponse.json();
         
-        // 只要有 nonce 就算通过，不检查 success 字段
-        // 因为后端可能返回 success: false 但实际有 nonce 的情况
-        if (!nonceData.nonce) {
-          throw new Error(nonceData.message || '獲取 nonce 失敗：缺少 nonce 字段');
+        // 调试：打印完整的响应结构
+        console.log('📦 后端返回的完整响应:', JSON.stringify(nonceData, null, 2));
+        console.log('📦 nonceData.nonce:', nonceData.nonce);
+        console.log('📦 nonceData.message:', nonceData.message);
+        console.log('📦 nonceData.timestamp:', nonceData.timestamp);
+        console.log('📦 nonceData 的所有键:', Object.keys(nonceData));
+        
+        // 如果 message 存在但 nonce 不存在，尝试从 message 中提取
+        if (nonceData.message && (!nonceData.nonce || nonceData.nonce === '')) {
+          console.warn('⚠️ nonce 字段不存在，尝试从 message 中提取');
+          if (nonceData.message.includes('Nonce:')) {
+            const nonceMatch = nonceData.message.match(/Nonce:\s*([^\n]+)/);
+            if (nonceMatch && nonceMatch[1]) {
+              console.log('✅ 从 message 中提取 nonce:', nonceMatch[1].trim());
+              nonceData.nonce = nonceMatch[1].trim();
+            }
+          }
         }
         
-        // 验证必要的字段
-        if (!nonceData.message) {
-          throw new Error('獲取 nonce 失敗：缺少 message 字段');
+        // 如果 message 存在但 timestamp 不存在，尝试从 message 中提取
+        if (nonceData.message && !nonceData.timestamp) {
+          console.warn('⚠️ timestamp 字段不存在，尝试从 message 中提取');
+          if (nonceData.message.includes('Timestamp:')) {
+            const timestampMatch = nonceData.message.match(/Timestamp:\s*([^\n]+)/);
+            if (timestampMatch && timestampMatch[1]) {
+              const timestamp = parseInt(timestampMatch[1].trim());
+              if (!isNaN(timestamp)) {
+                console.log('✅ 从 message 中提取 timestamp:', timestamp);
+                nonceData.timestamp = timestamp;
+              }
+            }
+          }
         }
         
+        // 验证必要的字段：只要有 message 就可以继续（因为可以从 message 中提取其他信息）
+        if (!nonceData.message || nonceData.message === '') {
+          throw new Error('獲取 nonce 失敗：缺少 message 字段。响应: ' + JSON.stringify(nonceData));
+        }
+        
+        // 如果还是没有 nonce，抛出错误
+        if (!nonceData.nonce || nonceData.nonce === '') {
+          throw new Error('獲取 nonce 失敗：缺少 nonce 字段，且无法从 message 中提取。响应: ' + JSON.stringify(nonceData));
+        }
+        
+        // timestamp 是可选的，如果没有就从 message 中提取，如果还是提取不到就使用当前时间戳
         if (!nonceData.timestamp) {
-          throw new Error('獲取 nonce 失敗：缺少 timestamp 字段');
+          console.warn('⚠️ timestamp 不存在，使用当前时间戳');
+          nonceData.timestamp = Math.floor(Date.now() / 1000);
         }
 
         // 调试：检查 message 格式（包含换行符）
