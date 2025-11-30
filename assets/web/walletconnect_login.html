@@ -249,7 +249,7 @@
 <body>
   <div class="container">
     <h1>連接錢包</h1>
-    <p class="subtitle">使用 WalletConnect 連接您的錢包以登入</p>
+    <p class="subtitle">使用 WalletConnect 連接您的錢包以登入（僅支援主網：ERC20、BSC20、TRC20）</p>
 
     <div id="status" class="status info">
       <span class="loading"></span>
@@ -297,7 +297,11 @@
     const CONFIG = {
       projectId: '7412eb629501759c091220ccc09ded23',
       apiBaseUrl: 'https://agoramarketapi.purrtechllc.com/api',
-      supportedChains: ['eip155:1', 'eip155:137', 'eip155:56'], // Ethereum, Polygon, BSC
+      // 只支持正式链（主网）
+      // ERC20: Ethereum 主网 (eip155:1)
+      // BSC20: BSC 主网 (eip155:56)
+      // TRC20: Tron 主网 (通过 TronLink 直接连接，不支持 WalletConnect)
+      supportedChains: ['eip155:1', 'eip155:56'], // Ethereum Mainnet (ERC20), BSC Mainnet (BSC20)
     };
 
     // 日志级别控制（生产环境设为 false）
@@ -328,6 +332,8 @@
     let SignClient = null; // WalletConnect SignClient
     let isBrowserExtension = false; // 是否使用浏览器扩展
     let ethereumProvider = null; // 浏览器扩展提供者
+    let isTronLink = false; // 是否使用 TronLink
+    let tronWeb = null; // TronLink provider
 
     // 等待 WalletConnect v2 SDK 加载完成（本地文件版本）
     function waitForSignClient() {
@@ -494,6 +500,14 @@
         detect: () => window.bitkeep
       },
       {
+        id: 'tronlink',
+        name: 'TronLink',
+        icon: '🔴',
+        type: 'tron',
+        installUrl: 'https://www.tronlink.org/',
+        detect: () => window.tronWeb || window.tronLink
+      },
+      {
         id: 'other',
         name: '其他錢包',
         icon: '🔌',
@@ -595,12 +609,19 @@
         }
 
         // 设置对应的 provider
-        if (wallet.type === 'extension' && window.ethereum) {
+        if (wallet.type === 'tron') {
+          // TronLink 特殊处理
+          isTronLink = true;
+          isBrowserExtension = false;
+          await connectTronLink();
+        } else if (wallet.type === 'extension' && window.ethereum) {
           ethereumProvider = window.ethereum;
           isBrowserExtension = true;
+          isTronLink = false;
           await connectBrowserExtension();
         } else if (walletType === 'walletconnect') {
           isBrowserExtension = false;
+          isTronLink = false;
           await connect();
         } else {
           throw new Error('該錢包需要通過 WalletConnect 連接');
@@ -666,6 +687,92 @@
       }
     }
 
+    // 连接 TronLink
+    async function connectTronLink() {
+      try {
+        // 检测 TronLink
+        if (window.tronWeb) {
+          tronWeb = window.tronWeb;
+        } else if (window.tronLink && window.tronLink.tronWeb) {
+          tronWeb = window.tronLink.tronWeb;
+        } else {
+          throw new Error('未檢測到 TronLink，請先安裝 TronLink 擴充功能');
+        }
+
+        updateStatus('info', '正在連接 TronLink...');
+        isTronLink = true;
+
+        // 隐藏钱包选择器
+        document.getElementById('walletSelector').style.display = 'none';
+
+        // 等待 TronWeb 就绪
+        if (!tronWeb || !tronWeb.ready) {
+          // 如果 TronWeb 未就绪，等待一段时间
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          
+          if (window.tronWeb) {
+            tronWeb = window.tronWeb;
+          } else if (window.tronLink && window.tronLink.tronWeb) {
+            tronWeb = window.tronLink.tronWeb;
+          }
+        }
+
+        if (!tronWeb || !tronWeb.ready) {
+          throw new Error('TronLink 未就緒，請確保已安裝並解鎖 TronLink');
+        }
+
+        // 获取当前账户
+        let account = tronWeb.defaultAddress?.base58;
+        
+        if (!account) {
+          // 请求连接（TronLink 可能需要用户授权）
+          try {
+            await tronWeb.request({
+              method: 'tron_requestAccounts'
+            });
+          } catch (e) {
+            // 某些版本的 TronLink 可能不需要 request
+            debugWarn('TronLink request 失败，尝试直接获取账户:', e);
+          }
+          
+          // 再次获取账户
+          account = tronWeb.defaultAddress?.base58;
+          if (!account) {
+            throw new Error('用戶拒絕連接或未選擇帳戶');
+          }
+        }
+
+        const walletAddress = account;
+        debugLog('✅ TronLink 连接成功:', walletAddress);
+
+        updateStatus('success', '錢包連接成功！');
+        showWalletInfo(walletAddress);
+        
+        sendEventToFlutter('connected', { 
+          walletAddress: walletAddress,
+          isTronLink: true,
+          chain: 'TRC20'
+        });
+
+        // 继续登录流程
+        await performLogin(walletAddress);
+      } catch (error) {
+        debugError('連接 TronLink 失敗:', error);
+        // 如果是用户拒绝，不显示错误
+        if (error.code === 4001 || 
+            error.message.includes('rejected') || 
+            error.message.includes('denied') || 
+            error.message.includes('User rejected') ||
+            error.message.includes('User cancel')) {
+          updateStatus('info', '已取消連接');
+          showWalletSelector();
+          return;
+        }
+        updateStatus('error', '連接失敗: ' + error.message);
+        sendEventToFlutter('error', { error: error.message });
+      }
+    }
+
     // 连接浏览器扩展
     async function connectBrowserExtension() {
       try {
@@ -718,9 +825,9 @@
     // 连接钱包（WalletConnect）
     async function connect() {
       try {
-        // 如果已经通过浏览器扩展连接，不执行 WalletConnect 连接
-        if (isBrowserExtension) {
-          debugLog('⏭️ 已使用浏览器扩展连接，跳过 WalletConnect');
+        // 如果已经通过浏览器扩展或 TronLink 连接，不执行 WalletConnect 连接
+        if (isBrowserExtension || isTronLink) {
+          debugLog('⏭️ 已使用其他钱包连接，跳过 WalletConnect');
           return;
         }
 
@@ -734,6 +841,8 @@
           requiredNamespaces: {
             eip155: {
               methods: ['personal_sign', 'eth_signTypedData'],
+              // 只支持主网：ERC20 (Ethereum Mainnet), BSC20 (BSC Mainnet)
+              // 注意：TRC20 (Tron) 通过 TronLink 直接连接，不支持 WalletConnect
               chains: CONFIG.supportedChains,
               events: ['chainChanged', 'accountsChanged']
             }
@@ -963,9 +1072,13 @@
       
       debugLog('🔐 [SIGN] 开始签名流程...');
       debugLog('🔐 [SIGN] isBrowserExtension:', isBrowserExtension);
+      debugLog('🔐 [SIGN] isTronLink:', isTronLink);
       debugLog('🔐 [SIGN] ethereumProvider:', !!ethereumProvider);
+      debugLog('🔐 [SIGN] tronWeb:', !!tronWeb);
 
-      if (isBrowserExtension && ethereumProvider) {
+      if (isTronLink && tronWeb) {
+        return await signWithTronLink(nonceData);
+      } else if (isBrowserExtension && ethereumProvider) {
         return await signWithBrowserExtension(nonceData);
       } else {
         return await signWithWalletConnect(nonceData);
@@ -1043,11 +1156,124 @@
       }
     }
 
+    // 使用 TronLink 签名
+    async function signWithTronLink(nonceData) {
+      debugLog('🔐 [SIGN] 使用 TronLink 签名');
+      updateStatus('info', '請在 TronLink 中確認簽名...');
+      
+      try {
+        if (!tronWeb || !tronWeb.ready) {
+          throw new Error('TronLink 未就緒');
+        }
+
+        const account = tronWeb.defaultAddress?.base58;
+        debugLog('🔐 [SIGN] TronLink 账户:', account);
+        debugLog('🔐 [SIGN] Message 长度:', nonceData.message.length);
+        
+        // 显示钱包弹窗提示
+        showWalletPopupHint();
+        
+        // 添加进度提示
+        let progressCount = 0;
+        const progressInterval = setInterval(() => {
+          progressCount++;
+          debugLog(`⏳ [SIGN] 仍在等待用户确认签名... (${progressCount * 5}秒)`);
+          if (progressCount % 2 === 0) {
+            updateStatus('info', `請在 TronLink 彈窗中確認簽名... (已等待 ${progressCount * 5}秒)`);
+          }
+        }, 5000);
+        
+        try {
+          // TronLink 签名方法
+          // Tron 链使用 tronWeb.trx.signMessage 或 tronWeb.request
+          let signature;
+          
+          if (tronWeb.trx && typeof tronWeb.trx.signMessage === 'function') {
+            // 方法 1: 使用 trx.signMessage
+            const result = await tronWeb.trx.signMessage(nonceData.message);
+            signature = result.signature || result;
+            // Tron 签名是 base58 或 hex，需要转换为 0x 开头的格式
+            if (signature && !signature.startsWith('0x')) {
+              signature = '0x' + signature;
+            }
+          } else if (tronWeb.request) {
+            // 方法 2: 使用 request API
+            const result = await tronWeb.request({
+              method: 'tron_signMessage',
+              params: {
+                message: nonceData.message,
+                address: account
+              }
+            });
+            signature = result.signature || result;
+            if (signature && !signature.startsWith('0x')) {
+              signature = '0x' + signature;
+            }
+          } else {
+            throw new Error('TronLink 簽名方法不可用，請更新 TronLink 版本');
+          }
+          
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => {
+              debugError('❌ [SIGN] TronLink 签名请求超时（60秒）');
+              reject(new Error('簽名請求超時（60秒），請檢查 TronLink 是否彈出確認窗口'));
+            }, 60000);
+          });
+          
+          signature = await Promise.race([
+            Promise.resolve(signature),
+            timeoutPromise
+          ]);
+          
+          clearInterval(progressInterval);
+          
+          debugLog('✅ [SIGN] TronLink 签名成功');
+          return signature;
+        } catch (signRequestError) {
+          clearInterval(progressInterval);
+          throw signRequestError;
+        }
+      } catch (signError) {
+        debugError('❌ [SIGN] TronLink 签名失败:', signError);
+        debugError('❌ [SIGN] 错误代码:', signError.code);
+        debugError('❌ [SIGN] 错误消息:', signError.message);
+        
+        // 用户拒绝
+        if (signError.code === 4001 || 
+            signError.message?.includes('rejected') || 
+            signError.message?.includes('denied') || 
+            signError.message?.includes('User rejected') ||
+            signError.message?.includes('User cancel') ||
+            signError.message?.includes('cancelled')) {
+          updateStatus('info', '簽名已取消');
+          sendEventToFlutter('error', { error: '用戶取消簽名' });
+          throw new Error('USER_CANCELLED');
+        }
+        
+        throw signError;
+      }
+    }
+
     // 使用 WalletConnect 签名
     async function signWithWalletConnect(nonceData) {
       debugLog('🔐 [SIGN] 使用 WalletConnect 签名');
       
-      const chainId = 'eip155:1';
+      // 获取当前连接的链，优先使用 Ethereum 主网 (ERC20)，其次 BSC 主网 (BSC20)
+      // 只支持主网：ERC20 (eip155:1) 和 BSC20 (eip155:56)
+      let chainId = 'eip155:1'; // 默认 Ethereum 主网 (ERC20)
+      const availableChains = session.namespaces.eip155.chains || [];
+      
+      // 优先选择 Ethereum 主网 (ERC20)
+      if (availableChains.includes('eip155:1')) {
+        chainId = 'eip155:1'; // Ethereum 主网 (ERC20)
+      } else if (availableChains.includes('eip155:56')) {
+        chainId = 'eip155:56'; // BSC 主网 (BSC20)
+      } else if (availableChains.length > 0) {
+        // 如果都不在支持列表中，使用第一个可用链（但应该不会发生，因为连接时已限制）
+        chainId = availableChains[0];
+        debugWarn('⚠️ 使用未在主网列表中的链:', chainId);
+      }
+      
       const account = session.namespaces.eip155.accounts[0];
       
       debugLog('🔐 [SIGN] Session topic:', session.topic);
