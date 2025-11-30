@@ -555,6 +555,11 @@
           throw new Error(nonceData.message || '獲取 nonce 失敗');
         }
 
+        // 调试：检查 message 格式（包含换行符）
+        console.log('📝 后端返回的 message:', nonceData.message);
+        console.log('📝 Message 长度:', nonceData.message?.length);
+        console.log('📝 Message 包含换行符:', nonceData.message?.includes('\n'));
+
         updateStatus('info', '請在錢包中簽名消息...');
         sendEventToFlutter('nonce_received', { nonce: nonceData.nonce });
 
@@ -582,18 +587,21 @@
           });
         } else {
           // 使用 WalletConnect 签名
+          // ⚠️ 重要：必须使用后端返回的 message 直接进行签名，不要做任何修改！
+          // message 包含换行符 \n，必须保持原样
           const chainId = 'eip155:1'; // 使用 Ethereum Mainnet
           const account = session.namespaces.eip155.accounts[0];
 
+          // ⚠️ personal_sign 的参数格式必须是数组 [message, account]，符合 EIP-1193 标准
           signature = await signClient.request({
             topic: session.topic,
             chainId: chainId,
             request: {
               method: 'personal_sign',
-              params: {
-                message: nonceData.message,
-                account: account
-              }
+              params: [
+                nonceData.message,  // 直接使用后端返回的完整 message（包含所有换行符）
+                account
+              ]
             }
           });
         }
