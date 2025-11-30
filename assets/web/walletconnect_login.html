@@ -180,8 +180,12 @@
 
     <div id="walletconnectSection" style="display: none;">
       <h3 style="margin-bottom: 20px; color: #333; margin-top: 20px;">移動錢包</h3>
-      <div id="qrcode"></div>
-      <button id="deepLinkBtn" class="deep-link-btn" onclick="openDeepLink()">
+      <button id="connectWalletBtn" class="deep-link-btn" onclick="connectWalletConnect()" style="display: block; margin-bottom: 20px;">
+        <span style="margin-right: 8px;">📱</span>
+        連接移動錢包
+      </button>
+      <div id="qrcode" style="display: none;"></div>
+      <button id="deepLinkBtn" class="deep-link-btn" onclick="openDeepLink()" style="display: none;">
         在錢包中打開
       </button>
     </div>
@@ -334,10 +338,10 @@
           }
         });
 
-        updateStatus('info', 'WalletConnect 初始化成功，請連接錢包');
+        updateStatus('info', 'WalletConnect 初始化成功，請點擊按鈕連接錢包');
         
-        // 开始连接流程
-        await connect();
+        // 不自动开始连接，等待用户点击按钮
+        // await connect();
       } catch (error) {
         console.error('WalletConnect 初始化失败:', error);
         updateStatus('error', 'WalletConnect 初始化失败: ' + error.message);
@@ -394,7 +398,19 @@
       }
     }
 
-    // 连接钱包（WalletConnect）
+    // 连接钱包（WalletConnect）- 手动触发
+    async function connectWalletConnect() {
+      // 隐藏连接按钮
+      const connectBtn = document.getElementById('connectWalletBtn');
+      if (connectBtn) {
+        connectBtn.style.display = 'none';
+      }
+      
+      // 调用实际的连接函数
+      await connect();
+    }
+
+    // 连接钱包（WalletConnect）- 实际连接逻辑
     async function connect() {
       try {
         // 如果已经通过浏览器扩展连接，不执行 WalletConnect 连接
@@ -429,6 +445,8 @@
           sendEventToFlutter('uri_generated', { uri: uri });
           
           updateStatus('info', '請掃描 QR Code 或點擊按鈕在錢包中打開');
+        } else {
+          throw new Error('未能生成連接 URI');
         }
 
         // 等待用户批准连接
@@ -458,10 +476,27 @@
         // 如果是用户取消，不显示错误
         if (error.message && (error.message.includes('User rejected') || error.message.includes('rejected'))) {
           updateStatus('info', '已取消連接');
+          // 重新显示连接按钮
+          const connectBtn = document.getElementById('connectWalletBtn');
+          if (connectBtn) {
+            connectBtn.style.display = 'block';
+          }
+          // 隐藏 QR Code
+          document.getElementById('qrcode').style.display = 'none';
+          document.getElementById('deepLinkBtn').style.display = 'none';
           return;
         }
         updateStatus('error', '連接失敗: ' + error.message);
         sendEventToFlutter('error', { error: error.message });
+        // 重新显示连接按钮，允许重试
+        const connectBtn = document.getElementById('connectWalletBtn');
+        if (connectBtn) {
+          connectBtn.style.display = 'block';
+          connectBtn.textContent = '重試連接';
+        }
+        // 隐藏 QR Code
+        document.getElementById('qrcode').style.display = 'none';
+        document.getElementById('deepLinkBtn').style.display = 'none';
       }
     }
 
