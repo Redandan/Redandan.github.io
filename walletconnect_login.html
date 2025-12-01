@@ -1143,9 +1143,17 @@
           if (installedWallets['tronlink']) {
             detectedWallet = WALLET_CONFIG.installed.find(w => w.id === 'tronlink');
           } else {
-            // 如果没有检测到扩展，在 PWA/移动设备上可以尝试打开 App
-            if (isPWAMode() || isMobileDevice()) {
-              // 在 PWA/移动设备上，尝试打开 TronLink App
+            // 在 PWA 模式下，即使检测不到也允许尝试连接（参考 SunSwap 方式）
+            if (isPWAMode() && wallet.id === 'tronlink') {
+              debugLog('PWA 模式下未檢測到 TronLink，但允許嘗試連接（類似 SunSwap）');
+              // 直接尝试连接，让 connectTronLink 处理
+              await connectTronLink();
+              return;
+            }
+            
+            // 如果没有检测到扩展，在移动设备上可以尝试打开 App
+            if (isMobileDevice()) {
+              // 在移动设备上，尝试打开 TronLink App
               updateStatus('info', '未檢測到 TronLink 擴展，正在嘗試打開 TronLink App...');
               showDeepLinkPage(wallet);
               
@@ -1590,7 +1598,7 @@
       walletAddress.textContent = address;
     }
 
-    // 连接 TronLink（参考 SunSwap 实现方式）
+    // 连接 TronLink（参考 SunSwap 实现方式 - 直接调用 request 触发连接）
     async function connectTronLink() {
       try {
         // 检查是否有保存的授权状态（仅在 PWA 模式下）
@@ -1614,10 +1622,41 @@
           }
         }
         
-        // 检测 TronLink（参考 SunSwap 方式，PWA 模式下需要更长的等待时间）
+        // 参考 SunSwap 方式：直接尝试连接，不先检测（在 PWA 模式下更可靠）
         updateStatus('info', '正在連接 TronLink...');
         
-        // 在 PWA 模式下，等待更长时间让 TronLink 注入（最多等待 5 秒）
+        // 在 PWA 模式下，直接尝试调用 request 来触发 TronLink（类似 SunSwap）
+        if (isPWAMode()) {
+          debugLog('PWA 模式下直接嘗試連接 TronLink...');
+          
+          // 尝试直接调用 window.tronLink.request（如果存在）
+          if (window.tronLink && typeof window.tronLink.request === 'function') {
+            try {
+              debugLog('嘗試通過 window.tronLink.request 觸發連接...');
+              const result = await window.tronLink.request({ method: 'tron_requestAccounts' });
+              debugLog('TronLink request 結果:', result);
+              
+              // 如果成功，等待 tronWeb 注入
+              if (result && result.code === 200) {
+                // 等待 tronWeb 注入（最多等待 2 秒）
+                for (let i = 0; i < 20; i++) {
+                  if (window.tronWeb) {
+                    tronWeb = window.tronWeb;
+                    break;
+                  } else if (window.tronLink && window.tronLink.tronWeb) {
+                    tronWeb = window.tronLink.tronWeb;
+                    break;
+                  }
+                  await new Promise((resolve) => setTimeout(resolve, 100));
+                }
+              }
+            } catch (e) {
+              debugWarn('通過 request 觸發連接失敗:', e);
+            }
+          }
+        }
+        
+        // 检测 TronLink（等待注入，最多等待 5 秒）
         const maxWaitTime = isPWAMode() ? 50 : 30;
         let tronWebDetected = false;
         
@@ -1637,39 +1676,15 @@
             break;
           }
           
-          // 在 PWA 模式下，每 100ms 检查一次
+          // 每 100ms 检查一次
           await new Promise((resolve) => setTimeout(resolve, 100));
         }
         
         if (!tronWebDetected || !tronWeb) {
-          // 在 PWA 模式下，如果检测不到扩展，尝试触发 TronLink 注入
-          if (isPWAMode()) {
-            debugLog('PWA 模式下未檢測到 TronLink，嘗試觸發注入...');
-            // 尝试通过访问 tronWeb 属性来触发注入
-            try {
-              if (window.tronLink && typeof window.tronLink.request === 'function') {
-                // 尝试调用 request 方法，可能会触发 TronLink 注入
-                await window.tronLink.request({ method: 'tron_requestAccounts' }).catch(() => {});
-                // 再次检查
-                if (window.tronWeb) {
-                  tronWeb = window.tronWeb;
-                  tronWebDetected = true;
-                } else if (window.tronLink && window.tronLink.tronWeb) {
-                  tronWeb = window.tronLink.tronWeb;
-                  tronWebDetected = true;
-                }
-              }
-            } catch (e) {
-              debugWarn('觸發 TronLink 注入失敗:', e);
-            }
+          if (isPWAMode() || isMobileDevice()) {
+            throw new Error('未檢測到 TronLink。請確保已安裝並解鎖 TronLink 瀏覽器擴展，或使用 TronLink 手機 App。');
           }
-          
-          if (!tronWebDetected || !tronWeb) {
-            if (isPWAMode() || isMobileDevice()) {
-              throw new Error('未檢測到 TronLink。請確保已安裝並解鎖 TronLink 瀏覽器擴展，或使用 TronLink 手機 App。');
-            }
-            throw new Error('未檢測到 TronLink。請安裝 TronLink 瀏覽器擴展。');
-          }
+          throw new Error('未檢測到 TronLink。請安裝 TronLink 瀏覽器擴展。');
         }
 
         // 等待 TronWeb 就绪（参考 SunSwap 方式）
