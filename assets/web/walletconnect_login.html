@@ -180,6 +180,12 @@
       justify-content: center;
     }
 
+    .wallet-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
     .wallet-info {
       flex: 1;
     }
@@ -385,6 +391,15 @@
       width: 32px;
       height: 32px;
       font-size: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .wallet-icon-small img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
     }
 
     /* Deep Link 页面 */
@@ -398,6 +413,15 @@
       height: 64px;
       font-size: 64px;
       margin: 0 auto 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .deeplink-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
     }
 
     .deeplink-button {
@@ -664,8 +688,8 @@
       </div>
 
       <div class="wallet-icons">
-        <span class="wallet-icon-small">🦊</span>
-        <span class="wallet-icon-small">🔴</span>
+        <span class="wallet-icon-small"><img src="assets/icons/metamask_icon.jpg" alt="MetaMask" /></span>
+        <span class="wallet-icon-small"><img src="assets/icons/TronLink_icon.jpg" alt="TronLink" /></span>
         <span class="wallet-icon-small">🟢</span>
         <span class="wallet-icon-small">💼</span>
         <span class="wallet-icon-small">🛡️</span>
@@ -680,7 +704,7 @@
     <!-- 页面 3: Deep Link 登录 -->
     <div id="pageDeepLink" class="page">
       <div class="page-header">
-        <div class="deeplink-icon" id="deeplinkIcon">🔴</div>
+        <div class="deeplink-icon" id="deeplinkIcon"><img src="assets/icons/TronLink_icon.jpg" alt="TronLink" /></div>
         <h1 class="page-title" id="deeplinkTitle">正在打開 TronLink…</h1>
         <p class="page-subtitle" id="deeplinkSubtitle">如果沒有自動跳轉，請手動點擊下方按鈕。</p>
       </div>
@@ -741,26 +765,112 @@
     let tronWeb = null;
     let currentDeepLinkWallet = null;
     let qrRefreshTimer = null;
+    
+    // PWA 环境检测
+    function isPWAMode() {
+      try {
+        // 检测是否在 standalone 模式（PWA）
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+        const isFullscreen = window.matchMedia('(display-mode: fullscreen)').matches;
+        const isMinimalUI = window.matchMedia('(display-mode: minimal-ui)').matches;
+        // iOS Safari 特殊处理
+        const isIOSStandalone = window.navigator.standalone === true;
+        return isStandalone || isFullscreen || isMinimalUI || isIOSStandalone;
+      } catch (e) {
+        return false;
+      }
+    }
+    
+    // 检测是否在移动设备
+    function isMobileDevice() {
+      return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+    
+    // 检测 TronLink App 是否已安装（通过尝试打开 Universal Link）
+    async function checkTronLinkAppInstalled() {
+      return new Promise((resolve) => {
+        const timeout = setTimeout(() => resolve(false), 1000);
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = 'tronlink://';
+        document.body.appendChild(iframe);
+        
+        window.addEventListener('blur', function onBlur() {
+          clearTimeout(timeout);
+          document.body.removeChild(iframe);
+          window.removeEventListener('blur', onBlur);
+          resolve(true);
+        });
+        
+        setTimeout(() => {
+          clearTimeout(timeout);
+          document.body.removeChild(iframe);
+          window.removeEventListener('blur', onBlur);
+          resolve(false);
+        }, 2000);
+      });
+    }
+    
+    // 授权状态管理（LocalStorage）
+    const AuthStorage = {
+      key: 'wallet_connect_auth',
+      save: function(walletAddress, walletType, chain) {
+        try {
+          const data = {
+            walletAddress,
+            walletType,
+            chain,
+            timestamp: Date.now(),
+            expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7天过期
+          };
+          localStorage.setItem(this.key, JSON.stringify(data));
+        } catch (e) {
+          debugWarn('保存授权状态失败:', e);
+        }
+      },
+      load: function() {
+        try {
+          const data = localStorage.getItem(this.key);
+          if (!data) return null;
+          const auth = JSON.parse(data);
+          if (auth.expiresAt && auth.expiresAt < Date.now()) {
+            this.clear();
+            return null;
+          }
+          return auth;
+        } catch (e) {
+          debugWarn('加载授权状态失败:', e);
+          return null;
+        }
+      },
+      clear: function() {
+        try {
+          localStorage.removeItem(this.key);
+        } catch (e) {
+          debugWarn('清除授权状态失败:', e);
+        }
+      }
+    };
 
     // 钱包配置
     const WALLET_CONFIG = {
       installed: [
-        { id: 'metamask', name: 'MetaMask', icon: '🦊', type: 'extension', installUrl: 'https://metamask.io/download/' },
+        { id: 'metamask', name: 'MetaMask', icon: 'assets/icons/metamask_icon.jpg', type: 'extension', installUrl: 'https://metamask.io/download/' },
         { id: 'coinbase', name: 'Coinbase Wallet', icon: '🔷', type: 'extension', installUrl: 'https://www.coinbase.com/wallet' },
         { id: 'okx', name: 'OKX Wallet', icon: '🟢', type: 'extension', installUrl: 'https://www.okx.com/web3' },
-        { id: 'tronlink', name: 'TronLink', icon: '🔴', type: 'tron', installUrl: 'https://www.tronlink.org/' },
+        { id: 'tronlink', name: 'TronLink', icon: 'assets/icons/TronLink_icon.jpg', type: 'tron', installUrl: 'https://www.tronlink.org/' },
         { id: 'trust', name: 'Trust Wallet', icon: '🛡️', type: 'extension', installUrl: 'https://trustwallet.com/browser-extension' },
         { id: 'bitget', name: 'Bitget Wallet', icon: '💼', type: 'extension', installUrl: 'https://web3.bitget.com/' },
       ],
       mobile: [
-        { id: 'metamask-mobile', name: 'MetaMask Mobile', icon: '🦊', deepLink: 'metamask://wc?uri=' },
-        { id: 'tronlink-app', name: 'TronLink App', icon: '🔴', deepLink: 'tronlink://wc?uri=' },
+        { id: 'metamask-mobile', name: 'MetaMask Mobile', icon: 'assets/icons/metamask_icon.jpg', deepLink: 'metamask://wc?uri=' },
+        { id: 'tronlink-app', name: 'TronLink App', icon: 'assets/icons/TronLink_icon.jpg', deepLink: 'tronlink://wc?uri=' },
         { id: 'okx-app', name: 'OKX App', icon: '🟢', deepLink: 'okx://wc?uri=' },
         { id: 'bitget-app', name: 'Bitget', icon: '💼', deepLink: 'bitget://wc?uri=' },
         { id: 'trust-app', name: 'Trust Wallet', icon: '🛡️', deepLink: 'trust://wc?uri=' },
       ],
       cold: [
-        { id: 'tronlink-scan', name: 'TronLink – 掃描登入', icon: '🔴', action: 'scan' },
+        { id: 'tronlink-scan', name: 'TronLink – 掃描登入', icon: 'assets/icons/TronLink_icon.jpg', action: 'scan' },
         { id: 'keystone', name: 'Keystone – 掃描登入', icon: '🔐', action: 'scan' },
         { id: 'safepal', name: 'SafePal – 掃描登入', icon: '🎯', action: 'scan' },
         { id: 'onekey', name: 'OneKey – 掃描登入', icon: '🔑', action: 'scan' },
@@ -788,12 +898,32 @@
     function showDeepLinkPage(wallet) {
       currentDeepLinkWallet = wallet;
       const page = document.getElementById('pageDeepLink');
-      document.getElementById('deeplinkIcon').textContent = wallet.icon;
+      const deeplinkIconEl = document.getElementById('deeplinkIcon');
+      
+      // 检测 icon 是图片路径还是 emoji
+      const isImagePath = wallet.icon && (wallet.icon.includes('.') || wallet.icon.startsWith('assets/') || wallet.icon.startsWith('/'));
+      if (isImagePath) {
+        deeplinkIconEl.innerHTML = `<img src="${wallet.icon}" alt="${wallet.name}" />`;
+      } else {
+        deeplinkIconEl.textContent = wallet.icon;
+      }
+      
       document.getElementById('deeplinkTitle').textContent = `正在打開 ${wallet.name}…`;
       document.getElementById('deeplinkButton').textContent = `打開 ${wallet.name} App`;
+      
+      // PWA 模式下的特殊提示
+      const subtitleEl = document.getElementById('deeplinkSubtitle');
+      if (isPWAMode() && (wallet.id === 'tronlink-app' || wallet.id === 'tronlink')) {
+        subtitleEl.textContent = '如果沒有自動跳轉，請手動點擊下方按鈕。在 PWA 模式下，您也可以使用掃描 QR Code 的方式連接。';
+      } else {
+        subtitleEl.textContent = '如果沒有自動跳轉，請手動點擊下方按鈕。';
+      }
+      
       if (wallet.installUrl) {
         document.getElementById('deeplinkDownload').style.display = 'block';
         document.getElementById('deeplinkDownloadLink').href = wallet.installUrl;
+      } else {
+        document.getElementById('deeplinkDownload').style.display = 'none';
       }
       showPage('pageDeepLink');
     }
@@ -838,8 +968,14 @@
       button.className = 'wallet-button';
       button.onclick = () => handleWalletClick(wallet, isInstalled);
       
+      // 检测 icon 是图片路径还是 emoji
+      const isImagePath = wallet.icon && (wallet.icon.includes('.') || wallet.icon.startsWith('assets/') || wallet.icon.startsWith('/'));
+      const iconHtml = isImagePath 
+        ? `<img src="${wallet.icon}" alt="${wallet.name}" />`
+        : wallet.icon;
+      
       button.innerHTML = `
-        <div class="wallet-icon">${wallet.icon}</div>
+        <div class="wallet-icon">${iconHtml}</div>
         <div class="wallet-info">
           <div class="wallet-name">
             ${wallet.name}
@@ -862,10 +998,12 @@
       return types[type] || '';
     }
 
-    // 初始化钱包选择器
+    // 初始化钱包选择器（优化版，PWA 模式下优先显示相关选项）
     function initWalletSelector() {
       const installed = getInstalledWallets();
       const installedList = WALLET_CONFIG.installed.filter(w => installed[w.id]);
+      const isPWA = isPWAMode();
+      const isMobile = isMobileDevice();
       
       // 渲染已安装的钱包
       if (installedList.length > 0) {
@@ -878,26 +1016,49 @@
         installedSection.style.display = 'block';
       }
 
-      // 渲染手机钱包
+      // 渲染手机钱包（PWA 模式下优先显示）
       const mobileSection = document.getElementById('mobileWalletsSection');
       const mobileListEl = document.getElementById('mobileWalletsList');
       mobileListEl.innerHTML = '';
-      WALLET_CONFIG.mobile.forEach(wallet => {
+      
+      // 在 PWA 或移动设备上，优先显示 TronLink
+      const mobileWallets = [...WALLET_CONFIG.mobile];
+      if (isPWA || isMobile) {
+        // 将 TronLink 移到最前面
+        const tronLinkIndex = mobileWallets.findIndex(w => w.id === 'tronlink-app');
+        if (tronLinkIndex > 0) {
+          const tronLink = mobileWallets.splice(tronLinkIndex, 1)[0];
+          mobileWallets.unshift(tronLink);
+        }
+      }
+      
+      mobileWallets.forEach(wallet => {
         mobileListEl.appendChild(renderWalletButton(wallet));
       });
       mobileSection.style.display = 'block';
 
-      // 渲染冷钱包
+      // 渲染冷钱包（PWA 模式下优先显示 TronLink 扫描）
       const coldSection = document.getElementById('coldWalletsSection');
       const coldListEl = document.getElementById('coldWalletsList');
       coldListEl.innerHTML = '';
-      WALLET_CONFIG.cold.forEach(wallet => {
+      
+      const coldWallets = [...WALLET_CONFIG.cold];
+      if (isPWA || isMobile) {
+        // 将 TronLink 扫描移到最前面
+        const tronLinkScanIndex = coldWallets.findIndex(w => w.id === 'tronlink-scan');
+        if (tronLinkScanIndex > 0) {
+          const tronLinkScan = coldWallets.splice(tronLinkScanIndex, 1)[0];
+          coldWallets.unshift(tronLinkScan);
+        }
+      }
+      
+      coldWallets.forEach(wallet => {
         coldListEl.appendChild(renderWalletButton(wallet));
       });
       coldSection.style.display = 'block';
     }
 
-    // 处理钱包点击
+    // 处理钱包点击（优化版，支持 PWA 智能检测）
     async function handleWalletClick(wallet, isInstalled) {
       try {
         // 已安装的钱包 - 直接连接
@@ -910,11 +1071,29 @@
             await connectBrowserExtension();
           }
         }
-        // 手机钱包 - Deep Link
+        // 手机钱包 - Deep Link（优化：PWA 模式下智能检测）
         else if (wallet.deepLink) {
-          showDeepLinkPage(wallet);
-          // 等待 WalletConnect URI 生成
-          await connectWalletConnect();
+          // 如果是 TronLink 且在 PWA/移动设备上，先检测 App 是否安装
+          if ((wallet.id === 'tronlink-app' || wallet.id === 'tronlink') && (isPWAMode() || isMobileDevice())) {
+            updateStatus('info', '正在檢測 TronLink App...');
+            const isInstalled = await checkTronLinkAppInstalled();
+            
+            if (isInstalled) {
+              // App 已安装，直接使用 Deep Link
+              showDeepLinkPage(wallet);
+              await connectWalletConnect();
+            } else {
+              // App 未安装，显示下载提示或使用 QR Code
+              showDeepLinkPage(wallet);
+              document.getElementById('deeplinkDownload').style.display = 'block';
+              // 同时生成 QR Code 作为备选方案
+              await connectWalletConnect();
+            }
+          } else {
+            // 其他钱包或非移动设备，使用标准流程
+            showDeepLinkPage(wallet);
+            await connectWalletConnect();
+          }
         }
         // 冷钱包 - 显示 QR Code
         else if (wallet.action === 'scan') {
@@ -926,17 +1105,85 @@
       }
     }
 
-    // 打开 Deep Link
+    // 打开 Deep Link（优化版，支持 PWA 和 TronLink）
     async function openDeepLinkApp() {
-      if (currentDeepLinkWallet && currentUri) {
-        const deepLink = currentDeepLinkWallet.deepLink + encodeURIComponent(currentUri);
-        window.location.href = deepLink;
-        
-        // 设置超时，如果5秒后还没跳转，显示下载链接
-        setTimeout(() => {
-          document.getElementById('deeplinkDownload').style.display = 'block';
-        }, 5000);
+      if (!currentDeepLinkWallet || !currentUri) {
+        updateStatus('error', '缺少連接信息');
+        return;
       }
+      
+      const wallet = currentDeepLinkWallet;
+      let deepLink = wallet.deepLink + encodeURIComponent(currentUri);
+      
+      // TronLink 特殊处理：支持多种连接方式
+      if (wallet.id === 'tronlink-app' || wallet.id === 'tronlink') {
+        // 方式1: 使用 WalletConnect URI（推荐）
+        deepLink = `tronlink://wc?uri=${encodeURIComponent(currentUri)}`;
+        
+        // 方式2: 如果支持 Universal Link，优先使用
+        if (isPWAMode() || isMobileDevice()) {
+          // 尝试使用 Universal Link（如果 TronLink 支持）
+          const universalLink = `https://tronlink.org/wc?uri=${encodeURIComponent(currentUri)}`;
+          
+          // 先尝试 Universal Link，如果失败则回退到 Deep Link
+          try {
+            // 在 PWA 中，Universal Link 可能更可靠
+            if (isPWAMode()) {
+              window.location.href = universalLink;
+              // 设置超时检测
+              setTimeout(() => {
+                // 如果还在当前页面，尝试 Deep Link
+                if (document.hasFocus()) {
+                  window.location.href = deepLink;
+                }
+              }, 2000);
+            } else {
+              window.location.href = deepLink;
+            }
+          } catch (e) {
+            debugWarn('Universal Link 失败，使用 Deep Link:', e);
+            window.location.href = deepLink;
+          }
+        } else {
+          window.location.href = deepLink;
+        }
+      } else {
+        // 其他钱包使用标准 Deep Link
+        window.location.href = deepLink;
+      }
+      
+      // 设置超时，如果5秒后还没跳转，显示下载链接
+      setTimeout(() => {
+        const downloadEl = document.getElementById('deeplinkDownload');
+        if (downloadEl) {
+          downloadEl.style.display = 'block';
+        }
+      }, 5000);
+      
+      // 监听页面可见性变化，检测是否成功跳转
+      let visibilityTimeout;
+      const handleVisibilityChange = () => {
+        if (document.hidden) {
+          // 页面隐藏，可能已跳转到 App
+          clearTimeout(visibilityTimeout);
+          visibilityTimeout = setTimeout(() => {
+            if (!document.hidden) {
+              // 页面重新可见，可能跳转失败
+              const downloadEl = document.getElementById('deeplinkDownload');
+              if (downloadEl) {
+                downloadEl.style.display = 'block';
+              }
+            }
+          }, 3000);
+        }
+      };
+      
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      
+      // 清理监听器
+      setTimeout(() => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }, 10000);
     }
 
     // 刷新 QR Code
@@ -1091,6 +1338,12 @@
         if (walletAddress) {
           updateStatus('success', '錢包連接成功！');
           showWalletInfo(walletAddress);
+          
+          // 保存授权状态（仅在 PWA 模式下）
+          if (isPWAMode()) {
+            AuthStorage.save(walletAddress, 'walletconnect', 'EVM');
+          }
+          
           sendEventToFlutter('connected', { 
             walletAddress: walletAddress,
             session: session,
@@ -1167,14 +1420,39 @@
       walletAddress.textContent = address;
     }
 
-    // 连接 TronLink
+    // 连接 TronLink（优化版，支持授权状态持久化）
     async function connectTronLink() {
       try {
+        // 检查是否有保存的授权状态（仅在 PWA 模式下）
+        if (isPWAMode()) {
+          const savedAuth = AuthStorage.load();
+          if (savedAuth && savedAuth.walletType === 'tronlink' && savedAuth.walletAddress) {
+            debugLog('发现保存的授权状态，尝试自动重连...');
+            updateStatus('info', '正在使用已保存的授權...');
+            
+            // 验证钱包是否仍然可用
+            if (window.tronWeb || (window.tronLink && window.tronLink.tronWeb)) {
+              try {
+                // 尝试使用保存的地址直接登录（如果钱包仍然连接）
+                await performLogin(savedAuth.walletAddress);
+                return;
+              } catch (e) {
+                debugWarn('使用保存的授权失败，重新连接:', e);
+                AuthStorage.clear();
+              }
+            }
+          }
+        }
+        
         if (window.tronWeb) {
           tronWeb = window.tronWeb;
         } else if (window.tronLink && window.tronLink.tronWeb) {
           tronWeb = window.tronLink.tronWeb;
         } else {
+          // 在 PWA 模式下，如果没有检测到扩展，提示使用手机 App
+          if (isPWAMode() || isMobileDevice()) {
+            throw new Error('未檢測到 TronLink 擴展。請使用 TronLink 手機 App 掃描 QR Code 連接。');
+          }
           throw new Error('未檢測到 TronLink');
         }
 
@@ -1214,6 +1492,11 @@
         const walletAddress = account;
         updateStatus('success', '錢包連接成功！');
         showWalletInfo(walletAddress);
+        
+        // 保存授权状态（仅在 PWA 模式下）
+        if (isPWAMode()) {
+          AuthStorage.save(walletAddress, 'tronlink', 'TRC20');
+        }
         
         sendEventToFlutter('connected', { 
           walletAddress: walletAddress,
@@ -1582,10 +1865,20 @@
       }
     }
 
-    // 初始化
+    // 初始化（优化版，支持 PWA 自动重连）
     async function init() {
       try {
         updateStatus('info', '正在檢測可用錢包...');
+        
+        // 在 PWA 模式下，检查是否有保存的授权状态
+        if (isPWAMode()) {
+          const savedAuth = AuthStorage.load();
+          if (savedAuth) {
+            debugLog('PWA 模式下发现保存的授权:', savedAuth);
+            // 不自动重连，让用户选择，但可以提示
+            updateStatus('info', '檢測到已保存的授權，請選擇連接方式...');
+          }
+        }
         
         // 初始化 WalletConnect（异步，不阻塞）
         initWalletConnect().catch(() => {
