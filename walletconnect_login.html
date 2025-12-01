@@ -1201,9 +1201,9 @@
         debugLog('🔐 [SIGN] Hex Message (备用):', hexMessage);
         
         // 检查可用的签名方法
+        debugLog('🔐 [SIGN] request 可用:', !!tronWeb.request);
         debugLog('🔐 [SIGN] signMessageV2 可用:', !!(tronWeb.trx && typeof tronWeb.trx.signMessageV2 === 'function'));
         debugLog('🔐 [SIGN] signMessage 可用:', !!(tronWeb.trx && typeof tronWeb.trx.signMessage === 'function'));
-        debugLog('🔐 [SIGN] request 可用:', !!tronWeb.request);
         
         // 显示钱包弹窗提示
         showWalletPopupHint();
@@ -1220,43 +1220,14 @@
         
         try {
           // TronLink 签名方法
-          // 优先使用 signMessageV2（支持明文），如果不可用则尝试其他方法
+          // TronLink 推荐使用 request API，优先尝试该方法
           let signature;
           
-          if (tronWeb.trx && typeof tronWeb.trx.signMessageV2 === 'function') {
-            // 方法 1: 使用 signMessageV2（推荐，支持明文消息，符合 TIP-191 标准）
-            debugLog('🔐 [SIGN] 使用方法 1: trx.signMessageV2 (支持明文)');
-            const result = await tronWeb.trx.signMessageV2(nonceData.message);
-            signature = result.signature || result;
-            debugLog('🔐 [SIGN] 签名结果:', signature);
-            // signMessageV2 返回的签名可能需要转换为 0x 开头的格式
-            if (signature && typeof signature === 'string' && !signature.startsWith('0x')) {
-              signature = '0x' + signature;
-            }
-          } else if (tronWeb.trx && typeof tronWeb.trx.signMessage === 'function') {
-            // 方法 2: 使用 signMessage（尝试原始消息，如果失败则尝试十六进制）
-            debugLog('🔐 [SIGN] 使用方法 2: trx.signMessage');
+          if (tronWeb.request) {
+            // 方法 1: 使用 request API（TronLink 推荐方式）
+            debugLog('🔐 [SIGN] 使用方法 1: request API (TronLink 推荐)');
             try {
-              // 先尝试原始消息
-              const result = await tronWeb.trx.signMessage(nonceData.message);
-              signature = result.signature || result;
-              debugLog('🔐 [SIGN] 使用原始消息签名成功');
-            } catch (textError) {
-              debugWarn('⚠️ 原始消息签名失败，尝试十六进制:', textError);
-              // 如果原始消息失败，尝试十六进制
-              const result = await tronWeb.trx.signMessage(hexMessage);
-              signature = result.signature || result;
-              debugLog('🔐 [SIGN] 使用十六进制消息签名成功');
-            }
-            // Tron 签名是 base58 或 hex，需要转换为 0x 开头的格式
-            if (signature && typeof signature === 'string' && !signature.startsWith('0x')) {
-              signature = '0x' + signature;
-            }
-          } else if (tronWeb.request) {
-            // 方法 3: 使用 request API
-            debugLog('🔐 [SIGN] 使用方法 3: request API');
-            try {
-              // 先尝试原始消息
+              // 尝试使用原始消息
               const result = await tronWeb.request({
                 method: 'tron_signMessage',
                 params: {
@@ -1269,21 +1240,45 @@
             } catch (requestError) {
               debugWarn('⚠️ request API 原始消息失败，尝试十六进制:', requestError);
               // 如果原始消息失败，尝试十六进制
-              const result = await tronWeb.request({
-                method: 'tron_signMessage',
-                params: {
-                  message: hexMessage,
-                  address: account
-                }
-              });
-              signature = result.signature || result;
-              debugLog('🔐 [SIGN] request API 使用十六进制成功');
+              try {
+                const result = await tronWeb.request({
+                  method: 'tron_signMessage',
+                  params: {
+                    message: hexMessage,
+                    address: account
+                  }
+                });
+                signature = result.signature || result;
+                debugLog('🔐 [SIGN] request API 使用十六进制成功');
+              } catch (hexError) {
+                debugWarn('⚠️ request API 十六进制也失败，尝试不带 address:', hexError);
+                // 尝试不带 address 参数
+                const result = await tronWeb.request({
+                  method: 'tron_signMessage',
+                  params: {
+                    message: nonceData.message
+                  }
+                });
+                signature = result.signature || result;
+                debugLog('🔐 [SIGN] request API 不带 address 成功');
+              }
             }
+            // 确保签名格式正确
+            if (signature && typeof signature === 'string' && !signature.startsWith('0x')) {
+              signature = '0x' + signature;
+            }
+          } else if (tronWeb.trx && typeof tronWeb.trx.signMessageV2 === 'function') {
+            // 方法 2: 使用 signMessageV2（支持明文消息，符合 TIP-191 标准）
+            debugLog('🔐 [SIGN] 使用方法 2: trx.signMessageV2 (支持明文)');
+            const result = await tronWeb.trx.signMessageV2(nonceData.message);
+            signature = result.signature || result;
+            debugLog('🔐 [SIGN] 签名结果:', signature);
+            // signMessageV2 返回的签名可能需要转换为 0x 开头的格式
             if (signature && typeof signature === 'string' && !signature.startsWith('0x')) {
               signature = '0x' + signature;
             }
           } else {
-            throw new Error('TronLink 簽名方法不可用，請更新 TronLink 版本至 4.4.0 或更高');
+            throw new Error('TronLink 簽名方法不可用，請確保已安裝並解鎖 TronLink，或更新至最新版本');
           }
           
           const timeoutPromise = new Promise((_, reject) => {
