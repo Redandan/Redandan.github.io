@@ -1709,11 +1709,6 @@
           }
         }
         
-        // 初始化 WalletConnect（异步，不阻塞）
-        initWalletConnect().catch(() => {
-          // 静默处理错误
-        });
-        
         // 初始化钱包选择器
         await initWalletSelector();
         
