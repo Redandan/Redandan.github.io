@@ -1373,12 +1373,19 @@
 
         updateStatus('info', '正在生成連接請求...');
 
+        // 配置 WalletConnect 连接，支持 EVM 和 TRON 链
         const { uri, approval } = await signClient.connect({
           optionalNamespaces: {
             eip155: {
               methods: ['personal_sign', 'eth_signTypedData'],
               chains: CONFIG.supportedChains,
               events: ['chainChanged', 'accountsChanged']
+            },
+            // 添加 TRON 链支持（如果钱包支持）
+            tron: {
+              methods: ['tron_signMessage', 'tron_signTransaction'],
+              chains: ['tron:201206'],
+              events: []
             }
           }
         });
@@ -1398,6 +1405,55 @@
         updateStatus('info', '等待錢包連接...');
         session = await approval();
 
+        // 检测连接的钱包类型（检查是否有 TRON 链支持）
+        const hasTronNamespace = session.namespaces && session.namespaces.tron;
+        const hasTronAccounts = hasTronNamespace && session.namespaces.tron.accounts && session.namespaces.tron.accounts.length > 0;
+        
+        // 如果通过 WalletConnect 连接的是 TronLink（有 TRON 账户），需要特殊处理
+        if (hasTronAccounts) {
+          debugLog('檢測到 TronLink 通過 WalletConnect 連接');
+          // 获取 TRON 账户地址
+          const tronAccount = session.namespaces.tron.accounts[0];
+          // TRON 账户格式: tron:201206:TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t
+          const walletAddress = tronAccount.split(':')[2];
+          
+          if (walletAddress) {
+            updateStatus('success', 'TronLink 連接成功！');
+            showWalletInfo(walletAddress);
+            
+            // 设置 TronLink 标志，但注意：通过 WalletConnect 连接时，不能使用 tronWeb
+            // 需要检查是否有本地的 TronLink 扩展可用
+            if (window.tronWeb || (window.tronLink && window.tronLink.tronWeb)) {
+              // 如果有本地扩展，优先使用扩展
+              tronWeb = window.tronWeb || window.tronLink.tronWeb;
+              isTronLink = true;
+              debugLog('檢測到本地 TronLink 擴展，使用擴展進行簽名');
+            } else {
+              // 如果没有本地扩展，标记为 WalletConnect TronLink
+              // 但 WalletConnect 的 TRON 签名需要特殊处理
+              isTronLink = true;
+              debugLog('通過 WalletConnect 連接 TronLink，將使用 WalletConnect 簽名');
+            }
+            
+            // 保存授权状态（仅在 PWA 模式下）
+            if (isPWAMode()) {
+              AuthStorage.save(walletAddress, 'tronlink', 'TRC20');
+            }
+            
+            sendEventToFlutter('connected', { 
+              walletAddress: walletAddress,
+              session: session,
+              isBrowserExtension: false,
+              isTronLink: true,
+              chain: 'TRC20'
+            });
+
+            await performLogin(walletAddress);
+            return;
+          }
+        }
+        
+        // EVM 链处理（原有逻辑）
         const walletAddress = getWalletAddress();
         if (walletAddress) {
           updateStatus('success', '錢包連接成功！');
@@ -1803,6 +1859,70 @@
     }
 
     async function signWithWalletConnect(nonceData) {
+      // 检查是否是 TronLink 通过 WalletConnect 连接
+      const hasTronNamespace = session.namespaces && session.namespaces.tron;
+      const hasTronAccounts = hasTronNamespace && session.namespaces.tron.accounts && session.namespaces.tron.accounts.length > 0;
+      
+      // 如果有本地 TronLink 扩展可用，优先使用扩展签名
+      if (isTronLink && (window.tronWeb || (window.tronLink && window.tronLink.tronWeb))) {
+        debugLog('使用本地 TronLink 擴展進行簽名');
+        return await signWithTronLink(nonceData);
+      }
+      
+      // 如果是 TRON 链但无本地扩展，尝试使用 WalletConnect TRON 签名
+      if (hasTronAccounts && isTronLink) {
+        try {
+          const tronAccount = session.namespaces.tron.accounts[0];
+          // TRON 链 ID: tron:201206
+          const chainId = 'tron:201206';
+          const tronAddress = tronAccount.split(':')[2];
+          
+          debugLog('嘗試使用 WalletConnect TRON 簽名，地址:', tronAddress);
+          
+          // 尝试使用 TRON 签名方法
+          try {
+            const signature = await signClient.request({
+              topic: session.topic,
+              chainId: chainId,
+              request: {
+                method: 'tron_signMessage',
+                params: {
+                  message: nonceData.message,
+                  address: tronAddress
+                }
+              }
+            });
+            
+            // 处理签名结果
+            let finalSignature = signature;
+            if (typeof signature === 'object' && signature !== null) {
+              finalSignature = signature.signature || signature.result || JSON.stringify(signature);
+            }
+            if (typeof finalSignature !== 'string') {
+              finalSignature = String(finalSignature);
+            }
+            if (finalSignature && !finalSignature.startsWith('0x') && /^[0-9a-fA-F]+$/.test(finalSignature)) {
+              finalSignature = '0x' + finalSignature;
+            }
+            
+            debugLog('WalletConnect TRON 簽名成功');
+            return finalSignature;
+          } catch (tronSignError) {
+            debugError('WalletConnect TRON 簽名失敗:', tronSignError);
+            // 如果 WalletConnect TRON 签名失败，提示用户使用本地扩展
+            throw new Error('WalletConnect TRON 簽名失敗。請使用 TronLink 瀏覽器擴展進行簽名，或使用掃描 QR Code 方式連接。錯誤: ' + tronSignError.message);
+          }
+        } catch (error) {
+          debugError('❌ WalletConnect TronLink 签名失败:', error);
+          throw error;
+        }
+      }
+      
+      // EVM 链签名（原有逻辑）
+      if (!session.namespaces.eip155 || !session.namespaces.eip155.accounts || session.namespaces.eip155.accounts.length === 0) {
+        throw new Error('未找到 EVM 鏈賬戶');
+      }
+      
       let chainId = 'eip155:1';
       const availableChains = session.namespaces.eip155.chains || [];
       
