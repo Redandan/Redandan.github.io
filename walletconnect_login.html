@@ -1572,7 +1572,7 @@
       walletAddress.textContent = address;
     }
 
-    // 连接 TronLink（优化版，支持授权状态持久化）
+    // 连接 TronLink（参考 SunSwap 实现方式）
     async function connectTronLink() {
       try {
         // 检查是否有保存的授权状态（仅在 PWA 模式下）
@@ -1596,64 +1596,80 @@
           }
         }
         
-        if (window.tronWeb) {
-          tronWeb = window.tronWeb;
-        } else if (window.tronLink && window.tronLink.tronWeb) {
-          tronWeb = window.tronLink.tronWeb;
-        } else {
-          // 在 PWA 模式下，如果没有检测到扩展，提供更好的提示
-          if (isPWAMode()) {
-            // PWA 模式下，优先提示使用扩展，也可以打开 App
-            if (isMobileDevice()) {
-              throw new Error('未檢測到 TronLink 擴展。請安裝 TronLink 瀏覽器擴展，或使用 TronLink 手機 App。');
-            } else {
-              throw new Error('未檢測到 TronLink 擴展。請安裝 TronLink 瀏覽器擴展後重試。');
-            }
-          } else if (isMobileDevice()) {
-            throw new Error('未檢測到 TronLink 擴展。請使用 TronLink 手機 App 或安裝瀏覽器擴展。');
-          }
-          throw new Error('未檢測到 TronLink');
-        }
-
+        // 检测 TronLink（参考 SunSwap 方式）
         updateStatus('info', '正在連接 TronLink...');
-        isTronLink = true;
-
-        if (!tronWeb || !tronWeb.ready) {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+        
+        // 等待 TronLink 加载（最多等待 3 秒）
+        let tronWebDetected = false;
+        for (let i = 0; i < 30; i++) {
           if (window.tronWeb) {
             tronWeb = window.tronWeb;
+            tronWebDetected = true;
+            break;
           } else if (window.tronLink && window.tronLink.tronWeb) {
             tronWeb = window.tronLink.tronWeb;
+            tronWebDetected = true;
+            break;
           }
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+        
+        if (!tronWebDetected || !tronWeb) {
+          if (isPWAMode() || isMobileDevice()) {
+            throw new Error('未檢測到 TronLink。請安裝 TronLink 瀏覽器擴展或使用 TronLink 手機 App。');
+          }
+          throw new Error('未檢測到 TronLink。請安裝 TronLink 瀏覽器擴展。');
         }
 
-        if (!tronWeb || !tronWeb.ready) {
-          // 在 PWA 模式下提供更友好的错误提示
-          if (isPWAMode()) {
-            throw new Error('TronLink 未就緒。請確保 TronLink 擴展已正確安裝並已解鎖。');
-          }
-          throw new Error('TronLink 未就緒');
+        // 等待 TronWeb 就绪（参考 SunSwap 方式）
+        if (!tronWeb.ready) {
+          await new Promise((resolve, reject) => {
+            const checkReady = setInterval(() => {
+              if (tronWeb && tronWeb.ready) {
+                clearInterval(checkReady);
+                resolve();
+              }
+            }, 100);
+            
+            // 10 秒超时
+            setTimeout(() => {
+              clearInterval(checkReady);
+              reject(new Error('TronLink 初始化超時'));
+            }, 10000);
+          });
         }
 
+        isTronLink = true;
+
+        // 请求账户连接（参考 SunSwap 方式）
         let account = tronWeb.defaultAddress?.base58;
         
         if (!account) {
           try {
-            await tronWeb.request({
-              method: 'tron_requestAccounts'
-            });
+            // 使用 request 方法请求账户（类似 SunSwap）
+            if (tronWeb.request) {
+              await tronWeb.request({
+                method: 'tron_requestAccounts'
+              });
+            } else {
+              // 兼容旧版本 TronLink
+              await new Promise((resolve) => setTimeout(resolve, 500));
+            }
+            
+            account = tronWeb.defaultAddress?.base58;
           } catch (e) {
             debugWarn('TronLink request 失败:', e);
+            // 如果 request 失败，尝试直接获取
+            account = tronWeb.defaultAddress?.base58;
           }
           
-          account = tronWeb.defaultAddress?.base58;
           if (!account) {
-            throw new Error('用戶拒絕連接');
+            throw new Error('用戶拒絕連接或未選擇賬戶');
           }
         }
 
         const walletAddress = account;
-        updateStatus('success', '錢包連接成功！');
+        updateStatus('success', 'TronLink 連接成功！');
         showWalletInfo(walletAddress);
         
         // 保存授权状态（仅在 PWA 模式下）
@@ -1670,7 +1686,10 @@
         await performLogin(walletAddress);
       } catch (error) {
         debugError('連接 TronLink 失敗:', error);
-        if (error.code === 4001 || error.message.includes('rejected') || error.message.includes('denied')) {
+        if (error.code === 4001 || 
+            error.message?.includes('rejected') || 
+            error.message?.includes('denied') ||
+            error.message?.includes('拒絕')) {
           updateStatus('info', '已取消連接');
           return;
         }
@@ -1835,10 +1854,10 @@
       }
     }
 
+    // TronLink 签名（参考 SunSwap 实现方式）
     async function signWithTronLink(nonceData) {
       try {
         if (!tronWeb || !tronWeb.ready) {
-          // 在 PWA 模式下提供更友好的错误提示
           if (isPWAMode()) {
             throw new Error('TronLink 未就緒。請確保 TronLink 擴展已正確安裝並已解鎖。');
           }
@@ -1846,10 +1865,14 @@
         }
 
         const account = tronWeb.defaultAddress?.base58;
-        const canUseSignMessageV2 = tronWeb.trx && typeof tronWeb.trx.signMessageV2 === 'function';
-        
+        if (!account) {
+          throw new Error('未找到 TronLink 賬戶');
+        }
+
         let signature;
-        if (canUseSignMessageV2) {
+        
+        // 优先使用 signMessageV2（参考 SunSwap 方式）
+        if (tronWeb.trx && typeof tronWeb.trx.signMessageV2 === 'function') {
           const timeoutPromise = new Promise((_, reject) => {
             setTimeout(() => {
               reject(new Error('簽名請求超時（60秒）'));
@@ -1861,6 +1884,7 @@
           
           signature = result.signature || result;
           
+          // 处理签名结果
           if (typeof signature === 'object' && signature !== null) {
             signature = signature.signature || signature.result || JSON.stringify(signature);
           }
@@ -1869,10 +1893,13 @@
             signature = String(signature);
           }
           
+          // 确保签名格式正确（添加 0x 前缀如果需要）
           if (signature && !signature.startsWith('0x') && /^[0-9a-fA-F]+$/.test(signature)) {
             signature = '0x' + signature;
           }
-        } else if (tronWeb.request) {
+        } 
+        // 使用 request 方法（参考 SunSwap 方式）
+        else if (tronWeb.request && typeof tronWeb.request === 'function') {
           const result = await tronWeb.request({
             method: 'tron_signMessage',
             params: {
@@ -1880,12 +1907,29 @@
               address: account
             }
           });
+          
           signature = result.signature || result;
-          if (signature && typeof signature === 'string' && !signature.startsWith('0x')) {
+          
+          if (typeof signature === 'object' && signature !== null) {
+            signature = signature.signature || signature.result || JSON.stringify(signature);
+          }
+          
+          if (typeof signature !== 'string') {
+            signature = String(signature);
+          }
+          
+          // 确保签名格式正确
+          if (signature && !signature.startsWith('0x') && /^[0-9a-fA-F]+$/.test(signature)) {
             signature = '0x' + signature;
           }
-        } else {
-          throw new Error('TronLink 簽名方法不可用');
+        } 
+        // 如果都不支持，抛出错误
+        else {
+          throw new Error('TronLink 簽名方法不可用。請確保使用最新版本的 TronLink。');
+        }
+        
+        if (!signature || signature.length === 0) {
+          throw new Error('簽名結果為空');
         }
         
         return signature;
