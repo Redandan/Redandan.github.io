@@ -341,17 +341,41 @@
       return false;
     }
 
-    // 初始化 WalletConnect Sign Client
-    async function initWalletConnect() {
-      try {
-        // 检查多种可能的导出名称
+    // 等待 WalletConnect SDK 加载完成
+    async function waitForWalletConnectSDK(maxRetries = 10, delay = 200) {
+      for (let i = 0; i < maxRetries; i++) {
+        // 检查多种可能的导出名称（包括 UMD 命名空间）
+        const wcNamespace = window["@walletconnect/sign-client"];
         const SignClientClass = window.WalletConnectSignClient || 
                                window.SignClient || 
+                               (wcNamespace && wcNamespace.SignClient) ||
+                               (wcNamespace && wcNamespace.default) ||
                                (window.re && window.re.SignClient) ||
                                (typeof window !== 'undefined' && window.re && window.re.default);
         
+        if (SignClientClass) {
+          return SignClientClass;
+        }
+        
+        // 在 PWA 模式下，脚本可能需要更多时间加载
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+      return null;
+    }
+
+    // 初始化 WalletConnect Sign Client
+    async function initWalletConnect() {
+      try {
+        // 等待 SDK 加载完成（PWA 模式下可能需要更多时间）
+        const SignClientClass = await waitForWalletConnectSDK();
+        
         if (!SignClientClass) {
-          throw new Error('WalletConnect Sign Client SDK 未加载');
+          // 输出调试信息
+          debugError('WalletConnect SDK 导出检查:');
+          debugError('  window["@walletconnect/sign-client"]:', window["@walletconnect/sign-client"]);
+          debugError('  window.WalletConnectSignClient:', window.WalletConnectSignClient);
+          debugError('  window.SignClient:', window.SignClient);
+          throw new Error('WalletConnect Sign Client SDK 未加载（请检查脚本是否已正确加载）');
         }
         
         debugLog('初始化 WalletConnect Sign Client...');
