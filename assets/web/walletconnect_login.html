@@ -1156,6 +1156,31 @@
       }
     }
 
+    // 将文本消息转换为十六进制格式（TronLink 需要）
+    function messageToHex(message) {
+      try {
+        // 将字符串转换为 UTF-8 字节数组
+        const encoder = new TextEncoder();
+        const bytes = encoder.encode(message);
+        // 将字节数组转换为十六进制字符串
+        let hex = '';
+        for (let i = 0; i < bytes.length; i++) {
+          const byte = bytes[i];
+          hex += byte.toString(16).padStart(2, '0');
+        }
+        return '0x' + hex;
+      } catch (error) {
+        debugError('❌ 消息转十六进制失败:', error);
+        // 降级方案：使用简单的转换
+        let hex = '';
+        for (let i = 0; i < message.length; i++) {
+          const charCode = message.charCodeAt(i);
+          hex += charCode.toString(16).padStart(2, '0');
+        }
+        return '0x' + hex;
+      }
+    }
+
     // 使用 TronLink 签名
     async function signWithTronLink(nonceData) {
       debugLog('🔐 [SIGN] 使用 TronLink 签名');
@@ -1169,6 +1194,12 @@
         const account = tronWeb.defaultAddress?.base58;
         debugLog('🔐 [SIGN] TronLink 账户:', account);
         debugLog('🔐 [SIGN] Message 长度:', nonceData.message.length);
+        debugLog('🔐 [SIGN] Message 内容:', nonceData.message);
+        
+        // 将消息转换为十六进制格式（TronLink 要求）
+        const hexMessage = messageToHex(nonceData.message);
+        debugLog('🔐 [SIGN] Hex Message:', hexMessage);
+        debugLog('🔐 [SIGN] Hex Message 长度:', hexMessage.length);
         
         // 显示钱包弹窗提示
         showWalletPopupHint();
@@ -1189,25 +1220,44 @@
           let signature;
           
           if (tronWeb.trx && typeof tronWeb.trx.signMessage === 'function') {
-            // 方法 1: 使用 trx.signMessage
-            const result = await tronWeb.trx.signMessage(nonceData.message);
+            // 方法 1: 使用 trx.signMessage（需要十六进制格式）
+            debugLog('🔐 [SIGN] 使用方法 1: trx.signMessage');
+            const result = await tronWeb.trx.signMessage(hexMessage);
             signature = result.signature || result;
+            debugLog('🔐 [SIGN] 签名结果:', signature);
             // Tron 签名是 base58 或 hex，需要转换为 0x 开头的格式
             if (signature && !signature.startsWith('0x')) {
               signature = '0x' + signature;
             }
           } else if (tronWeb.request) {
-            // 方法 2: 使用 request API
-            const result = await tronWeb.request({
-              method: 'tron_signMessage',
-              params: {
-                message: nonceData.message,
-                address: account
+            // 方法 2: 使用 request API（尝试使用原始消息，如果失败则使用十六进制）
+            debugLog('🔐 [SIGN] 使用方法 2: request API');
+            try {
+              const result = await tronWeb.request({
+                method: 'tron_signMessage',
+                params: {
+                  message: hexMessage, // 也使用十六进制格式
+                  address: account
+                }
+              });
+              signature = result.signature || result;
+              if (signature && !signature.startsWith('0x')) {
+                signature = '0x' + signature;
               }
-            });
-            signature = result.signature || result;
-            if (signature && !signature.startsWith('0x')) {
-              signature = '0x' + signature;
+            } catch (requestError) {
+              debugWarn('⚠️ request API 失败，尝试使用原始消息:', requestError);
+              // 如果十六进制失败，尝试原始消息
+              const result = await tronWeb.request({
+                method: 'tron_signMessage',
+                params: {
+                  message: nonceData.message,
+                  address: account
+                }
+              });
+              signature = result.signature || result;
+              if (signature && !signature.startsWith('0x')) {
+                signature = '0x' + signature;
+              }
             }
           } else {
             throw new Error('TronLink 簽名方法不可用，請更新 TronLink 版本');
@@ -1228,6 +1278,7 @@
           clearInterval(progressInterval);
           
           debugLog('✅ [SIGN] TronLink 签名成功');
+          debugLog('✅ [SIGN] 最终签名:', signature);
           return signature;
         } catch (signRequestError) {
           clearInterval(progressInterval);
