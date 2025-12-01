@@ -6,7 +6,7 @@
   <title>連接錢包 - Agora Market</title>
   <link rel="stylesheet" href="walletconnect_login.css">
   <!-- WalletConnect Sign Client SDK -->
-  <script src="https://unpkg.com/@walletconnect/sign-client@2.14.0/dist/index.umd.js"></script>
+  <script src="walletconnect-sign-client.js"></script>
 </head>
 <body>
   <div class="container">
@@ -408,12 +408,18 @@
     // 初始化 WalletConnect Sign Client
     async function initWalletConnect() {
       try {
-        if (!window.WalletConnectSignClient) {
+        // 检查多种可能的导出名称
+        const SignClientClass = window.WalletConnectSignClient || 
+                               window.SignClient || 
+                               (window.re && window.re.SignClient) ||
+                               (typeof window !== 'undefined' && window.re && window.re.default);
+        
+        if (!SignClientClass) {
           throw new Error('WalletConnect Sign Client SDK 未加载');
         }
         
         debugLog('初始化 WalletConnect Sign Client...');
-        signClient = await window.WalletConnectSignClient.init({
+        signClient = await SignClientClass.init({
           projectId: CONFIG.walletConnectProjectId,
           metadata: {
             name: 'Agora Market',
