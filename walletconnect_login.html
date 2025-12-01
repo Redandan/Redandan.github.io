@@ -1201,9 +1201,17 @@
         debugLog('🔐 [SIGN] Hex Message (备用):', hexMessage);
         
         // 检查可用的签名方法
+        debugLog('🔐 [SIGN] tronWeb.trx 存在:', !!tronWeb.trx);
+        debugLog('🔐 [SIGN] signMessageV2 函数存在:', !!(tronWeb.trx && tronWeb.trx.signMessageV2));
+        debugLog('🔐 [SIGN] signMessageV2 类型检查:', !!(tronWeb.trx && typeof tronWeb.trx.signMessageV2 === 'function'));
         debugLog('🔐 [SIGN] request 可用:', !!tronWeb.request);
-        debugLog('🔐 [SIGN] signMessageV2 可用:', !!(tronWeb.trx && typeof tronWeb.trx.signMessageV2 === 'function'));
         debugLog('🔐 [SIGN] signMessage 可用:', !!(tronWeb.trx && typeof tronWeb.trx.signMessage === 'function'));
+        
+        // 决定使用哪个方法
+        const useSignMessageV2 = tronWeb.trx && typeof tronWeb.trx.signMessageV2 === 'function';
+        const useRequest = tronWeb.request;
+        debugLog('🔐 [SIGN] 将使用 signMessageV2:', useSignMessageV2);
+        debugLog('🔐 [SIGN] 将使用 request:', useRequest && !useSignMessageV2);
         
         // 显示钱包弹窗提示
         showWalletPopupHint();
@@ -1220,12 +1228,59 @@
         
         try {
           // TronLink 签名方法
-          // TronLink 推荐使用 request API，优先尝试该方法
+          // 优先使用 signMessageV2（如果可用），因为它支持明文消息且最稳定
           let signature;
           
-          if (tronWeb.request) {
-            // 方法 1: 使用 request API（TronLink 推荐方式）
-            debugLog('🔐 [SIGN] 使用方法 1: request API (TronLink 推荐)');
+          // 重新检查，确保使用正确的方法
+          const canUseSignMessageV2 = tronWeb.trx && typeof tronWeb.trx.signMessageV2 === 'function';
+          debugLog('🔐 [SIGN] 最终决定 - canUseSignMessageV2:', canUseSignMessageV2);
+          
+          if (canUseSignMessageV2) {
+            // 方法 1: 使用 signMessageV2（推荐，支持明文消息，符合 TIP-191 标准）
+            debugLog('🔐 [SIGN] ✅ 使用方法 1: trx.signMessageV2 (支持明文，推荐)');
+            
+            // 创建超时 Promise
+            const timeoutPromise = new Promise((_, reject) => {
+              setTimeout(() => {
+                debugError('❌ [SIGN] signMessageV2 签名请求超时（60秒）');
+                reject(new Error('簽名請求超時（60秒），請檢查 TronLink 是否彈出確認窗口'));
+              }, 60000);
+            });
+            
+            // 执行签名并设置超时
+            const signPromise = tronWeb.trx.signMessageV2(nonceData.message);
+            const result = await Promise.race([signPromise, timeoutPromise]);
+            
+            signature = result.signature || result;
+            debugLog('🔐 [SIGN] signMessageV2 签名结果:', signature);
+            debugLog('🔐 [SIGN] 签名结果类型:', typeof signature);
+            debugLog('🔐 [SIGN] 签名结果是否为对象:', typeof signature === 'object');
+            
+            // signMessageV2 返回的可能是对象或字符串
+            if (typeof signature === 'object' && signature !== null) {
+              // 如果是对象，尝试获取 signature 字段
+              signature = signature.signature || signature.result || JSON.stringify(signature);
+            }
+            
+            // 确保是字符串格式
+            if (typeof signature !== 'string') {
+              signature = String(signature);
+            }
+            
+            // 转换为 0x 开头的格式（如果需要）
+            if (signature && !signature.startsWith('0x')) {
+              // 检查是否已经是十六进制格式（只包含 0-9a-fA-F）
+              if (/^[0-9a-fA-F]+$/.test(signature)) {
+                signature = '0x' + signature;
+              } else {
+                // 如果不是纯十六进制，可能是 base58 或其他格式，保持原样
+                debugWarn('⚠️ 签名格式不是标准十六进制，保持原样:', signature);
+              }
+            }
+            debugLog('🔐 [SIGN] 最终签名:', signature);
+          } else if (tronWeb.request) {
+            // 方法 2: 使用 request API（降级方案）
+            debugLog('🔐 [SIGN] ⚠️ 使用方法 2: request API (降级方案，因为 signMessageV2 不可用)');
             try {
               // 尝试使用原始消息
               const result = await tronWeb.request({
@@ -1238,42 +1293,10 @@
               signature = result.signature || result;
               debugLog('🔐 [SIGN] request API 使用原始消息成功');
             } catch (requestError) {
-              debugWarn('⚠️ request API 原始消息失败，尝试十六进制:', requestError);
-              // 如果原始消息失败，尝试十六进制
-              try {
-                const result = await tronWeb.request({
-                  method: 'tron_signMessage',
-                  params: {
-                    message: hexMessage,
-                    address: account
-                  }
-                });
-                signature = result.signature || result;
-                debugLog('🔐 [SIGN] request API 使用十六进制成功');
-              } catch (hexError) {
-                debugWarn('⚠️ request API 十六进制也失败，尝试不带 address:', hexError);
-                // 尝试不带 address 参数
-                const result = await tronWeb.request({
-                  method: 'tron_signMessage',
-                  params: {
-                    message: nonceData.message
-                  }
-                });
-                signature = result.signature || result;
-                debugLog('🔐 [SIGN] request API 不带 address 成功');
-              }
+              debugWarn('⚠️ request API 失败:', requestError);
+              throw new Error('request API 不支持 tron_signMessage 方法');
             }
             // 确保签名格式正确
-            if (signature && typeof signature === 'string' && !signature.startsWith('0x')) {
-              signature = '0x' + signature;
-            }
-          } else if (tronWeb.trx && typeof tronWeb.trx.signMessageV2 === 'function') {
-            // 方法 2: 使用 signMessageV2（支持明文消息，符合 TIP-191 标准）
-            debugLog('🔐 [SIGN] 使用方法 2: trx.signMessageV2 (支持明文)');
-            const result = await tronWeb.trx.signMessageV2(nonceData.message);
-            signature = result.signature || result;
-            debugLog('🔐 [SIGN] 签名结果:', signature);
-            // signMessageV2 返回的签名可能需要转换为 0x 开头的格式
             if (signature && typeof signature === 'string' && !signature.startsWith('0x')) {
               signature = '0x' + signature;
             }
@@ -1281,17 +1304,20 @@
             throw new Error('TronLink 簽名方法不可用，請確保已安裝並解鎖 TronLink，或更新至最新版本');
           }
           
-          const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => {
-              debugError('❌ [SIGN] TronLink 签名请求超时（60秒）');
-              reject(new Error('簽名請求超時（60秒），請檢查 TronLink 是否彈出確認窗口'));
-            }, 60000);
-          });
-          
-          signature = await Promise.race([
-            Promise.resolve(signature),
-            timeoutPromise
-          ]);
+          // 如果使用 request API，需要设置超时
+          if (tronWeb.request && !signature) {
+            const timeoutPromise = new Promise((_, reject) => {
+              setTimeout(() => {
+                debugError('❌ [SIGN] TronLink 签名请求超时（60秒）');
+                reject(new Error('簽名請求超時（60秒），請檢查 TronLink 是否彈出確認窗口'));
+              }, 60000);
+            });
+            
+            signature = await Promise.race([
+              Promise.resolve(signature),
+              timeoutPromise
+            ]);
+          }
           
           clearInterval(progressInterval);
           
