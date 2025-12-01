@@ -4,618 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>連接錢包 - Agora Market</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background: #f5f5f5;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      transition: background-color 0.3s ease;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      body {
-        background: #1a1a1a;
-      }
-    }
-
-    .container {
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
-      max-width: 500px;
-      width: 100%;
-      padding: 0;
-      overflow: hidden;
-      transition: background-color 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .container {
-        background: #2a2a2a;
-        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
-      }
-    }
-
-    /* 页面容器 */
-    .page {
-      display: none;
-      padding: 32px;
-    }
-
-    .page.active {
-      display: block;
-    }
-
-    /* 标题区域 */
-    .page-header {
-      text-align: center;
-      margin-bottom: 32px;
-    }
-
-    .page-title {
-      font-size: 24px;
-      font-weight: 600;
-      color: #1a1a1a;
-      margin-bottom: 8px;
-      transition: color 0.3s ease;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .page-title {
-        color: #ffffff;
-      }
-    }
-
-    .page-subtitle {
-      font-size: 14px;
-      color: #666;
-      line-height: 1.5;
-      margin-bottom: 8px;
-      transition: color 0.3s ease;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .page-subtitle {
-        color: #b0b0b0;
-      }
-    }
-
-    .page-description {
-      font-size: 14px;
-      color: #999;
-      line-height: 1.5;
-      transition: color 0.3s ease;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .page-description {
-        color: #888;
-      }
-    }
-
-    /* 区块标题 */
-    .section-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: #1a1a1a;
-      margin-bottom: 12px;
-      margin-top: 24px;
-      transition: color 0.3s ease;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .section-title {
-        color: #ffffff;
-      }
-    }
-
-    .section-title:first-child {
-      margin-top: 0;
-    }
-
-    /* 钱包按钮列表 */
-    .wallet-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 24px;
-    }
-
-    .wallet-button {
-      display: flex;
-      align-items: center;
-      padding: 16px;
-      background: white;
-      border: 1px solid #e0e0e0;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-align: left;
-      position: relative;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .wallet-button {
-        background: #333;
-        border-color: #444;
-      }
-    }
-
-    .wallet-button:hover {
-      border-color: #3b99fc;
-      background: #f5f9ff;
-      transform: translateY(-1px);
-      box-shadow: 0 2px 8px rgba(59, 153, 252, 0.1);
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .wallet-button:hover {
-        background: #3a3a3a;
-        border-color: #3b99fc;
-        box-shadow: 0 2px 8px rgba(59, 153, 252, 0.2);
-      }
-    }
-
-    .wallet-button:active {
-      transform: translateY(0);
-    }
-
-    .wallet-icon {
-      width: 28px;
-      height: 28px;
-      font-size: 28px;
-      margin-right: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .wallet-icon img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-
-    .wallet-info {
-      flex: 1;
-    }
-
-    .wallet-name {
-      font-size: 17px;
-      font-weight: 500;
-      color: #1a1a1a;
-      margin-bottom: 2px;
-      transition: color 0.3s ease;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .wallet-name {
-        color: #ffffff;
-      }
-    }
-
-    .wallet-badge {
-      display: inline-block;
-      font-size: 12px;
-      color: #4caf50;
-      background: #e8f5e9;
-      padding: 2px 8px;
-      border-radius: 4px;
-      margin-left: 8px;
-    }
-
-    .wallet-type {
-      font-size: 14px;
-      color: #999;
-      transition: color 0.3s ease;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .wallet-type {
-        color: #888;
-      }
-    }
-
-    /* 主要CTA按钮 */
-    .primary-button {
-      width: 100%;
-      padding: 16px;
-      background: linear-gradient(135deg, #3b99fc 0%, #2e7ce8 100%);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-size: 17px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      margin-top: 24px;
-    }
-
-    .primary-button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(59, 153, 252, 0.3);
-    }
-
-    .primary-button:active {
-      transform: translateY(0);
-    }
-
-    .primary-button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    /* QR Code 页面 */
-    .qr-container {
-      text-align: center;
-      margin: 32px 0;
-    }
-
-    .qr-box {
-      width: 260px;
-      height: 260px;
-      margin: 0 auto;
-      padding: 20px;
-      background: white;
-      border: 1px solid #e0e0e0;
-      border-radius: 16px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background-color 0.3s ease, border-color 0.3s ease;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .qr-box {
-        background: #333;
-        border-color: #444;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-      }
-    }
-
-    #qrcode {
-      width: 100%;
-      height: 100%;
-    }
-
-    .qr-expiry {
-      font-size: 12px;
-      color: #999;
-      margin-top: 12px;
-      transition: color 0.3s ease;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .qr-expiry {
-        color: #888;
-      }
-    }
-
-    .qr-refresh {
-      margin-top: 16px;
-      background: none;
-      border: 1px solid #e0e0e0;
-      color: #666;
-      padding: 8px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      transition: all 0.2s;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .qr-refresh {
-        border-color: #444;
-        color: #b0b0b0;
-      }
-    }
-
-    .qr-refresh:hover {
-      border-color: #3b99fc;
-      color: #3b99fc;
-    }
-
-    .qr-steps {
-      text-align: left;
-      margin-top: 32px;
-      padding: 20px;
-      background: #f9f9f9;
-      border-radius: 12px;
-    }
-
-    .qr-steps-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: #1a1a1a;
-      margin-bottom: 12px;
-    }
-
-    .qr-steps-list {
-      list-style: none;
-      padding: 0;
-    }
-
-    .qr-steps-list li {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 8px;
-      padding-left: 24px;
-      position: relative;
-    }
-
-    .qr-steps-list li:before {
-      content: counter(step);
-      counter-increment: step;
-      position: absolute;
-      left: 0;
-      width: 20px;
-      height: 20px;
-      background: #3b99fc;
-      color: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    .qr-steps-list {
-      counter-reset: step;
-    }
-
-    .wallet-icons {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      margin-top: 16px;
-      flex-wrap: wrap;
-    }
-
-    .wallet-icon-small {
-      width: 32px;
-      height: 32px;
-      font-size: 32px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .wallet-icon-small img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-
-    /* Deep Link 页面 */
-    .deeplink-container {
-      text-align: center;
-      margin: 32px 0;
-    }
-
-    .deeplink-icon {
-      width: 64px;
-      height: 64px;
-      font-size: 64px;
-      margin: 0 auto 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .deeplink-icon img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-
-    .deeplink-button {
-      width: 100%;
-      padding: 16px;
-      background: linear-gradient(135deg, #3b99fc 0%, #2e7ce8 100%);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-size: 17px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      margin-top: 24px;
-    }
-
-    .deeplink-button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(59, 153, 252, 0.3);
-    }
-
-    .deeplink-download {
-      margin-top: 24px;
-      font-size: 14px;
-      color: #666;
-      transition: color 0.3s ease;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .deeplink-download {
-        color: #b0b0b0;
-      }
-    }
-
-    .deeplink-download a {
-      color: #3b99fc;
-      text-decoration: none;
-    }
-
-    .deeplink-download a:hover {
-      text-decoration: underline;
-    }
-
-    /* 返回按钮 */
-    .back-button {
-      background: none;
-      border: none;
-      color: #3b99fc;
-      font-size: 14px;
-      cursor: pointer;
-      padding: 8px 0;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      margin-top: 24px;
-      transition: color 0.3s ease;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .back-button {
-        color: #64b5f6;
-      }
-    }
-
-    .back-button:hover {
-      text-decoration: underline;
-    }
-
-    /* 状态提示 */
-    .status {
-      padding: 12px 16px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      font-size: 14px;
-      display: none;
-      transition: background-color 0.3s ease, color 0.3s ease;
-    }
-
-    .status.info {
-      background: #e3f2fd;
-      color: #1976d2;
-      display: block;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .status.info {
-        background: #1e3a5f;
-        color: #64b5f6;
-      }
-    }
-
-    .status.success {
-      background: #e8f5e9;
-      color: #388e3c;
-      display: block;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .status.success {
-        background: #1b5e20;
-        color: #81c784;
-      }
-    }
-
-    .status.error {
-      background: #ffebee;
-      color: #d32f2f;
-      display: block;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .status.error {
-        background: #5f1a1a;
-        color: #e57373;
-      }
-    }
-
-    .loading {
-      display: inline-block;
-      width: 16px;
-      height: 16px;
-      border: 2px solid #f3f3f3;
-      border-top: 2px solid #3b99fc;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-right: 8px;
-      vertical-align: middle;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    /* 钱包信息显示 */
-    .wallet-info-display {
-      margin-top: 20px;
-      padding: 16px;
-      background: #f9f9f9;
-      border-radius: 8px;
-      display: none;
-      transition: background-color 0.3s ease;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .wallet-info-display {
-        background: #333;
-      }
-    }
-
-    .wallet-address {
-      font-family: monospace;
-      font-size: 14px;
-      color: #333;
-      word-break: break-all;
-      transition: color 0.3s ease;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .wallet-address {
-        color: #ffffff;
-      }
-    }
-
-    /* Fallback 区域 */
-    .fallback-section {
-      margin-top: 32px;
-      padding-top: 24px;
-      border-top: 1px solid #e0e0e0;
-      transition: border-color 0.3s ease;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .fallback-section {
-        border-top-color: #444;
-      }
-    }
-
-    .fallback-text {
-      font-size: 14px;
-      color: #999;
-      margin-bottom: 16px;
-      text-align: center;
-      transition: color 0.3s ease;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .fallback-text {
-        color: #888;
-      }
-    }
-  </style>
-  <!-- QRCode.js for generating QR codes (local) -->
-  <script src="qrcode.min.js"></script>
+  <link rel="stylesheet" href="walletconnect_login.css">
 </head>
 <body>
   <div class="container">
@@ -645,11 +34,6 @@
         <div id="mobileWalletsList" class="wallet-list"></div>
       </div>
 
-      <!-- 冷錢包 / QR 錢包登入 -->
-      <div id="coldWalletsSection" style="display: none;">
-        <div class="section-title">冷錢包 / 掃描登入</div>
-        <div id="coldWalletsList" class="wallet-list"></div>
-      </div>
 
     </div>
 
@@ -705,7 +89,7 @@
       if (DEBUG) console.warn(...args);
     }
 
-    // 全局变量（简化版，只保留 TronLink）
+    // 全局变量
     let isTronLink = false;
     let tronWeb = null;
     let currentDeepLinkWallet = null;
@@ -728,45 +112,6 @@
     // 检测是否在移动设备
     function isMobileDevice() {
       return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    }
-    
-    // 检测 TronLink App 是否已安装（通过尝试打开 Universal Link）
-    async function checkTronLinkAppInstalled() {
-      return new Promise((resolve) => {
-        const timeout = setTimeout(() => resolve(false), 1000);
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        iframe.src = 'tronlink://';
-        document.body.appendChild(iframe);
-        
-        // 将事件处理函数提取到外部作用域，以便在 setTimeout 中也能访问
-        let onBlur = null;
-        let cleanupDone = false;
-        
-        const cleanup = () => {
-          if (cleanupDone) return;
-          cleanupDone = true;
-          clearTimeout(timeout);
-          if (iframe.parentNode) {
-            document.body.removeChild(iframe);
-          }
-          if (onBlur) {
-            window.removeEventListener('blur', onBlur);
-          }
-        };
-        
-        onBlur = () => {
-          cleanup();
-          resolve(true);
-        };
-        
-        window.addEventListener('blur', onBlur);
-        
-        setTimeout(() => {
-          cleanup();
-          resolve(false);
-        }, 2000);
-      });
     }
     
     // 授权状态管理（LocalStorage）
@@ -810,15 +155,14 @@
       }
     };
 
-    // 钱包配置（简化版，只保留 TronLink）
+    // 钱包配置
     const WALLET_CONFIG = {
       installed: [
         { id: 'tronlink', name: 'TronLink', icon: 'assets/icons/TronLink_icon.jpg', type: 'tron', installUrl: 'https://www.tronlink.org/' },
       ],
       mobile: [
         { id: 'tronlink-app', name: 'TronLink App', icon: 'assets/icons/TronLink_icon.jpg', deepLink: 'tronlink://', type: 'tron', installUrl: 'https://www.tronlink.org/' },
-      ],
-      cold: []
+      ]
     };
 
     // 页面切换
@@ -880,22 +224,36 @@
       document.getElementById('status').style.display = 'none';
     }
 
-    // 检测已安装的钱包（优化版，支持 PWA 模式下的异步检测）
+    // 检测已安装的钱包
     async function getInstalledWallets() {
       const installed = {};
       
-      // 对于 TronLink，在 PWA 模式下需要等待更长时间
+      // 对于 TronLink，检测浏览器扩展
       const checkTronLink = async () => {
-        // 在 PWA 模式下，等待最多 2 秒让 TronLink 注入
+        // 立即检查 window.tronLink 对象（浏览器扩展会注入这个对象）
+        if (window.tronLink) {
+          debugLog('检测到 window.tronLink 对象');
+          return true;
+        }
+        
+        // 检查 window.tronWeb（新版本 TronLink）
+        if (window.tronWeb) {
+          debugLog('检测到 window.tronWeb');
+          return true;
+        }
+        
+        // 在 PWA/移动设备模式下，等待最多 2 秒让 TronLink 注入
         if (isPWAMode() || isMobileDevice()) {
           for (let i = 0; i < 20; i++) {
-            if (window.tronWeb || (window.tronLink && window.tronLink.tronWeb)) {
+            if (window.tronLink || window.tronWeb) {
+              debugLog('等待后检测到 TronLink (第 ' + (i + 1) + ' 次)');
               return true;
             }
             await new Promise((resolve) => setTimeout(resolve, 100));
           }
         }
-        return window.tronWeb || (window.tronLink && window.tronLink.tronWeb);
+        
+        return false;
       };
       
       for (const wallet of WALLET_CONFIG.installed) {
@@ -903,6 +261,7 @@
           // TronLink 需要异步检测
           if (await checkTronLink()) {
             installed[wallet.id] = true;
+            debugLog('TronLink 浏览器扩展已安装');
           }
         }
       }
@@ -945,7 +304,7 @@
       return types[type] || '';
     }
 
-    // 初始化钱包选择器（优化版，PWA 模式下优先显示相关选项）
+    // 初始化钱包选择器
     async function initWalletSelector() {
       const installed = await getInstalledWallets();
       const installedList = WALLET_CONFIG.installed.filter(w => installed[w.id]);
@@ -984,25 +343,21 @@
       });
       mobileSection.style.display = 'block';
 
-      // 渲染冷钱包（PWA 模式下优先显示 TronLink 扫描）
-      const coldSection = document.getElementById('coldWalletsSection');
-      const coldListEl = document.getElementById('coldWalletsList');
-      coldListEl.innerHTML = '';
-      
-      const coldWallets = [...WALLET_CONFIG.cold];
-      
-      coldWallets.forEach(wallet => {
-        coldListEl.appendChild(renderWalletButton(wallet));
-      });
-      coldSection.style.display = 'block';
     }
 
-    // 打开 TronLink App（使用更可靠的方式，参考 SunSwap）
+    // 打开 TronLink App（使用真正的 deep link）
     function openTronLinkApp() {
       try {
+        // 获取当前页面的 URL
+        const currentUrl = encodeURIComponent(window.location.href);
+        // 使用 TronLink 的 open_url deep link 格式
+        const deepLink = `tronlink://open_url?url=${currentUrl}`;
+        
+        debugLog('尝试打开 TronLink App，deep link:', deepLink);
+        
         // 方法1: 使用隐藏的 <a> 标签（最可靠的方式）
         const link = document.createElement('a');
-        link.href = 'tronlink://';
+        link.href = deepLink;
         link.style.display = 'none';
         document.body.appendChild(link);
         link.click();
@@ -1011,12 +366,13 @@
         // 方法2: 备用方案 - 使用 window.location
         setTimeout(() => {
           if (document.hasFocus()) {
-            window.location.href = 'tronlink://';
+            window.location.href = deepLink;
           }
         }, 100);
       } catch (e) {
-        // 方法3: 最后的备用方案
+        // 方法3: 最后的备用方案 - 使用简单的 tronlink://
         try {
+          debugWarn('使用备用 deep link 方案');
           window.location.href = 'tronlink://';
         } catch (e2) {
           debugError('所有方式都無法打開 TronLink App:', e2);
@@ -1024,52 +380,62 @@
       }
     }
 
-    // 处理钱包点击（优化版，支持 PWA 智能检测，参考 SunSwap 方式）
+    // 处理钱包点击
     async function handleWalletClick(wallet, isInstalled) {
       try {
-        // TronLink 特殊处理：在 PWA/移动设备模式下，优先尝试唤起 App（类似 SunSwap）
-        if ((wallet.id === 'tronlink-app' || wallet.id === 'tronlink') && (isPWAMode() || isMobileDevice())) {
-          // 先快速检测是否有扩展（最多等待 500ms）
-          let hasExtension = false;
-          for (let i = 0; i < 5; i++) {
-            if (window.tronWeb || (window.tronLink && window.tronLink.tronWeb)) {
-              hasExtension = true;
-              break;
-            }
-            await new Promise((resolve) => setTimeout(resolve, 100));
-          }
+        debugLog('处理钱包点击:', wallet.id, 'isInstalled:', isInstalled);
+        
+        // TronLink 处理逻辑
+        if (wallet.id === 'tronlink-app' || wallet.id === 'tronlink') {
+          // 先检测是否有浏览器扩展
+          updateStatus('info', '正在檢測 TronLink 瀏覽器擴展...');
+          const installedWallets = await getInstalledWallets();
+          const hasExtension = installedWallets['tronlink'];
           
-          // 如果检测到扩展，直接连接
+          debugLog('TronLink 扩展检测结果:', hasExtension);
+          
+          // 如果检测到浏览器扩展，直接连接
           if (hasExtension) {
-            debugLog('PWA/移动设备模式下检测到 TronLink 扩展，直接连接');
+            debugLog('检测到 TronLink 浏览器扩展，直接连接');
+            updateStatus('info', '檢測到 TronLink 瀏覽器擴展，正在連接...');
             await connectTronLink();
             return;
           }
           
-          // 如果没有检测到扩展，在 PWA/移动设备上优先尝试唤起 App（类似 SunSwap）
-          debugLog('PWA/移动设备模式下未检测到扩展，尝试唤起 TronLink App（类似 SunSwap）');
-          updateStatus('info', '正在打開 TronLink App...');
-          showDeepLinkPage(wallet);
-          
-          // 立即尝试唤起 App
-          openTronLinkApp();
-          
-          // 设置超时检测
-          setTimeout(() => {
-            if (document.hasFocus()) {
-              updateStatus('error', '無法打開 TronLink App。請確保已安裝 TronLink 手機 App。');
-              const downloadEl = document.getElementById('deeplinkDownload');
-              if (downloadEl) {
-                downloadEl.style.display = 'block';
-              }
-              if (wallet.installUrl) {
-                const downloadLink = document.getElementById('deeplinkDownloadLink');
-                if (downloadLink) {
-                  downloadLink.href = wallet.installUrl;
+          // 如果没有检测到扩展，在移动设备/PWA 上尝试唤起 App
+          if (isPWAMode() || isMobileDevice()) {
+            debugLog('未检测到扩展，在移动设备/PWA 模式下尝试唤起 TronLink App');
+            updateStatus('info', '正在打開 TronLink App...');
+            showDeepLinkPage(wallet);
+            
+            // 使用真正的 deep link 唤起 App
+            openTronLinkApp();
+            
+            // 设置超时检测
+            setTimeout(() => {
+              if (document.hasFocus()) {
+                updateStatus('error', '無法打開 TronLink App。請確保已安裝 TronLink 手機 App。');
+                const downloadEl = document.getElementById('deeplinkDownload');
+                if (downloadEl) {
+                  downloadEl.style.display = 'block';
+                }
+                if (wallet.installUrl) {
+                  const downloadLink = document.getElementById('deeplinkDownloadLink');
+                  if (downloadLink) {
+                    downloadLink.href = wallet.installUrl;
+                  }
                 }
               }
-            }
-          }, 3000);
+            }, 3000);
+            return;
+          }
+          
+          // 桌面浏览器，提示安装扩展
+          updateStatus('error', '未檢測到 TronLink 瀏覽器擴展。請安裝 TronLink 瀏覽器擴展後重試。');
+          const installUrl = wallet.installUrl || 'https://www.tronlink.org/';
+          if (confirm('未檢測到 TronLink 擴展。是否前往下載頁面？')) {
+            window.open(installUrl, '_blank');
+          }
           return;
         }
         
@@ -1080,45 +446,13 @@
           }
           return;
         }
-        
-        // 对于其他情况，先重新检测是否已安装对应的钱包
-        updateStatus('info', '正在檢測可用錢包...');
-        const installedWallets = await getInstalledWallets();
-        
-        // 检查是否有对应的已安装钱包
-        let detectedWallet = null;
-        if (wallet.id === 'tronlink-app' || wallet.id === 'tronlink') {
-          // 检查是否有扩展
-          if (installedWallets['tronlink']) {
-            detectedWallet = WALLET_CONFIG.installed.find(w => w.id === 'tronlink');
-          } else {
-            // 非 PWA/移动设备，提示安装扩展
-            updateStatus('error', '未檢測到 TronLink 擴展。請安裝 TronLink 瀏覽器擴展後重試。');
-            const installUrl = wallet.installUrl || 'https://www.tronlink.org/';
-            if (confirm('未檢測到 TronLink 擴展。是否前往下載頁面？')) {
-              window.open(installUrl, '_blank');
-            }
-            return;
-          }
-        }
-        
-        // 如果检测到已安装的钱包，优先使用已安装的钱包
-        if (detectedWallet) {
-          debugLog('檢測到已安裝的錢包，使用已安裝版本:', detectedWallet.name);
-          updateStatus('info', `檢測到已安裝的 ${detectedWallet.name}，正在連接...`);
-          
-          if (detectedWallet.type === 'tron') {
-            await connectTronLink();
-          }
-          return;
-        }
       } catch (error) {
         debugError('處理錢包點擊失敗:', error);
         updateStatus('error', '連接失敗: ' + error.message);
       }
     }
 
-    // 打开 Deep Link（简化版，只支持 TronLink）
+    // 打开 Deep Link
     async function openDeepLinkApp() {
       if (!currentDeepLinkWallet) {
         updateStatus('error', '缺少連接信息');
@@ -1127,22 +461,19 @@
       
       const wallet = currentDeepLinkWallet;
       
-      // 只支持 TronLink
-      if (wallet.id === 'tronlink-app' || wallet.id === 'tronlink') {
-        // 使用更可靠的方式打开 App
-        openTronLinkApp();
-        
-        // 设置超时检测
-        setTimeout(() => {
-          if (document.hasFocus()) {
-            updateStatus('error', '無法打開 TronLink App。請確保已安裝 TronLink 手機 App，或使用 TronLink 瀏覽器擴展。');
-            const downloadEl = document.getElementById('deeplinkDownload');
-            if (downloadEl) {
-              downloadEl.style.display = 'block';
-            }
+      // 使用更可靠的方式打开 App
+      openTronLinkApp();
+      
+      // 设置超时检测
+      setTimeout(() => {
+        if (document.hasFocus()) {
+          updateStatus('error', '無法打開 TronLink App。請確保已安裝 TronLink 手機 App，或使用 TronLink 瀏覽器擴展。');
+          const downloadEl = document.getElementById('deeplinkDownload');
+          if (downloadEl) {
+            downloadEl.style.display = 'block';
           }
-        }, 3000);
-      }
+        }
+      }, 3000);
     }
 
 
@@ -1153,7 +484,7 @@
       walletAddress.textContent = address;
     }
 
-    // 连接 TronLink（完全参考 SunSwap 方式 - 直接尝试，不依赖检测）
+    // 连接 TronLink
     async function connectTronLink() {
       try {
         // 检查是否有保存的授权状态（仅在 PWA 模式下）
@@ -1177,7 +508,6 @@
           }
         }
         
-        // SunSwap 方式：直接尝试连接，不先检测
         updateStatus('info', '正在連接 TronLink...');
         debugLog('開始連接 TronLink，當前狀態:', {
           hasTronWeb: !!window.tronWeb,
@@ -1266,7 +596,7 @@
           throw new Error('未檢測到 TronLink。請安裝 TronLink 瀏覽器擴展。');
         }
 
-        // 等待 TronWeb 就绪（参考 SunSwap 方式）
+        // 等待 TronWeb 就绪
         if (!tronWeb.ready) {
           await new Promise((resolve, reject) => {
             const checkReady = setInterval(() => {
@@ -1286,12 +616,11 @@
 
         isTronLink = true;
 
-        // 请求账户连接（参考 SunSwap 方式）
+        // 请求账户连接
         let account = tronWeb.defaultAddress?.base58;
         
         if (!account) {
           try {
-            // 使用 request 方法请求账户（类似 SunSwap）
             if (tronWeb.request) {
               await tronWeb.request({
                 method: 'tron_requestAccounts'
@@ -1344,7 +673,7 @@
     }
 
 
-    // 登录流程（保持原有逻辑）
+    // 登录流程
     async function performLogin(walletAddress) {
       try {
         updateStatus('info', '步驟 1/4: 獲取驗證信息');
@@ -1424,7 +753,7 @@
       }
     }
 
-    // TronLink 签名（参考 SunSwap 实现方式）
+    // TronLink 签名
     async function signWithTronLink(nonceData) {
       try {
         if (!tronWeb || !tronWeb.ready) {
@@ -1441,7 +770,7 @@
 
         let signature;
         
-        // 优先使用 signMessageV2（参考 SunSwap 方式）
+        // 优先使用 signMessageV2
         if (tronWeb.trx && typeof tronWeb.trx.signMessageV2 === 'function') {
           const timeoutPromise = new Promise((_, reject) => {
             setTimeout(() => {
@@ -1468,7 +797,7 @@
             signature = '0x' + signature;
           }
         } 
-        // 使用 request 方法（参考 SunSwap 方式）
+        // 使用 request 方法
         else if (tronWeb.request && typeof tronWeb.request === 'function') {
           const result = await tronWeb.request({
             method: 'tron_signMessage',
@@ -1519,35 +848,6 @@
       }
     }
 
-    async function signWithWalletConnect(nonceData) {
-      let chainId = 'eip155:1';
-      const availableChains = session.namespaces.eip155.chains || [];
-      
-      if (availableChains.includes('eip155:1')) {
-        chainId = 'eip155:1';
-      } else if (availableChains.includes('eip155:56')) {
-        chainId = 'eip155:56';
-      } else if (availableChains.length > 0) {
-        chainId = availableChains[0];
-      }
-      
-      const account = session.namespaces.eip155.accounts[0];
-      
-      try {
-        const signature = await signClient.request({
-          topic: session.topic,
-          chainId: chainId,
-          request: {
-            method: 'personal_sign',
-            params: [nonceData.message, account]
-          }
-        });
-        return signature;
-      } catch (signError) {
-        debugError('❌ WalletConnect 签名失败:', signError);
-        throw signError;
-      }
-    }
 
     async function verifyAndLogin(walletAddress, signature, nonceData) {
       updateStatus('info', '簽名成功，正在驗證...');
@@ -1646,7 +946,7 @@
       }
     }
 
-    // 初始化（优化版，支持 PWA 自动重连）
+    // 初始化
     async function init() {
       try {
         updateStatus('info', '正在檢測可用錢包...');
@@ -1672,7 +972,7 @@
       }
     }
 
-    // 监听 TronLink 注入事件（PWA 模式下很重要）
+    // 监听 TronLink 注入事件
     function setupTronLinkListener() {
       // 定期检查 TronLink 注入（作为备用方案）
       if (isPWAMode()) {
