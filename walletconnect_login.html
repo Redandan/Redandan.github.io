@@ -954,24 +954,42 @@
       document.getElementById('status').style.display = 'none';
     }
 
-    // 检测已安装的钱包
-    function getInstalledWallets() {
+    // 检测已安装的钱包（优化版，支持 PWA 模式下的异步检测）
+    async function getInstalledWallets() {
       const installed = {};
-      WALLET_CONFIG.installed.forEach(wallet => {
+      
+      // 对于 TronLink，在 PWA 模式下需要等待更长时间
+      const checkTronLink = async () => {
+        // 在 PWA 模式下，等待最多 2 秒让 TronLink 注入
+        if (isPWAMode() || isMobileDevice()) {
+          for (let i = 0; i < 20; i++) {
+            if (window.tronWeb || (window.tronLink && window.tronLink.tronWeb)) {
+              return true;
+            }
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
+        }
+        return window.tronWeb || (window.tronLink && window.tronLink.tronWeb);
+      };
+      
+      for (const wallet of WALLET_CONFIG.installed) {
         if (wallet.id === 'metamask' && window.ethereum?.isMetaMask) {
           installed[wallet.id] = true;
         } else if (wallet.id === 'coinbase' && window.ethereum?.isCoinbaseWallet) {
           installed[wallet.id] = true;
         } else if (wallet.id === 'okx' && window.okxwallet) {
           installed[wallet.id] = true;
-        } else if (wallet.id === 'tronlink' && (window.tronWeb || window.tronLink)) {
-          installed[wallet.id] = true;
+        } else if (wallet.id === 'tronlink') {
+          // TronLink 需要异步检测
+          if (await checkTronLink()) {
+            installed[wallet.id] = true;
+          }
         } else if (wallet.id === 'trust' && window.ethereum?.isTrust) {
           installed[wallet.id] = true;
         } else if (wallet.id === 'bitget' && window.bitkeep) {
           installed[wallet.id] = true;
         }
-      });
+      }
       return installed;
     }
 
@@ -1012,8 +1030,8 @@
     }
 
     // 初始化钱包选择器（优化版，PWA 模式下优先显示相关选项）
-    function initWalletSelector() {
-      const installed = getInstalledWallets();
+    async function initWalletSelector() {
+      const installed = await getInstalledWallets();
       const installedList = WALLET_CONFIG.installed.filter(w => installed[w.id]);
       const isPWA = isPWAMode();
       const isMobile = isMobileDevice();
@@ -1080,7 +1098,7 @@
         
         // 对于手机钱包和冷钱包，先重新检测是否已安装对应的钱包
         updateStatus('info', '正在檢測可用錢包...');
-        const installedWallets = getInstalledWallets();
+        const installedWallets = await getInstalledWallets();
         
         // 检查是否有对应的已安装钱包
         let detectedWallet = null;
@@ -1596,29 +1614,62 @@
           }
         }
         
-        // 检测 TronLink（参考 SunSwap 方式）
+        // 检测 TronLink（参考 SunSwap 方式，PWA 模式下需要更长的等待时间）
         updateStatus('info', '正在連接 TronLink...');
         
-        // 等待 TronLink 加载（最多等待 3 秒）
+        // 在 PWA 模式下，等待更长时间让 TronLink 注入（最多等待 5 秒）
+        const maxWaitTime = isPWAMode() ? 50 : 30;
         let tronWebDetected = false;
-        for (let i = 0; i < 30; i++) {
+        
+        for (let i = 0; i < maxWaitTime; i++) {
+          // 检查 window.tronWeb（新版本）
           if (window.tronWeb) {
             tronWeb = window.tronWeb;
             tronWebDetected = true;
+            debugLog('檢測到 window.tronWeb');
             break;
-          } else if (window.tronLink && window.tronLink.tronWeb) {
+          } 
+          // 检查 window.tronLink.tronWeb（旧版本）
+          else if (window.tronLink && window.tronLink.tronWeb) {
             tronWeb = window.tronLink.tronWeb;
             tronWebDetected = true;
+            debugLog('檢測到 window.tronLink.tronWeb');
             break;
           }
+          
+          // 在 PWA 模式下，每 100ms 检查一次
           await new Promise((resolve) => setTimeout(resolve, 100));
         }
         
         if (!tronWebDetected || !tronWeb) {
-          if (isPWAMode() || isMobileDevice()) {
-            throw new Error('未檢測到 TronLink。請安裝 TronLink 瀏覽器擴展或使用 TronLink 手機 App。');
+          // 在 PWA 模式下，如果检测不到扩展，尝试触发 TronLink 注入
+          if (isPWAMode()) {
+            debugLog('PWA 模式下未檢測到 TronLink，嘗試觸發注入...');
+            // 尝试通过访问 tronWeb 属性来触发注入
+            try {
+              if (window.tronLink && typeof window.tronLink.request === 'function') {
+                // 尝试调用 request 方法，可能会触发 TronLink 注入
+                await window.tronLink.request({ method: 'tron_requestAccounts' }).catch(() => {});
+                // 再次检查
+                if (window.tronWeb) {
+                  tronWeb = window.tronWeb;
+                  tronWebDetected = true;
+                } else if (window.tronLink && window.tronLink.tronWeb) {
+                  tronWeb = window.tronLink.tronWeb;
+                  tronWebDetected = true;
+                }
+              }
+            } catch (e) {
+              debugWarn('觸發 TronLink 注入失敗:', e);
+            }
           }
-          throw new Error('未檢測到 TronLink。請安裝 TronLink 瀏覽器擴展。');
+          
+          if (!tronWebDetected || !tronWeb) {
+            if (isPWAMode() || isMobileDevice()) {
+              throw new Error('未檢測到 TronLink。請確保已安裝並解鎖 TronLink 瀏覽器擴展，或使用 TronLink 手機 App。');
+            }
+            throw new Error('未檢測到 TronLink。請安裝 TronLink 瀏覽器擴展。');
+          }
         }
 
         // 等待 TronWeb 就绪（参考 SunSwap 方式）
@@ -2097,7 +2148,7 @@
         });
         
         // 初始化钱包选择器
-        initWalletSelector();
+        await initWalletSelector();
         
         hideStatus();
       } catch (error) {
