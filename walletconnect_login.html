@@ -1084,16 +1084,66 @@
             isBrowserExtension = true;
             await connectBrowserExtension();
           }
+          return;
         }
-        // 手机钱包 - Deep Link（优化：PWA 模式下智能检测）
-        else if (wallet.deepLink) {
+        
+        // 对于手机钱包和冷钱包，先重新检测是否已安装对应的钱包
+        updateStatus('info', '正在檢測可用錢包...');
+        const installedWallets = getInstalledWallets();
+        
+        // 检查是否有对应的已安装钱包
+        let detectedWallet = null;
+        if (wallet.id === 'tronlink-app' || wallet.id === 'tronlink' || wallet.id === 'tronlink-scan') {
+          // TronLink 相关钱包
+          if (installedWallets['tronlink']) {
+            detectedWallet = WALLET_CONFIG.installed.find(w => w.id === 'tronlink');
+          }
+        } else if (wallet.id === 'metamask-mobile') {
+          // MetaMask Mobile
+          if (installedWallets['metamask']) {
+            detectedWallet = WALLET_CONFIG.installed.find(w => w.id === 'metamask');
+          }
+        } else if (wallet.id === 'okx-app') {
+          // OKX App
+          if (installedWallets['okx']) {
+            detectedWallet = WALLET_CONFIG.installed.find(w => w.id === 'okx');
+          }
+        } else if (wallet.id === 'trust-app') {
+          // Trust Wallet App
+          if (installedWallets['trust']) {
+            detectedWallet = WALLET_CONFIG.installed.find(w => w.id === 'trust');
+          }
+        } else if (wallet.id === 'bitget-app') {
+          // Bitget App
+          if (installedWallets['bitget']) {
+            detectedWallet = WALLET_CONFIG.installed.find(w => w.id === 'bitget');
+          }
+        }
+        
+        // 如果检测到已安装的钱包，优先使用已安装的钱包
+        if (detectedWallet) {
+          debugLog('檢測到已安裝的錢包，使用已安裝版本:', detectedWallet.name);
+          updateStatus('info', `檢測到已安裝的 ${detectedWallet.name}，正在連接...`);
+          
+          if (detectedWallet.type === 'tron') {
+            await connectTronLink();
+          } else if (detectedWallet.type === 'extension') {
+            ethereumProvider = window.ethereum;
+            isBrowserExtension = true;
+            await connectBrowserExtension();
+          }
+          return;
+        }
+        
+        // 手机钱包 - Deep Link（只有在检测不到已安装钱包时才使用）
+        if (wallet.deepLink) {
           // 如果是 TronLink 且在 PWA/移动设备上，先检测 App 是否安装
           if ((wallet.id === 'tronlink-app' || wallet.id === 'tronlink') && (isPWAMode() || isMobileDevice())) {
             updateStatus('info', '正在檢測 TronLink App...');
-            const isInstalled = await checkTronLinkAppInstalled();
+            const isAppInstalled = await checkTronLinkAppInstalled();
             
-            if (isInstalled) {
-              // App 已安装，直接使用 Deep Link
+            if (isAppInstalled) {
+              // App 已安装，使用 Deep Link
               showDeepLinkPage(wallet);
               await connectWalletConnect();
             } else {
@@ -1109,7 +1159,7 @@
             await connectWalletConnect();
           }
         }
-        // 冷钱包 - 显示 QR Code
+        // 冷钱包 - 显示 QR Code（只有在检测不到已安装钱包时才使用）
         else if (wallet.action === 'scan') {
           showQRPage();
         }
