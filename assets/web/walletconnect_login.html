@@ -795,17 +795,31 @@
         iframe.src = 'tronlink://';
         document.body.appendChild(iframe);
         
-        window.addEventListener('blur', function onBlur() {
+        // 将事件处理函数提取到外部作用域，以便在 setTimeout 中也能访问
+        let onBlur = null;
+        let cleanupDone = false;
+        
+        const cleanup = () => {
+          if (cleanupDone) return;
+          cleanupDone = true;
           clearTimeout(timeout);
-          document.body.removeChild(iframe);
-          window.removeEventListener('blur', onBlur);
+          if (iframe.parentNode) {
+            document.body.removeChild(iframe);
+          }
+          if (onBlur) {
+            window.removeEventListener('blur', onBlur);
+          }
+        };
+        
+        onBlur = () => {
+          cleanup();
           resolve(true);
-        });
+        };
+        
+        window.addEventListener('blur', onBlur);
         
         setTimeout(() => {
-          clearTimeout(timeout);
-          document.body.removeChild(iframe);
-          window.removeEventListener('blur', onBlur);
+          cleanup();
           resolve(false);
         }, 2000);
       });
@@ -1310,7 +1324,7 @@
         updateStatus('info', '正在生成連接請求...');
 
         const { uri, approval } = await signClient.connect({
-          requiredNamespaces: {
+          optionalNamespaces: {
             eip155: {
               methods: ['personal_sign', 'eth_signTypedData'],
               chains: CONFIG.supportedChains,
