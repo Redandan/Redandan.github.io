@@ -263,20 +263,34 @@
         <button onclick="closeWalletSelector()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">&times;</button>
       </div>
       
-      <!-- 搜索框 -->
-      <div style="position: relative; margin-bottom: 20px;">
-        <input type="text" id="walletSearch" placeholder="搜索錢包" 
-               style="width: 100%; padding: 12px 40px 12px 16px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; box-sizing: border-box;"
-               oninput="filterWallets()">
-        <span style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: #999;">🔍</span>
+      <!-- 已安装的钱包区域 -->
+      <div id="installedWalletsSection" style="display: none; margin-bottom: 20px;">
+        <h4 style="margin: 0 0 12px 0; color: #666; font-size: 14px; font-weight: 500;">已安裝的錢包</h4>
+        <div id="installedWalletsList" class="wallet-grid"></div>
+        <div style="margin: 20px 0; text-align: center;">
+          <button onclick="showAllWallets()" style="background: none; border: 1px solid #e0e0e0; color: #666; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px;">
+            其他錢包
+          </button>
+        </div>
       </div>
 
-      <!-- 钱包网格 -->
-      <div id="walletList" class="wallet-grid"></div>
-      
-      <!-- 空状态 -->
-      <div id="noWalletsFound" style="display: none; text-align: center; padding: 40px; color: #999;">
-        未找到匹配的錢包
+      <!-- 所有钱包区域（默认隐藏，点击"其他钱包"后显示） -->
+      <div id="allWalletsSection" style="display: none;">
+        <!-- 搜索框 -->
+        <div style="position: relative; margin-bottom: 20px;">
+          <input type="text" id="walletSearch" placeholder="搜索錢包" 
+                 style="width: 100%; padding: 12px 40px 12px 16px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; box-sizing: border-box;"
+                 oninput="filterWallets()">
+          <span style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: #999;">🔍</span>
+        </div>
+
+        <!-- 钱包网格 -->
+        <div id="walletList" class="wallet-grid"></div>
+        
+        <!-- 空状态 -->
+        <div id="noWalletsFound" style="display: none; text-align: center; padding: 40px; color: #999;">
+          未找到匹配的錢包
+        </div>
       </div>
     </div>
 
@@ -305,7 +319,7 @@
     };
 
     // 日志级别控制（生产环境设为 false）
-    const DEBUG = true; // 开发环境：true，生产环境：false
+    const DEBUG = false; // 开发环境：true，生产环境：false
     
     // 统一的日志函数
     function debugLog(...args) {
@@ -348,14 +362,11 @@
               SignClient = wcModule.SignClient || wcModule.default || wcModule;
               
               if (SignClient && typeof SignClient.init === 'function') {
-                debugLog('✅ SignClient 已找到');
                 return SignClient;
               } else {
                 debugWarn('⚠️ SignClient 对象存在但没有 init 方法:', SignClient);
                 debugWarn('⚠️ wcModule 内容:', Object.keys(wcModule));
               }
-            } else {
-              debugLog('⏳ 等待 WalletConnect 模块加载...');
             }
             return null;
           } catch (e) {
@@ -528,18 +539,57 @@
       return installed;
     }
 
-    // 显示钱包选择器 (Uniswap 风格)
+    // 显示钱包选择器 (两层选择)
     function showWalletSelector() {
       const installed = getInstalledWallets();
-      renderWalletList(SUPPORTED_WALLETS, installed);
+      const installedList = SUPPORTED_WALLETS.filter(wallet => installed[wallet.id]);
+      
       document.getElementById('walletSelector').style.display = 'block';
+      
+      // 如果检测到已安装的钱包，显示两层选择
+      if (installedList.length > 0) {
+        // 显示已安装的钱包
+        renderInstalledWallets(installedList, installed);
+        document.getElementById('installedWalletsSection').style.display = 'block';
+        document.getElementById('allWalletsSection').style.display = 'none';
+        updateStatus('info', '請選擇要連接的錢包');
+      } else {
+        // 没有检测到已安装的钱包，直接显示所有钱包
+        renderWalletList(SUPPORTED_WALLETS, installed);
+        document.getElementById('installedWalletsSection').style.display = 'none';
+        document.getElementById('allWalletsSection').style.display = 'block';
+        document.getElementById('walletSearch').value = '';
+        updateStatus('info', '未檢測到已安裝的錢包，請選擇連接方式');
+      }
+    }
+
+    // 渲染已安装的钱包
+    function renderInstalledWallets(wallets, installed) {
+      const installedList = document.getElementById('installedWalletsList');
+      installedList.innerHTML = '';
+
+      wallets.forEach(wallet => {
+        const isInstalled = installed[wallet.id] || false;
+        const item = createWalletItem(wallet, isInstalled);
+        installedList.appendChild(item);
+      });
+    }
+
+    // 显示所有钱包（点击"其他钱包"后）
+    function showAllWallets() {
+      const installed = getInstalledWallets();
+      renderWalletList(SUPPORTED_WALLETS, installed);
+      document.getElementById('installedWalletsSection').style.display = 'none';
+      document.getElementById('allWalletsSection').style.display = 'block';
       document.getElementById('walletSearch').value = '';
-      updateStatus('info', '請選擇要連接的錢包');
     }
 
     // 关闭钱包选择器
     function closeWalletSelector() {
       document.getElementById('walletSelector').style.display = 'none';
+      // 重置到初始状态
+      document.getElementById('installedWalletsSection').style.display = 'none';
+      document.getElementById('allWalletsSection').style.display = 'none';
     }
 
     // 渲染钱包列表
@@ -674,12 +724,8 @@
           }
         });
 
-        debugLog('✅ WalletConnect SignClient 初始化成功');
-        
         // 设置事件监听器
         setupSessionListeners();
-
-        updateStatus('info', 'WalletConnect 初始化成功');
       } catch (error) {
         debugError('WalletConnect 初始化失败:', error);
         updateStatus('error', 'WalletConnect 初始化失败: ' + error.message);
@@ -743,8 +789,6 @@
         }
 
         const walletAddress = account;
-        debugLog('✅ TronLink 连接成功:', walletAddress);
-
         updateStatus('success', '錢包連接成功！');
         showWalletInfo(walletAddress);
         
@@ -754,7 +798,6 @@
           chain: 'TRC20'
         });
 
-        // 继续登录流程
         await performLogin(walletAddress);
       } catch (error) {
         debugError('連接 TronLink 失敗:', error);
@@ -796,8 +839,6 @@
         }
 
         const walletAddress = accounts[0];
-        debugLog('✅ 浏览器扩展连接成功:', walletAddress);
-
         updateStatus('success', '錢包連接成功！');
         showWalletInfo(walletAddress);
         
@@ -806,7 +847,6 @@
           isBrowserExtension: true
         });
 
-        // 继续登录流程
         await performLogin(walletAddress);
       } catch (error) {
         debugError('連接瀏覽器擴充功能失敗:', error);
@@ -872,8 +912,6 @@
         if (walletAddress) {
           updateStatus('success', '錢包連接成功！');
           showWalletInfo(walletAddress);
-          
-          // 隐藏钱包选择器
           document.getElementById('walletSelector').style.display = 'none';
           
           sendEventToFlutter('connected', { 
@@ -882,7 +920,6 @@
             isBrowserExtension: false
           });
 
-          // 继续登录流程
           await performLogin(walletAddress);
         }
       } catch (error) {
@@ -1011,18 +1048,11 @@
 
       const data = await nonceResponse.json();
       
-      debugLog('📦 后端返回的完整响应:', JSON.stringify(data, null, 2));
-      debugLog('📦 nonceData.nonce:', data.nonce);
-      debugLog('📦 nonceData.message:', data.message);
-      debugLog('📦 nonceData.timestamp:', data.timestamp);
-      debugLog('📦 nonceData 的所有键:', Object.keys(data));
       // 如果 message 存在但 nonce 不存在，尝试从 message 中提取
       if (data.message && (!data.nonce || data.nonce === '')) {
-        debugWarn('⚠️ nonce 字段不存在，尝试从 message 中提取');
         if (data.message.includes('Nonce:')) {
           const nonceMatch = data.message.match(/Nonce:\s*([^\n]+)/);
           if (nonceMatch && nonceMatch[1]) {
-            debugLog('✅ 从 message 中提取 nonce:', nonceMatch[1].trim());
             data.nonce = nonceMatch[1].trim();
           }
         }
@@ -1030,13 +1060,11 @@
       
       // 如果 message 存在但 timestamp 不存在，尝试从 message 中提取
       if (data.message && !data.timestamp) {
-        debugWarn('⚠️ timestamp 字段不存在，尝试从 message 中提取');
         if (data.message.includes('Timestamp:')) {
           const timestampMatch = data.message.match(/Timestamp:\s*([^\n]+)/);
           if (timestampMatch && timestampMatch[1]) {
             const timestamp = parseInt(timestampMatch[1].trim());
             if (!isNaN(timestamp)) {
-              debugLog('✅ 从 message 中提取 timestamp:', timestamp);
               data.timestamp = timestamp;
             }
           }
@@ -1054,12 +1082,8 @@
       
       // timestamp 是可选的
       if (!data.timestamp) {
-        debugWarn('⚠️ timestamp 不存在，使用当前时间戳');
         data.timestamp = Math.floor(Date.now() / 1000);
       }
-
-      debugLog('📝 Message 长度:', data.message?.length);
-      debugLog('📝 Message 包含换行符:', data.message?.includes('\n'));
 
       sendEventToFlutter('nonce_received', { nonce: data.nonce });
       return data;
@@ -1067,14 +1091,8 @@
 
     // 2. 签名消息
     async function signMessage(nonceData, walletAddress) {
-      showStepIndicator(2); // 步骤 2/4: 签名消息
+      showStepIndicator(2);
       updateStatus('info', '請在錢包中簽名消息...');
-      
-      debugLog('🔐 [SIGN] 开始签名流程...');
-      debugLog('🔐 [SIGN] isBrowserExtension:', isBrowserExtension);
-      debugLog('🔐 [SIGN] isTronLink:', isTronLink);
-      debugLog('🔐 [SIGN] ethereumProvider:', !!ethereumProvider);
-      debugLog('🔐 [SIGN] tronWeb:', !!tronWeb);
 
       if (isTronLink && tronWeb) {
         return await signWithTronLink(nonceData);
@@ -1087,61 +1105,32 @@
 
     // 使用浏览器扩展签名
     async function signWithBrowserExtension(nonceData) {
-      debugLog('🔐 [SIGN] 使用浏览器扩展签名');
       updateStatus('info', '請在瀏覽器擴充功能中確認簽名...');
       
       try {
         const accounts = await ethereumProvider.request({ method: 'eth_accounts' });
-        debugLog('🔐 [SIGN] 账户列表:', accounts);
-        
         if (!accounts || accounts.length === 0) {
           throw new Error('未找到連接的帳戶');
         }
         
         const account = accounts[0];
-        debugLog('🔐 [SIGN] 使用账户:', account);
-        debugLog('🔐 [SIGN] Message 长度:', nonceData.message.length);
-        
-        // 显示钱包弹窗提示
         showWalletPopupHint();
         
-        // 添加进度提示
-        let progressCount = 0;
-        const progressInterval = setInterval(() => {
-          progressCount++;
-          debugLog(`⏳ [SIGN] 仍在等待用户确认签名... (${progressCount * 5}秒)`);
-          if (progressCount % 2 === 0) {
-            updateStatus('info', `請在錢包彈窗中確認簽名... (已等待 ${progressCount * 5}秒)`);
-          }
-        }, 5000);
+        // 添加超时处理
+        const signPromise = ethereumProvider.request({
+          method: 'personal_sign',
+          params: [nonceData.message, account]
+        });
         
-        try {
-          const signPromise = ethereumProvider.request({
-            method: 'personal_sign',
-            params: [nonceData.message, account]
-          });
-          
-          const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => {
-              debugError('❌ [SIGN] 签名请求超时（60秒）');
-              reject(new Error('簽名請求超時（60秒），請檢查錢包是否彈出確認窗口'));
-            }, 60000);
-          });
-          
-          const signature = await Promise.race([signPromise, timeoutPromise]);
-          clearInterval(progressInterval);
-          
-          debugLog('✅ [SIGN] 签名成功');
-          return signature;
-        } catch (signRequestError) {
-          clearInterval(progressInterval);
-          throw signRequestError;
-        }
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => {
+            reject(new Error('簽名請求超時（60秒），請檢查錢包是否彈出確認窗口'));
+          }, 60000);
+        });
+        
+        const signature = await Promise.race([signPromise, timeoutPromise]);
+        return signature;
       } catch (signError) {
-        debugError('❌ [SIGN] 签名失败:', signError);
-        debugError('❌ [SIGN] 错误代码:', signError.code);
-        debugError('❌ [SIGN] 错误消息:', signError.message);
-        
         // 用户拒绝
         if (signError.code === 4001 || 
             signError.message?.includes('rejected') || 
@@ -1151,39 +1140,14 @@
           sendEventToFlutter('error', { error: '用戶取消簽名' });
           throw new Error('USER_CANCELLED');
         }
-        
+        debugError('❌ 浏览器扩展签名失败:', signError);
         throw signError;
       }
     }
 
-    // 将文本消息转换为十六进制格式（TronLink 需要）
-    function messageToHex(message) {
-      try {
-        // 将字符串转换为 UTF-8 字节数组
-        const encoder = new TextEncoder();
-        const bytes = encoder.encode(message);
-        // 将字节数组转换为十六进制字符串
-        let hex = '';
-        for (let i = 0; i < bytes.length; i++) {
-          const byte = bytes[i];
-          hex += byte.toString(16).padStart(2, '0');
-        }
-        return '0x' + hex;
-      } catch (error) {
-        debugError('❌ 消息转十六进制失败:', error);
-        // 降级方案：使用简单的转换
-        let hex = '';
-        for (let i = 0; i < message.length; i++) {
-          const charCode = message.charCodeAt(i);
-          hex += charCode.toString(16).padStart(2, '0');
-        }
-        return '0x' + hex;
-      }
-    }
 
     // 使用 TronLink 签名
     async function signWithTronLink(nonceData) {
-      debugLog('🔐 [SIGN] 使用 TronLink 签名');
       updateStatus('info', '請在 TronLink 中確認簽名...');
       
       try {
@@ -1192,147 +1156,57 @@
         }
 
         const account = tronWeb.defaultAddress?.base58;
-        debugLog('🔐 [SIGN] TronLink 账户:', account);
-        debugLog('🔐 [SIGN] Message 长度:', nonceData.message.length);
-        debugLog('🔐 [SIGN] Message 内容:', nonceData.message);
-        
-        // 准备十六进制消息（作为备用方案）
-        const hexMessage = messageToHex(nonceData.message);
-        debugLog('🔐 [SIGN] Hex Message (备用):', hexMessage);
-        
-        // 检查可用的签名方法
-        debugLog('🔐 [SIGN] tronWeb.trx 存在:', !!tronWeb.trx);
-        debugLog('🔐 [SIGN] signMessageV2 函数存在:', !!(tronWeb.trx && tronWeb.trx.signMessageV2));
-        debugLog('🔐 [SIGN] signMessageV2 类型检查:', !!(tronWeb.trx && typeof tronWeb.trx.signMessageV2 === 'function'));
-        debugLog('🔐 [SIGN] request 可用:', !!tronWeb.request);
-        debugLog('🔐 [SIGN] signMessage 可用:', !!(tronWeb.trx && typeof tronWeb.trx.signMessage === 'function'));
-        
-        // 决定使用哪个方法
-        const useSignMessageV2 = tronWeb.trx && typeof tronWeb.trx.signMessageV2 === 'function';
-        const useRequest = tronWeb.request;
-        debugLog('🔐 [SIGN] 将使用 signMessageV2:', useSignMessageV2);
-        debugLog('🔐 [SIGN] 将使用 request:', useRequest && !useSignMessageV2);
-        
-        // 显示钱包弹窗提示
         showWalletPopupHint();
         
-        // 添加进度提示
-        let progressCount = 0;
-        const progressInterval = setInterval(() => {
-          progressCount++;
-          debugLog(`⏳ [SIGN] 仍在等待用户确认签名... (${progressCount * 5}秒)`);
-          if (progressCount % 2 === 0) {
-            updateStatus('info', `請在 TronLink 彈窗中確認簽名... (已等待 ${progressCount * 5}秒)`);
-          }
-        }, 5000);
+        // 优先使用 signMessageV2（推荐方法）
+        const canUseSignMessageV2 = tronWeb.trx && typeof tronWeb.trx.signMessageV2 === 'function';
         
-        try {
-          // TronLink 签名方法
-          // 优先使用 signMessageV2（如果可用），因为它支持明文消息且最稳定
-          let signature;
+        let signature;
+        if (canUseSignMessageV2) {
+          // 使用 signMessageV2（支持明文消息，符合 TIP-191 标准）
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => {
+              reject(new Error('簽名請求超時（60秒），請檢查 TronLink 是否彈出確認窗口'));
+            }, 60000);
+          });
           
-          // 重新检查，确保使用正确的方法
-          const canUseSignMessageV2 = tronWeb.trx && typeof tronWeb.trx.signMessageV2 === 'function';
-          debugLog('🔐 [SIGN] 最终决定 - canUseSignMessageV2:', canUseSignMessageV2);
+          const signPromise = tronWeb.trx.signMessageV2(nonceData.message);
+          const result = await Promise.race([signPromise, timeoutPromise]);
           
-          if (canUseSignMessageV2) {
-            // 方法 1: 使用 signMessageV2（推荐，支持明文消息，符合 TIP-191 标准）
-            debugLog('🔐 [SIGN] ✅ 使用方法 1: trx.signMessageV2 (支持明文，推荐)');
-            
-            // 创建超时 Promise
-            const timeoutPromise = new Promise((_, reject) => {
-              setTimeout(() => {
-                debugError('❌ [SIGN] signMessageV2 签名请求超时（60秒）');
-                reject(new Error('簽名請求超時（60秒），請檢查 TronLink 是否彈出確認窗口'));
-              }, 60000);
-            });
-            
-            // 执行签名并设置超时
-            const signPromise = tronWeb.trx.signMessageV2(nonceData.message);
-            const result = await Promise.race([signPromise, timeoutPromise]);
-            
-            signature = result.signature || result;
-            debugLog('🔐 [SIGN] signMessageV2 签名结果:', signature);
-            debugLog('🔐 [SIGN] 签名结果类型:', typeof signature);
-            debugLog('🔐 [SIGN] 签名结果是否为对象:', typeof signature === 'object');
-            
-            // signMessageV2 返回的可能是对象或字符串
-            if (typeof signature === 'object' && signature !== null) {
-              // 如果是对象，尝试获取 signature 字段
-              signature = signature.signature || signature.result || JSON.stringify(signature);
-            }
-            
-            // 确保是字符串格式
-            if (typeof signature !== 'string') {
-              signature = String(signature);
-            }
-            
-            // 转换为 0x 开头的格式（如果需要）
-            if (signature && !signature.startsWith('0x')) {
-              // 检查是否已经是十六进制格式（只包含 0-9a-fA-F）
-              if (/^[0-9a-fA-F]+$/.test(signature)) {
-                signature = '0x' + signature;
-              } else {
-                // 如果不是纯十六进制，可能是 base58 或其他格式，保持原样
-                debugWarn('⚠️ 签名格式不是标准十六进制，保持原样:', signature);
-              }
-            }
-            debugLog('🔐 [SIGN] 最终签名:', signature);
-          } else if (tronWeb.request) {
-            // 方法 2: 使用 request API（降级方案）
-            debugLog('🔐 [SIGN] ⚠️ 使用方法 2: request API (降级方案，因为 signMessageV2 不可用)');
-            try {
-              // 尝试使用原始消息
-              const result = await tronWeb.request({
-                method: 'tron_signMessage',
-                params: {
-                  message: nonceData.message,
-                  address: account
-                }
-              });
-              signature = result.signature || result;
-              debugLog('🔐 [SIGN] request API 使用原始消息成功');
-            } catch (requestError) {
-              debugWarn('⚠️ request API 失败:', requestError);
-              throw new Error('request API 不支持 tron_signMessage 方法');
-            }
-            // 确保签名格式正确
-            if (signature && typeof signature === 'string' && !signature.startsWith('0x')) {
-              signature = '0x' + signature;
-            }
-          } else {
-            throw new Error('TronLink 簽名方法不可用，請確保已安裝並解鎖 TronLink，或更新至最新版本');
+          signature = result.signature || result;
+          
+          // 处理返回结果
+          if (typeof signature === 'object' && signature !== null) {
+            signature = signature.signature || signature.result || JSON.stringify(signature);
           }
           
-          // 如果使用 request API，需要设置超时
-          if (tronWeb.request && !signature) {
-            const timeoutPromise = new Promise((_, reject) => {
-              setTimeout(() => {
-                debugError('❌ [SIGN] TronLink 签名请求超时（60秒）');
-                reject(new Error('簽名請求超時（60秒），請檢查 TronLink 是否彈出確認窗口'));
-              }, 60000);
-            });
-            
-            signature = await Promise.race([
-              Promise.resolve(signature),
-              timeoutPromise
-            ]);
+          if (typeof signature !== 'string') {
+            signature = String(signature);
           }
           
-          clearInterval(progressInterval);
-          
-          debugLog('✅ [SIGN] TronLink 签名成功');
-          debugLog('✅ [SIGN] 最终签名:', signature);
-          return signature;
-        } catch (signRequestError) {
-          clearInterval(progressInterval);
-          throw signRequestError;
+          // 转换为 0x 开头的格式（如果需要）
+          if (signature && !signature.startsWith('0x') && /^[0-9a-fA-F]+$/.test(signature)) {
+            signature = '0x' + signature;
+          }
+        } else if (tronWeb.request) {
+          // 降级方案：使用 request API
+          const result = await tronWeb.request({
+            method: 'tron_signMessage',
+            params: {
+              message: nonceData.message,
+              address: account
+            }
+          });
+          signature = result.signature || result;
+          if (signature && typeof signature === 'string' && !signature.startsWith('0x')) {
+            signature = '0x' + signature;
+          }
+        } else {
+          throw new Error('TronLink 簽名方法不可用，請確保已安裝並解鎖 TronLink，或更新至最新版本');
         }
-      } catch (signError) {
-        debugError('❌ [SIGN] TronLink 签名失败:', signError);
-        debugError('❌ [SIGN] 错误代码:', signError.code);
-        debugError('❌ [SIGN] 错误消息:', signError.message);
         
+        return signature;
+      } catch (signError) {
         // 用户拒绝
         if (signError.code === 4001 || 
             signError.message?.includes('rejected') || 
@@ -1344,36 +1218,26 @@
           sendEventToFlutter('error', { error: '用戶取消簽名' });
           throw new Error('USER_CANCELLED');
         }
-        
+        debugError('❌ TronLink 签名失败:', signError);
         throw signError;
       }
     }
 
     // 使用 WalletConnect 签名
     async function signWithWalletConnect(nonceData) {
-      debugLog('🔐 [SIGN] 使用 WalletConnect 签名');
-      
       // 获取当前连接的链，优先使用 Ethereum 主网 (ERC20)，其次 BSC 主网 (BSC20)
-      // 只支持主网：ERC20 (eip155:1) 和 BSC20 (eip155:56)
-      let chainId = 'eip155:1'; // 默认 Ethereum 主网 (ERC20)
+      let chainId = 'eip155:1'; // 默认 Ethereum 主网
       const availableChains = session.namespaces.eip155.chains || [];
       
-      // 优先选择 Ethereum 主网 (ERC20)
       if (availableChains.includes('eip155:1')) {
-        chainId = 'eip155:1'; // Ethereum 主网 (ERC20)
+        chainId = 'eip155:1';
       } else if (availableChains.includes('eip155:56')) {
-        chainId = 'eip155:56'; // BSC 主网 (BSC20)
+        chainId = 'eip155:56';
       } else if (availableChains.length > 0) {
-        // 如果都不在支持列表中，使用第一个可用链（但应该不会发生，因为连接时已限制）
         chainId = availableChains[0];
-        debugWarn('⚠️ 使用未在主网列表中的链:', chainId);
       }
       
       const account = session.namespaces.eip155.accounts[0];
-      
-      debugLog('🔐 [SIGN] Session topic:', session.topic);
-      debugLog('🔐 [SIGN] Chain ID:', chainId);
-      debugLog('🔐 [SIGN] Account:', account);
       
       try {
         const signature = await signClient.request({
@@ -1384,11 +1248,9 @@
             params: [nonceData.message, account]
           }
         });
-        
-        debugLog('✅ [SIGN] WalletConnect 签名成功');
         return signature;
       } catch (signError) {
-        debugError('❌ [SIGN] WalletConnect 签名失败:', signError);
+        debugError('❌ WalletConnect 签名失败:', signError);
         throw signError;
       }
     }
@@ -1435,34 +1297,35 @@
         walletAddress: walletAddress
       });
       
-      debugLog('🔐 [VERIFY] 开始验证签名并登录...');
-      debugLog('🔐 [VERIFY] 请求 URL:', `${CONFIG.apiBaseUrl}/auth/wallet-connect/login`);
+      // 构建请求体
+      const requestBody = {
+        walletAddress: walletAddress,
+        signature: signature,
+        nonce: nonceData.nonce,
+        timestamp: nonceData.timestamp
+      };
+      
+      // 如果是 TronLink，添加链类型标识
+      if (isTronLink) {
+        requestBody.chain = 'TRC20';
+        requestBody.chainType = 'tron';
+      }
       
       const loginResponse = await fetch(`${CONFIG.apiBaseUrl}/auth/wallet-connect/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          walletAddress: walletAddress,
-          signature: signature,
-          nonce: nonceData.nonce,
-          timestamp: nonceData.timestamp
-        })
+        body: JSON.stringify(requestBody)
       });
-
-      debugLog('🔐 [VERIFY] 登录响应状态:', loginResponse.status);
 
       if (!loginResponse.ok) {
         const errorData = await loginResponse.json().catch(() => ({ message: loginResponse.statusText }));
-        debugError('❌ [VERIFY] 登录失败:', errorData);
+        debugError('❌ 登录失败:', errorData);
         throw new Error(errorData.message || '登錄失敗: ' + loginResponse.statusText);
       }
 
       const loginData = await loginResponse.json();
-      
-      debugLog('✅ [VERIFY] 登录响应接收成功');
-      debugLog('🔐 [VERIFY] Login data keys:', Object.keys(loginData));
       
       // 验证响应数据
       if (!loginData.token || !loginData.refreshToken) {
@@ -1475,30 +1338,24 @@
 
     // 4. 处理登录成功
     async function handleLoginSuccess(loginData) {
-      showStepIndicator(4); // 步骤 4/4: 完成
+      showStepIndicator(4);
       updateStatus('success', '登入成功！');
       
-      debugLog('✅ [LOGIN] 登录成功，发送 verified 事件');
       sendEventToFlutter('verified', {
         token: loginData.token,
         refreshToken: loginData.refreshToken,
         user: loginData.user
       });
-      debugLog('✅ [LOGIN] verified 事件已发送');
     }
 
     // 统一错误处理
     function handleLoginError(error) {
-      debugError('❌ [LOGIN] ========== 登录流程失败 ==========');
-      debugError('❌ [LOGIN] Error:', error);
-      debugError('❌ [LOGIN] Error message:', error.message);
-      debugError('❌ [LOGIN] Error stack:', error.stack);
-      debugError('❌ [LOGIN] Error code:', error.code);
-      
       // 用户取消不显示错误
       if (error.message === 'USER_CANCELLED') {
         return;
       }
+      
+      debugError('❌ 登录失败:', error);
       
       // 用户友好的错误消息
       const userFriendlyMessages = {
@@ -1538,7 +1395,6 @@
             event: event,
             data: data
           }, window.location.origin);
-          debugLog('📤 通过 postMessage 发送事件:', event, data);
         } else if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
           // 移动平台：使用 flutter_inappwebview.callHandler
           window.flutter_inappwebview.callHandler('walletConnectEvent', {
@@ -1566,11 +1422,8 @@
         return;
       }
 
-      debugLog('📡 设置 WalletConnect 事件监听器');
-
       // 监听会话更新
       signClient.on('session_update', ({ topic, params }) => {
-        debugLog('📨 Session updated:', topic, params);
         if (session && session.topic === topic) {
           session = { ...session, ...params };
           const walletAddress = getWalletAddress();
@@ -1585,28 +1438,16 @@
 
       // 监听会话删除
       signClient.on('session_delete', ({ topic }) => {
-        debugLog('📨 Session deleted:', topic);
         if (session && session.topic === topic) {
           session = null;
           sendEventToFlutter('session_disconnected', {});
           updateStatus('warning', '錢包連接已斷開');
         }
       });
-
-      // 监听会话事件 (WalletConnect v2 新特性)
-      signClient.on('session_event', ({ event, chainId }) => {
-        debugLog('📨 Session event:', event, chainId);
-      });
-
-      // 监听会话提议 (WalletConnect v2 新特性)
-      signClient.on('session_proposal', ({ id, params }) => {
-        debugLog('📨 Session proposal:', id, params);
-      });
     }
 
     // 页面加载完成后初始化
     window.addEventListener('DOMContentLoaded', async () => {
-      debugLog('🚀 页面加载完成，开始初始化...');
       await init();
     });
 
