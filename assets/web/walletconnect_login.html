@@ -997,9 +997,82 @@
       coldSection.style.display = 'block';
     }
 
-    // 处理钱包点击（优化版，支持 PWA 智能检测）
+    // 打开 TronLink App（使用更可靠的方式，参考 SunSwap）
+    function openTronLinkApp() {
+      try {
+        // 方法1: 使用隐藏的 <a> 标签（最可靠的方式）
+        const link = document.createElement('a');
+        link.href = 'tronlink://';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // 方法2: 备用方案 - 使用 window.location
+        setTimeout(() => {
+          if (document.hasFocus()) {
+            window.location.href = 'tronlink://';
+          }
+        }, 100);
+      } catch (e) {
+        // 方法3: 最后的备用方案
+        try {
+          window.location.href = 'tronlink://';
+        } catch (e2) {
+          debugError('所有方式都無法打開 TronLink App:', e2);
+        }
+      }
+    }
+
+    // 处理钱包点击（优化版，支持 PWA 智能检测，参考 SunSwap 方式）
     async function handleWalletClick(wallet, isInstalled) {
       try {
+        // TronLink 特殊处理：在 PWA/移动设备模式下，优先尝试唤起 App（类似 SunSwap）
+        if ((wallet.id === 'tronlink-app' || wallet.id === 'tronlink') && (isPWAMode() || isMobileDevice())) {
+          // 先快速检测是否有扩展（最多等待 500ms）
+          let hasExtension = false;
+          for (let i = 0; i < 5; i++) {
+            if (window.tronWeb || (window.tronLink && window.tronLink.tronWeb)) {
+              hasExtension = true;
+              break;
+            }
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
+          
+          // 如果检测到扩展，直接连接
+          if (hasExtension) {
+            debugLog('PWA/移动设备模式下检测到 TronLink 扩展，直接连接');
+            await connectTronLink();
+            return;
+          }
+          
+          // 如果没有检测到扩展，在 PWA/移动设备上优先尝试唤起 App（类似 SunSwap）
+          debugLog('PWA/移动设备模式下未检测到扩展，尝试唤起 TronLink App（类似 SunSwap）');
+          updateStatus('info', '正在打開 TronLink App...');
+          showDeepLinkPage(wallet);
+          
+          // 立即尝试唤起 App
+          openTronLinkApp();
+          
+          // 设置超时检测
+          setTimeout(() => {
+            if (document.hasFocus()) {
+              updateStatus('error', '無法打開 TronLink App。請確保已安裝 TronLink 手機 App。');
+              const downloadEl = document.getElementById('deeplinkDownload');
+              if (downloadEl) {
+                downloadEl.style.display = 'block';
+              }
+              if (wallet.installUrl) {
+                const downloadLink = document.getElementById('deeplinkDownloadLink');
+                if (downloadLink) {
+                  downloadLink.href = wallet.installUrl;
+                }
+              }
+            }
+          }, 3000);
+          return;
+        }
+        
         // 已安装的钱包 - 直接连接
         if (isInstalled) {
           if (wallet.type === 'tron') {
@@ -1008,100 +1081,22 @@
           return;
         }
         
-        // 对于手机钱包和冷钱包，先重新检测是否已安装对应的钱包
+        // 对于其他情况，先重新检测是否已安装对应的钱包
         updateStatus('info', '正在檢測可用錢包...');
         const installedWallets = await getInstalledWallets();
         
         // 检查是否有对应的已安装钱包
         let detectedWallet = null;
         if (wallet.id === 'tronlink-app' || wallet.id === 'tronlink') {
-          // TronLink 特殊处理：在 PWA 模式下，如果选择 tronlink-app，直接尝试唤起 App
-          if (wallet.id === 'tronlink-app' && (isPWAMode() || isMobileDevice())) {
-            // 在 PWA/移动设备上，选择 tronlink-app 时直接尝试唤起 App
-            updateStatus('info', '正在打開 TronLink App...');
-            showDeepLinkPage(wallet);
-            
-            try {
-              // 直接打开 TronLink App（不使用 WalletConnect）
-              window.location.href = 'tronlink://';
-              // 设置超时，如果3秒后还在当前页面，提示用户
-              setTimeout(() => {
-                if (document.hasFocus()) {
-                  updateStatus('error', '無法打開 TronLink App。請確保已安裝 TronLink 手機 App。');
-                  const downloadEl = document.getElementById('deeplinkDownload');
-                  if (downloadEl) {
-                    downloadEl.style.display = 'block';
-                  }
-                  if (wallet.installUrl) {
-                    const downloadLink = document.getElementById('deeplinkDownloadLink');
-                    if (downloadLink) {
-                      downloadLink.href = wallet.installUrl;
-                    }
-                  }
-                }
-              }, 3000);
-            } catch (e) {
-              debugError('打開 TronLink App 失敗:', e);
-              updateStatus('error', '無法打開 TronLink App。請確保已安裝 TronLink 手機 App。');
-              const downloadEl = document.getElementById('deeplinkDownload');
-              if (downloadEl) {
-                downloadEl.style.display = 'block';
-              }
-            }
-            return;
-          }
-          
-          // 其他情况：检查是否有扩展
+          // 检查是否有扩展
           if (installedWallets['tronlink']) {
             detectedWallet = WALLET_CONFIG.installed.find(w => w.id === 'tronlink');
           } else {
-            // 在 PWA 模式下，即使检测不到也允许尝试连接（参考 SunSwap 方式）
-            if (isPWAMode() && wallet.id === 'tronlink') {
-              debugLog('PWA 模式下未檢測到 TronLink，但允許嘗試連接（類似 SunSwap）');
-              // 直接尝试连接，让 connectTronLink 处理
-              await connectTronLink();
-              return;
-            }
-            
-            // 如果没有检测到扩展，在移动设备上可以尝试打开 App
-            if (isMobileDevice()) {
-              // 在移动设备上，尝试打开 TronLink App
-              updateStatus('info', '未檢測到 TronLink 擴展，正在嘗試打開 TronLink App...');
-              showDeepLinkPage(wallet);
-              
-              try {
-                window.location.href = 'tronlink://';
-                // 设置超时检测
-                setTimeout(() => {
-                  if (document.hasFocus()) {
-                    updateStatus('error', '無法打開 TronLink App。請安裝 TronLink 瀏覽器擴展或確保已安裝 TronLink 手機 App。');
-                    const downloadEl = document.getElementById('deeplinkDownload');
-                    if (downloadEl) {
-                      downloadEl.style.display = 'block';
-                    }
-                    if (wallet.installUrl) {
-                      const downloadLink = document.getElementById('deeplinkDownloadLink');
-                      if (downloadLink) {
-                        downloadLink.href = wallet.installUrl;
-                      }
-                    }
-                  }
-                }, 3000);
-              } catch (e) {
-                debugError('打開 TronLink App 失敗:', e);
-                updateStatus('error', '無法打開 TronLink App。請安裝 TronLink 瀏覽器擴展。');
-                const downloadEl = document.getElementById('deeplinkDownload');
-                if (downloadEl) {
-                  downloadEl.style.display = 'block';
-                }
-              }
-            } else {
-              // 非移动设备，提示安装扩展
-              updateStatus('error', '未檢測到 TronLink 擴展。請安裝 TronLink 瀏覽器擴展後重試。');
-              const installUrl = wallet.installUrl || 'https://www.tronlink.org/';
-              if (confirm('未檢測到 TronLink 擴展。是否前往下載頁面？')) {
-                window.open(installUrl, '_blank');
-              }
+            // 非 PWA/移动设备，提示安装扩展
+            updateStatus('error', '未檢測到 TronLink 擴展。請安裝 TronLink 瀏覽器擴展後重試。');
+            const installUrl = wallet.installUrl || 'https://www.tronlink.org/';
+            if (confirm('未檢測到 TronLink 擴展。是否前往下載頁面？')) {
+              window.open(installUrl, '_blank');
             }
             return;
           }
@@ -1114,49 +1109,6 @@
           
           if (detectedWallet.type === 'tron') {
             await connectTronLink();
-          }
-          return;
-        }
-        
-        // 手机钱包 - Deep Link（TronLink App）
-        if (wallet.deepLink && (wallet.id === 'tronlink-app' || wallet.id === 'tronlink')) {
-          // 在 PWA/移动设备上，尝试直接打开 TronLink App
-          if (isPWAMode() || isMobileDevice()) {
-            updateStatus('info', '正在打開 TronLink App...');
-            showDeepLinkPage(wallet);
-            
-            try {
-              window.location.href = 'tronlink://';
-              setTimeout(() => {
-                if (document.hasFocus()) {
-                  updateStatus('error', '無法打開 TronLink App。請確保已安裝 TronLink 手機 App，或使用 TronLink 瀏覽器擴展。');
-                  const downloadEl = document.getElementById('deeplinkDownload');
-                  if (downloadEl) {
-                    downloadEl.style.display = 'block';
-                  }
-                  if (wallet.installUrl) {
-                    const downloadLink = document.getElementById('deeplinkDownloadLink');
-                    if (downloadLink) {
-                      downloadLink.href = wallet.installUrl;
-                    }
-                  }
-                }
-              }, 3000);
-            } catch (e) {
-              debugError('打開 TronLink App 失敗:', e);
-              updateStatus('error', '無法打開 TronLink App。請使用 TronLink 瀏覽器擴展。');
-              const downloadEl = document.getElementById('deeplinkDownload');
-              if (downloadEl) {
-                downloadEl.style.display = 'block';
-              }
-            }
-          } else {
-            updateStatus('error', '請使用 TronLink 瀏覽器擴展進行連接。');
-            if (wallet.installUrl) {
-              if (confirm('未檢測到 TronLink 擴展。是否前往下載頁面？')) {
-                window.open(wallet.installUrl, '_blank');
-              }
-            }
           }
           return;
         }
@@ -1177,8 +1129,8 @@
       
       // 只支持 TronLink
       if (wallet.id === 'tronlink-app' || wallet.id === 'tronlink') {
-        const deepLink = 'tronlink://';
-        window.location.href = deepLink;
+        // 使用更可靠的方式打开 App
+        openTronLinkApp();
         
         // 设置超时检测
         setTimeout(() => {
