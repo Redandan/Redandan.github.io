@@ -616,8 +616,6 @@
   </style>
   <!-- QRCode.js for generating QR codes (local) -->
   <script src="qrcode.min.js"></script>
-  <!-- WalletConnect Sign Client v2 (本地文件) -->
-  <script src="walletconnect-sign-client.js"></script>
 </head>
 <body>
   <div class="container">
@@ -653,53 +651,8 @@
         <div id="coldWalletsList" class="wallet-list"></div>
       </div>
 
-      <!-- Fallback: WalletConnect -->
-      <div class="fallback-section">
-        <p class="fallback-text">若以上方式皆無法使用，你仍可使用 WalletConnect 掃描登入：</p>
-        <button class="primary-button" onclick="showQRPage()">
-          <span>使用 WalletConnect 掃描登入</span>
-        </button>
-      </div>
     </div>
 
-    <!-- 页面 2: QR 扫描登录 -->
-    <div id="pageQR" class="page">
-      <div class="page-header">
-        <h1 class="page-title">使用錢包掃描以登入</h1>
-        <p class="page-subtitle">Scan with WalletConnect</p>
-        <p class="page-description">支援所有 EVM 與 TRON 錢包（TronLink / OKX / Bitget / Trust / SafePal）</p>
-      </div>
-
-      <div class="qr-container">
-        <div class="qr-box" id="qrcodeContainer">
-          <div id="qrcode"></div>
-        </div>
-        <div class="qr-expiry" id="qrExpiry">此 QR 將在 2 分鐘後過期</div>
-        <button class="qr-refresh" onclick="refreshQRCode()">🔄 重新整理 QR</button>
-      </div>
-
-      <div class="qr-steps">
-        <div class="qr-steps-title">使用步驟：</div>
-        <ol class="qr-steps-list">
-          <li>打開你的錢包 App</li>
-          <li>找到「掃描 QR」功能</li>
-          <li>掃描以建立連線</li>
-        </ol>
-      </div>
-
-      <div class="wallet-icons">
-        <span class="wallet-icon-small"><img src="assets/icons/metamask_icon.jpg" alt="MetaMask" /></span>
-        <span class="wallet-icon-small"><img src="assets/icons/TronLink_icon.jpg" alt="TronLink" /></span>
-        <span class="wallet-icon-small">🟢</span>
-        <span class="wallet-icon-small">💼</span>
-        <span class="wallet-icon-small">🛡️</span>
-        <span class="wallet-icon-small">🎯</span>
-      </div>
-
-      <button class="back-button" onclick="showSelectorPage()">
-        ← 返回錢包選擇器
-      </button>
-    </div>
 
     <!-- 页面 3: Deep Link 登录 -->
     <div id="pageDeepLink" class="page">
@@ -734,9 +687,7 @@
   <script>
     // 配置
     const CONFIG = {
-      projectId: '7412eb629501759c091220ccc09ded23',
       apiBaseUrl: 'https://agoramarketapi.purrtechllc.com/api',
-      supportedChains: ['eip155:1', 'eip155:56'],
     };
 
     // 日志级别控制
@@ -754,17 +705,10 @@
       if (DEBUG) console.warn(...args);
     }
 
-    // 全局变量
-    let signClient = null;
-    let session = null;
-    let currentUri = null;
-    let SignClient = null;
-    let isBrowserExtension = false;
-    let ethereumProvider = null;
+    // 全局变量（简化版，只保留 TronLink）
     let isTronLink = false;
     let tronWeb = null;
     let currentDeepLinkWallet = null;
-    let qrRefreshTimer = null;
     
     // PWA 环境检测
     function isPWAMode() {
@@ -866,28 +810,15 @@
       }
     };
 
-    // 钱包配置
+    // 钱包配置（简化版，只保留 TronLink）
     const WALLET_CONFIG = {
       installed: [
-        { id: 'metamask', name: 'MetaMask', icon: 'assets/icons/metamask_icon.jpg', type: 'extension', installUrl: 'https://metamask.io/download/' },
-        { id: 'coinbase', name: 'Coinbase Wallet', icon: '🔷', type: 'extension', installUrl: 'https://www.coinbase.com/wallet' },
-        { id: 'okx', name: 'OKX Wallet', icon: '🟢', type: 'extension', installUrl: 'https://www.okx.com/web3' },
         { id: 'tronlink', name: 'TronLink', icon: 'assets/icons/TronLink_icon.jpg', type: 'tron', installUrl: 'https://www.tronlink.org/' },
-        { id: 'trust', name: 'Trust Wallet', icon: '🛡️', type: 'extension', installUrl: 'https://trustwallet.com/browser-extension' },
-        { id: 'bitget', name: 'Bitget Wallet', icon: '💼', type: 'extension', installUrl: 'https://web3.bitget.com/' },
       ],
       mobile: [
-        { id: 'metamask-mobile', name: 'MetaMask Mobile', icon: 'assets/icons/metamask_icon.jpg', deepLink: 'metamask://wc?uri=' },
         { id: 'tronlink-app', name: 'TronLink App', icon: 'assets/icons/TronLink_icon.jpg', deepLink: 'tronlink://', type: 'tron', installUrl: 'https://www.tronlink.org/' },
-        { id: 'okx-app', name: 'OKX App', icon: '🟢', deepLink: 'okx://wc?uri=' },
-        { id: 'bitget-app', name: 'Bitget', icon: '💼', deepLink: 'bitget://wc?uri=' },
-        { id: 'trust-app', name: 'Trust Wallet', icon: '🛡️', deepLink: 'trust://wc?uri=' },
       ],
-      cold: [
-        { id: 'keystone', name: 'Keystone – 掃描登入', icon: '🔐', action: 'scan' },
-        { id: 'safepal', name: 'SafePal – 掃描登入', icon: '🎯', action: 'scan' },
-        { id: 'onekey', name: 'OneKey – 掃描登入', icon: '🔑', action: 'scan' },
-      ]
+      cold: []
     };
 
     // 页面切换
@@ -901,11 +832,6 @@
     function showSelectorPage() {
       showPage('pageSelector');
       hideStatus();
-    }
-
-    function showQRPage() {
-      showPage('pageQR');
-      connectWalletConnect();
     }
 
     function showDeepLinkPage(wallet) {
@@ -973,21 +899,11 @@
       };
       
       for (const wallet of WALLET_CONFIG.installed) {
-        if (wallet.id === 'metamask' && window.ethereum?.isMetaMask) {
-          installed[wallet.id] = true;
-        } else if (wallet.id === 'coinbase' && window.ethereum?.isCoinbaseWallet) {
-          installed[wallet.id] = true;
-        } else if (wallet.id === 'okx' && window.okxwallet) {
-          installed[wallet.id] = true;
-        } else if (wallet.id === 'tronlink') {
+        if (wallet.id === 'tronlink') {
           // TronLink 需要异步检测
           if (await checkTronLink()) {
             installed[wallet.id] = true;
           }
-        } else if (wallet.id === 'trust' && window.ethereum?.isTrust) {
-          installed[wallet.id] = true;
-        } else if (wallet.id === 'bitget' && window.bitkeep) {
-          installed[wallet.id] = true;
         }
       }
       return installed;
@@ -1088,10 +1004,6 @@
         if (isInstalled) {
           if (wallet.type === 'tron') {
             await connectTronLink();
-          } else if (wallet.type === 'extension') {
-            ethereumProvider = window.ethereum;
-            isBrowserExtension = true;
-            await connectBrowserExtension();
           }
           return;
         }
@@ -1193,26 +1105,6 @@
             }
             return;
           }
-        } else if (wallet.id === 'metamask-mobile') {
-          // MetaMask Mobile
-          if (installedWallets['metamask']) {
-            detectedWallet = WALLET_CONFIG.installed.find(w => w.id === 'metamask');
-          }
-        } else if (wallet.id === 'okx-app') {
-          // OKX App
-          if (installedWallets['okx']) {
-            detectedWallet = WALLET_CONFIG.installed.find(w => w.id === 'okx');
-          }
-        } else if (wallet.id === 'trust-app') {
-          // Trust Wallet App
-          if (installedWallets['trust']) {
-            detectedWallet = WALLET_CONFIG.installed.find(w => w.id === 'trust');
-          }
-        } else if (wallet.id === 'bitget-app') {
-          // Bitget App
-          if (installedWallets['bitget']) {
-            detectedWallet = WALLET_CONFIG.installed.find(w => w.id === 'bitget');
-          }
         }
         
         // 如果检测到已安装的钱包，优先使用已安装的钱包
@@ -1222,70 +1114,51 @@
           
           if (detectedWallet.type === 'tron') {
             await connectTronLink();
-          } else if (detectedWallet.type === 'extension') {
-            ethereumProvider = window.ethereum;
-            isBrowserExtension = true;
-            await connectBrowserExtension();
           }
           return;
         }
         
-        // 手机钱包 - Deep Link（只有在检测不到已安装钱包时才使用）
-        if (wallet.deepLink) {
-          // TronLink 特殊处理：不使用 WalletConnect，直接打开 App 或提示安装扩展
-          if (wallet.id === 'tronlink-app' || wallet.id === 'tronlink') {
-            // 在 PWA/移动设备上，尝试直接打开 TronLink App
-            if (isPWAMode() || isMobileDevice()) {
-              updateStatus('info', '正在打開 TronLink App...');
-              // 显示 Deep Link 页面
-              showDeepLinkPage(wallet);
-              
-              try {
-                // 直接打开 TronLink App（不使用 WalletConnect）
-                window.location.href = 'tronlink://';
-                // 设置超时，如果3秒后还在当前页面，提示用户
-                setTimeout(() => {
-                  if (document.hasFocus()) {
-                    updateStatus('error', '無法打開 TronLink App。請確保已安裝 TronLink 手機 App，或使用 TronLink 瀏覽器擴展。');
-                    const downloadEl = document.getElementById('deeplinkDownload');
-                    if (downloadEl) {
-                      downloadEl.style.display = 'block';
-                    }
-                    if (wallet.installUrl) {
-                      const downloadLink = document.getElementById('deeplinkDownloadLink');
-                      if (downloadLink) {
-                        downloadLink.href = wallet.installUrl;
-                      }
+        // 手机钱包 - Deep Link（TronLink App）
+        if (wallet.deepLink && (wallet.id === 'tronlink-app' || wallet.id === 'tronlink')) {
+          // 在 PWA/移动设备上，尝试直接打开 TronLink App
+          if (isPWAMode() || isMobileDevice()) {
+            updateStatus('info', '正在打開 TronLink App...');
+            showDeepLinkPage(wallet);
+            
+            try {
+              window.location.href = 'tronlink://';
+              setTimeout(() => {
+                if (document.hasFocus()) {
+                  updateStatus('error', '無法打開 TronLink App。請確保已安裝 TronLink 手機 App，或使用 TronLink 瀏覽器擴展。');
+                  const downloadEl = document.getElementById('deeplinkDownload');
+                  if (downloadEl) {
+                    downloadEl.style.display = 'block';
+                  }
+                  if (wallet.installUrl) {
+                    const downloadLink = document.getElementById('deeplinkDownloadLink');
+                    if (downloadLink) {
+                      downloadLink.href = wallet.installUrl;
                     }
                   }
-                }, 3000);
-              } catch (e) {
-                debugError('打開 TronLink App 失敗:', e);
-                updateStatus('error', '無法打開 TronLink App。請使用 TronLink 瀏覽器擴展。');
-                const downloadEl = document.getElementById('deeplinkDownload');
-                if (downloadEl) {
-                  downloadEl.style.display = 'block';
                 }
-              }
-            } else {
-              // 非移动设备，提示使用扩展
-              updateStatus('error', '請使用 TronLink 瀏覽器擴展進行連接。');
-              if (wallet.installUrl) {
-                if (confirm('未檢測到 TronLink 擴展。是否前往下載頁面？')) {
-                  window.open(wallet.installUrl, '_blank');
-                }
+              }, 3000);
+            } catch (e) {
+              debugError('打開 TronLink App 失敗:', e);
+              updateStatus('error', '無法打開 TronLink App。請使用 TronLink 瀏覽器擴展。');
+              const downloadEl = document.getElementById('deeplinkDownload');
+              if (downloadEl) {
+                downloadEl.style.display = 'block';
               }
             }
-            return;
           } else {
-            // 其他钱包使用 WalletConnect 标准流程
-            showDeepLinkPage(wallet);
-            await connectWalletConnect();
+            updateStatus('error', '請使用 TronLink 瀏覽器擴展進行連接。');
+            if (wallet.installUrl) {
+              if (confirm('未檢測到 TronLink 擴展。是否前往下載頁面？')) {
+                window.open(wallet.installUrl, '_blank');
+              }
+            }
           }
-        }
-        // 冷钱包 - 显示 QR Code（只有在检测不到已安装钱包时才使用）
-        else if (wallet.action === 'scan') {
-          showQRPage();
+          return;
         }
       } catch (error) {
         debugError('處理錢包點擊失敗:', error);
@@ -1293,7 +1166,7 @@
       }
     }
 
-    // 打开 Deep Link（优化版，TronLink 不使用 WalletConnect）
+    // 打开 Deep Link（简化版，只支持 TronLink）
     async function openDeepLinkApp() {
       if (!currentDeepLinkWallet) {
         updateStatus('error', '缺少連接信息');
@@ -1302,9 +1175,8 @@
       
       const wallet = currentDeepLinkWallet;
       
-      // TronLink 不使用 WalletConnect，直接打开 App
+      // 只支持 TronLink
       if (wallet.id === 'tronlink-app' || wallet.id === 'tronlink') {
-        // 直接打开 TronLink App（不使用 WalletConnect URI）
         const deepLink = 'tronlink://';
         window.location.href = deepLink;
         
@@ -1318,278 +1190,9 @@
             }
           }
         }, 3000);
-        return;
-      }
-      
-      // 其他钱包使用 WalletConnect Deep Link
-      if (!currentUri) {
-        updateStatus('error', '缺少連接信息');
-        return;
-      }
-      
-      const deepLink = wallet.deepLink + encodeURIComponent(currentUri);
-      window.location.href = deepLink;
-      
-      // 设置超时，如果5秒后还没跳转，显示下载链接
-      setTimeout(() => {
-        const downloadEl = document.getElementById('deeplinkDownload');
-        if (downloadEl) {
-          downloadEl.style.display = 'block';
-        }
-      }, 5000);
-      
-      // 监听页面可见性变化，检测是否成功跳转
-      let visibilityTimeout;
-      const handleVisibilityChange = () => {
-        if (document.hidden) {
-          // 页面隐藏，可能已跳转到 App
-          clearTimeout(visibilityTimeout);
-          visibilityTimeout = setTimeout(() => {
-            if (!document.hidden) {
-              // 页面重新可见，可能跳转失败
-              const downloadEl = document.getElementById('deeplinkDownload');
-              if (downloadEl) {
-                downloadEl.style.display = 'block';
-              }
-            }
-          }, 3000);
-        }
-      };
-      
-      document.addEventListener('visibilitychange', handleVisibilityChange);
-      
-      // 清理监听器
-      setTimeout(() => {
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
-      }, 10000);
-    }
-
-    // 刷新 QR Code
-    async function refreshQRCode() {
-      if (signClient && currentUri) {
-        // 断开当前连接
-        try {
-          const sessions = signClient.session.getAll();
-          sessions.forEach(s => {
-            if (s.topic) {
-              signClient.disconnect({ topic: s.topic, reason: { code: 6000, message: 'User refreshed QR' } });
-            }
-          });
-        } catch (e) {
-          debugWarn('断开连接失败:', e);
-        }
-        
-        // 重新生成 QR Code
-        await connectWalletConnect();
       }
     }
 
-    // WalletConnect 相关函数（保持原有逻辑）
-    async function waitForSignClient() {
-      return new Promise((resolve, reject) => {
-        const checkSignClient = () => {
-          try {
-            const wcModule = window['@walletconnect/sign-client'];
-            if (wcModule) {
-              SignClient = wcModule.SignClient || wcModule.default || wcModule;
-              if (SignClient && typeof SignClient.init === 'function') {
-                return SignClient;
-              }
-            }
-            return null;
-          } catch (e) {
-            debugError('检查 SignClient 时出错:', e);
-            return null;
-          }
-        };
-
-        const client = checkSignClient();
-        if (client) {
-          resolve(client);
-          return;
-        }
-
-        let attempts = 0;
-        const maxAttempts = 100;
-        const checkInterval = setInterval(() => {
-          attempts++;
-          const client = checkSignClient();
-          if (client) {
-            clearInterval(checkInterval);
-            resolve(client);
-          } else if (attempts >= maxAttempts) {
-            clearInterval(checkInterval);
-            reject(new Error('WalletConnect SignClient 加载超时'));
-          }
-        }, 100);
-      });
-    }
-
-    async function initWalletConnect() {
-      try {
-        await waitForSignClient();
-        
-        if (!SignClient) {
-          throw new Error('SignClient 未找到');
-        }
-        
-        signClient = await SignClient.init({
-          projectId: CONFIG.projectId,
-          metadata: {
-            name: 'Agora Market',
-            description: 'Agora Market DApp',
-            url: window.location.origin,
-            icons: [window.location.origin + '/favicon.png']
-          }
-        });
-
-        setupSessionListeners();
-      } catch (error) {
-        debugError('WalletConnect 初始化失败:', error);
-        throw error;
-      }
-    }
-
-    function setupSessionListeners() {
-      if (!signClient) return;
-
-      signClient.on('session_update', ({ topic, params }) => {
-        if (session && session.topic === topic) {
-          session = { ...session, ...params };
-          const walletAddress = getWalletAddress();
-          if (walletAddress) {
-            sendEventToFlutter('session_updated', {
-              walletAddress: walletAddress,
-              session: session
-            });
-          }
-        }
-      });
-
-      signClient.on('session_delete', ({ topic }) => {
-        if (session && session.topic === topic) {
-          session = null;
-          sendEventToFlutter('session_disconnected', {});
-        }
-      });
-    }
-
-    async function connectWalletConnect() {
-      try {
-        if (!signClient) {
-          updateStatus('info', '正在初始化 WalletConnect...');
-          await initWalletConnect();
-          
-          if (!signClient) {
-            throw new Error('WalletConnect 初始化失敗');
-          }
-        }
-
-        updateStatus('info', '正在生成連接請求...');
-
-        const { uri, approval } = await signClient.connect({
-          optionalNamespaces: {
-            eip155: {
-              methods: ['personal_sign', 'eth_signTypedData'],
-              chains: CONFIG.supportedChains,
-              events: ['chainChanged', 'accountsChanged']
-            }
-          }
-        });
-
-        if (uri) {
-          currentUri = uri;
-          await showQRCode(uri);
-          sendEventToFlutter('uri_generated', { uri: uri });
-          
-          // 设置 QR 过期倒计时
-          startQRExpiryTimer();
-        } else {
-          throw new Error('未能生成連接 URI');
-        }
-
-        // 等待用户批准连接
-        updateStatus('info', '等待錢包連接...');
-        session = await approval();
-
-        const walletAddress = getWalletAddress();
-        if (walletAddress) {
-          updateStatus('success', '錢包連接成功！');
-          showWalletInfo(walletAddress);
-          
-          // 保存授权状态（仅在 PWA 模式下）
-          if (isPWAMode()) {
-            AuthStorage.save(walletAddress, 'walletconnect', 'EVM');
-          }
-          
-          sendEventToFlutter('connected', { 
-            walletAddress: walletAddress,
-            session: session,
-            isBrowserExtension: false
-          });
-
-          await performLogin(walletAddress);
-        }
-      } catch (error) {
-        debugError('連接 WalletConnect 失敗:', error);
-        if (error.message && (error.message.includes('User rejected') || error.message.includes('rejected'))) {
-          updateStatus('info', '已取消連接');
-          showSelectorPage();
-          return;
-        }
-        updateStatus('error', '連接失敗: ' + error.message);
-        sendEventToFlutter('error', { error: error.message });
-      }
-    }
-
-    async function showQRCode(uri) {
-      const qrcodeDiv = document.getElementById('qrcode');
-      qrcodeDiv.innerHTML = '';
-      
-      try {
-        const qrcode = new QRCode(qrcodeDiv, {
-          text: uri,
-          width: 220,
-          height: 220,
-          colorDark: '#000000',
-          colorLight: '#FFFFFF',
-          correctLevel: QRCode.CorrectLevel.H
-        });
-      } catch (error) {
-        debugError('生成 QR Code 失败:', error);
-        qrcodeDiv.innerHTML = '<p>無法生成 QR Code</p>';
-      }
-    }
-
-    function startQRExpiryTimer() {
-      if (qrRefreshTimer) {
-        clearInterval(qrRefreshTimer);
-      }
-      
-      let seconds = 120;
-      const expiryEl = document.getElementById('qrExpiry');
-      
-      qrRefreshTimer = setInterval(() => {
-        seconds--;
-        if (seconds > 0) {
-          expiryEl.textContent = `此 QR 將在 ${Math.floor(seconds / 60)} 分 ${seconds % 60} 秒後過期`;
-        } else {
-          expiryEl.textContent = 'QR Code 已過期，請點擊重新整理';
-          clearInterval(qrRefreshTimer);
-        }
-      }, 1000);
-    }
-
-    function getWalletAddress() {
-      if (!session || !session.namespaces || !session.namespaces.eip155) {
-        return null;
-      }
-      const accounts = session.namespaces.eip155.accounts;
-      if (accounts && accounts.length > 0) {
-        return accounts[0].split(':')[2];
-      }
-      return null;
-    }
 
     function showWalletInfo(address) {
       const walletInfo = document.getElementById('walletInfo');
@@ -1598,7 +1201,7 @@
       walletAddress.textContent = address;
     }
 
-    // 连接 TronLink（参考 SunSwap 实现方式 - 直接调用 request 触发连接）
+    // 连接 TronLink（完全参考 SunSwap 方式 - 直接尝试，不依赖检测）
     async function connectTronLink() {
       try {
         // 检查是否有保存的授权状态（仅在 PWA 模式下）
@@ -1622,65 +1225,89 @@
           }
         }
         
-        // 参考 SunSwap 方式：直接尝试连接，不先检测（在 PWA 模式下更可靠）
+        // SunSwap 方式：直接尝试连接，不先检测
         updateStatus('info', '正在連接 TronLink...');
+        debugLog('開始連接 TronLink，當前狀態:', {
+          hasTronWeb: !!window.tronWeb,
+          hasTronLink: !!window.tronLink,
+          hasTronLinkTronWeb: !!(window.tronLink && window.tronLink.tronWeb),
+          isPWAMode: isPWAMode()
+        });
         
-        // 在 PWA 模式下，直接尝试调用 request 来触发 TronLink（类似 SunSwap）
-        if (isPWAMode()) {
-          debugLog('PWA 模式下直接嘗試連接 TronLink...');
-          
-          // 尝试直接调用 window.tronLink.request（如果存在）
-          if (window.tronLink && typeof window.tronLink.request === 'function') {
-            try {
-              debugLog('嘗試通過 window.tronLink.request 觸發連接...');
-              const result = await window.tronLink.request({ method: 'tron_requestAccounts' });
-              debugLog('TronLink request 結果:', result);
-              
-              // 如果成功，等待 tronWeb 注入
-              if (result && result.code === 200) {
-                // 等待 tronWeb 注入（最多等待 2 秒）
-                for (let i = 0; i < 20; i++) {
-                  if (window.tronWeb) {
-                    tronWeb = window.tronWeb;
-                    break;
-                  } else if (window.tronLink && window.tronLink.tronWeb) {
-                    tronWeb = window.tronLink.tronWeb;
-                    break;
-                  }
-                  await new Promise((resolve) => setTimeout(resolve, 100));
-                }
+        // 方法1: 尝试直接通过 window.tronLink.request 连接（PWA 模式优先）
+        if (window.tronLink && typeof window.tronLink.request === 'function') {
+          try {
+            debugLog('嘗試方法1: 通過 window.tronLink.request 連接...');
+            const result = await window.tronLink.request({ method: 'tron_requestAccounts' });
+            debugLog('window.tronLink.request 結果:', result);
+            
+            // 等待 tronWeb 注入（最多等待 3 秒）
+            for (let i = 0; i < 30; i++) {
+              if (window.tronWeb) {
+                tronWeb = window.tronWeb;
+                debugLog('通過 request 後檢測到 window.tronWeb');
+                break;
+              } else if (window.tronLink && window.tronLink.tronWeb) {
+                tronWeb = window.tronLink.tronWeb;
+                debugLog('通過 request 後檢測到 window.tronLink.tronWeb');
+                break;
               }
-            } catch (e) {
-              debugWarn('通過 request 觸發連接失敗:', e);
+              await new Promise((resolve) => setTimeout(resolve, 100));
             }
+          } catch (e) {
+            debugWarn('方法1 失敗:', e);
           }
         }
         
-        // 检测 TronLink（等待注入，最多等待 5 秒）
-        const maxWaitTime = isPWAMode() ? 50 : 30;
-        let tronWebDetected = false;
-        
-        for (let i = 0; i < maxWaitTime; i++) {
-          // 检查 window.tronWeb（新版本）
-          if (window.tronWeb) {
-            tronWeb = window.tronWeb;
-            tronWebDetected = true;
-            debugLog('檢測到 window.tronWeb');
-            break;
-          } 
-          // 检查 window.tronLink.tronWeb（旧版本）
-          else if (window.tronLink && window.tronLink.tronWeb) {
-            tronWeb = window.tronLink.tronWeb;
-            tronWebDetected = true;
-            debugLog('檢測到 window.tronLink.tronWeb');
-            break;
-          }
+        // 方法2: 检测并等待 TronLink 注入（如果方法1未成功）
+        if (!tronWeb) {
+          debugLog('方法1 未成功，嘗試方法2: 等待 TronLink 注入...');
+          const maxWaitTime = isPWAMode() ? 100 : 50; // PWA 模式下等待更久
           
-          // 每 100ms 检查一次
-          await new Promise((resolve) => setTimeout(resolve, 100));
+          for (let i = 0; i < maxWaitTime; i++) {
+            // 检查 window.tronWeb（新版本）
+            if (window.tronWeb) {
+              tronWeb = window.tronWeb;
+              debugLog('方法2 檢測到 window.tronWeb (第 ' + (i + 1) + ' 次)');
+              break;
+            } 
+            // 检查 window.tronLink.tronWeb（旧版本）
+            else if (window.tronLink && window.tronLink.tronWeb) {
+              tronWeb = window.tronLink.tronWeb;
+              debugLog('方法2 檢測到 window.tronLink.tronWeb (第 ' + (i + 1) + ' 次)');
+              break;
+            }
+            
+            // 每 100ms 检查一次
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
         }
         
-        if (!tronWebDetected || !tronWeb) {
+        // 如果还是检测不到，在 PWA 模式下尝试最后一次
+        if (!tronWeb && isPWAMode()) {
+          debugLog('方法2 未成功，PWA 模式下嘗試最後一次...');
+          // 尝试访问 window.tronLink 来触发注入
+          try {
+            if (window.tronLink) {
+              // 尝试访问各种可能的属性来触发注入
+              const _ = window.tronLink.tronWeb || window.tronLink.request || window.tronLink.isTronLink;
+              await new Promise((resolve) => setTimeout(resolve, 500));
+              
+              if (window.tronWeb) {
+                tronWeb = window.tronWeb;
+                debugLog('最後一次嘗試成功: window.tronWeb');
+              } else if (window.tronLink && window.tronLink.tronWeb) {
+                tronWeb = window.tronLink.tronWeb;
+                debugLog('最後一次嘗試成功: window.tronLink.tronWeb');
+              }
+            }
+          } catch (e) {
+            debugWarn('最後一次嘗試失敗:', e);
+          }
+        }
+        
+        if (!tronWeb) {
+          debugError('所有方法都失敗，未檢測到 TronLink');
           if (isPWAMode() || isMobileDevice()) {
             throw new Error('未檢測到 TronLink。請確保已安裝並解鎖 TronLink 瀏覽器擴展，或使用 TronLink 手機 App。');
           }
@@ -1764,44 +1391,6 @@
       }
     }
 
-    // 连接浏览器扩展
-    async function connectBrowserExtension() {
-      try {
-        if (!ethereumProvider) {
-          throw new Error('未檢測到瀏覽器擴充功能');
-        }
-
-        updateStatus('info', '正在連接瀏覽器擴充功能...');
-        isBrowserExtension = true;
-
-        const accounts = await ethereumProvider.request({
-          method: 'eth_requestAccounts'
-        });
-
-        if (!accounts || accounts.length === 0) {
-          throw new Error('用戶拒絕連接');
-        }
-
-        const walletAddress = accounts[0];
-        updateStatus('success', '錢包連接成功！');
-        showWalletInfo(walletAddress);
-        
-        sendEventToFlutter('connected', { 
-          walletAddress: walletAddress,
-          isBrowserExtension: true
-        });
-
-        await performLogin(walletAddress);
-      } catch (error) {
-        debugError('連接瀏覽器擴充功能失敗:', error);
-        if (error.code === 4001 || error.message.includes('rejected') || error.message.includes('denied')) {
-          updateStatus('info', '已取消連接');
-          return;
-        }
-        updateStatus('error', '連接失敗: ' + error.message);
-        sendEventToFlutter('error', { error: error.message });
-      }
-    }
 
     // 登录流程（保持原有逻辑）
     async function performLogin(walletAddress) {
@@ -1878,45 +1467,8 @@
 
       if (isTronLink && tronWeb) {
         return await signWithTronLink(nonceData);
-      } else if (isBrowserExtension && ethereumProvider) {
-        return await signWithBrowserExtension(nonceData);
       } else {
-        return await signWithWalletConnect(nonceData);
-      }
-    }
-
-    async function signWithBrowserExtension(nonceData) {
-      try {
-        const accounts = await ethereumProvider.request({ method: 'eth_accounts' });
-        if (!accounts || accounts.length === 0) {
-          throw new Error('未找到連接的帳戶');
-        }
-        
-        const account = accounts[0];
-        const signPromise = ethereumProvider.request({
-          method: 'personal_sign',
-          params: [nonceData.message, account]
-        });
-        
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => {
-            reject(new Error('簽名請求超時（60秒）'));
-          }, 60000);
-        });
-        
-        const signature = await Promise.race([signPromise, timeoutPromise]);
-        return signature;
-      } catch (signError) {
-        if (signError.code === 4001 || 
-            signError.message?.includes('rejected') || 
-            signError.message?.includes('denied') || 
-            signError.message?.includes('User rejected')) {
-          updateStatus('info', '簽名已取消');
-          sendEventToFlutter('error', { error: '用戶取消簽名' });
-          throw new Error('USER_CANCELLED');
-        }
-        debugError('❌ 浏览器扩展签名失败:', signError);
-        throw signError;
+        throw new Error('未找到可用的簽名方法。請使用 TronLink 連接。');
       }
     }
 
@@ -2173,8 +1725,28 @@
       }
     }
 
+    // 监听 TronLink 注入事件（PWA 模式下很重要）
+    function setupTronLinkListener() {
+      // 定期检查 TronLink 注入（作为备用方案）
+      if (isPWAMode()) {
+        const checkInterval = setInterval(() => {
+          if (window.tronWeb && !tronWeb) {
+            debugLog('定期檢查發現 TronLink (window.tronWeb)');
+            tronWeb = window.tronWeb;
+          } else if (window.tronLink && window.tronLink.tronWeb && !tronWeb) {
+            debugLog('定期檢查發現 TronLink (window.tronLink.tronWeb)');
+            tronWeb = window.tronLink.tronWeb;
+          }
+        }, 500);
+        
+        // 30 秒后清除
+        setTimeout(() => clearInterval(checkInterval), 30000);
+      }
+    }
+    
     // 页面加载完成后初始化
     window.addEventListener('DOMContentLoaded', async () => {
+      setupTronLinkListener();
       await init();
     });
 
