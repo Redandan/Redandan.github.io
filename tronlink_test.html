@@ -222,6 +222,50 @@
       cursor: pointer;
       text-decoration: underline;
     }
+
+    .log-actions {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .copy-log-btn {
+      padding: 6px 12px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .copy-log-btn:hover {
+      background: #5568d3;
+      transform: translateY(-1px);
+    }
+
+    .copy-log-btn:active {
+      transform: translateY(0);
+    }
+
+    .copy-log-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .copy-success {
+      color: #4caf50;
+      font-size: 12px;
+      margin-left: 10px;
+      animation: fadeInOut 2s;
+    }
+
+    @keyframes fadeInOut {
+      0%, 100% { opacity: 0; }
+      50% { opacity: 1; }
+    }
   </style>
   <!-- WalletConnect Sign Client SDK -->
   <script src="https://unpkg.com/@walletconnect/sign-client@2.14.0/dist/index.umd.js"></script>
@@ -267,7 +311,13 @@
       <div class="result-content" id="resultContent"></div>
     </div>
 
-    <div class="toggle-log" onclick="toggleLog()">显示/隐藏日志</div>
+    <div class="log-actions">
+      <span class="toggle-log" onclick="toggleLog()">显示/隐藏日志</span>
+      <button class="copy-log-btn" id="copyLogBtn" onclick="copyLogs()" disabled>
+        📋 复制日志
+      </button>
+      <span class="copy-success" id="copySuccess" style="display: none;">已复制到剪贴板</span>
+    </div>
     <div class="log-box" id="logBox"></div>
   </div>
 
@@ -303,6 +353,12 @@
       logBox.appendChild(logItem);
       logBox.scrollTop = logBox.scrollHeight;
       
+      // 更新复制按钮状态
+      const copyBtn = document.getElementById('copyLogBtn');
+      if (copyBtn) {
+        copyBtn.disabled = false;
+      }
+      
       console.log(`[${timestamp}] ${type.toUpperCase()}:`, message, data || '');
     }
 
@@ -310,6 +366,71 @@
       logVisible = !logVisible;
       const logBox = document.getElementById('logBox');
       logBox.classList.toggle('show', logVisible);
+      
+      // 更新复制按钮状态
+      const copyBtn = document.getElementById('copyLogBtn');
+      if (copyBtn) {
+        copyBtn.disabled = logs.length === 0;
+      }
+    }
+
+    // 复制日志到剪贴板
+    async function copyLogs() {
+      try {
+        if (logs.length === 0) {
+          log('warn', '没有日志可复制');
+          return;
+        }
+
+        // 格式化日志文本
+        const logText = logs.map(logEntry => {
+          const dataStr = logEntry.data ? ' ' + JSON.stringify(logEntry.data, null, 2) : '';
+          return `[${logEntry.timestamp}] ${logEntry.type.toUpperCase()}: ${logEntry.message}${dataStr}`;
+        }).join('\n');
+
+        // 添加标题和时间戳
+        const fullLogText = `TronLink PWA 测试日志\n生成时间: ${new Date().toLocaleString()}\n\n${logText}`;
+
+        // 使用 Clipboard API 复制
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(fullLogText);
+          showCopySuccess();
+          log('success', '日志已复制到剪贴板');
+        } else {
+          // 降级方案：使用传统方法
+          const textArea = document.createElement('textarea');
+          textArea.value = fullLogText;
+          textArea.style.position = 'fixed';
+          textArea.style.opacity = '0';
+          document.body.appendChild(textArea);
+          textArea.select();
+          
+          try {
+            document.execCommand('copy');
+            showCopySuccess();
+            log('success', '日志已复制到剪贴板（降级方案）');
+          } catch (err) {
+            log('error', '复制失败', err.message);
+            alert('复制失败，请手动选择日志内容复制');
+          } finally {
+            document.body.removeChild(textArea);
+          }
+        }
+      } catch (error) {
+        log('error', '复制日志失败', error.message);
+        alert('复制失败: ' + error.message);
+      }
+    }
+
+    // 显示复制成功提示
+    function showCopySuccess() {
+      const successEl = document.getElementById('copySuccess');
+      if (successEl) {
+        successEl.style.display = 'inline';
+        setTimeout(() => {
+          successEl.style.display = 'none';
+        }, 2000);
+      }
     }
 
     // 环境检测
@@ -804,6 +925,12 @@
       log('info', '页面加载完成');
       updateEnvironmentInfo();
       setupTronLinkListeners();
+      
+      // 初始化复制按钮状态
+      const copyBtn = document.getElementById('copyLogBtn');
+      if (copyBtn) {
+        copyBtn.disabled = logs.length === 0;
+      }
       
       // 在移动设备/PWA 模式下初始化 WalletConnect
       if (isMobileDevice() || isPWAMode()) {
