@@ -12,7 +12,7 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
       display: flex;
@@ -70,34 +70,6 @@
       font-weight: 600;
     }
 
-    .status {
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      display: inline-block;
-    }
-
-    .status.pwa {
-      background: #e3f2fd;
-      color: #1976d2;
-    }
-
-    .status.mobile {
-      background: #fff3e0;
-      color: #f57c00;
-    }
-
-    .status.desktop {
-      background: #e8f5e9;
-      color: #388e3c;
-    }
-
-    .status.extension {
-      background: #f3e5f5;
-      color: #7b1fa2;
-    }
-
     .button {
       width: 100%;
       padding: 15px;
@@ -110,10 +82,6 @@
       margin-bottom: 15px;
     }
 
-    .button:last-child {
-      margin-bottom: 0;
-    }
-
     .button-primary {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
@@ -122,19 +90,6 @@
     .button-primary:hover {
       transform: translateY(-2px);
       box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-    }
-
-    .button-primary:active {
-      transform: translateY(0);
-    }
-
-    .button-secondary {
-      background: #f5f5f5;
-      color: #333;
-    }
-
-    .button-secondary:hover {
-      background: #e0e0e0;
     }
 
     .button:disabled {
@@ -146,7 +101,6 @@
       margin-top: 20px;
       padding: 15px;
       border-radius: 10px;
-      background: #f5f5f5;
       display: none;
     }
 
@@ -162,12 +116,6 @@
     .result-box.error {
       background: #ffebee;
       border: 1px solid #f44336;
-    }
-
-    .result-title {
-      font-weight: 600;
-      margin-bottom: 10px;
-      font-size: 14px;
     }
 
     .result-content {
@@ -196,11 +144,7 @@
     .log-item {
       margin-bottom: 5px;
       padding: 5px;
-      border-left: 3px solid transparent;
-    }
-
-    .log-item.info {
-      border-left-color: #2196f3;
+      border-left: 3px solid #2196f3;
     }
 
     .log-item.success {
@@ -211,23 +155,18 @@
       border-left-color: #f44336;
     }
 
-    .log-item.warn {
-      border-left-color: #ff9800;
-    }
-
-    .toggle-log {
-      margin-top: 10px;
-      font-size: 12px;
-      color: #666;
-      cursor: pointer;
-      text-decoration: underline;
-    }
-
     .log-actions {
       margin-top: 10px;
       display: flex;
       gap: 10px;
       align-items: center;
+    }
+
+    .toggle-log {
+      font-size: 12px;
+      color: #666;
+      cursor: pointer;
+      text-decoration: underline;
     }
 
     .copy-log-btn {
@@ -238,36 +177,13 @@
       border-radius: 6px;
       font-size: 12px;
       cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .copy-log-btn:hover {
-      background: #5568d3;
-      transform: translateY(-1px);
-    }
-
-    .copy-log-btn:active {
-      transform: translateY(0);
     }
 
     .copy-log-btn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
-
-    .copy-success {
-      color: #4caf50;
-      font-size: 12px;
-      margin-left: 10px;
-      animation: fadeInOut 2s;
-    }
-
-    @keyframes fadeInOut {
-      0%, 100% { opacity: 0; }
-      50% { opacity: 1; }
-    }
   </style>
-  <!-- WalletConnect Sign Client SDK -->
   <script src="https://unpkg.com/@walletconnect/sign-client@2.14.0/dist/index.umd.js"></script>
 </head>
 <body>
@@ -277,24 +193,12 @@
 
     <div class="info-box">
       <div class="info-item">
-        <span class="info-label">环境模式:</span>
-        <span class="info-value" id="envMode">检测中...</span>
-      </div>
-      <div class="info-item">
-        <span class="info-label">设备类型:</span>
-        <span class="info-value" id="deviceType">检测中...</span>
-      </div>
-      <div class="info-item">
-        <span class="info-label">TronLink 扩展:</span>
-        <span class="info-value" id="extensionStatus">检测中...</span>
+        <span class="info-label">环境:</span>
+        <span class="info-value" id="envInfo">检测中...</span>
       </div>
       <div class="info-item">
         <span class="info-label">连接状态:</span>
         <span class="info-value" id="connectionStatus">未连接</span>
-      </div>
-      <div class="info-item">
-        <span class="info-label">WalletConnect:</span>
-        <span class="info-value" id="wcStatus">未初始化</span>
       </div>
     </div>
 
@@ -302,49 +206,33 @@
       连接 TronLink
     </button>
 
-    <button class="button button-secondary" id="disconnectBtn" onclick="handleDisconnect()" disabled>
-      断开连接
-    </button>
-
     <div class="result-box" id="resultBox">
-      <div class="result-title" id="resultTitle"></div>
       <div class="result-content" id="resultContent"></div>
     </div>
 
     <div class="log-actions">
       <span class="toggle-log" onclick="toggleLog()">显示/隐藏日志</span>
-      <button class="copy-log-btn" id="copyLogBtn" onclick="copyLogs()" disabled>
-        📋 复制日志
-      </button>
-      <span class="copy-success" id="copySuccess" style="display: none;">已复制到剪贴板</span>
+      <button class="copy-log-btn" id="copyLogBtn" onclick="copyLogs()" disabled>📋 复制日志</button>
     </div>
     <div class="log-box" id="logBox"></div>
   </div>
 
   <script>
-    // WalletConnect 配置
-    const WALLETCONNECT_CONFIG = {
+    // 配置
+    const CONFIG = {
       projectId: '7412eb629501759c091220ccc09ded23',
     };
 
-    // WalletConnect v2 相关变量
+    // 全局变量
     let signClient = null;
     let session = null;
-    let wcUri = null;
-
-    // 日志系统
     const logs = [];
     let logVisible = false;
 
+    // 日志
     function log(type, message, data = null) {
       const timestamp = new Date().toLocaleTimeString();
-      const logEntry = {
-        type,
-        message,
-        data,
-        timestamp
-      };
-      logs.push(logEntry);
+      logs.push({ type, message, data, timestamp });
       
       const logBox = document.getElementById('logBox');
       const logItem = document.createElement('div');
@@ -353,363 +241,94 @@
       logBox.appendChild(logItem);
       logBox.scrollTop = logBox.scrollHeight;
       
-      // 更新复制按钮状态
-      const copyBtn = document.getElementById('copyLogBtn');
-      if (copyBtn) {
-        copyBtn.disabled = false;
-      }
-      
+      document.getElementById('copyLogBtn').disabled = false;
       console.log(`[${timestamp}] ${type.toUpperCase()}:`, message, data || '');
     }
 
     function toggleLog() {
       logVisible = !logVisible;
-      const logBox = document.getElementById('logBox');
-      logBox.classList.toggle('show', logVisible);
-      
-      // 更新复制按钮状态
-      const copyBtn = document.getElementById('copyLogBtn');
-      if (copyBtn) {
-        copyBtn.disabled = logs.length === 0;
-      }
+      document.getElementById('logBox').classList.toggle('show', logVisible);
     }
 
-    // 复制日志到剪贴板
     async function copyLogs() {
+      if (logs.length === 0) return;
+      
+      const logText = logs.map(e => 
+        `[${e.timestamp}] ${e.type.toUpperCase()}: ${e.message}${e.data ? ' ' + JSON.stringify(e.data) : ''}`
+      ).join('\n');
+      
+      const fullText = `TronLink PWA 测试日志\n生成时间: ${new Date().toLocaleString()}\n\n${logText}`;
+      
       try {
-        if (logs.length === 0) {
-          log('warn', '没有日志可复制');
-          return;
-        }
-
-        // 格式化日志文本
-        const logText = logs.map(logEntry => {
-          const dataStr = logEntry.data ? ' ' + JSON.stringify(logEntry.data, null, 2) : '';
-          return `[${logEntry.timestamp}] ${logEntry.type.toUpperCase()}: ${logEntry.message}${dataStr}`;
-        }).join('\n');
-
-        // 添加标题和时间戳
-        const fullLogText = `TronLink PWA 测试日志\n生成时间: ${new Date().toLocaleString()}\n\n${logText}`;
-
-        // 使用 Clipboard API 复制
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          await navigator.clipboard.writeText(fullLogText);
-          showCopySuccess();
-          log('success', '日志已复制到剪贴板');
-        } else {
-          // 降级方案：使用传统方法
-          const textArea = document.createElement('textarea');
-          textArea.value = fullLogText;
-          textArea.style.position = 'fixed';
-          textArea.style.opacity = '0';
-          document.body.appendChild(textArea);
-          textArea.select();
-          
-          try {
-            document.execCommand('copy');
-            showCopySuccess();
-            log('success', '日志已复制到剪贴板（降级方案）');
-          } catch (err) {
-            log('error', '复制失败', err.message);
-            alert('复制失败，请手动选择日志内容复制');
-          } finally {
-            document.body.removeChild(textArea);
-          }
-        }
-      } catch (error) {
-        log('error', '复制日志失败', error.message);
-        alert('复制失败: ' + error.message);
-      }
-    }
-
-    // 显示复制成功提示
-    function showCopySuccess() {
-      const successEl = document.getElementById('copySuccess');
-      if (successEl) {
-        successEl.style.display = 'inline';
-        setTimeout(() => {
-          successEl.style.display = 'none';
-        }, 2000);
+        await navigator.clipboard.writeText(fullText);
+        log('success', '日志已复制');
+      } catch (e) {
+        const textArea = document.createElement('textarea');
+        textArea.value = fullText;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        log('success', '日志已复制');
       }
     }
 
     // 环境检测
     function isPWAMode() {
-      try {
-        const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-        const isFullscreen = window.matchMedia('(display-mode: fullscreen)').matches;
-        const isMinimalUI = window.matchMedia('(display-mode: minimal-ui)').matches;
-        const isIOSStandalone = window.navigator.standalone === true;
-        return isStandalone || isFullscreen || isMinimalUI || isIOSStandalone;
-      } catch (e) {
-        return false;
-      }
+      return window.matchMedia('(display-mode: standalone)').matches ||
+             window.matchMedia('(display-mode: fullscreen)').matches ||
+             window.navigator.standalone === true;
     }
 
     function isMobileDevice() {
       return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     }
 
-    function isTronLinkBrowser() {
-      return window.tronWeb && window.tronWeb.ready && 
-             window.tronWeb.defaultAddress && 
-             window.tronWeb.defaultAddress.base58;
-    }
-
-    async function checkTronLinkExtension() {
-      if (window.tronLink || window.tronWeb) {
-        return true;
-      }
-      
-      // 尝试访问 tronLink 对象来触发注入
-      try {
-        if (window.tronLink && typeof window.tronLink.request === 'function') {
-          return true;
-        }
-      } catch (e) {
-        // 忽略错误
-      }
-      
-      return false;
-    }
-
-    // 更新环境信息
-    function updateEnvironmentInfo() {
-      const pwaMode = isPWAMode();
-      const mobile = isMobileDevice();
-      const hasExtension = window.tronLink || window.tronWeb;
-      const inTronLinkBrowser = isTronLinkBrowser();
-
-      document.getElementById('envMode').innerHTML = pwaMode 
-        ? '<span class="status pwa">PWA 模式</span>' 
-        : '<span class="status desktop">浏览器模式</span>';
-      
-      document.getElementById('deviceType').innerHTML = mobile 
-        ? '<span class="status mobile">移动设备</span>' 
-        : '<span class="status desktop">桌面设备</span>';
-      
-      document.getElementById('extensionStatus').innerHTML = hasExtension 
-        ? '<span class="status extension">已安装</span>' 
-        : '<span class="status">未安装</span>';
-
-      log('info', '环境检测完成', {
-        pwaMode,
-        mobile,
-        hasExtension,
-        inTronLinkBrowser
-      });
-    }
-
-    // 连接状态
-    let connectedAddress = null;
-
-    function updateConnectionStatus(address) {
-      connectedAddress = address;
-      const statusEl = document.getElementById('connectionStatus');
-      const connectBtn = document.getElementById('connectBtn');
-      const disconnectBtn = document.getElementById('disconnectBtn');
-
-      if (address) {
-        statusEl.textContent = `已连接: ${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-        statusEl.style.color = '#4caf50';
-        connectBtn.disabled = true;
-        disconnectBtn.disabled = false;
-      } else {
-        statusEl.textContent = '未连接';
-        statusEl.style.color = '#666';
-        connectBtn.disabled = false;
-        disconnectBtn.disabled = true;
-      }
-    }
-
-    function showResult(success, title, content) {
-      const resultBox = document.getElementById('resultBox');
-      const resultTitle = document.getElementById('resultTitle');
-      const resultContent = document.getElementById('resultContent');
-
-      resultBox.className = `result-box show ${success ? 'success' : 'error'}`;
-      resultTitle.textContent = title;
-      resultContent.textContent = content;
-    }
-
-    // 连接 TronLink（浏览器扩展）
-    async function connectTronLinkExtension() {
-      try {
-        log('info', '尝试连接 TronLink 扩展...');
-
-        if (window.tronLink) {
-          log('info', '使用 window.tronLink.request');
-          const result = await window.tronLink.request({
-            method: 'tron_requestAccounts'
-          });
-          
-          if (result && result.code === 200 && result.data && result.data.length > 0) {
-            const address = result.data[0];
-            log('success', '连接成功（tronLink.request）', { address });
-            return address;
-          }
-        }
-
-        if (window.tronWeb) {
-          log('info', '使用 window.tronWeb');
-          // 等待 tronWeb ready
-          let retries = 0;
-          while (!window.tronWeb.ready && retries < 20) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            retries++;
-          }
-
-          if (window.tronWeb.ready && window.tronWeb.defaultAddress) {
-            const address = window.tronWeb.defaultAddress.base58;
-            log('success', '连接成功（tronWeb）', { address });
-            return address;
-          }
-        }
-
-        throw new Error('无法获取钱包地址');
-      } catch (error) {
-        log('error', '连接扩展失败', error.message);
-        throw error;
-      }
-    }
-
-    // 连接 TronLink（移动 App - 在 TronLink 内建浏览器中）
-    async function connectTronLinkMobile() {
-      try {
-        log('info', '尝试连接 TronLink 移动 App（内建浏览器）...');
-
-        if (isTronLinkBrowser()) {
-          if (window.tronWeb && window.tronWeb.defaultAddress) {
-            const address = window.tronWeb.defaultAddress.base58;
-            log('success', '连接成功（TronLink 内建浏览器）', { address });
-            return address;
-          }
-        }
-
-        throw new Error('不在 TronLink 内建浏览器中');
-      } catch (error) {
-        log('error', '连接移动 App 失败', error.message);
-        throw error;
-      }
-    }
-
-    // 打开 TronLink App（Deep Link）
-    // 等待 WalletConnect SDK 加载完成
-    async function waitForWalletConnectSDK(maxRetries = 10, delay = 200) {
-      for (let i = 0; i < maxRetries; i++) {
-        const wcNamespace = window["@walletconnect/sign-client"];
-        const SignClientClass = window.WalletConnectSignClient || 
-                               window.SignClient || 
-                               (wcNamespace && wcNamespace.SignClient) ||
-                               (wcNamespace && wcNamespace.default) ||
-                               (window.re && window.re.SignClient) ||
-                               (typeof window !== 'undefined' && window.re && window.re.default);
-        
-        if (SignClientClass) {
-          return SignClientClass;
-        }
-        
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
-      return null;
-    }
-
-    // 更新 WalletConnect 状态显示
-    function updateWCStatus(status) {
-      const wcStatusEl = document.getElementById('wcStatus');
-      if (wcStatusEl) {
-        wcStatusEl.textContent = status;
-      }
-    }
-
-    // 初始化 WalletConnect Sign Client
+    // 初始化 WalletConnect
     async function initWalletConnect() {
-      try {
-        log('info', '初始化 WalletConnect Sign Client...');
-        updateWCStatus('初始化中...');
-        
-        // 检查 Project ID
-        if (!WALLETCONNECT_CONFIG.projectId || WALLETCONNECT_CONFIG.projectId === 'YOUR_PROJECT_ID') {
-          const errorMsg = '请配置 WalletConnect Project ID';
-          log('error', errorMsg);
-          updateWCStatus('未配置 Project ID');
-          throw new Error(errorMsg);
-        }
-        
-        // 等待 SDK 加载完成
-        const SignClientClass = await waitForWalletConnectSDK();
-        
-        if (!SignClientClass) {
-          throw new Error('WalletConnect Sign Client SDK 未加载');
-        }
-        
-        signClient = await SignClientClass.init({
-          projectId: WALLETCONNECT_CONFIG.projectId,
-          metadata: {
-            name: 'TronLink PWA 测试',
-            description: 'TronLink PWA 测试应用',
-            url: window.location.origin,
-            icons: [`${window.location.origin}/icons/Icon-512.png`]
-          }
-        });
-        
-        log('success', 'WalletConnect Sign Client 初始化成功');
-        updateWCStatus('已就绪');
-        
-        // 设置事件监听
-        setupWalletConnectListeners();
-        
-        return signClient;
-      } catch (error) {
-        log('error', '初始化 WalletConnect 失败', error.message);
-        updateWCStatus('初始化失败');
-        throw error;
+      const SignClientClass = window.WalletConnectSignClient || 
+                             window.SignClient || 
+                             (window["@walletconnect/sign-client"]?.SignClient) ||
+                             (window["@walletconnect/sign-client"]?.default);
+      
+      if (!SignClientClass) {
+        throw new Error('WalletConnect SDK 未加载');
       }
-    }
-
-    // 设置 WalletConnect 事件监听
-    function setupWalletConnectListeners() {
-      if (!signClient) return;
       
-      signClient.on('session_proposal', async (event) => {
-        log('info', '收到 session 提案', event);
+      signClient = await SignClientClass.init({
+        projectId: CONFIG.projectId,
+        metadata: {
+          name: 'TronLink PWA 测试',
+          description: 'TronLink PWA 测试应用',
+          url: window.location.origin,
+          icons: [`${window.location.origin}/icons/Icon-512.png`]
+        }
       });
       
-      signClient.on('session_event', async (event) => {
-        log('info', '收到 session 事件', event);
-      });
-      
-      signClient.on('session_delete', async (event) => {
-        log('info', 'Session 已删除', event);
+      signClient.on('session_delete', () => {
         session = null;
         updateConnectionStatus(null);
       });
+      
+      log('success', 'WalletConnect 初始化成功');
     }
 
-    // 使用 WalletConnect v2 打开 TronLink App
-    async function openTronLinkAppWithWalletConnect() {
+    // 连接 TronLink
+    async function handleConnect() {
       try {
-        log('info', '使用 WalletConnect v2 打开 TronLink App...');
+        log('info', '开始连接...');
+        showResult(true, '连接中...');
         
-        // 确保 WalletConnect 已初始化
         if (!signClient) {
           await initWalletConnect();
         }
         
-        log('info', '生成 WalletConnect URI...');
-        showResult(true, '连接中...', '正在生成连接信息...');
-        
-        // 创建连接提案
-        // 注意：使用 optionalNamespaces 而不是 requiredNamespaces（已弃用）
-        // TronLink 支持的链格式：tron:mainnet
-        // 尝试简化配置，只包含 TronLink 必需的方法
         const { uri, approval } = await signClient.connect({
           optionalNamespaces: {
             tron: {
-              methods: [
-                'tron_requestAccounts',
-                'tron_signMessage'
-              ],
+              methods: ['tron_requestAccounts', 'tron_signMessage'],
               chains: ['tron:mainnet'],
               events: []
             }
@@ -720,271 +339,75 @@
           throw new Error('無法生成 WalletConnect URI');
         }
         
-        wcUri = uri;
-        log('success', 'WalletConnect URI 生成成功', uri);
+        log('success', 'URI 生成成功', uri);
         
-        // 构建带 URI 的 deep link
-        // TronLink 可能期望原始 URI（不编码），因为 deep link 协议通常自己处理特殊字符
-        log('info', 'WalletConnect URI (原始)', uri);
-        
-        // 验证 URI 格式
-        if (!uri || !uri.startsWith('wc:')) {
-          throw new Error('WalletConnect URI 格式无效: ' + uri);
-        }
-        
-        // 方案1: 编码 URI（优先使用）- TronLink 可能期望编码后的格式
+        // 构建 deep link（使用编码 URI）
         const encodedUri = encodeURIComponent(uri);
-        const deeplinkEncoded = `tronlink://wc?uri=${encodedUri}`;
-        log('info', 'Deep Link (编码URI)', deeplinkEncoded);
+        const deeplink = `tronlink://wc?uri=${encodedUri}`;
+        log('info', 'Deep Link', deeplink);
         
-        // 方案2: 原始 URI（备用方案）
-        const deeplinkRaw = `tronlink://wc?uri=${uri}`;
-        log('info', 'Deep Link (原始URI，不编码)', deeplinkRaw);
+        showResult(true, '正在打开 TronLink App...');
+        window.location.href = deeplink;
         
-        // ⚠️ 重要：优先使用编码后的 URI
-        const deeplink = deeplinkEncoded;  // 使用编码版本
-        log('info', '✅ 使用 Deep Link (编码URI) - 这是实际发送的格式', deeplink);
-        console.log('✅ 实际使用的 deep link (编码):', deeplink);
+        // 等待用户批准
+        session = await approval();
+        log('success', '连接已批准', session);
         
-        showResult(true, '正在打开 TronLink App', '请在 TronLink App 中批准连接...');
-        
-        // 打开 TronLink App
-        // 使用 setTimeout 确保页面状态已更新
-        setTimeout(() => {
-          try {
-            // 尝试使用编码后的 URI
-            window.location.href = deeplink;
-            log('info', '已发送 deep link 请求（编码URI）');
-            
-            // 如果 3 秒后还在当前页面，可能是 deep link 失败，尝试原始版本
-            setTimeout(() => {
-              if (document.hasFocus()) {
-                log('warn', 'Deep link 可能失败，尝试原始URI版本');
-                try {
-                  window.location.href = deeplinkRaw;
-                  log('info', '已发送 deep link 请求（原始URI）');
-                } catch (e) {
-                  log('error', '发送原始 deep link 失败', e.message);
-                }
-              }
-            }, 3000);
-          } catch (error) {
-            log('error', '发送 deep link 失败', error.message);
-            // 降级方案：尝试使用 window.open
-            try {
-              window.open(deeplink, '_blank');
-              log('info', '使用 window.open 作为降级方案');
-            } catch (e) {
-              log('error', '所有 deep link 方案都失败', e.message);
-              throw e;
-            }
-          }
-        }, 100);
-        
-        // 等待用户批准连接
-        log('info', '等待用户批准连接...');
-        try {
-          session = await approval();
-          log('success', '连接已批准，Session', session);
-          
-          // 处理 session，获取账户
-          await handleWalletConnectSession(session);
-        } catch (error) {
-          if (error.message?.includes('rejected') || error.message?.includes('User rejected')) {
-            log('warn', '用户已取消连接');
-            showResult(false, '已取消', '用户已取消连接');
-            return;
-          }
-          throw error;
-        }
-        
-      } catch (error) {
-        log('error', 'WalletConnect 连接失败', error.message);
-        showResult(false, '连接失败', error.message);
-        throw error;
-      }
-    }
-
-    // 处理 WalletConnect Session
-    async function handleWalletConnectSession(session) {
-      try {
-        log('info', '处理 WalletConnect Session', session);
-        
-        // 从 session 中提取账户地址
+        // 获取账户
         const accounts = session.namespaces?.tron?.accounts || [];
         if (accounts.length === 0) {
           throw new Error('Session 中未找到账户');
         }
         
-        // 提取地址（格式：tron:mainnet:TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t）
-        const account = accounts[0];
-        const address = account.split(':')[2]; // 提取 TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t
-        
-        log('success', '获取到钱包地址', address);
+        const address = accounts[0].split(':')[2];
         updateConnectionStatus(address);
-        showResult(true, '连接成功', `地址: ${address}`);
+        showResult(true, `连接成功: ${address}`);
+        log('success', '获取到地址', address);
         
       } catch (error) {
-        log('error', '处理 Session 失败', error.message);
-        throw error;
+        if (error.message?.includes('rejected')) {
+          log('warn', '用户已取消');
+          showResult(false, '已取消连接');
+        } else {
+          log('error', '连接失败', error.message);
+          showResult(false, '连接失败: ' + error.message);
+        }
       }
     }
 
-    // 旧版直接打开方式（保留作为备用）
-    function openTronLinkApp() {
-      try {
-        log('info', '尝试打开 TronLink App（直接方式）...');
-        const currentUrl = encodeURIComponent(window.location.href);
-        const deeplink = `tronlink://open_url?url=${currentUrl}`;
-        
-        log('info', 'Deep Link:', deeplink);
-        window.location.href = deeplink;
-        
-        // 显示提示
-        showResult(true, '正在打开 TronLink App', '请在 TronLink App 中打开此页面并连接');
-      } catch (error) {
-        log('error', '打开 App 失败', error.message);
-        showResult(false, '打开失败', error.message);
+    function updateConnectionStatus(address) {
+      const statusEl = document.getElementById('connectionStatus');
+      const connectBtn = document.getElementById('connectBtn');
+      
+      if (address) {
+        statusEl.textContent = `已连接: ${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+        statusEl.style.color = '#4caf50';
+        connectBtn.disabled = true;
+      } else {
+        statusEl.textContent = '未连接';
+        statusEl.style.color = '#666';
+        connectBtn.disabled = false;
       }
     }
 
-    // 主连接处理
-    async function handleConnect() {
-      try {
-        log('info', '开始连接流程...');
-        showResult(true, '连接中...', '正在检测 TronLink...');
-
-        // 1. 检查是否在 TronLink 内建浏览器中
-        if (isTronLinkBrowser()) {
-          log('info', '检测到 TronLink 内建浏览器');
-          const address = await connectTronLinkMobile();
-          updateConnectionStatus(address);
-          showResult(true, '连接成功', `地址: ${address}`);
-          return;
-        }
-
-        // 2. 检查是否有浏览器扩展
-        const hasExtension = await checkTronLinkExtension();
-        if (hasExtension) {
-          log('info', '检测到 TronLink 扩展');
-          const address = await connectTronLinkExtension();
-          updateConnectionStatus(address);
-          showResult(true, '连接成功', `地址: ${address}`);
-          return;
-        }
-
-        // 3. 移动设备/PWA 模式，使用 WalletConnect v2 打开 App
-        if (isMobileDevice() || isPWAMode()) {
-          log('info', '移动设备/PWA 模式，使用 WalletConnect v2 打开 TronLink App');
-          await openTronLinkAppWithWalletConnect();
-          return;
-        }
-
-        // 4. 桌面设备且无扩展
-        showResult(false, '未检测到 TronLink', '请安装 TronLink 浏览器扩展或使用移动设备');
-        log('warn', '未检测到 TronLink 扩展或 App');
-
-      } catch (error) {
-        log('error', '连接失败', error.message);
-        showResult(false, '连接失败', error.message);
-      }
-    }
-
-    // 断开连接
-    async function handleDisconnect() {
-      try {
-        log('info', '断开连接');
-        
-        // 如果有 WalletConnect session，断开它
-        if (session && signClient) {
-          try {
-            await signClient.disconnect({
-              topic: session.topic,
-              reason: {
-                code: 6000,
-                message: 'User disconnected'
-              }
-            });
-            log('success', 'WalletConnect session 已断开');
-          } catch (error) {
-            log('warn', '断开 WalletConnect session 失败', error.message);
-          }
-        }
-        
-        session = null;
-        updateConnectionStatus(null);
-        showResult(true, '已断开', '连接已断开');
-      } catch (error) {
-        log('error', '断开连接失败', error.message);
-        updateConnectionStatus(null);
-        showResult(true, '已断开', '连接已断开');
-      }
-    }
-
-    // 监听 TronLink 事件
-    function setupTronLinkListeners() {
-      // 监听账户变化
-      if (window.tronLink) {
-        window.tronLink.on('addressChange', (address) => {
-          log('info', '账户地址变化', address);
-          if (address) {
-            updateConnectionStatus(address);
-          }
-        });
-
-        window.tronLink.on('disconnect', () => {
-          log('info', 'TronLink 断开连接');
-          updateConnectionStatus(null);
-        });
-      }
-
-      // 定期检查 TronWeb（PWA 模式）
-      if (isPWAMode()) {
-        const checkInterval = setInterval(() => {
-          if (window.tronWeb && !connectedAddress) {
-            log('info', '检测到 TronWeb 注入');
-            if (window.tronWeb.defaultAddress) {
-              const address = window.tronWeb.defaultAddress.base58;
-              updateConnectionStatus(address);
-              showResult(true, '自动连接成功', `地址: ${address}`);
-              clearInterval(checkInterval);
-            }
-          }
-        }, 500);
-
-        // 30 秒后清除
-        setTimeout(() => clearInterval(checkInterval), 30000);
-      }
+    function showResult(success, content) {
+      const resultBox = document.getElementById('resultBox');
+      const resultContent = document.getElementById('resultContent');
+      resultBox.className = `result-box show ${success ? 'success' : 'error'}`;
+      resultContent.textContent = content;
     }
 
     // 初始化
-    window.addEventListener('DOMContentLoaded', async () => {
-      log('info', '页面加载完成');
-      updateEnvironmentInfo();
-      setupTronLinkListeners();
+    window.addEventListener('DOMContentLoaded', () => {
+      const env = isPWAMode() ? 'PWA' : isMobileDevice() ? '移动设备' : '桌面';
+      document.getElementById('envInfo').textContent = env;
       
-      // 初始化复制按钮状态
-      const copyBtn = document.getElementById('copyLogBtn');
-      if (copyBtn) {
-        copyBtn.disabled = logs.length === 0;
-      }
+      log('info', '页面加载完成', { env });
       
-      // 在移动设备/PWA 模式下初始化 WalletConnect
       if (isMobileDevice() || isPWAMode()) {
-        try {
-          await initWalletConnect();
-          log('success', 'WalletConnect 初始化完成');
-        } catch (error) {
-          log('warn', 'WalletConnect 初始化失败（将使用备用方案）', error.message);
-        }
+        initWalletConnect().catch(e => log('warn', 'WalletConnect 初始化失败', e.message));
       }
-      
-      // 延迟检查扩展（等待注入）
-      setTimeout(() => {
-        updateEnvironmentInfo();
-      }, 1000);
     });
   </script>
 </body>
 </html>
-
