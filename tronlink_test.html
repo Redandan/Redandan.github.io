@@ -184,7 +184,8 @@
       cursor: not-allowed;
     }
   </style>
-  <script src="https://unpkg.com/@walletconnect/sign-client@2.14.0/dist/index.umd.js"></script>
+  <!-- WalletConnect v1 SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/client@1.7.0/dist/index.umd.js"></script>
 </head>
 <body>
   <div class="container">
@@ -220,12 +221,11 @@
   <script>
     // 配置
     const CONFIG = {
-      projectId: '7412eb629501759c091220ccc09ded23',
+      bridge: 'https://bridge.walletconnect.org',
     };
 
     // 全局变量
-    let signClient = null;
-    let session = null;
+    let walletConnector = null;
     const logs = [];
     let logVisible = false;
 
@@ -286,33 +286,57 @@
       return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     }
 
-    // 初始化 WalletConnect
+    // 等待 WalletConnect v1 SDK 加载
+    async function waitForWalletConnectSDK(maxRetries = 10, delay = 200) {
+      for (let i = 0; i < maxRetries; i++) {
+        if (window.WalletConnect || (window.WalletConnectClient && window.WalletConnectClient.default)) {
+          return window.WalletConnect || window.WalletConnectClient.default;
+        }
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+      return null;
+    }
+
+    // 初始化 WalletConnect v1
     async function initWalletConnect() {
-      const SignClientClass = window.WalletConnectSignClient || 
-                             window.SignClient || 
-                             (window["@walletconnect/sign-client"]?.SignClient) ||
-                             (window["@walletconnect/sign-client"]?.default);
+      const WalletConnectClass = await waitForWalletConnectSDK();
       
-      if (!SignClientClass) {
-        throw new Error('WalletConnect SDK 未加载');
+      if (!WalletConnectClass) {
+        throw new Error('WalletConnect v1 SDK 未加载');
       }
       
-      signClient = await SignClientClass.init({
-        projectId: CONFIG.projectId,
-        metadata: {
-          name: 'TronLink PWA 测试',
-          description: 'TronLink PWA 测试应用',
-          url: window.location.origin,
-          icons: [`${window.location.origin}/icons/Icon-512.png`]
+      walletConnector = new WalletConnectClass({
+        bridge: CONFIG.bridge,
+      });
+      
+      // 监听连接事件
+      walletConnector.on('connect', (error, payload) => {
+        if (error) {
+          log('error', '连接错误', error);
+          return;
+        }
+        
+        const { accounts } = payload.params[0];
+        if (accounts && accounts.length > 0) {
+          // TronLink 地址格式可能是完整的账户字符串，需要提取
+          const account = accounts[0];
+          const address = account.includes(':') ? account.split(':')[2] : account;
+          updateConnectionStatus(address);
+          showResult(true, `连接成功: ${address}`);
+          log('success', '连接成功', { address, accounts });
         }
       });
       
-      signClient.on('session_delete', () => {
-        session = null;
+      // 监听断开事件
+      walletConnector.on('disconnect', (error) => {
+        if (error) {
+          log('error', '断开连接错误', error);
+        }
         updateConnectionStatus(null);
+        log('info', '已断开连接');
       });
       
-      log('success', 'WalletConnect 初始化成功');
+      log('success', 'WalletConnect v1 初始化成功');
     }
 
     // 连接 TronLink
@@ -321,24 +345,32 @@
         log('info', '开始连接...');
         showResult(true, '连接中...');
         
-        if (!signClient) {
+        if (!walletConnector) {
           await initWalletConnect();
         }
         
-        const { uri, approval } = await signClient.connect({
-          optionalNamespaces: {
-            tron: {
-              methods: ['tron_requestAccounts', 'tron_signMessage'],
-              chains: ['tron:mainnet'],
-              events: []
-            }
+        // 检查是否已连接
+        if (walletConnector.connected) {
+          const accounts = walletConnector.accounts;
+          if (accounts && accounts.length > 0) {
+            const account = accounts[0];
+            const address = account.includes(':') ? account.split(':')[2] : account;
+            updateConnectionStatus(address);
+            showResult(true, `已连接: ${address}`);
+            log('info', '使用现有连接', { address });
+            return;
           }
-        });
+        }
         
-        if (!uri) {
+        // 创建新会话
+        log('info', '创建新会话...');
+        await walletConnector.createSession();
+        
+        if (!walletConnector.uri) {
           throw new Error('無法生成 WalletConnect URI');
         }
         
+        const uri = walletConnector.uri;
         log('success', 'URI 生成成功', uri);
         
         // 构建 deep link（使用编码 URI）
@@ -349,23 +381,11 @@
         showResult(true, '正在打开 TronLink App...');
         window.location.href = deeplink;
         
-        // 等待用户批准
-        session = await approval();
-        log('success', '连接已批准', session);
-        
-        // 获取账户
-        const accounts = session.namespaces?.tron?.accounts || [];
-        if (accounts.length === 0) {
-          throw new Error('Session 中未找到账户');
-        }
-        
-        const address = accounts[0].split(':')[2];
-        updateConnectionStatus(address);
-        showResult(true, `连接成功: ${address}`);
-        log('success', '获取到地址', address);
+        // WalletConnect v1 使用事件监听器，不需要 await approval
+        // 连接结果会通过 'connect' 事件返回
         
       } catch (error) {
-        if (error.message?.includes('rejected')) {
+        if (error.message?.includes('rejected') || error.message?.includes('User rejected')) {
           log('warn', '用户已取消');
           showResult(false, '已取消连接');
         } else {
@@ -404,9 +424,8 @@
       
       log('info', '页面加载完成', { env });
       
-      if (isMobileDevice() || isPWAMode()) {
-        initWalletConnect().catch(e => log('warn', 'WalletConnect 初始化失败', e.message));
-      }
+      // WalletConnect v1 在连接时初始化，不需要提前初始化
+      log('info', '准备就绪，点击连接按钮开始');
     });
   </script>
 </body>
