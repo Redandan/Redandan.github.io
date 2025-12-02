@@ -134,18 +134,18 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <script type="text/babel">
-    const { useState, useEffect, useMemo, createContext, useContext } = React;
+    const { useState, useEffect, createContext, useContext } = React;
 
     // ============================================
-    // 轻量级 Wallet Adapter (CDN 版本)
+    // 轻量级 Wallet Adapter (CDN 版本 - 仅新版本 API)
     // ============================================
 
     // Wallet Context
     const WalletContext = createContext(null);
 
-    // 获取 TronWeb 实例（支持新旧版本）
+    // 获取 TronWeb 实例（新版本）
     function getTronWeb() {
-      return window.tronWeb || window.tronLink?.tronWeb || null;
+      return window.tronLink?.tronWeb || window.tronWeb || null;
     }
 
     // 检查是否在 TronLink App 内建浏览器
@@ -154,9 +154,9 @@
       return tronWeb && tronWeb.ready && tronWeb.defaultAddress?.base58;
     }
 
-    // 检查 TronLink 是否已安装
+    // 检查 TronLink 是否已安装（新版本）
     function isTronLinkInstalled() {
-      return !!(window.tronLink || window.tronWeb);
+      return !!window.tronLink;
     }
 
     // Wallet Provider 组件
@@ -243,50 +243,34 @@
           }
 
           // 使用新版本 API
-          if (window.tronLink) {
-            const result = await window.tronLink.request({ 
-              method: 'tron_requestAccounts' 
-            });
+          const result = await window.tronLink.request({ 
+            method: 'tron_requestAccounts' 
+          });
 
-            if (result.code === 200) {
-              // 等待 tronWeb 注入
-              let tronWeb = getTronWeb();
-              for (let i = 0; i < 30; i++) {
-                if (tronWeb && tronWeb.ready) break;
-                await new Promise(resolve => setTimeout(resolve, 100));
-                tronWeb = getTronWeb();
-              }
-
-              if (tronWeb && tronWeb.ready) {
-                const addr = tronWeb.defaultAddress?.base58;
-                if (addr) {
-                  setAddress(addr);
-                  setConnected(true);
-                } else {
-                  throw new Error('无法获取地址，请确保已解锁钱包');
-                }
-              } else {
-                throw new Error('TronLink 未就绪');
-              }
-            } else if (result.code === 4001) {
-              throw new Error('用户已拒绝授权');
-            } else {
-              throw new Error(`连接失败: ${result.message || '未知错误'}`);
+          if (result.code === 200) {
+            // 等待 tronWeb 注入
+            let tronWeb = getTronWeb();
+            for (let i = 0; i < 30; i++) {
+              if (tronWeb && tronWeb.ready) break;
+              await new Promise(resolve => setTimeout(resolve, 100));
+              tronWeb = getTronWeb();
             }
-          } 
-          // 使用旧版本 API
-          else if (window.tronWeb) {
-            if (window.tronWeb.ready) {
-              const addr = window.tronWeb.defaultAddress?.base58;
+
+            if (tronWeb && tronWeb.ready) {
+              const addr = tronWeb.defaultAddress?.base58;
               if (addr) {
                 setAddress(addr);
                 setConnected(true);
               } else {
-                throw new Error('请先解锁钱包');
+                throw new Error('无法获取地址，请确保已解锁钱包');
               }
             } else {
               throw new Error('TronLink 未就绪');
             }
+          } else if (result.code === 4001) {
+            throw new Error('用户已拒绝授权');
+          } else {
+            throw new Error(`连接失败: ${result.message || '未知错误'}`);
           }
         } catch (err) {
           const errorMsg = err.message || '连接失败';
@@ -423,7 +407,7 @@
       return (
         <div className="container">
           <h1>🔗 TronLink 连接</h1>
-          <p className="subtitle">使用轻量级 Adapter (CDN 版本)</p>
+          <p className="subtitle">使用轻量级 Adapter (新版本 API)</p>
 
           <div className="info-box">
             <div className="info-item">
