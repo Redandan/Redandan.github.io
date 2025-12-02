@@ -702,6 +702,7 @@
         // 创建连接提案
         // 注意：使用 optionalNamespaces 而不是 requiredNamespaces（已弃用）
         // TronLink 支持的链格式：tron:mainnet
+        // 尝试简化配置，只包含 TronLink 必需的方法
         const { uri, approval } = await signClient.connect({
           optionalNamespaces: {
             tron: {
@@ -712,7 +713,9 @@
               chains: ['tron:mainnet'],
               events: []
             }
-          }
+          },
+          // 添加配对标签，帮助 TronLink 识别
+          pairingTopic: undefined // 让 WalletConnect 自动生成
         });
         
         if (!uri) {
@@ -723,25 +726,54 @@
         log('success', 'WalletConnect URI 生成成功', uri);
         
         // 构建带 URI 的 deep link
-        // 注意：URI 需要正确编码，但不要双重编码
-        // TronLink 期望的格式：tronlink://wc?uri=<walletconnect_uri>
-        const encodedUri = encodeURIComponent(uri);
-        const deeplink = `tronlink://wc?uri=${encodedUri}`;
+        // TronLink 可能期望不同的格式，尝试多种方式
+        // 方案1: 直接使用原始 URI（不编码）
+        // 方案2: 只编码特殊字符
+        // 方案3: 使用 encodeURIComponent
         
         log('info', 'WalletConnect URI (原始)', uri);
-        log('info', 'WalletConnect URI (编码后)', encodedUri);
-        log('info', 'Deep Link with WC URI', deeplink);
-        showResult(true, '正在打开 TronLink App', '请在 TronLink App 中批准连接...');
         
         // 验证 URI 格式
         if (!uri || !uri.startsWith('wc:')) {
           throw new Error('WalletConnect URI 格式无效: ' + uri);
         }
         
+        // 尝试方案1: 直接使用原始 URI（TronLink 可能自己处理编码）
+        let deeplink = `tronlink://wc?uri=${uri}`;
+        log('info', 'Deep Link (方案1 - 原始URI)', deeplink);
+        
+        // 如果 URI 包含特殊字符，尝试编码
+        // 但先尝试不编码，因为 TronLink 可能期望原始格式
+        if (uri.includes('?') || uri.includes('&') || uri.includes('=')) {
+          // URI 包含查询参数，可能需要编码
+          const encodedUri = encodeURIComponent(uri);
+          const deeplinkEncoded = `tronlink://wc?uri=${encodedUri}`;
+          log('info', 'Deep Link (方案2 - 编码URI)', deeplinkEncoded);
+          
+          // 根据 TronLink 文档，通常需要编码
+          deeplink = deeplinkEncoded;
+        }
+        
+        log('info', '最终 Deep Link', deeplink);
+        showResult(true, '正在打开 TronLink App', '请在 TronLink App 中批准连接...');
+        
         // 打开 TronLink App
         // 使用 setTimeout 确保页面状态已更新
         setTimeout(() => {
-          window.location.href = deeplink;
+          try {
+            window.location.href = deeplink;
+            log('info', '已发送 deep link 请求');
+          } catch (error) {
+            log('error', '发送 deep link 失败', error.message);
+            // 降级方案：尝试使用 window.open
+            try {
+              window.open(deeplink, '_blank');
+              log('info', '使用 window.open 作为降级方案');
+            } catch (e) {
+              log('error', '所有 deep link 方案都失败', e.message);
+              throw e;
+            }
+          }
         }, 100);
         
         // 等待用户批准连接
