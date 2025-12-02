@@ -221,6 +221,19 @@
   </div>
 
   <script>
+    /**
+     * TronLink 原生 API 测试页面
+     * 
+     * 根据 TronLink 集成文档最佳实践优化：
+     * 1. 支持新旧版本 API（window.tronLink v3.22.0+ 和 window.tronWeb）
+     * 2. 添加响应码检查（200/4000/4001）
+     * 3. 使用 window.tronLink.ready 状态检测
+     * 4. 改进错误处理，区分不同错误类型
+     * 5. 优化 TronWeb 检测方式（支持 window.tronWeb 和 window.tronLink.tronWeb）
+     * 
+     * 参考文档：https://developers.tron.network/docs/tronlink-integration
+     */
+    
     // 全局变量
     let tronWeb = null;
     const logs = [];
@@ -283,10 +296,18 @@
       return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     }
 
+    // 获取 TronWeb 实例（支持新旧版本）
+    // 优先使用 window.tronWeb，其次使用 window.tronLink.tronWeb
+    function getTronWeb() {
+      return window.tronWeb || window.tronLink?.tronWeb || null;
+    }
+
     // 检查是否在 TronLink App 内建浏览器
+    // 根据文档：检查 window.tronWeb 和 defaultAddress.base58
     function isTronLinkBrowser() {
-      if (window.tronWeb && window.tronWeb.ready) {
-        if (window.tronWeb.defaultAddress && window.tronWeb.defaultAddress.base58) {
+      const tronWeb = getTronWeb();
+      if (tronWeb && tronWeb.ready) {
+        if (tronWeb.defaultAddress && tronWeb.defaultAddress.base58) {
           return true;
         }
       }
@@ -294,23 +315,55 @@
     }
 
     // 检测 TronLink 浏览器扩展是否已安装
+    // 支持新旧版本：window.tronLink (v3.22.0+) 或 window.tronWeb (旧版本)
     function isTronLinkExtensionInstalled() {
       if (isMobileDevice() || isPWAMode()) {
         return false;
       }
+      // 新版本：检查 window.tronLink
+      // 旧版本：检查 window.tronWeb
       return !!(window.tronLink || window.tronWeb);
     }
 
+    // 检查 TronLink 是否已授权（使用 window.tronLink.ready）
+    function isTronLinkReady() {
+      // 新版本支持 window.tronLink.ready
+      if (window.tronLink && window.tronLink.ready) {
+        return true;
+      }
+      // 旧版本或 App 内建浏览器：检查 tronWeb.ready
+      const tronWeb = getTronWeb();
+      return tronWeb && tronWeb.ready;
+    }
+
     // 更新 TronLink 状态显示
+    // 根据文档最佳实践，显示更详细的状态信息
     function updateTronLinkStatus() {
       const statusEl = document.getElementById('tronlinkStatus');
       
       if (isTronLinkBrowser()) {
-        statusEl.textContent = 'TronLink App 内建浏览器';
+        const tronWeb = getTronWeb();
+        const address = tronWeb?.defaultAddress?.base58;
+        if (address) {
+          statusEl.textContent = `TronLink App (${address.substring(0, 6)}...)`;
+        } else {
+          statusEl.textContent = 'TronLink App 内建浏览器';
+        }
         statusEl.style.color = '#4caf50';
       } else if (isTronLinkExtensionInstalled()) {
-        statusEl.textContent = '浏览器扩展已安装';
-        statusEl.style.color = '#4caf50';
+        // 检查是否已授权
+        if (isTronLinkReady()) {
+          const tronWeb = getTronWeb();
+          const address = tronWeb?.defaultAddress?.base58;
+          if (address) {
+            statusEl.textContent = `扩展已连接 (${address.substring(0, 6)}...)`;
+          } else {
+            statusEl.textContent = '扩展已安装并授权';
+          }
+        } else {
+          statusEl.textContent = '浏览器扩展已安装（未授权）';
+        }
+        statusEl.style.color = isTronLinkReady() ? '#4caf50' : '#ff9800';
       } else {
         statusEl.textContent = '未检测到 TronLink';
         statusEl.style.color = '#f44336';
@@ -318,34 +371,55 @@
     }
 
     // 连接 TronLink 浏览器扩展（桌面浏览器）
+    // 根据文档最佳实践优化
     async function connectTronLinkExtension() {
       try {
         log('info', '连接 TronLink 浏览器扩展...');
         
-        if (!window.tronLink) {
+        // 检查是否已安装（支持新旧版本）
+        const tronLink = window.tronLink;
+        if (!tronLink && !window.tronWeb) {
           throw new Error('未检测到 TronLink 浏览器扩展');
         }
         
-        // 请求账户连接
-        log('info', '请求账户授权...');
-        const result = await window.tronLink.request({ method: 'tron_requestAccounts' });
-        log('info', '请求结果', result);
-        
-        // 等待 tronWeb 注入
-        let localTronWeb = null;
-        for (let i = 0; i < 30; i++) {
-          if (window.tronWeb) {
-            localTronWeb = window.tronWeb;
-            break;
-          } else if (window.tronLink && window.tronLink.tronWeb) {
-            localTronWeb = window.tronLink.tronWeb;
-            break;
+        // 如果使用新版本 API (window.tronLink)
+        if (tronLink) {
+          // 检查是否已授权（使用 window.tronLink.ready）
+          if (tronLink.ready) {
+            log('info', 'TronLink 已授权，直接获取地址');
+          } else {
+            // 请求账户授权
+            log('info', '请求账户授权...');
+            const result = await tronLink.request({ method: 'tron_requestAccounts' });
+            
+            // 根据文档检查响应码
+            if (result.code === 200) {
+              log('success', '用户已接受授权');
+            } else if (result.code === 4001) {
+              throw new Error('用户已拒绝授权');
+            } else if (result.code === 4000) {
+              log('info', '请求已在队列中，无需重复提交');
+            } else {
+              log('warn', '未知响应码', { code: result.code, message: result.message });
+            }
           }
-          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+        
+        // 等待 tronWeb 注入（支持新旧版本）
+        let localTronWeb = getTronWeb();
+        if (!localTronWeb) {
+          log('info', '等待 TronWeb 注入...');
+          for (let i = 0; i < 30; i++) {
+            localTronWeb = getTronWeb();
+            if (localTronWeb) {
+              break;
+            }
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
         }
         
         if (!localTronWeb) {
-          throw new Error('无法获取 TronWeb 实例');
+          throw new Error('无法获取 TronWeb 实例，请确保 TronLink 扩展已正确安装');
         }
         
         // 等待 TronWeb 就绪
@@ -361,26 +435,37 @@
             
             setTimeout(() => {
               clearInterval(checkReady);
-              reject(new Error('TronLink 初始化超时'));
+              reject(new Error('TronLink 初始化超时，请刷新页面重试'));
             }, 10000);
           });
         }
         
-        // 获取账户地址
+        // 获取账户地址（根据文档：检查 defaultAddress.base58）
         let address = localTronWeb.defaultAddress?.base58;
         
         if (!address) {
-          // 再次请求账户
-          if (localTronWeb.request) {
-            await localTronWeb.request({
-              method: 'tron_requestAccounts'
-            });
+          // 如果使用新版本 API，再次请求账户
+          if (tronLink && !tronLink.ready) {
+            try {
+              await tronLink.request({ method: 'tron_requestAccounts' });
+            } catch (e) {
+              log('warn', '再次请求账户失败', e.message);
+            }
           }
+          // 或者使用 tronWeb.request（如果支持）
+          else if (localTronWeb.request) {
+            try {
+              await localTronWeb.request({ method: 'tron_requestAccounts' });
+            } catch (e) {
+              log('warn', '通过 tronWeb 请求账户失败', e.message);
+            }
+          }
+          
           address = localTronWeb.defaultAddress?.base58;
         }
         
         if (!address) {
-          throw new Error('无法获取 TronLink 地址，请确保已解锁并选择账户');
+          throw new Error('无法获取 TronLink 地址，请确保已解锁钱包并选择账户');
         }
         
         tronWeb = localTronWeb;
@@ -389,7 +474,8 @@
         
       } catch (error) {
         log('error', '连接扩展失败', error.message);
-        if (error.code === 4001 || error.message?.includes('rejected') || error.message?.includes('denied')) {
+        // 根据文档：4001 表示用户拒绝
+        if (error.code === 4001 || error.message?.includes('拒绝') || error.message?.includes('rejected') || error.message?.includes('denied')) {
           throw new Error('用户已取消连接');
         }
         throw error;
@@ -397,46 +483,81 @@
     }
 
     // 连接 TronLink App 内建浏览器（移动设备）
+    // 根据文档：在 App 内建浏览器中，window.tronWeb 会被自动注入
     async function connectTronLinkMobile() {
-      if (!isTronLinkBrowser()) {
+      // 检查是否在 TronLink App 内建浏览器中
+      // 根据文档：检查 window.tronWeb 和 defaultAddress.base58
+      const tronWeb = getTronWeb();
+      if (!tronWeb) {
         throw new Error('请使用 TronLink App 内建浏览器打开本页面');
       }
       
-      // 等待 TronWeb 就绪
-      if (!window.tronWeb.ready) {
+      // 等待 TronWeb 就绪（根据文档示例）
+      if (!tronWeb.ready) {
         log('info', '等待 TronLink 初始化...');
-        for (let i = 0; i < 50; i++) {
-          if (window.tronWeb && window.tronWeb.ready) break;
-          await new Promise(res => setTimeout(res, 100));
-        }
+        // 使用文档推荐的检测方式
+        await new Promise((resolve, reject) => {
+          const checkInterval = setInterval(() => {
+            const currentTronWeb = getTronWeb();
+            if (currentTronWeb && currentTronWeb.ready) {
+              clearInterval(checkInterval);
+              resolve();
+            }
+          }, 10); // 文档示例使用 10ms 间隔
+          
+          setTimeout(() => {
+            clearInterval(checkInterval);
+            reject(new Error('TronLink 初始化超时'));
+          }, 5000); // 5秒超时
+        });
       }
       
-      if (!window.tronWeb || !window.tronWeb.ready) {
+      const finalTronWeb = getTronWeb();
+      if (!finalTronWeb || !finalTronWeb.ready) {
         throw new Error('TronLink 未就绪，请确保 TronLink App 已解锁');
       }
       
-      // 获取地址
-      let address = window.tronWeb.defaultAddress?.base58;
+      // 获取地址（根据文档：检查 defaultAddress.base58）
+      let address = finalTronWeb.defaultAddress?.base58;
       
-      // 如果没有地址，尝试请求
+      // 如果没有地址，尝试请求（支持新版本 window.tronLink）
       if (!address) {
         try {
-          if (window.tronWeb.request) {
-            await window.tronWeb.request({
+          // 优先使用 window.tronLink.request（新版本，v4.3.4+）
+          if (window.tronLink && window.tronLink.request) {
+            const result = await window.tronLink.request({
+              method: 'tron_requestAccounts'
+            });
+            
+            // 检查响应码
+            if (result.code === 200) {
+              log('success', '用户已接受授权');
+            } else if (result.code === 4001) {
+              throw new Error('用户已拒绝授权');
+            }
+          }
+          // 备用：使用 tronWeb.request（如果支持）
+          else if (finalTronWeb.request) {
+            await finalTronWeb.request({
               method: 'tron_requestAccounts'
             });
           }
-          address = window.tronWeb.defaultAddress?.base58;
+          
+          address = finalTronWeb.defaultAddress?.base58;
         } catch (e) {
           log('warn', '请求账户失败', e.message);
+          // 如果是用户拒绝，直接抛出
+          if (e.message?.includes('拒绝') || e.message?.includes('rejected')) {
+            throw e;
+          }
         }
       }
       
       if (!address) {
-        throw new Error('无法获取 TronLink 地址，请确保已解锁并选择账户');
+        throw new Error('无法获取 TronLink 地址，请确保已解锁钱包并选择账户');
       }
       
-      tronWeb = window.tronWeb;
+      tronWeb = finalTronWeb;
       log('success', 'App 内建浏览器连接成功', { address });
       return address;
     }
