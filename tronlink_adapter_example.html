@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tronwallet Adapter 示例</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+      width: 100%;
+      padding: 40px;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 24px;
+    }
+
+    .subtitle {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+
+    .info-box {
+      background: #f5f5f5;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+
+    .button {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-bottom: 15px;
+    }
+
+    .button-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .button-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .status {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .status.success {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .status.error {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .status.info {
+      background: #e3f2fd;
+      color: #1976d2;
+    }
+
+    .note {
+      background: #fff3e0;
+      border-left: 4px solid #ff9800;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+
+    .note-title {
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔗 Tronwallet Adapter 集成示例</h1>
+    <p class="subtitle">演示如何使用 Tronwallet Adapter（需要 React/Vue）</p>
+
+    <div class="note">
+      <div class="note-title">⚠️ 重要提示</div>
+      <p>Tronwallet Adapter 需要 React 或 Vue 框架，不能直接通过 CDN 使用。</p>
+      <p>当前页面展示的是使用原生 API 的替代方案。</p>
+      <p>如需使用 Tronwallet Adapter，请参考集成指南创建独立的 React/Vue 项目。</p>
+    </div>
+
+    <div class="info-box">
+      <div style="margin-bottom: 10px;">
+        <strong>当前方案：</strong>TronLink 原生 API
+      </div>
+      <div style="margin-bottom: 10px;">
+        <strong>状态：</strong><span id="status">检测中...</span>
+      </div>
+      <div>
+        <strong>地址：</strong><span id="address">未连接</span>
+      </div>
+    </div>
+
+    <button class="button button-primary" id="connectBtn" onclick="handleConnect()">
+      连接 TronLink
+    </button>
+
+    <button class="button" id="disconnectBtn" onclick="handleDisconnect()" style="display: none;">
+      断开连接
+    </button>
+
+    <div class="status info" id="messageBox" style="display: none;"></div>
+  </div>
+
+  <script>
+    /**
+     * 这是一个使用 TronLink 原生 API 的示例
+     * 
+     * 如果要使用 Tronwallet Adapter，需要：
+     * 1. 创建独立的 React/Vue 项目
+     * 2. 安装 @tronweb3/tronwallet-adapters
+     * 3. 使用构建工具（webpack/vite）构建
+     * 4. 集成到 Flutter 或作为独立页面
+     * 
+     * 参考：docs/guides/TRONWALLET_ADAPTER_INTEGRATION.md
+     */
+
+    let tronWeb = null;
+    let connectedAddress = null;
+
+    // 检测 TronLink
+    function checkTronLink() {
+      const statusEl = document.getElementById('status');
+      
+      if (window.tronLink || window.tronWeb) {
+        statusEl.textContent = 'TronLink 已安装';
+        statusEl.style.color = '#2e7d32';
+        return true;
+      } else {
+        statusEl.textContent = '未检测到 TronLink';
+        statusEl.style.color = '#c62828';
+        return false;
+      }
+    }
+
+    // 连接钱包
+    async function handleConnect() {
+      const messageBox = document.getElementById('messageBox');
+      messageBox.style.display = 'block';
+      messageBox.className = 'status info';
+      messageBox.textContent = '正在连接...';
+
+      try {
+        // 使用新版本 API
+        if (window.tronLink) {
+          const result = await window.tronLink.request({ 
+            method: 'tron_requestAccounts' 
+          });
+
+          if (result.code === 200) {
+            tronWeb = window.tronWeb || window.tronLink.tronWeb;
+            if (tronWeb && tronWeb.ready) {
+              connectedAddress = tronWeb.defaultAddress?.base58;
+              updateUI();
+              showMessage('连接成功！', 'success');
+            }
+          } else if (result.code === 4001) {
+            showMessage('用户已拒绝授权', 'error');
+          }
+        } 
+        // 使用旧版本 API
+        else if (window.tronWeb) {
+          if (window.tronWeb.ready) {
+            connectedAddress = window.tronWeb.defaultAddress?.base58;
+            tronWeb = window.tronWeb;
+            updateUI();
+            showMessage('连接成功！', 'success');
+          } else {
+            showMessage('TronLink 未就绪，请先解锁钱包', 'error');
+          }
+        } else {
+          showMessage('未检测到 TronLink，请先安装扩展', 'error');
+        }
+      } catch (error) {
+        showMessage('连接失败: ' + error.message, 'error');
+      }
+    }
+
+    // 断开连接
+    function handleDisconnect() {
+      tronWeb = null;
+      connectedAddress = null;
+      updateUI();
+      showMessage('已断开连接', 'info');
+    }
+
+    // 更新 UI
+    function updateUI() {
+      const addressEl = document.getElementById('address');
+      const connectBtn = document.getElementById('connectBtn');
+      const disconnectBtn = document.getElementById('disconnectBtn');
+
+      if (connectedAddress) {
+        addressEl.textContent = connectedAddress.substring(0, 6) + '...' + connectedAddress.substring(connectedAddress.length - 4);
+        addressEl.style.color = '#2e7d32';
+        connectBtn.style.display = 'none';
+        disconnectBtn.style.display = 'block';
+      } else {
+        addressEl.textContent = '未连接';
+        addressEl.style.color = '#666';
+        connectBtn.style.display = 'block';
+        disconnectBtn.style.display = 'none';
+      }
+    }
+
+    // 显示消息
+    function showMessage(message, type) {
+      const messageBox = document.getElementById('messageBox');
+      messageBox.style.display = 'block';
+      messageBox.className = `status ${type}`;
+      messageBox.textContent = message;
+      
+      if (type === 'success' || type === 'info') {
+        setTimeout(() => {
+          messageBox.style.display = 'none';
+        }, 3000);
+      }
+    }
+
+    // 初始化
+    window.addEventListener('DOMContentLoaded', () => {
+      checkTronLink();
+      
+      // 定期检查 TronLink 注入
+      const checkInterval = setInterval(() => {
+        if (checkTronLink()) {
+          clearInterval(checkInterval);
+        }
+      }, 100);
+
+      setTimeout(() => clearInterval(checkInterval), 5000);
+    });
+  </script>
+</body>
+</html>
+
