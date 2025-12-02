@@ -579,10 +579,15 @@
         showResult(true, '连接中...', '正在生成连接信息...');
         
         // 创建连接提案
+        // 注意：使用 optionalNamespaces 而不是 requiredNamespaces（已弃用）
+        // TronLink 支持的链格式：tron:mainnet
         const { uri, approval } = await signClient.connect({
-          requiredNamespaces: {
+          optionalNamespaces: {
             tron: {
-              methods: ['tron_requestAccounts', 'tron_signMessage'],
+              methods: [
+                'tron_requestAccounts',
+                'tron_signMessage'
+              ],
               chains: ['tron:mainnet'],
               events: []
             }
@@ -597,14 +602,26 @@
         log('success', 'WalletConnect URI 生成成功', uri);
         
         // 构建带 URI 的 deep link
+        // 注意：URI 需要正确编码，但不要双重编码
+        // TronLink 期望的格式：tronlink://wc?uri=<walletconnect_uri>
         const encodedUri = encodeURIComponent(uri);
         const deeplink = `tronlink://wc?uri=${encodedUri}`;
         
+        log('info', 'WalletConnect URI (原始)', uri);
+        log('info', 'WalletConnect URI (编码后)', encodedUri);
         log('info', 'Deep Link with WC URI', deeplink);
         showResult(true, '正在打开 TronLink App', '请在 TronLink App 中批准连接...');
         
+        // 验证 URI 格式
+        if (!uri || !uri.startsWith('wc:')) {
+          throw new Error('WalletConnect URI 格式无效: ' + uri);
+        }
+        
         // 打开 TronLink App
-        window.location.href = deeplink;
+        // 使用 setTimeout 确保页面状态已更新
+        setTimeout(() => {
+          window.location.href = deeplink;
+        }, 100);
         
         // 等待用户批准连接
         log('info', '等待用户批准连接...');
