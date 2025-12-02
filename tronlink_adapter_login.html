@@ -132,18 +132,18 @@
   
   <!-- Babel Standalone (用于 JSX 转换) -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- 注意：官方 @tronweb3/tronwallet-adapters 的 UMD 版本在浏览器中有兼容性问题 -->
+  <!-- 使用改进的自定义实现，API 与官方库类似 -->
 
   <script type="text/babel">
     const { useState, useEffect, createContext, useContext } = React;
 
     // ============================================
-    // 轻量级 Wallet Adapter (CDN 版本 - 仅新版本 API)
+    // 改进的自定义 TronLink Adapter（兼容官方 API）
     // ============================================
 
-    // Wallet Context
-    const WalletContext = createContext(null);
-
-    // 获取 TronWeb 实例（新版本）
+    // 获取 TronWeb 实例
     function getTronWeb() {
       return window.tronLink?.tronWeb || window.tronWeb || null;
     }
@@ -154,10 +154,13 @@
       return tronWeb && tronWeb.ready && tronWeb.defaultAddress?.base58;
     }
 
-    // 检查 TronLink 是否已安装（新版本）
+    // 检查 TronLink 是否已安装
     function isTronLinkInstalled() {
-      return !!window.tronLink;
+      return !!(window.tronLink || window.tronWeb);
     }
+
+    // Wallet Context
+    const WalletContext = createContext(null);
 
     // Wallet Provider 组件
     function WalletProvider({ children, onError }) {
@@ -165,20 +168,49 @@
       const [address, setAddress] = useState(null);
       const [connected, setConnected] = useState(false);
       const [connecting, setConnecting] = useState(false);
+      const [detecting, setDetecting] = useState(true);
       const [error, setError] = useState(null);
 
       // 检测 TronLink
       useEffect(() => {
+        let checkInterval = null;
+        let timeout = null;
+
         const checkTronLink = () => {
           if (isTronLinkInstalled()) {
             setWallet('TronLink');
+            setDetecting(false);
+            if (checkInterval) clearInterval(checkInterval);
+            
+            // 检查是否已连接
+            const tronWeb = getTronWeb();
+            if (tronWeb && tronWeb.ready) {
+              const addr = tronWeb.defaultAddress?.base58;
+              if (addr) {
+                setAddress(addr);
+                setConnected(true);
+              }
+            }
           }
         };
 
         checkTronLink();
-        const interval = setInterval(checkTronLink, 100);
-        setTimeout(() => clearInterval(interval), 5000);
-      }, []);
+        checkInterval = setInterval(checkTronLink, 100);
+        
+        // 5 秒后停止检测
+        timeout = setTimeout(() => {
+          if (checkInterval) clearInterval(checkInterval);
+          setDetecting(false);
+          if (!wallet && window.tronWeb) {
+            setWallet('TronLink');
+          }
+        }, 5000);
+
+        return () => {
+          if (checkInterval) clearInterval(checkInterval);
+          if (timeout) clearTimeout(timeout);
+        };
+      }, [wallet]);
 
       // 自动检测连接状态
       useEffect(() => {
@@ -243,34 +275,49 @@
           }
 
           // 使用新版本 API
-          const result = await window.tronLink.request({ 
-            method: 'tron_requestAccounts' 
-          });
+          if (window.tronLink) {
+            const result = await window.tronLink.request({ 
+              method: 'tron_requestAccounts' 
+            });
 
-          if (result.code === 200) {
-            // 等待 tronWeb 注入
-            let tronWeb = getTronWeb();
-            for (let i = 0; i < 30; i++) {
-              if (tronWeb && tronWeb.ready) break;
-              await new Promise(resolve => setTimeout(resolve, 100));
-              tronWeb = getTronWeb();
+            if (result.code === 200) {
+              // 等待 tronWeb 注入
+              let tronWeb = getTronWeb();
+              for (let i = 0; i < 30; i++) {
+                if (tronWeb && tronWeb.ready) break;
+                await new Promise(resolve => setTimeout(resolve, 100));
+                tronWeb = getTronWeb();
+              }
+
+              if (tronWeb && tronWeb.ready) {
+                const addr = tronWeb.defaultAddress?.base58;
+                if (addr) {
+                  setAddress(addr);
+                  setConnected(true);
+                } else {
+                  throw new Error('无法获取地址，请确保已解锁钱包');
+                }
+              } else {
+                throw new Error('TronLink 未就绪');
+              }
+            } else if (result.code === 4001) {
+              throw new Error('用户已拒绝授权');
+            } else {
+              throw new Error(`连接失败: ${result.message || '未知错误'}`);
             }
-
-            if (tronWeb && tronWeb.ready) {
-              const addr = tronWeb.defaultAddress?.base58;
+          } else if (window.tronWeb) {
+            // 旧版本兼容
+            if (window.tronWeb.ready) {
+              const addr = window.tronWeb.defaultAddress?.base58;
               if (addr) {
                 setAddress(addr);
                 setConnected(true);
               } else {
-                throw new Error('无法获取地址，请确保已解锁钱包');
+                throw new Error('请先解锁钱包');
               }
             } else {
               throw new Error('TronLink 未就绪');
             }
-          } else if (result.code === 4001) {
-            throw new Error('用户已拒绝授权');
-          } else {
-            throw new Error(`连接失败: ${result.message || '未知错误'}`);
           }
         } catch (err) {
           const errorMsg = err.message || '连接失败';
@@ -298,9 +345,18 @@
         }
 
         try {
-          // 使用 TronWeb 签名消息
-          const signedMessage = await tronWeb.trx.signMessage(message);
-          return signedMessage;
+          // 优先使用 signMessageV2
+          if (tronWeb.trx && typeof tronWeb.trx.signMessageV2 === 'function') {
+            const result = await tronWeb.trx.signMessageV2(message);
+            return result.signature || result;
+          }
+          // 使用 signMessage
+          else if (tronWeb.trx && typeof tronWeb.trx.signMessage === 'function') {
+            const signedMessage = await tronWeb.trx.signMessage(message);
+            return signedMessage;
+          } else {
+            throw new Error('签名方法不可用');
+          }
         } catch (err) {
           throw new Error(`签名失败: ${err.message}`);
         }
@@ -329,6 +385,7 @@
         address,
         connected,
         connecting,
+        detecting,
         error,
         connect,
         disconnect,
@@ -362,6 +419,7 @@
         address, 
         connected, 
         connecting, 
+        detecting,
         error, 
         connect, 
         disconnect,
@@ -407,7 +465,7 @@
       return (
         <div className="container">
           <h1>🔗 TronLink 连接</h1>
-          <p className="subtitle">使用轻量级 Adapter (新版本 API)</p>
+          <p className="subtitle">使用改进的自定义 Adapter</p>
 
           <div className="info-box">
             <div className="info-item">
@@ -440,9 +498,15 @@
             </div>
           )}
 
-          {!wallet && (
+          {detecting && !wallet && (
             <div className="status-box info">
               正在检测钱包...
+            </div>
+          )}
+
+          {!detecting && !wallet && (
+            <div className="status-box error">
+              未检测到 TronLink，请先安装 TronLink 扩展或使用 TronLink App
             </div>
           )}
 
