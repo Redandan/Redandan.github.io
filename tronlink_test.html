@@ -732,20 +732,18 @@
           throw new Error('WalletConnect URI 格式无效: ' + uri);
         }
         
-        // 方案1: 直接使用原始 URI（不编码）- TronLink 可能期望这种格式
-        // 因为 deep link 协议（如 tronlink://）通常自己处理 URI 编码
-        const deeplinkRaw = `tronlink://wc?uri=${uri}`;
-        log('info', 'Deep Link (原始URI，不编码)', deeplinkRaw);
-        
-        // 方案2: 编码 URI（备用方案）
+        // 方案1: 编码 URI（优先使用）- TronLink 可能期望编码后的格式
         const encodedUri = encodeURIComponent(uri);
         const deeplinkEncoded = `tronlink://wc?uri=${encodedUri}`;
         log('info', 'Deep Link (编码URI)', deeplinkEncoded);
         
-        // 优先尝试原始 URI（不编码），因为这是 TronLink 最可能期望的格式
-        // 如果失败，用户可以手动尝试编码版本
-        const deeplink = deeplinkRaw;
-        log('info', '使用 Deep Link (原始URI)', deeplink);
+        // 方案2: 原始 URI（备用方案）
+        const deeplinkRaw = `tronlink://wc?uri=${uri}`;
+        log('info', 'Deep Link (原始URI，不编码)', deeplinkRaw);
+        
+        // 优先使用编码后的 URI
+        const deeplink = deeplinkEncoded;
+        log('info', '使用 Deep Link (编码URI)', deeplink);
         
         showResult(true, '正在打开 TronLink App', '请在 TronLink App 中批准连接...');
         
@@ -753,19 +751,19 @@
         // 使用 setTimeout 确保页面状态已更新
         setTimeout(() => {
           try {
-            // 尝试使用原始 URI
+            // 尝试使用编码后的 URI
             window.location.href = deeplink;
-            log('info', '已发送 deep link 请求（原始URI）');
+            log('info', '已发送 deep link 请求（编码URI）');
             
-            // 如果 3 秒后还在当前页面，可能是 deep link 失败，尝试编码版本
+            // 如果 3 秒后还在当前页面，可能是 deep link 失败，尝试原始版本
             setTimeout(() => {
               if (document.hasFocus()) {
-                log('warn', 'Deep link 可能失败，尝试编码版本');
+                log('warn', 'Deep link 可能失败，尝试原始URI版本');
                 try {
-                  window.location.href = deeplinkEncoded;
-                  log('info', '已发送 deep link 请求（编码URI）');
+                  window.location.href = deeplinkRaw;
+                  log('info', '已发送 deep link 请求（原始URI）');
                 } catch (e) {
-                  log('error', '发送编码 deep link 失败', e.message);
+                  log('error', '发送原始 deep link 失败', e.message);
                 }
               }
             }, 3000);
