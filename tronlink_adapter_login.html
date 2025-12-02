@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TronLink 登入 - Agora Market (Adapter CDN)</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+      width: 100%;
+      padding: 40px;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 24px;
+    }
+
+    .subtitle {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+
+    .info-box {
+      background: #f5f5f5;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    .info-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .info-label {
+      color: #666;
+      font-weight: 500;
+    }
+
+    .info-value {
+      color: #333;
+      font-weight: 600;
+    }
+
+    .button {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-bottom: 15px;
+    }
+
+    .button-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .button-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .status-box {
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    .status-box.success {
+      background: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #4caf50;
+    }
+
+    .status-box.error {
+      background: #ffebee;
+      color: #c62828;
+      border: 1px solid #f44336;
+    }
+
+    .status-box.info {
+      background: #e3f2fd;
+      color: #1976d2;
+      border: 1px solid #2196f3;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- React 和 ReactDOM (CDN) -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Babel Standalone (用于 JSX 转换) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, createContext, useContext } = React;
+
+    // ============================================
+    // 轻量级 Wallet Adapter (CDN 版本)
+    // ============================================
+
+    // Wallet Context
+    const WalletContext = createContext(null);
+
+    // 获取 TronWeb 实例（支持新旧版本）
+    function getTronWeb() {
+      return window.tronWeb || window.tronLink?.tronWeb || null;
+    }
+
+    // 检查是否在 TronLink App 内建浏览器
+    function isTronLinkBrowser() {
+      const tronWeb = getTronWeb();
+      return tronWeb && tronWeb.ready && tronWeb.defaultAddress?.base58;
+    }
+
+    // 检查 TronLink 是否已安装
+    function isTronLinkInstalled() {
+      return !!(window.tronLink || window.tronWeb);
+    }
+
+    // Wallet Provider 组件
+    function WalletProvider({ children, onError }) {
+      const [wallet, setWallet] = useState(null);
+      const [address, setAddress] = useState(null);
+      const [connected, setConnected] = useState(false);
+      const [connecting, setConnecting] = useState(false);
+      const [error, setError] = useState(null);
+
+      // 检测 TronLink
+      useEffect(() => {
+        const checkTronLink = () => {
+          if (isTronLinkInstalled()) {
+            setWallet('TronLink');
+          }
+        };
+
+        checkTronLink();
+        const interval = setInterval(checkTronLink, 100);
+        setTimeout(() => clearInterval(interval), 5000);
+      }, []);
+
+      // 自动检测连接状态
+      useEffect(() => {
+        if (!wallet) return;
+
+        const checkConnection = () => {
+          const tronWeb = getTronWeb();
+          if (tronWeb && tronWeb.ready) {
+            const addr = tronWeb.defaultAddress?.base58;
+            if (addr && addr !== address) {
+              setAddress(addr);
+              setConnected(true);
+              setError(null);
+            }
+          }
+        };
+
+        checkConnection();
+        const interval = setInterval(checkConnection, 500);
+        return () => clearInterval(interval);
+      }, [wallet, address]);
+
+      // 页面可见性检测（从 TronLink App 返回时）
+      useEffect(() => {
+        const handleVisibilityChange = () => {
+          if (!document.hidden && isTronLinkBrowser() && !connected) {
+            setTimeout(() => {
+              const tronWeb = getTronWeb();
+              if (tronWeb && tronWeb.ready) {
+                const addr = tronWeb.defaultAddress?.base58;
+                if (addr) {
+                  setAddress(addr);
+                  setConnected(true);
+                }
+              }
+            }, 500);
+          }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }, [connected]);
+
+      const connect = async () => {
+        try {
+          setConnecting(true);
+          setError(null);
+
+          if (!isTronLinkInstalled()) {
+            throw new Error('未检测到 TronLink，请先安装 TronLink 扩展或使用 TronLink App');
+          }
+
+          // 如果已经在 TronLink 浏览器中
+          if (isTronLinkBrowser()) {
+            const tronWeb = getTronWeb();
+            const addr = tronWeb.defaultAddress?.base58;
+            if (addr) {
+              setAddress(addr);
+              setConnected(true);
+              return;
+            }
+          }
+
+          // 使用新版本 API
+          if (window.tronLink) {
+            const result = await window.tronLink.request({ 
+              method: 'tron_requestAccounts' 
+            });
+
+            if (result.code === 200) {
+              // 等待 tronWeb 注入
+              let tronWeb = getTronWeb();
+              for (let i = 0; i < 30; i++) {
+                if (tronWeb && tronWeb.ready) break;
+                await new Promise(resolve => setTimeout(resolve, 100));
+                tronWeb = getTronWeb();
+              }
+
+              if (tronWeb && tronWeb.ready) {
+                const addr = tronWeb.defaultAddress?.base58;
+                if (addr) {
+                  setAddress(addr);
+                  setConnected(true);
+                } else {
+                  throw new Error('无法获取地址，请确保已解锁钱包');
+                }
+              } else {
+                throw new Error('TronLink 未就绪');
+              }
+            } else if (result.code === 4001) {
+              throw new Error('用户已拒绝授权');
+            } else {
+              throw new Error(`连接失败: ${result.message || '未知错误'}`);
+            }
+          } 
+          // 使用旧版本 API
+          else if (window.tronWeb) {
+            if (window.tronWeb.ready) {
+              const addr = window.tronWeb.defaultAddress?.base58;
+              if (addr) {
+                setAddress(addr);
+                setConnected(true);
+              } else {
+                throw new Error('请先解锁钱包');
+              }
+            } else {
+              throw new Error('TronLink 未就绪');
+            }
+          }
+        } catch (err) {
+          const errorMsg = err.message || '连接失败';
+          setError(errorMsg);
+          if (onError) onError(err);
+        } finally {
+          setConnecting(false);
+        }
+      };
+
+      const disconnect = () => {
+        setAddress(null);
+        setConnected(false);
+        setError(null);
+      };
+
+      const signMessage = async (message) => {
+        if (!connected || !address) {
+          throw new Error('请先连接钱包');
+        }
+
+        const tronWeb = getTronWeb();
+        if (!tronWeb || !tronWeb.ready) {
+          throw new Error('TronLink 未就绪');
+        }
+
+        try {
+          // 使用 TronWeb 签名消息
+          const signedMessage = await tronWeb.trx.signMessage(message);
+          return signedMessage;
+        } catch (err) {
+          throw new Error(`签名失败: ${err.message}`);
+        }
+      };
+
+      const signTransaction = async (transaction) => {
+        if (!connected || !address) {
+          throw new Error('请先连接钱包');
+        }
+
+        const tronWeb = getTronWeb();
+        if (!tronWeb || !tronWeb.ready) {
+          throw new Error('TronLink 未就绪');
+        }
+
+        try {
+          const signedTx = await tronWeb.trx.sign(transaction);
+          return signedTx;
+        } catch (err) {
+          throw new Error(`签名交易失败: ${err.message}`);
+        }
+      };
+
+      const value = {
+        wallet,
+        address,
+        connected,
+        connecting,
+        error,
+        connect,
+        disconnect,
+        signMessage,
+        signTransaction,
+      };
+
+      return (
+        <WalletContext.Provider value={value}>
+          {children}
+        </WalletContext.Provider>
+      );
+    }
+
+    // useWallet Hook
+    function useWallet() {
+      const context = useContext(WalletContext);
+      if (!context) {
+        throw new Error('useWallet must be used within WalletProvider');
+      }
+      return context;
+    }
+
+    // ============================================
+    // 应用组件
+    // ============================================
+
+    function WalletConnect() {
+      const { 
+        wallet, 
+        address, 
+        connected, 
+        connecting, 
+        error, 
+        connect, 
+        disconnect,
+        signMessage 
+      } = useWallet();
+
+      const [signature, setSignature] = useState(null);
+      const [signing, setSigning] = useState(false);
+
+      // 与 Flutter 通信
+      useEffect(() => {
+        if (connected && address) {
+          // 发送事件到 Flutter
+          if (window.flutter_inappwebview) {
+            window.flutter_inappwebview.callHandler('walletEvent', {
+              type: 'connected',
+              address: address
+            });
+          }
+          // 或者使用 postMessage
+          if (window.parent !== window) {
+            window.parent.postMessage({
+              type: 'wallet_connected',
+              address: address
+            }, '*');
+          }
+        }
+      }, [connected, address]);
+
+      const handleSignMessage = async () => {
+        try {
+          setSigning(true);
+          setSignature(null);
+          const sig = await signMessage('Hello from Agora Market!');
+          setSignature(sig);
+        } catch (err) {
+          alert('签名失败: ' + err.message);
+        } finally {
+          setSigning(false);
+        }
+      };
+
+      return (
+        <div className="container">
+          <h1>🔗 TronLink 连接</h1>
+          <p className="subtitle">使用轻量级 Adapter (CDN 版本)</p>
+
+          <div className="info-box">
+            <div className="info-item">
+              <span className="info-label">钱包:</span>
+              <span className="info-value">{wallet || '检测中...'}</span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">状态:</span>
+              <span className="info-value">
+                {connecting ? '连接中...' : connected ? '已连接' : '未连接'}
+              </span>
+            </div>
+            {address && (
+              <div className="info-item">
+                <span className="info-label">地址:</span>
+                <span className="info-value">
+                  {address.substring(0, 6)}...{address.substring(address.length - 4)}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {error && (
+            <div className="status-box error">{error}</div>
+          )}
+
+          {connected && address && (
+            <div className="status-box success">
+              已连接: {address}
+            </div>
+          )}
+
+          {!wallet && (
+            <div className="status-box info">
+              正在检测钱包...
+            </div>
+          )}
+
+          {wallet && (
+            <>
+              {!connected ? (
+                <button 
+                  className="button button-primary" 
+                  onClick={connect}
+                  disabled={connecting}
+                >
+                  {connecting ? '连接中...' : '连接钱包'}
+                </button>
+              ) : (
+                <>
+                  <button 
+                    className="button" 
+                    onClick={disconnect}
+                  >
+                    断开连接
+                  </button>
+                  <button 
+                    className="button button-primary" 
+                    onClick={handleSignMessage}
+                    disabled={signing}
+                  >
+                    {signing ? '签名中...' : '签名消息测试'}
+                  </button>
+                  {signature && (
+                    <div className="status-box success">
+                      签名成功: {signature.substring(0, 20)}...
+                    </div>
+                  )}
+                </>
+              )}
+            </>
+          )}
+        </div>
+      );
+    }
+
+    function App() {
+      const handleError = (error) => {
+        console.error('Wallet error:', error);
+      };
+
+      return (
+        <WalletProvider onError={handleError}>
+          <WalletConnect />
+        </WalletProvider>
+      );
+    }
+
+    // 渲染应用
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
+
