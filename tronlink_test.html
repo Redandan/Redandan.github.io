@@ -741,9 +741,10 @@
         const deeplinkRaw = `tronlink://wc?uri=${uri}`;
         log('info', 'Deep Link (原始URI，不编码)', deeplinkRaw);
         
-        // 优先使用编码后的 URI
-        const deeplink = deeplinkEncoded;
-        log('info', '使用 Deep Link (编码URI)', deeplink);
+        // ⚠️ 重要：优先使用编码后的 URI
+        const deeplink = deeplinkEncoded;  // 使用编码版本
+        log('info', '✅ 使用 Deep Link (编码URI) - 这是实际发送的格式', deeplink);
+        console.log('✅ 实际使用的 deep link (编码):', deeplink);
         
         showResult(true, '正在打开 TronLink App', '请在 TronLink App 中批准连接...');
         
