@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TronLink PWA 测试</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+      width: 100%;
+      padding: 40px;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 24px;
+    }
+
+    .subtitle {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+
+    .info-box {
+      background: #f5f5f5;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    .info-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .info-label {
+      color: #666;
+      font-weight: 500;
+    }
+
+    .info-value {
+      color: #333;
+      font-weight: 600;
+    }
+
+    .status {
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-block;
+    }
+
+    .status.pwa {
+      background: #e3f2fd;
+      color: #1976d2;
+    }
+
+    .status.mobile {
+      background: #fff3e0;
+      color: #f57c00;
+    }
+
+    .status.desktop {
+      background: #e8f5e9;
+      color: #388e3c;
+    }
+
+    .status.extension {
+      background: #f3e5f5;
+      color: #7b1fa2;
+    }
+
+    .button {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-bottom: 15px;
+    }
+
+    .button:last-child {
+      margin-bottom: 0;
+    }
+
+    .button-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .button-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .button-primary:active {
+      transform: translateY(0);
+    }
+
+    .button-secondary {
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    .button-secondary:hover {
+      background: #e0e0e0;
+    }
+
+    .button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .result-box {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 10px;
+      background: #f5f5f5;
+      display: none;
+    }
+
+    .result-box.show {
+      display: block;
+    }
+
+    .result-box.success {
+      background: #e8f5e9;
+      border: 1px solid #4caf50;
+    }
+
+    .result-box.error {
+      background: #ffebee;
+      border: 1px solid #f44336;
+    }
+
+    .result-title {
+      font-weight: 600;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    .result-content {
+      font-size: 12px;
+      word-break: break-all;
+      color: #666;
+    }
+
+    .log-box {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 10px;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .log-box.show {
+      display: block;
+    }
+
+    .log-item {
+      margin-bottom: 5px;
+      padding: 5px;
+      border-left: 3px solid transparent;
+    }
+
+    .log-item.info {
+      border-left-color: #2196f3;
+    }
+
+    .log-item.success {
+      border-left-color: #4caf50;
+    }
+
+    .log-item.error {
+      border-left-color: #f44336;
+    }
+
+    .log-item.warn {
+      border-left-color: #ff9800;
+    }
+
+    .toggle-log {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #666;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔗 TronLink PWA 测试</h1>
+    <p class="subtitle">测试 PWA 模式下唤起 TronLink 钱包</p>
+
+    <div class="info-box">
+      <div class="info-item">
+        <span class="info-label">环境模式:</span>
+        <span class="info-value" id="envMode">检测中...</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">设备类型:</span>
+        <span class="info-value" id="deviceType">检测中...</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">TronLink 扩展:</span>
+        <span class="info-value" id="extensionStatus">检测中...</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">连接状态:</span>
+        <span class="info-value" id="connectionStatus">未连接</span>
+      </div>
+    </div>
+
+    <button class="button button-primary" id="connectBtn" onclick="handleConnect()">
+      连接 TronLink
+    </button>
+
+    <button class="button button-secondary" id="disconnectBtn" onclick="handleDisconnect()" disabled>
+      断开连接
+    </button>
+
+    <div class="result-box" id="resultBox">
+      <div class="result-title" id="resultTitle"></div>
+      <div class="result-content" id="resultContent"></div>
+    </div>
+
+    <div class="toggle-log" onclick="toggleLog()">显示/隐藏日志</div>
+    <div class="log-box" id="logBox"></div>
+  </div>
+
+  <script>
+    // 日志系统
+    const logs = [];
+    let logVisible = false;
+
+    function log(type, message, data = null) {
+      const timestamp = new Date().toLocaleTimeString();
+      const logEntry = {
+        type,
+        message,
+        data,
+        timestamp
+      };
+      logs.push(logEntry);
+      
+      const logBox = document.getElementById('logBox');
+      const logItem = document.createElement('div');
+      logItem.className = `log-item ${type}`;
+      logItem.textContent = `[${timestamp}] ${type.toUpperCase()}: ${message}${data ? ' ' + JSON.stringify(data) : ''}`;
+      logBox.appendChild(logItem);
+      logBox.scrollTop = logBox.scrollHeight;
+      
+      console.log(`[${timestamp}] ${type.toUpperCase()}:`, message, data || '');
+    }
+
+    function toggleLog() {
+      logVisible = !logVisible;
+      const logBox = document.getElementById('logBox');
+      logBox.classList.toggle('show', logVisible);
+    }
+
+    // 环境检测
+    function isPWAMode() {
+      try {
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+        const isFullscreen = window.matchMedia('(display-mode: fullscreen)').matches;
+        const isMinimalUI = window.matchMedia('(display-mode: minimal-ui)').matches;
+        const isIOSStandalone = window.navigator.standalone === true;
+        return isStandalone || isFullscreen || isMinimalUI || isIOSStandalone;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function isMobileDevice() {
+      return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+
+    function isTronLinkBrowser() {
+      return window.tronWeb && window.tronWeb.ready && 
+             window.tronWeb.defaultAddress && 
+             window.tronWeb.defaultAddress.base58;
+    }
+
+    async function checkTronLinkExtension() {
+      if (window.tronLink || window.tronWeb) {
+        return true;
+      }
+      
+      // 尝试访问 tronLink 对象来触发注入
+      try {
+        if (window.tronLink && typeof window.tronLink.request === 'function') {
+          return true;
+        }
+      } catch (e) {
+        // 忽略错误
+      }
+      
+      return false;
+    }
+
+    // 更新环境信息
+    function updateEnvironmentInfo() {
+      const pwaMode = isPWAMode();
+      const mobile = isMobileDevice();
+      const hasExtension = window.tronLink || window.tronWeb;
+      const inTronLinkBrowser = isTronLinkBrowser();
+
+      document.getElementById('envMode').innerHTML = pwaMode 
+        ? '<span class="status pwa">PWA 模式</span>' 
+        : '<span class="status desktop">浏览器模式</span>';
+      
+      document.getElementById('deviceType').innerHTML = mobile 
+        ? '<span class="status mobile">移动设备</span>' 
+        : '<span class="status desktop">桌面设备</span>';
+      
+      document.getElementById('extensionStatus').innerHTML = hasExtension 
+        ? '<span class="status extension">已安装</span>' 
+        : '<span class="status">未安装</span>';
+
+      log('info', '环境检测完成', {
+        pwaMode,
+        mobile,
+        hasExtension,
+        inTronLinkBrowser
+      });
+    }
+
+    // 连接状态
+    let connectedAddress = null;
+
+    function updateConnectionStatus(address) {
+      connectedAddress = address;
+      const statusEl = document.getElementById('connectionStatus');
+      const connectBtn = document.getElementById('connectBtn');
+      const disconnectBtn = document.getElementById('disconnectBtn');
+
+      if (address) {
+        statusEl.textContent = `已连接: ${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+        statusEl.style.color = '#4caf50';
+        connectBtn.disabled = true;
+        disconnectBtn.disabled = false;
+      } else {
+        statusEl.textContent = '未连接';
+        statusEl.style.color = '#666';
+        connectBtn.disabled = false;
+        disconnectBtn.disabled = true;
+      }
+    }
+
+    function showResult(success, title, content) {
+      const resultBox = document.getElementById('resultBox');
+      const resultTitle = document.getElementById('resultTitle');
+      const resultContent = document.getElementById('resultContent');
+
+      resultBox.className = `result-box show ${success ? 'success' : 'error'}`;
+      resultTitle.textContent = title;
+      resultContent.textContent = content;
+    }
+
+    // 连接 TronLink（浏览器扩展）
+    async function connectTronLinkExtension() {
+      try {
+        log('info', '尝试连接 TronLink 扩展...');
+
+        if (window.tronLink) {
+          log('info', '使用 window.tronLink.request');
+          const result = await window.tronLink.request({
+            method: 'tron_requestAccounts'
+          });
+          
+          if (result && result.code === 200 && result.data && result.data.length > 0) {
+            const address = result.data[0];
+            log('success', '连接成功（tronLink.request）', { address });
+            return address;
+          }
+        }
+
+        if (window.tronWeb) {
+          log('info', '使用 window.tronWeb');
+          // 等待 tronWeb ready
+          let retries = 0;
+          while (!window.tronWeb.ready && retries < 20) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            retries++;
+          }
+
+          if (window.tronWeb.ready && window.tronWeb.defaultAddress) {
+            const address = window.tronWeb.defaultAddress.base58;
+            log('success', '连接成功（tronWeb）', { address });
+            return address;
+          }
+        }
+
+        throw new Error('无法获取钱包地址');
+      } catch (error) {
+        log('error', '连接扩展失败', error.message);
+        throw error;
+      }
+    }
+
+    // 连接 TronLink（移动 App - 在 TronLink 内建浏览器中）
+    async function connectTronLinkMobile() {
+      try {
+        log('info', '尝试连接 TronLink 移动 App（内建浏览器）...');
+
+        if (isTronLinkBrowser()) {
+          if (window.tronWeb && window.tronWeb.defaultAddress) {
+            const address = window.tronWeb.defaultAddress.base58;
+            log('success', '连接成功（TronLink 内建浏览器）', { address });
+            return address;
+          }
+        }
+
+        throw new Error('不在 TronLink 内建浏览器中');
+      } catch (error) {
+        log('error', '连接移动 App 失败', error.message);
+        throw error;
+      }
+    }
+
+    // 打开 TronLink App（Deep Link）
+    function openTronLinkApp() {
+      try {
+        log('info', '尝试打开 TronLink App...');
+        const currentUrl = encodeURIComponent(window.location.href);
+        const deeplink = `tronlink://open_url?url=${currentUrl}`;
+        
+        log('info', 'Deep Link:', deeplink);
+        window.location.href = deeplink;
+        
+        // 显示提示
+        showResult(true, '正在打开 TronLink App', '请在 TronLink App 中打开此页面并连接');
+      } catch (error) {
+        log('error', '打开 App 失败', error.message);
+        showResult(false, '打开失败', error.message);
+      }
+    }
+
+    // 主连接处理
+    async function handleConnect() {
+      try {
+        log('info', '开始连接流程...');
+        showResult(true, '连接中...', '正在检测 TronLink...');
+
+        // 1. 检查是否在 TronLink 内建浏览器中
+        if (isTronLinkBrowser()) {
+          log('info', '检测到 TronLink 内建浏览器');
+          const address = await connectTronLinkMobile();
+          updateConnectionStatus(address);
+          showResult(true, '连接成功', `地址: ${address}`);
+          return;
+        }
+
+        // 2. 检查是否有浏览器扩展
+        const hasExtension = await checkTronLinkExtension();
+        if (hasExtension) {
+          log('info', '检测到 TronLink 扩展');
+          const address = await connectTronLinkExtension();
+          updateConnectionStatus(address);
+          showResult(true, '连接成功', `地址: ${address}`);
+          return;
+        }
+
+        // 3. 移动设备/PWA 模式，打开 App
+        if (isMobileDevice() || isPWAMode()) {
+          log('info', '移动设备/PWA 模式，尝试打开 TronLink App');
+          openTronLinkApp();
+          return;
+        }
+
+        // 4. 桌面设备且无扩展
+        showResult(false, '未检测到 TronLink', '请安装 TronLink 浏览器扩展或使用移动设备');
+        log('warn', '未检测到 TronLink 扩展或 App');
+
+      } catch (error) {
+        log('error', '连接失败', error.message);
+        showResult(false, '连接失败', error.message);
+      }
+    }
+
+    // 断开连接
+    function handleDisconnect() {
+      log('info', '断开连接');
+      updateConnectionStatus(null);
+      showResult(true, '已断开', '连接已断开');
+    }
+
+    // 监听 TronLink 事件
+    function setupTronLinkListeners() {
+      // 监听账户变化
+      if (window.tronLink) {
+        window.tronLink.on('addressChange', (address) => {
+          log('info', '账户地址变化', address);
+          if (address) {
+            updateConnectionStatus(address);
+          }
+        });
+
+        window.tronLink.on('disconnect', () => {
+          log('info', 'TronLink 断开连接');
+          updateConnectionStatus(null);
+        });
+      }
+
+      // 定期检查 TronWeb（PWA 模式）
+      if (isPWAMode()) {
+        const checkInterval = setInterval(() => {
+          if (window.tronWeb && !connectedAddress) {
+            log('info', '检测到 TronWeb 注入');
+            if (window.tronWeb.defaultAddress) {
+              const address = window.tronWeb.defaultAddress.base58;
+              updateConnectionStatus(address);
+              showResult(true, '自动连接成功', `地址: ${address}`);
+              clearInterval(checkInterval);
+            }
+          }
+        }, 500);
+
+        // 30 秒后清除
+        setTimeout(() => clearInterval(checkInterval), 30000);
+      }
+    }
+
+    // 初始化
+    window.addEventListener('DOMContentLoaded', () => {
+      log('info', '页面加载完成');
+      updateEnvironmentInfo();
+      setupTronLinkListeners();
+      
+      // 延迟检查扩展（等待注入）
+      setTimeout(() => {
+        updateEnvironmentInfo();
+      }, 1000);
+    });
+  </script>
+</body>
+</html>
+

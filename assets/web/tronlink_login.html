@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TronLink 登入 - Agora Market</title>
+  <link rel="stylesheet" href="tronlink_login.css">
+  <!-- Wallet API -->
+  <script src="wallet_api.js"></script>
+</head>
+<body>
+  <div class="container">
+    <!-- 状态提示 -->
+    <div id="status" class="status info" style="display: none;">
+      <span class="loading"></span>
+      <span id="statusText">正在初始化...</span>
+    </div>
+
+    <!-- 页面 1: 钱包选择器主页面 -->
+    <div id="pageSelector" class="page active">
+      <div class="page-header">
+        <h1 class="page-title">TronLink 登入</h1>
+        <p class="page-subtitle">使用 TronLink 錢包登入以繼續使用 Agora 社群商城</p>
+        <p class="page-description">我們將用你的 TronLink 錢包地址建立安全登入。你不需要提供任何密碼。</p>
+      </div>
+
+      <!-- 已安裝的錢包 -->
+      <div id="installedWalletsSection" style="display: none;">
+        <div class="section-title">已安裝的錢包（推薦）</div>
+        <div id="installedWalletsList" class="wallet-list"></div>
+      </div>
+
+      <!-- TronLink 登入 -->
+      <div id="mobileWalletsSection" style="display: none;">
+        <div class="section-title">TronLink 登入</div>
+        <div id="mobileWalletsList" class="wallet-list"></div>
+      </div>
+
+
+    </div>
+
+
+    <!-- 页面 3: Deep Link 登录 -->
+    <div id="pageDeepLink" class="page">
+      <div class="page-header">
+        <div class="deeplink-icon" id="deeplinkIcon"><img src="assets/icons/TronLink_icon.jpg" alt="TronLink" /></div>
+        <h1 class="page-title" id="deeplinkTitle">正在打開 TronLink…</h1>
+        <p class="page-subtitle" id="deeplinkSubtitle">如果沒有自動跳轉，請手動點擊下方按鈕。</p>
+      </div>
+
+      <div class="deeplink-container">
+        <button class="deeplink-button" id="deeplinkButton" onclick="openDeepLinkApp()">
+          打開 TronLink App
+        </button>
+
+        <div class="deeplink-download" id="deeplinkDownload" style="display: none;">
+          沒有安裝 TronLink？ <a href="#" id="deeplinkDownloadLink" target="_blank">前往下載</a>
+        </div>
+      </div>
+
+      <button class="back-button" onclick="showSelectorPage()">
+        ← 返回錢包選擇器
+      </button>
+    </div>
+
+    <!-- 钱包信息显示 -->
+    <div id="walletInfo" class="wallet-info-display">
+      <div>已連接錢包：</div>
+      <div class="wallet-address" id="walletAddress"></div>
+    </div>
+  </div>
+
+  <script>
+    // 日志级别控制
+    const DEBUG = false;
+    
+    function debugLog(...args) {
+      if (DEBUG) console.log(...args);
+    }
+    
+    function debugError(...args) {
+      console.error(...args);
+    }
+    
+    function debugWarn(...args) {
+      if (DEBUG) console.warn(...args);
+    }
+
+    // 全局变量
+    let isTronLink = false;
+    let tronWeb = null;
+    
+    // PWA 环境检测
+    function isPWAMode() {
+      try {
+        // 检测是否在 standalone 模式（PWA）
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+        const isFullscreen = window.matchMedia('(display-mode: fullscreen)').matches;
+        const isMinimalUI = window.matchMedia('(display-mode: minimal-ui)').matches;
+        // iOS Safari 特殊处理
+        const isIOSStandalone = window.navigator.standalone === true;
+        return isStandalone || isFullscreen || isMinimalUI || isIOSStandalone;
+      } catch (e) {
+        return false;
+      }
+    }
+    
+    // 检测是否在移动设备
+    function isMobileDevice() {
+      return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+    
+    // 授权状态管理（LocalStorage）
+    const AuthStorage = {
+      key: 'wallet_connect_auth',
+      save: function(walletAddress, walletType, chain) {
+        try {
+          const data = {
+            walletAddress,
+            walletType,
+            chain,
+            timestamp: Date.now(),
+            expiresAt: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7天过期
+          };
+          localStorage.setItem(this.key, JSON.stringify(data));
+        } catch (e) {
+          debugWarn('保存授权状态失败:', e);
+        }
+      },
+      load: function() {
+        try {
+          const data = localStorage.getItem(this.key);
+          if (!data) return null;
+          const auth = JSON.parse(data);
+          if (auth.expiresAt && auth.expiresAt < Date.now()) {
+            this.clear();
+            return null;
+          }
+          return auth;
+        } catch (e) {
+          debugWarn('加载授权状态失败:', e);
+          return null;
+        }
+      },
+      clear: function() {
+        try {
+          localStorage.removeItem(this.key);
+        } catch (e) {
+          debugWarn('清除授权状态失败:', e);
+        }
+      }
+    };
+
+    // TronLink 配置
+    const TRONLINK_CONFIG = {
+      name: 'TronLink',
+      icon: 'assets/icons/TronLink_icon.jpg',
+      installUrl: 'https://www.tronlink.org/',
+      deepLink: 'tronlink://'
+    };
+
+    // 页面切换
+    function showPage(pageId) {
+      document.querySelectorAll('.page').forEach(page => {
+        page.classList.remove('active');
+      });
+      document.getElementById(pageId).classList.add('active');
+    }
+
+    function showSelectorPage() {
+      showPage('pageSelector');
+      hideStatus();
+    }
+
+    function showDeepLinkPage() {
+      const page = document.getElementById('pageDeepLink');
+      const deeplinkIconEl = document.getElementById('deeplinkIcon');
+      deeplinkIconEl.innerHTML = `<img src="${TRONLINK_CONFIG.icon}" alt="${TRONLINK_CONFIG.name}" />`;
+      
+      document.getElementById('deeplinkTitle').textContent = `正在打開 ${TRONLINK_CONFIG.name}…`;
+      document.getElementById('deeplinkButton').textContent = `打開 ${TRONLINK_CONFIG.name} App`;
+      
+      // PWA 模式下的特殊提示
+      const subtitleEl = document.getElementById('deeplinkSubtitle');
+      if (isPWAMode()) {
+        subtitleEl.textContent = '如果沒有自動跳轉，請手動點擊下方按鈕打開 TronLink App。在 PWA 模式下，建議使用 TronLink 瀏覽器擴展以獲得最佳體驗。';
+      } else {
+        subtitleEl.textContent = '如果沒有自動跳轉，請手動點擊下方按鈕。';
+      }
+      
+      document.getElementById('deeplinkDownload').style.display = 'block';
+      document.getElementById('deeplinkDownloadLink').href = TRONLINK_CONFIG.installUrl;
+      showPage('pageDeepLink');
+    }
+
+    // 状态管理
+    function updateStatus(type, message) {
+      const statusDiv = document.getElementById('status');
+      const statusText = document.getElementById('statusText');
+      statusDiv.className = 'status ' + type;
+      statusText.textContent = message;
+      statusDiv.style.display = 'block';
+    }
+
+    function hideStatus() {
+      document.getElementById('status').style.display = 'none';
+    }
+
+    // 检测 TronLink App 是否已安装（通过尝试打开 deep link）
+    async function checkTronLinkAppInstalled() {
+      return new Promise((resolve) => {
+        let resolved = false;
+        const timeout = setTimeout(() => {
+          if (!resolved) {
+            resolved = true;
+            resolve(false);
+          }
+        }, 1000);
+        
+        // 使用 iframe 尝试打开 deep link
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = 'tronlink://';
+        document.body.appendChild(iframe);
+        
+        // 监听 blur 事件（如果 App 打开，页面会失去焦点）
+        const onBlur = () => {
+          if (!resolved) {
+            resolved = true;
+            clearTimeout(timeout);
+            document.body.removeChild(iframe);
+            window.removeEventListener('blur', onBlur);
+            resolve(true);
+          }
+        };
+        
+        window.addEventListener('blur', onBlur);
+        
+        // 清理
+        setTimeout(() => {
+          if (!resolved) {
+            resolved = true;
+            clearTimeout(timeout);
+            if (iframe.parentNode) {
+              document.body.removeChild(iframe);
+            }
+            window.removeEventListener('blur', onBlur);
+            resolve(false);
+          }
+        }, 2000);
+      });
+    }
+
+    // 检测 TronLink 浏览器扩展是否已安装
+    async function isTronLinkExtensionInstalled() {
+      // 只在桌面浏览器中检测扩展
+      // 注意：在 PWA/Mobile Web 中，TronLink App 不会注入 window.tronLink 或 window.tronWeb
+      if (isMobileDevice() || isPWAMode()) {
+        return false;
+      }
+      
+      // 检查 window.tronLink 对象（浏览器扩展会注入这个对象）
+      if (window.tronLink) {
+        debugLog('检测到 window.tronLink 对象（浏览器扩展）');
+        return true;
+      }
+      
+      // 检查 window.tronWeb（新版本 TronLink 扩展）
+      if (window.tronWeb) {
+        debugLog('检测到 window.tronWeb（浏览器扩展）');
+        return true;
+      }
+      
+      return false;
+    }
+
+    // 渲染 TronLink 按钮
+    function renderTronLinkButton(isInstalled) {
+      const button = document.createElement('button');
+      button.className = 'wallet-button';
+      button.onclick = () => handleTronLinkClick(isInstalled);
+      
+      button.innerHTML = `
+        <div class="wallet-icon"><img src="${TRONLINK_CONFIG.icon}" alt="${TRONLINK_CONFIG.name}" /></div>
+        <div class="wallet-info">
+          <div class="wallet-name">
+            ${TRONLINK_CONFIG.name}
+            ${isInstalled ? '<span class="wallet-badge">已安裝</span>' : ''}
+          </div>
+          <div class="wallet-type">Tron 錢包</div>
+        </div>
+      `;
+      
+      return button;
+    }
+
+    // 初始化 TronLink 选择器
+    async function initWalletSelector() {
+      const hasExtension = await isTronLinkExtensionInstalled();
+      
+      // 渲染已安装的扩展
+      if (hasExtension) {
+        const installedSection = document.getElementById('installedWalletsSection');
+        const installedListEl = document.getElementById('installedWalletsList');
+        installedListEl.innerHTML = '';
+        installedListEl.appendChild(renderTronLinkButton(true));
+        installedSection.style.display = 'block';
+      }
+
+      // 渲染 TronLink App（移动设备/PWA）
+      const mobileSection = document.getElementById('mobileWalletsSection');
+      const mobileListEl = document.getElementById('mobileWalletsList');
+      mobileListEl.innerHTML = '';
+      mobileListEl.appendChild(renderTronLinkButton(false));
+      mobileSection.style.display = 'block';
+    }
+
+    // 检查是否在 TronLink App 内建浏览器
+    // 注意：只有在 TronLink App 内建浏览器中，window.tronWeb 才会被注入
+    function isTronLinkBrowser() {
+      // 在 TronLink App 内建浏览器中，window.tronWeb 会被注入
+      if (window.tronWeb && window.tronWeb.ready) {
+        // 检查是否有默认地址
+        if (window.tronWeb.defaultAddress && window.tronWeb.defaultAddress.base58) {
+          debugLog('检测到 TronLink App 内建浏览器');
+          return true;
+        }
+      }
+      return false;
+    }
+
+    // 打开 TronLink App（使用 Deep Link）
+    async function openTronLinkApp() {
+      // 使用简单的 deep link 打开 TronLink App
+      const currentUrl = encodeURIComponent(window.location.href);
+      const deeplink = `tronlink://open_url?url=${currentUrl}`;
+      
+      debugLog('Opening TronLink DeepLink:', deeplink);
+      console.log('Opening TronLink DeepLink:', deeplink);
+      
+      updateStatus('info', '正在打開 TronLink App...');
+      window.location.href = deeplink;
+      
+      // 如果 1500ms 没成功跳转，显示提示
+      setTimeout(() => {
+        if (document.hasFocus()) {
+          const subtitleEl = document.getElementById('deeplinkSubtitle');
+          if (subtitleEl) {
+            subtitleEl.textContent = '似乎無法自動跳轉，請手動點擊下方按鈕，或確認是否已安裝 TronLink App。';
+          }
+        }
+      }, 1500);
+    }
+
+    // 处理 TronLink 点击
+    async function handleTronLinkClick(isInstalled) {
+      try {
+        debugLog('处理 TronLink 点击, isInstalled:', isInstalled);
+        
+        // Case 1: 已经在 TronLink Browser → 可直接 connect
+        if (isTronLinkBrowser()) {
+          debugLog('已在 TronLink App 内建浏览器，直接连接');
+          updateStatus('info', '檢測到 TronLink App，正在連接...');
+          const address = await connectTronLinkMobile();
+          if (address) {
+            onWalletConnected(address, 'tronlink');
+          }
+          return;
+        }
+        
+        // Case 2: 已经检测到浏览器扩展（桌面浏览器）
+        if (isInstalled) {
+          debugLog('检测到 TronLink 浏览器扩展，直接连接');
+          updateStatus('info', '檢測到 TronLink 瀏覽器擴展，正在連接...');
+          await connectTronLinkExtension();
+          return;
+        }
+        
+        // Case 3: 移动设备或 PWA 模式 → 使用 DeepLink
+        if (isMobileDevice() || isPWAMode()) {
+          debugLog('移动设备/PWA 模式，使用 DeepLink');
+          updateStatus('info', '正在打開 TronLink App...');
+          showDeepLinkPage();
+          
+          // 延迟 500ms 后自动跳转（给用户看到提示）
+          setTimeout(async () => {
+            try {
+              await openTronLinkApp();
+            } catch (error) {
+              debugError('打开 TronLink App 失败:', error);
+              updateStatus('error', '無法打開 TronLink App: ' + error.message);
+            }
+          }, 500);
+          return;
+        }
+        
+        // Case 4: 桌面浏览器，提示安装扩展
+        updateStatus('error', '未檢測到 TronLink 瀏覽器擴展。請安裝 TronLink 瀏覽器擴展後重試。');
+        if (confirm('未檢測到 TronLink 擴展。是否前往下載頁面？')) {
+          window.open(TRONLINK_CONFIG.installUrl, '_blank');
+        }
+      } catch (error) {
+        debugError('處理 TronLink 點擊失敗:', error);
+        updateStatus('error', '連接失敗: ' + error.message);
+      }
+    }
+    
+    // 连接 TronLink 浏览器扩展（桌面浏览器）
+    async function connectTronLinkExtension() {
+      try {
+        updateStatus('info', '正在連接 TronLink 瀏覽器擴展...');
+        
+        // 检查是否有 window.tronLink
+        if (!window.tronLink) {
+          throw new Error('未檢測到 TronLink 瀏覽器擴展');
+        }
+        
+        // 请求账户连接
+        const result = await window.tronLink.request({ method: 'tron_requestAccounts' });
+        debugLog('TronLink request 结果:', result);
+        
+        // 等待 tronWeb 注入
+        let localTronWeb = null;
+        for (let i = 0; i < 30; i++) {
+          if (window.tronWeb) {
+            localTronWeb = window.tronWeb;
+            break;
+          } else if (window.tronLink && window.tronLink.tronWeb) {
+            localTronWeb = window.tronLink.tronWeb;
+            break;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+        
+        if (!localTronWeb) {
+          throw new Error('無法獲取 TronWeb 實例');
+        }
+        
+        // 等待 TronWeb 就绪
+        if (!localTronWeb.ready) {
+          await new Promise((resolve, reject) => {
+            const checkReady = setInterval(() => {
+              if (localTronWeb && localTronWeb.ready) {
+                clearInterval(checkReady);
+                resolve();
+              }
+            }, 100);
+            
+            setTimeout(() => {
+              clearInterval(checkReady);
+              reject(new Error('TronLink 初始化超時'));
+            }, 10000);
+          });
+        }
+        
+        // 获取账户地址
+        let address = localTronWeb.defaultAddress?.base58;
+        
+        if (!address) {
+          // 再次请求账户
+          if (localTronWeb.request) {
+            await localTronWeb.request({
+              method: 'tron_requestAccounts'
+            });
+          }
+          address = localTronWeb.defaultAddress?.base58;
+        }
+        
+        if (!address) {
+          throw new Error('無法獲取 TronLink 地址，請確保已解鎖並選擇賬戶');
+        }
+        
+        debugLog('TronLink 扩展连接成功，地址:', address);
+        
+        // 更新全局变量
+        isTronLink = true;
+        tronWeb = localTronWeb;
+        
+        // 继续登录流程
+        onWalletConnected(address, 'tronlink');
+        
+      } catch (error) {
+        debugError('連接 TronLink 擴展失敗:', error);
+        if (error.code === 4001 || error.message?.includes('rejected') || error.message?.includes('denied')) {
+          updateStatus('info', '用戶已取消連接');
+          return;
+        }
+        throw error;
+      }
+    }
+    
+    // TronLink connect 程式碼（TronLink App 内建浏览器限定）
+    // 注意：只有在 TronLink App 内建浏览器中，window.tronWeb 才会被注入
+    async function connectTronLinkMobile() {
+      // 检查是否在 TronLink App 内建浏览器中
+      if (!isTronLinkBrowser()) {
+        debugError('不在 TronLink App 内建浏览器中');
+        updateStatus('error', '請使用 TronLink App 內建瀏覽器打開本頁面。');
+        return null;
+      }
+      
+      // 等待 TronWeb 就绪（通常已经就绪，但为了安全等待一下）
+      if (!window.tronWeb.ready) {
+        updateStatus('info', '等待 TronLink 初始化...');
+        for (let i = 0; i < 50; i++) {
+          if (window.tronWeb && window.tronWeb.ready) break;
+          await new Promise(res => setTimeout(res, 100));
+        }
+      }
+      
+      if (!window.tronWeb || !window.tronWeb.ready) {
+        debugError('TronLink 未就绪');
+        updateStatus('error', 'TronLink 未就緒，請確保 TronLink App 已解鎖。');
+        return null;
+      }
+      
+      // 获取地址
+      let address = window.tronWeb.defaultAddress?.base58;
+      
+      // 如果没有地址，尝试请求
+      if (!address) {
+        try {
+          if (window.tronWeb.request) {
+            await window.tronWeb.request({
+              method: 'tron_requestAccounts'
+            });
+          }
+          address = window.tronWeb.defaultAddress?.base58;
+        } catch (e) {
+          debugWarn('请求账户失败:', e);
+        }
+      }
+      
+      if (!address) {
+        debugError('无法获取 TronLink 地址');
+        updateStatus('error', '無法獲取 TronLink 地址，請確保已解鎖並選擇賬戶。');
+        return null;
+      }
+      
+      debugLog('Connected TronLink Address:', address);
+      console.log('Connected TronLink Address:', address);
+      return address;
+    }
+    
+    // 成功後更新 UI
+    function onWalletConnected(address, walletType) {
+      const walletAddressEl = document.getElementById('walletAddress');
+      const walletInfoEl = document.getElementById('walletInfo');
+      
+      if (walletAddressEl) {
+        walletAddressEl.textContent = address;
+      }
+      if (walletInfoEl) {
+        walletInfoEl.style.display = 'block';
+      }
+      
+      hideStatus();
+      
+      // 保存授权状态
+      if (isPWAMode()) {
+        AuthStorage.save(address, walletType, 'TRON');
+      }
+      
+      // 继续登录流程
+      performLogin(address).catch(error => {
+        debugError('登录失败:', error);
+        updateStatus('error', '登錄失敗: ' + error.message);
+      });
+    }
+
+    // 打开 Deep Link（按钮点击时调用）
+    async function openDeepLinkApp() {
+      try {
+        // 使用 Deep Link 打开 TronLink App
+        await openTronLinkApp();
+      } catch (error) {
+        debugError('打开 Deep Link 失败:', error);
+        updateStatus('error', '無法打開 TronLink App: ' + error.message);
+      }
+    }
+
+
+    function showWalletInfo(address) {
+      const walletInfo = document.getElementById('walletInfo');
+      const walletAddress = document.getElementById('walletAddress');
+      walletInfo.style.display = 'block';
+      walletAddress.textContent = address;
+    }
+
+    // 连接 TronLink（统一入口，根据环境选择合适的方法）
+    async function connectTronLink() {
+      try {
+        // Case 1: 已经在 TronLink Browser → 使用内建浏览器连接
+        if (isTronLinkBrowser()) {
+          debugLog('已在 TronLink Browser，使用内建浏览器连接');
+          const address = await connectTronLinkMobile();
+          if (address) {
+            onWalletConnected(address, 'tronlink');
+          }
+          return;
+        }
+        
+        // Case 2: 桌面浏览器扩展 → 使用扩展连接
+        const hasExtension = await isTronLinkExtensionInstalled();
+        if (hasExtension) {
+          debugLog('检测到浏览器扩展，使用扩展连接');
+          await connectTronLinkExtension();
+          return;
+        }
+        
+        // Case 3: 移动设备/PWA → 使用 DeepLink
+        if (isMobileDevice() || isPWAMode()) {
+          debugLog('移动设备/PWA 模式，使用 DeepLink');
+          await openTronLinkApp();
+          return;
+        }
+        
+        // Case 4: 其他情况
+        throw new Error('未檢測到 TronLink。請安裝 TronLink 瀏覽器擴展或使用 TronLink 手機 App。');
+        
+      } catch (error) {
+        debugError('連接 TronLink 失敗:', error);
+        if (error.code === 4001 || 
+            error.message?.includes('rejected') || 
+            error.message?.includes('denied') ||
+            error.message?.includes('拒絕')) {
+          updateStatus('info', '已取消連接');
+          return;
+        }
+        updateStatus('error', '連接失敗: ' + error.message);
+        sendEventToFlutter('error', { error: error.message });
+      }
+    }
+
+
+    // 登录流程
+    async function performLogin(walletAddress) {
+      try {
+        updateStatus('info', '步驟 1/4: 獲取驗證信息');
+        
+        const nonceData = await getNonce(walletAddress);
+        sendEventToFlutter('nonce_received', { nonce: nonceData.nonce });
+        
+        updateStatus('info', '步驟 2/4: 簽名消息');
+        const signature = await signMessage(nonceData, walletAddress);
+        
+        updateStatus('info', '步驟 3/4: 驗證登錄');
+        sendEventToFlutter('signature_received', {
+          signature: signature,
+          walletAddress: walletAddress
+        });
+        
+        const chainType = isTronLink ? 'tron' : 'tron';
+        const loginData = await verifyAndLogin(walletAddress, signature, nonceData, chainType);
+        
+        await handleLoginSuccess(loginData);
+      } catch (error) {
+        handleLoginError(error);
+      }
+    }
+
+    async function signMessage(nonceData, walletAddress) {
+      updateStatus('info', '請在錢包中簽名消息...');
+
+      // 使用 TronLink 扩展或内建浏览器
+      if (isTronLink && tronWeb) {
+        return await signWithTronLink(nonceData);
+      }
+      
+      throw new Error('未找到可用的簽名方法。請使用 TronLink 連接。');
+    }
+
+    // TronLink 签名
+    async function signWithTronLink(nonceData) {
+      try {
+        if (!tronWeb || !tronWeb.ready) {
+          if (isPWAMode()) {
+            throw new Error('TronLink 未就緒。請確保 TronLink 擴展已正確安裝並已解鎖。');
+          }
+          throw new Error('TronLink 未就緒');
+        }
+
+        const account = tronWeb.defaultAddress?.base58;
+        if (!account) {
+          throw new Error('未找到 TronLink 賬戶');
+        }
+
+        let signature;
+        
+        // 优先使用 signMessageV2
+        if (tronWeb.trx && typeof tronWeb.trx.signMessageV2 === 'function') {
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => {
+              reject(new Error('簽名請求超時（60秒）'));
+            }, 60000);
+          });
+          
+          const signPromise = tronWeb.trx.signMessageV2(nonceData.message);
+          const result = await Promise.race([signPromise, timeoutPromise]);
+          
+          signature = result.signature || result;
+          
+          // 处理签名结果
+          if (typeof signature === 'object' && signature !== null) {
+            signature = signature.signature || signature.result || JSON.stringify(signature);
+          }
+          
+          if (typeof signature !== 'string') {
+            signature = String(signature);
+          }
+          
+          // 确保签名格式正确（添加 0x 前缀如果需要）
+          if (signature && !signature.startsWith('0x') && /^[0-9a-fA-F]+$/.test(signature)) {
+            signature = '0x' + signature;
+          }
+        } 
+        // 使用 request 方法
+        else if (tronWeb.request && typeof tronWeb.request === 'function') {
+          const result = await tronWeb.request({
+            method: 'tron_signMessage',
+            params: {
+              message: nonceData.message,
+              address: account
+            }
+          });
+          
+          signature = result.signature || result;
+          
+          if (typeof signature === 'object' && signature !== null) {
+            signature = signature.signature || signature.result || JSON.stringify(signature);
+          }
+          
+          if (typeof signature !== 'string') {
+            signature = String(signature);
+          }
+          
+          // 确保签名格式正确
+          if (signature && !signature.startsWith('0x') && /^[0-9a-fA-F]+$/.test(signature)) {
+            signature = '0x' + signature;
+          }
+        } 
+        // 如果都不支持，抛出错误
+        else {
+          throw new Error('TronLink 簽名方法不可用。請確保使用最新版本的 TronLink。');
+        }
+        
+        if (!signature || signature.length === 0) {
+          throw new Error('簽名結果為空');
+        }
+        
+        return signature;
+      } catch (signError) {
+        if (signError.code === 4001 || 
+            signError.message?.includes('rejected') || 
+            signError.message?.includes('denied') || 
+            signError.message?.includes('User rejected') ||
+            signError.message?.includes('User cancel') ||
+            signError.message?.includes('cancelled')) {
+          updateStatus('info', '簽名已取消');
+          sendEventToFlutter('error', { error: '用戶取消簽名' });
+          throw new Error('USER_CANCELLED');
+        }
+        debugError('❌ TronLink 签名失败:', signError);
+        throw signError;
+      }
+    }
+
+
+    // verifyAndLogin 已移至 wallet_api.js
+
+    async function handleLoginSuccess(loginData) {
+      updateStatus('success', '登入成功！');
+      
+      sendEventToFlutter('verified', {
+        token: loginData.token,
+        refreshToken: loginData.refreshToken,
+        user: loginData.user
+      });
+    }
+
+    function handleLoginError(error) {
+      if (error.message === 'USER_CANCELLED') {
+        return;
+      }
+      
+      debugError('❌ 登录失败:', error);
+      
+      const userFriendlyMessages = {
+        'timeout': '操作超时，请重试',
+        'network': '网络错误，请检查连接',
+        'User rejected': '您已取消操作'
+      };
+      
+      const message = userFriendlyMessages[error.message] || error.message || '发生未知错误';
+      updateStatus('error', '登錄失敗: ' + message);
+      sendEventToFlutter('error', { error: message });
+    }
+
+    function sendEventToFlutter(event, data) {
+      try {
+        const isInIframe = window.self !== window.top;
+        
+        if (isInIframe && window.parent && window.parent.postMessage) {
+          window.parent.postMessage({
+            event: event,
+            data: data
+          }, window.location.origin);
+        } else if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
+          window.flutter_inappwebview.callHandler('walletEvent', {
+            event: event,
+            data: data
+          });
+        } else if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.walletEvent) {
+          window.webkit.messageHandlers.walletEvent.postMessage({
+            event: event,
+            data: data
+          });
+        }
+      } catch (error) {
+        debugError('❌ 发送事件到 Flutter 失败:', error);
+      }
+    }
+
+    // 初始化
+    async function init() {
+      try {
+        updateStatus('info', '正在初始化...');
+        
+        updateStatus('info', '正在檢測可用錢包...');
+        
+        // 在 PWA 模式下，检查是否有保存的授权状态
+        if (isPWAMode()) {
+          const savedAuth = AuthStorage.load();
+          if (savedAuth) {
+            debugLog('PWA 模式下发现保存的授权:', savedAuth);
+            // 不自动重连，让用户选择，但可以提示
+            updateStatus('info', '檢測到已保存的授權，請選擇連接方式...');
+          }
+        }
+        
+        // 初始化钱包选择器
+        await initWalletSelector();
+        
+        hideStatus();
+      } catch (error) {
+        debugError('初始化失败:', error);
+        updateStatus('error', '初始化失败: ' + error.message);
+        sendEventToFlutter('error', { error: error.message });
+      }
+    }
+
+    // 监听 TronLink 注入事件
+    function setupTronLinkListener() {
+      // 定期检查 TronLink 注入（作为备用方案）
+      if (isPWAMode()) {
+        const checkInterval = setInterval(() => {
+          if (window.tronWeb && !tronWeb) {
+            debugLog('定期檢查發現 TronLink (window.tronWeb)');
+            tronWeb = window.tronWeb;
+          } else if (window.tronLink && window.tronLink.tronWeb && !tronWeb) {
+            debugLog('定期檢查發現 TronLink (window.tronLink.tronWeb)');
+            tronWeb = window.tronLink.tronWeb;
+          }
+        }, 500);
+        
+        // 30 秒后清除
+        setTimeout(() => clearInterval(checkInterval), 30000);
+      }
+    }
+    
+    // 页面加载完成后初始化
+    window.addEventListener('DOMContentLoaded', async () => {
+      setupTronLinkListener();
+      await init();
+    });
+
+    // 错误处理
+    window.addEventListener('error', (event) => {
+      debugError('全局错误:', event.error);
+      updateStatus('error', '發生錯誤: ' + (event.error?.message || '未知錯誤'));
+      sendEventToFlutter('error', { error: event.error?.message || '未知錯誤' });
+    });
+
+    window.addEventListener('unhandledrejection', (event) => {
+      debugError('未处理的 Promise 拒绝:', event.reason);
+      updateStatus('error', '發生錯誤: ' + (event.reason?.message || '未知錯誤'));
+      sendEventToFlutter('error', { error: event.reason?.message || '未知錯誤' });
+    });
+  </script>
+</body>
+</html>
