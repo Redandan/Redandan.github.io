@@ -22,50 +22,50 @@
       
       // Immediately set up a Buffer placeholder that will be replaced when buffer-polyfill loads
       if (typeof window !== 'undefined') {
-        // Create a proxy that will wait for Buffer to be available
-        let bufferReady = false
-        let bufferValue = null
+        // Store the actual Buffer value in a closure to avoid recursion
+        let _bufferValue = null
+        let _bufferReady = false
         
-        // Set up a getter that will try to get Buffer from the buffer-polyfill chunk
+        // Create a minimal fallback Buffer implementation
+        const fallbackBuffer = {
+          from: function(data, encoding) {
+            if (typeof data === 'string') {
+              const bytes = new Uint8Array(data.length)
+              for (let i = 0; i < data.length; i++) {
+                bytes[i] = data.charCodeAt(i)
+              }
+              return bytes
+            }
+            return new Uint8Array(data)
+          },
+          isBuffer: function(obj) {
+            return obj instanceof Uint8Array
+          }
+        }
+        
+        // Set up a getter that avoids recursion by using closure variable
         Object.defineProperty(window, 'Buffer', {
           get: function() {
-            if (bufferReady && bufferValue) {
-              return bufferValue
+            if (_bufferReady && _bufferValue) {
+              return _bufferValue
             }
-            // Try to get from global scope or wait
-            if (typeof globalThis !== 'undefined' && globalThis.Buffer) {
-              bufferValue = globalThis.Buffer
-              bufferReady = true
-              return bufferValue
-            }
-            // Return a minimal fallback
+            // Return fallback if Buffer not ready yet
             console.warn('[HTML] Buffer not ready, using fallback')
-            return {
-              from: function(data, encoding) {
-                if (typeof data === 'string') {
-                  const bytes = new Uint8Array(data.length)
-                  for (let i = 0; i < data.length; i++) {
-                    bytes[i] = data.charCodeAt(i)
-                  }
-                  return bytes
-                }
-                return new Uint8Array(data)
-              },
-              isBuffer: function(obj) {
-                return obj instanceof Uint8Array
-              }
-            }
+            return fallbackBuffer
           },
           set: function(value) {
-            bufferValue = value
-            bufferReady = true
+            _bufferValue = value
+            _bufferReady = true
             console.log('[HTML] Buffer set:', typeof value)
           },
-          configurable: true
+          configurable: true,
+          enumerable: true
         })
         
+        // Set initial fallback
+        window.Buffer = fallbackBuffer
         window.global = window.global || window
-        console.log('[HTML] Buffer proxy set up')
+        console.log('[HTML] Buffer proxy set up with fallback')
       }
     </script>
     <!-- Load buffer-polyfill chunk FIRST, then polyfills, then main app -->
