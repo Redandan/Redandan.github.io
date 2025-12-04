@@ -7,10 +7,10 @@
     <meta name="theme-color" content="#000000" />
     <meta name="description" content="TRON Wallet Login Module - 可嵌入的钱包登录模块" />
     <title>TRON Wallet Login</title>
-    <script type="module" crossorigin src="/wellect-connect/assets/index.BrFQBsHD.js"></script>
-    <link rel="modulepreload" crossorigin href="/wellect-connect/assets/buffer-polyfill.D4-N1JiB.js">
-    <link rel="modulepreload" crossorigin href="/wellect-connect/assets/react-vendor.CY-G_Z4Y.js">
-    <link rel="modulepreload" crossorigin href="/wellect-connect/assets/wallet-vendor.BYI0E9G4.js">
+    <script type="module" crossorigin src="/wellect-connect/assets/index.CHHFwuzO.js"></script>
+    <link rel="modulepreload" crossorigin href="/wellect-connect/assets/buffer-polyfill.ErO7y5re.js">
+    <link rel="modulepreload" crossorigin href="/wellect-connect/assets/react-vendor.Bj0G0Oyz.js">
+    <link rel="modulepreload" crossorigin href="/wellect-connect/assets/wallet-vendor.CHv2NQr2.js">
     <link rel="stylesheet" crossorigin href="/wellect-connect/assets/wallet-vendor.LO4jQlsU.css">
   </head>
   <body>
@@ -26,7 +26,7 @@
         let _bufferValue = null
         let _bufferReady = false
         
-        // Create a minimal fallback Buffer implementation
+        // Create a minimal fallback Buffer implementation with essential methods
         const fallbackBuffer = {
           from: function(data, encoding) {
             if (typeof data === 'string') {
@@ -37,6 +37,37 @@
               return bytes
             }
             return new Uint8Array(data)
+          },
+          alloc: function(size, fill, encoding) {
+            const buf = new Uint8Array(size)
+            if (fill !== undefined) {
+              if (typeof fill === 'number') {
+                buf.fill(fill)
+              } else if (typeof fill === 'string') {
+                const fillBytes = this.from(fill, encoding)
+                for (let i = 0; i < Math.min(size, fillBytes.length); i++) {
+                  buf[i] = fillBytes[i]
+                }
+              }
+            }
+            return buf
+          },
+          allocUnsafe: function(size) {
+            return new Uint8Array(size)
+          },
+          concat: function(list, totalLength) {
+            if (!Array.isArray(list)) return new Uint8Array(0)
+            const length = totalLength !== undefined ? totalLength : list.reduce((sum, buf) => sum + buf.length, 0)
+            const result = new Uint8Array(length)
+            let offset = 0
+            for (let i = 0; i < list.length; i++) {
+              const buf = list[i]
+              if (buf && buf.length) {
+                result.set(buf, offset)
+                offset += buf.length
+              }
+            }
+            return result
           },
           isBuffer: function(obj) {
             return obj instanceof Uint8Array
@@ -68,7 +99,7 @@
         console.log('[HTML] Buffer proxy set up with fallback')
       }
     </script>
-    <!-- Load buffer-polyfill chunk FIRST, then polyfills, then main app -->
+    <!-- Load polyfills first, then main app -->
   </body>
 </html>
 
