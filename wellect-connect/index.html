@@ -7,15 +7,19 @@
     <meta name="theme-color" content="#000000" />
     <meta name="description" content="TRON Wallet Login Module - 可嵌入的钱包登录模块" />
     <title>TRON Wallet Login</title>
-    <script type="module" crossorigin src="/wellect-connect/assets/index.DAiPQc79.js"></script>
-    <link rel="modulepreload" crossorigin href="/wellect-connect/assets/buffer-polyfill.DG-Uutyh.js">
-    <link rel="modulepreload" crossorigin href="/wellect-connect/assets/react-vendor.rHj4_3Hj.js">
-    <link rel="modulepreload" crossorigin href="/wellect-connect/assets/wallet-vendor.DqcNkgUj.js">
-    <link rel="stylesheet" crossorigin href="/wellect-connect/assets/index.TgJLuG26.css">
+    <script type="module" crossorigin src="/wellect-connect/assets/index.XmZM25Qx.js"></script>
+    <link rel="modulepreload" crossorigin href="/wellect-connect/assets/buffer-polyfill.ErO7y5re.js">
+    <link rel="modulepreload" crossorigin href="/wellect-connect/assets/react-vendor.Bj0G0Oyz.js">
+    <link rel="modulepreload" crossorigin href="/wellect-connect/assets/wallet-vendor.DlQjiyY5.js">
+    <link rel="stylesheet" crossorigin href="/wellect-connect/assets/wallet-vendor.LO4jQlsU.css">
   </head>
   <body>
     <div id="root"></div>
-    <!-- Load polyfills first to ensure Buffer is available before wallet-vendor -->
+    <!-- Load polyfills first to ensure Buffer is available before wallet-vendor -->
+    <script>
+      console.log('[HTML] Script execution started')
+      console.log('[HTML] Before polyfills, Buffer check:', typeof window !== 'undefined' ? typeof window.Buffer : 'window undefined')
+    </script>
   </body>
 </html>
 
