@@ -7,19 +7,68 @@
     <meta name="theme-color" content="#000000" />
     <meta name="description" content="TRON Wallet Login Module - 可嵌入的钱包登录模块" />
     <title>TRON Wallet Login</title>
-    <script type="module" crossorigin src="/wellect-connect/assets/index.XmZM25Qx.js"></script>
-    <link rel="modulepreload" crossorigin href="/wellect-connect/assets/buffer-polyfill.ErO7y5re.js">
-    <link rel="modulepreload" crossorigin href="/wellect-connect/assets/react-vendor.Bj0G0Oyz.js">
-    <link rel="modulepreload" crossorigin href="/wellect-connect/assets/wallet-vendor.DlQjiyY5.js">
+    <script type="module" crossorigin src="/wellect-connect/assets/index.BrFQBsHD.js"></script>
+    <link rel="modulepreload" crossorigin href="/wellect-connect/assets/buffer-polyfill.D4-N1JiB.js">
+    <link rel="modulepreload" crossorigin href="/wellect-connect/assets/react-vendor.CY-G_Z4Y.js">
+    <link rel="modulepreload" crossorigin href="/wellect-connect/assets/wallet-vendor.BYI0E9G4.js">
     <link rel="stylesheet" crossorigin href="/wellect-connect/assets/wallet-vendor.LO4jQlsU.css">
   </head>
   <body>
     <div id="root"></div>
-    <!-- Load polyfills first to ensure Buffer is available before wallet-vendor -->
+    <!-- Critical: Set up Buffer BEFORE any modules load -->
     <script>
       console.log('[HTML] Script execution started')
       console.log('[HTML] Before polyfills, Buffer check:', typeof window !== 'undefined' ? typeof window.Buffer : 'window undefined')
-    </script>
+      
+      // Immediately set up a Buffer placeholder that will be replaced when buffer-polyfill loads
+      if (typeof window !== 'undefined') {
+        // Create a proxy that will wait for Buffer to be available
+        let bufferReady = false
+        let bufferValue = null
+        
+        // Set up a getter that will try to get Buffer from the buffer-polyfill chunk
+        Object.defineProperty(window, 'Buffer', {
+          get: function() {
+            if (bufferReady && bufferValue) {
+              return bufferValue
+            }
+            // Try to get from global scope or wait
+            if (typeof globalThis !== 'undefined' && globalThis.Buffer) {
+              bufferValue = globalThis.Buffer
+              bufferReady = true
+              return bufferValue
+            }
+            // Return a minimal fallback
+            console.warn('[HTML] Buffer not ready, using fallback')
+            return {
+              from: function(data, encoding) {
+                if (typeof data === 'string') {
+                  const bytes = new Uint8Array(data.length)
+                  for (let i = 0; i < data.length; i++) {
+                    bytes[i] = data.charCodeAt(i)
+                  }
+                  return bytes
+                }
+                return new Uint8Array(data)
+              },
+              isBuffer: function(obj) {
+                return obj instanceof Uint8Array
+              }
+            }
+          },
+          set: function(value) {
+            bufferValue = value
+            bufferReady = true
+            console.log('[HTML] Buffer set:', typeof value)
+          },
+          configurable: true
+        })
+        
+        window.global = window.global || window
+        console.log('[HTML] Buffer proxy set up')
+      }
+    </script>
+    <!-- Load buffer-polyfill chunk FIRST, then polyfills, then main app -->
   </body>
 </html>
 
