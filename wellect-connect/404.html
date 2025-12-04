@@ -1,0 +1,37 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Redirecting...</title>
+    <script>
+        // GitHub Pages SPA routing support for /wellect-connect
+        // This handles client-side routing when users access routes directly
+        var path = window.location.pathname;
+        var basePath = '/wellect-connect';
+        
+        // If path starts with basePath, redirect to index.html
+        if (path.startsWith(basePath)) {
+            // Extract the route after basePath
+            var route = path.substring(basePath.length);
+            if (route === '' || route === '/') {
+                route = '/';
+            }
+            // Redirect to index.html with the route as hash (for React Router if needed)
+            window.location.replace(basePath + '/index.html' + (route !== '/' ? '#' + route : ''));
+        } else {
+            // Fallback: redirect to base path
+            window.location.replace(basePath + '/');
+        }
+    </script>
+</head>
+<body>
+    <p>Redirecting...</p>
+    <script>
+        // Fallback redirect
+        setTimeout(function() {
+            window.location.replace('/wellect-connect/');
+        }, 1000);
+    </script>
+</body>
+</html>
