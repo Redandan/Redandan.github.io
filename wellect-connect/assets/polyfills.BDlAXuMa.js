@@ -1,0 +1,1 @@
+import{b as f}from"./buffer-polyfill.ErO7y5re.js";typeof window<"u"&&(window.Buffer=f.Buffer,window.global=window.global||window,typeof globalThis<"u"&&(globalThis.Buffer=f.Buffer,globalThis.global=globalThis.global||globalThis),typeof globalThis<"u"&&(globalThis.Buffer=f.Buffer));const l=f.Buffer;export{l as Buffer};
