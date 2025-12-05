@@ -7,7 +7,7 @@
     <meta name="theme-color" content="#000000" />
     <meta name="description" content="TRON Wallet Login Module - 可嵌入的钱包登录模块" />
     <title>TRON Wallet Login</title>
-    <script type="module" crossorigin src="/wellect-connect/assets/index.B0TDMera.js"></script>
+    <script type="module" crossorigin src="/wellect-connect/assets/index.CmN4AwTs.js"></script>
     <link rel="modulepreload" crossorigin href="/wellect-connect/assets/buffer-polyfill.ErO7y5re.js">
     <link rel="modulepreload" crossorigin href="/wellect-connect/assets/react-vendor.Bj0G0Oyz.js">
     <link rel="modulepreload" crossorigin href="/wellect-connect/assets/wallet-vendor.CHv2NQr2.js">
@@ -17,9 +17,6 @@
     <div id="root"></div>
     <!-- Critical: Set up Buffer BEFORE any modules load -->
     <script>
-      console.log('[HTML] Script execution started')
-      console.log('[HTML] Before polyfills, Buffer check:', typeof window !== 'undefined' ? typeof window.Buffer : 'window undefined')
-      
       // Immediately set up a Buffer placeholder that will be replaced when buffer-polyfill loads
       if (typeof window !== 'undefined') {
         // Store the actual Buffer value in a closure to avoid recursion
@@ -81,13 +78,11 @@
               return _bufferValue
             }
             // Return fallback if Buffer not ready yet
-            console.warn('[HTML] Buffer not ready, using fallback')
             return fallbackBuffer
           },
           set: function(value) {
             _bufferValue = value
             _bufferReady = true
-            console.log('[HTML] Buffer set:', typeof value)
           },
           configurable: true,
           enumerable: true
@@ -96,7 +91,6 @@
         // Set initial fallback
         window.Buffer = fallbackBuffer
         window.global = window.global || window
-        console.log('[HTML] Buffer proxy set up with fallback')
       }
     </script>
     <!-- Load polyfills first, then main app -->
