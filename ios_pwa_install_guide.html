@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="iOS 設備上將 Agora Market 加入主畫面的教學指南">
+    <title>iOS 安裝教學 - Agora Market</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .step {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #007AFF;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            background: #007AFF;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 32px;
+            font-weight: bold;
+            margin-right: 12px;
+            font-size: 18px;
+        }
+
+        .step-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+        }
+
+        .step-content {
+            color: #555;
+            line-height: 1.8;
+            font-size: 16px;
+            margin-left: 44px;
+        }
+
+        .step-content strong {
+            color: #007AFF;
+            font-weight: 600;
+        }
+
+        .icon-demo {
+            text-align: center;
+            margin: 15px 0;
+            font-size: 48px;
+        }
+
+        .highlight-box {
+            background: #e3f2fd;
+            border: 2px solid #007AFF;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .highlight-box p {
+            margin: 0;
+            color: #1976d2;
+            font-weight: 500;
+        }
+
+        .back-button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            text-align: center;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+
+        .back-button:hover {
+            background: #0056b3;
+        }
+
+        .back-button:active {
+            transform: scale(0.98);
+        }
+
+        .tips {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .tips p {
+            margin: 0;
+            color: #856404;
+            font-size: 14px;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px 15px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .step {
+                padding: 15px;
+            }
+
+            .step-title {
+                font-size: 18px;
+            }
+
+            .step-content {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📱 iOS 安裝教學</h1>
+            <p>將 Agora Market 加入主畫面，享受更流暢的購物體驗</p>
+        </div>
+
+        <div class="step">
+            <div class="step-title">
+                <span class="step-number">1</span>
+                使用 Safari 瀏覽器
+            </div>
+            <div class="step-content">
+                請確保您使用 <strong>Safari 瀏覽器</strong>打開本網站。其他瀏覽器（如 Chrome）可能不支持此功能。
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-title">
+                <span class="step-number">2</span>
+                點擊分享按鈕
+            </div>
+            <div class="step-content">
+                在 Safari 瀏覽器底部，找到並點擊 <strong>分享按鈕</strong>（方框內有向上箭頭的圖標 <span class="icon-demo">□↑</span>）。
+                <div class="highlight-box">
+                    <p>💡 提示：分享按鈕位於 Safari 底部工具欄的中間位置</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-title">
+                <span class="step-number">3</span>
+                選擇「加入主畫面」
+            </div>
+            <div class="step-content">
+                在分享選單中，向下滾動找到 <strong>「加入主畫面」</strong> 選項（圖標為加號）。
+                <div class="highlight-box">
+                    <p>💡 提示：如果找不到此選項，請繼續向下滾動</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-title">
+                <span class="step-number">4</span>
+                確認並加入
+            </div>
+            <div class="step-content">
+                點擊「加入主畫面」後，您可以自訂應用名稱（預設為 "Agora Market"），然後點擊右上角的 <strong>「加入」</strong> 按鈕。
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-title">
+                <span class="step-number">5</span>
+                完成安裝
+            </div>
+            <div class="step-content">
+                完成後，Agora Market 的圖標會出現在您的主畫面上。點擊圖標即可像原生應用一樣使用，享受更快的載入速度和更好的使用體驗！
+            </div>
+        </div>
+
+        <div class="tips">
+            <p><strong>💡 小提示：</strong>安裝後，您可以從主畫面直接啟動應用，無需每次打開 Safari 瀏覽器。應用會以全屏模式運行，提供更接近原生應用的體驗。</p>
+        </div>
+
+        <a href="/" class="back-button" onclick="if(window.history.length > 1) { event.preventDefault(); window.history.back(); }">返回</a>
+    </div>
+
+    <script>
+        // 檢測是否已經安裝為 PWA
+        if (window.matchMedia('(display-mode: standalone)').matches || 
+            (window.navigator.standalone === true)) {
+            // 如果已經安裝，可以顯示不同的內容或重定向
+            console.log('應用已安裝為 PWA');
+        }
+    </script>
+</body>
+</html>
+

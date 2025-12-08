@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?àÊú¨?ñÁ∑©Â≠òÊ?Ë≠?-->
-    <meta name="cache-version" content="1.0.616">
+    <meta name="cache-version" content="1.0.617">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -36,7 +36,7 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.616+617">
+  <meta name="version" content="1.0.617+618">
 
   <script>
     // iOS PWA ËßÜÂè£‰øÆÂ? - ÂøÖÈ°ª?®Ê??©Ê??ßË?ÔºåÈò≤Ê≠¢ÁôΩÊ°ÜÂ??ªÈù¢Ë∑≥Âä®
@@ -209,7 +209,7 @@
   <link rel="shortcut icon" href="icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.616">
+  <link rel="manifest" href="manifest.json?v=1.0.617">
   
   <!-- PWA ÂÆâË??êÁ§∫?ØÊ? -->
   <meta name="application-name" content="Agora Market">
@@ -217,7 +217,7 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ?ßËÉΩ‰ºòÂ?ÔºöÈ??†ËΩΩ?≥ÈîÆËµÑÊ? -->
-  <link rel="preload" href="flutter_bootstrap.js?v=1.0.616" as="script">
+  <link rel="preload" href="flutter_bootstrap.js?v=1.0.617" as="script">
   <link rel="preload" href="pwa_viewport_fix.js" as="script">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -615,6 +615,9 @@
       transform: none !important;
     }
   </style>
+  
+  <!-- iOS PWA ÂÆâË??êÁ§∫Ê©´Â?Ê®?? -->
+  <link rel="stylesheet" href="ios_pwa_banner.css?v=1.0.617">
 </head>
 <body>
   <!-- Loading screen -->
@@ -624,7 +627,7 @@
         <img src="icons/agora-market-icon.svg" alt="Agora Market" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.616</div>
+      <div class="loading-version" id="version-display">v1.0.617</div>
     </div>
   </div>
   
@@ -967,7 +970,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.616" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.617" async></script>
   
   <!-- PWA ËßÜÂè£È´òÂ∫¶‰øÆÂ??öÊú¨ - Ëß?Ü≥ standalone Ê®°Â?‰∏ãÁ?Ëß¶Êë∏?êÊ??èÁßª?ÆÈ? -->
   <script src="pwa_viewport_fix.js"></script>
@@ -1042,8 +1045,27 @@
       }
     };
   </script>
+
+  <!-- iOS PWA ÂÆâË??êÁ§∫Ê©´Â? -->
+  <div id="ios-guide-banner">
+    <div class="guide-content">
+      <div class="arrow-down"></div>
+      <p>
+        <strong>1. ÈªûÊ?‰∏ãÊñπ???°‚? ?ñÊ?</strong>
+        <br>
+        2. ?∏Ê? <strong>"?†ÂÖ•?∞‰∏ª?´Èù¢"</strong> ?≥ÂèØ‰∏Ä?µÂ??ïÔ?
+        <br>
+        <a href="ios_pwa_install_guide.html" style="color: #007AFF; text-decoration: underline; font-size: 12px; margin-top: 5px; display: inline-block;">?•Á?Ë©≥Á¥∞?ôÂ≠∏</a>
+      </p>
+      <button>?úÈ?</button>
+    </div>
+  </div>
+
+  <!-- iOS PWA ÂÆâË??êÁ§∫Ê©´Â??≥Êú¨ -->
+  <script src="ios_pwa_banner.js"></script>
 </body>
 </html>
+
 
 
 
