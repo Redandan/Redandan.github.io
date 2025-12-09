@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?àÊú¨?ñÁ∑©Â≠òÊ?Ë≠?-->
-    <meta name="cache-version" content="1.0.624">
+    <meta name="cache-version" content="1.0.625">
   <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
@@ -36,7 +36,7 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.624+625">
+  <meta name="version" content="1.0.625+626">
 
   <script>
     // iOS PWA ËßÜÂè£‰øÆÂ? - ÂøÖÈ°ª?®Ê??©Ê??ßË?ÔºåÈò≤Ê≠¢ÁôΩÊ°ÜÂ??ªÈù¢Ë∑≥Âä®
@@ -209,7 +209,7 @@
   <link rel="shortcut icon" href="icons/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.624">
+  <link rel="manifest" href="manifest.json?v=1.0.625">
   
   <!-- PWA ÂÆâË??êÁ§∫?ØÊ? -->
   <meta name="application-name" content="Agora Market">
@@ -217,7 +217,7 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ?ßËÉΩ‰ºòÂ?ÔºöÈ??†ËΩΩ?≥ÈîÆËµÑÊ? -->
-  <link rel="preload" href="flutter_bootstrap.js?v=1.0.624" as="script">
+  <link rel="preload" href="flutter_bootstrap.js?v=1.0.625" as="script">
   <link rel="preload" href="pwa_viewport_fix.js" as="script">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -394,23 +394,18 @@
       width: 120px;
       height: 120px;
       margin: 0 auto 32px;
-      background: 
-        linear-gradient(135deg, #AA95DC 0%, #9B7EDE 20%, #8E7CC3 40%, #7B5FB8 60%, #6A4C93 80%, #5A3A7A 100%),
-        radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
-      border-radius: 30px;
+      background: #ffffff; /* ?πÁÇ∫?ΩËâ≤?åÊôØ */
+      border-radius: 50%; /* ?πÁÇ∫?ìÂΩ¢ */
       display: flex;
       align-items: center;
       justify-content: center;
       box-shadow: 
-        0 12px 40px rgba(var(--color-primary), 0.4),
-        0 6px 20px rgba(var(--color-secondary), 0.3),
-        0 3px 10px rgba(var(--color-accent), 0.2),
-        inset 0 2px 0 rgba(255, 255, 255, 0.2),
-        inset 0 -2px 0 rgba(0, 0, 0, 0.1);
+        0 12px 40px rgba(0, 0, 0, 0.1),
+        0 6px 20px rgba(0, 0, 0, 0.05),
+        0 3px 10px rgba(0, 0, 0, 0.05);
       animation: float 1.5s ease-in-out infinite;
       position: relative;
       overflow: hidden;
-      border: 2px solid rgba(var(--color-primary), 0.3);
     }
     
     .loading-logo::before {
@@ -621,10 +616,10 @@
   <div id="loading-screen">
     <div class="loading-container">
       <div class="loading-logo">
-        <img src="icons/apple-icon.jpg" alt="Agora Market" />
+        <img src="icons/apple-icon.jpg" alt="Agora Market" style="width: 70px; height: 70px; object-fit: contain;" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.624</div>
+      <div class="loading-version" id="version-display">v1.0.625</div>
     </div>
   </div>
   
@@ -967,7 +962,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.624" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.625" async></script>
   
   <!-- PWA ËßÜÂè£È´òÂ∫¶‰øÆÂ??öÊú¨ - Ëß?Ü≥ standalone Ê®°Â?‰∏ãÁ?Ëß¶Êë∏?êÊ??èÁßª?ÆÈ? -->
   <script src="pwa_viewport_fix.js"></script>
@@ -1044,6 +1039,7 @@
   </script>
 </body>
 </html>
+
 
 
 
