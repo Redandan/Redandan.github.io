@@ -14,27 +14,27 @@
     "dir": "ltr",
     "icons": [
         {
-            "src": "icons/android-icon-192x192.jpg",
+            "src": "icons/android-icon-192x192.png",
             "sizes": "192x192",
-            "type": "image/jpeg",
+            "type": "image/png",
             "purpose": "any"
         },
         {
-            "src": "icons/apple-icon-180x180.jpg",
+            "src": "icons/pwa-icon-512x512.png",
             "sizes": "512x512",
-            "type": "image/jpeg",
+            "type": "image/png",
             "purpose": "any"
         },
         {
-            "src": "icons/android-icon-192x192.jpg",
+            "src": "icons/android-icon-192x192.png",
             "sizes": "192x192",
-            "type": "image/jpeg",
+            "type": "image/png",
             "purpose": "maskable"
         },
         {
-            "src": "icons/apple-icon-180x180.jpg",
+            "src": "icons/pwa-icon-512x512.png",
             "sizes": "512x512",
-            "type": "image/jpeg",
+            "type": "image/png",
             "purpose": "maskable"
         },
         {
@@ -95,7 +95,7 @@
             "url": "/orders",
             "icons": [
                 {
-                    "src": "icons/android-icon-192x192.jpg",
+                    "src": "icons/android-icon-192x192.png",
                     "sizes": "192x192",
                     "type": "image/jpeg"
                 }
@@ -108,7 +108,7 @@
             "url": "/cart",
             "icons": [
                 {
-                    "src": "icons/android-icon-192x192.jpg",
+                    "src": "icons/android-icon-192x192.png",
                     "sizes": "192x192",
                     "type": "image/jpeg"
                 }
@@ -121,7 +121,7 @@
             "url": "/favorites",
             "icons": [
                 {
-                    "src": "icons/android-icon-192x192.jpg",
+                    "src": "icons/android-icon-192x192.png",
                     "sizes": "192x192",
                     "type": "image/jpeg"
                 }
