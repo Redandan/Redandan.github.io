@@ -45,17 +45,64 @@
     return version && version.major >= 17;
   }
   
+  // 检测是否有 Dynamic Island（iPhone 14 Pro 及以后）
+  function hasDynamicIsland() {
+    try {
+      const iosVersion = getIOSVersion();
+      if (!iosVersion || iosVersion.major < 16) {
+        return false; // iOS 16 之前没有 Dynamic Island
+      }
+      
+      // 通过屏幕尺寸判断（Dynamic Island 设备通常是较新的 iPhone）
+      const screenHeight = window.screen.height;
+      const screenWidth = window.screen.width;
+      
+      // iPhone 14 Pro/15 Pro: 852x393, iPhone 14 Pro Max/15 Pro Max: 932x430
+      // iPhone 16 Pro: 932x430, iPhone 16 Pro Max: 1068x480
+      // 这些设备有 Dynamic Island
+      const dynamicIslandDevices = [
+        { width: 393, height: 852 }, // iPhone 14 Pro, 15 Pro
+        { width: 430, height: 932 }, // iPhone 14 Pro Max, 15 Pro Max, 16 Pro
+        { width: 480, height: 1068 } // iPhone 16 Pro Max
+      ];
+      
+      return dynamicIslandDevices.some(device => 
+        (screenWidth === device.width && screenHeight === device.height) ||
+        (screenWidth === device.height && screenHeight === device.width) // 横屏
+      );
+    } catch (e) {
+      return false;
+    }
+  }
+  
   if (!isStandaloneMode()) {
     return; // 非 PWA 模式，不需要修复
   }
   
   const isIOSStandalone = isIOS() && isStandaloneMode();
   const isIOS17Standalone = isIOSStandalone && isIOS17OrLater();
+  const hasDynamicIslandDevice = hasDynamicIsland();
+  
+  // 记录设备信息（调试用）
+  if (isIOSStandalone && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    console.log('[PWA_VIEWPORT_FIX] Device Info:', {
+      iosVersion: getIOSVersion(),
+      isIOS17: isIOS17Standalone,
+      hasDynamicIsland: hasDynamicIslandDevice,
+      screen: {
+        width: window.screen.width,
+        height: window.screen.height
+      },
+      visualViewport: window.visualViewport ? {
+        width: window.visualViewport.width,
+        height: window.visualViewport.height,
+        offsetTop: window.visualViewport.offsetTop
+      } : null
+    });
+  }
   
   // 设置真实的视口高度（CSS 变量方法）
   function setRealViewportHeight() {
-    // iOS 17+ 在 PWA standalone 模式下，visualViewport.height 完全不可靠
-    // 强制使用 window.innerHeight，忽略 visualViewport.height
     let actualHeight = window.innerHeight;
     let offsetTop = 0;
     
@@ -63,10 +110,22 @@
       const vp = window.visualViewport;
       offsetTop = vp.offsetTop || 0;
       
-      // iOS 17+ 特殊处理：完全忽略 visualViewport.height，只使用 window.innerHeight
-      // 因为 visualViewport.height 在 iOS 17 上非常不可靠
-      if (isIOS17Standalone) {
-        // 强制使用 window.innerHeight，不考虑 visualViewport.height
+      // Dynamic Island 设备（iPhone 17）特殊处理
+      if (hasDynamicIslandDevice && isIOS17Standalone) {
+        // Dynamic Island 设备：可能需要使用 visualViewport.height
+        // 因为 Dynamic Island 会影响实际可见区域
+        // 但如果 visualViewport.height 明显异常，使用 window.innerHeight
+        if (vp.height > 0 && 
+            vp.height <= window.innerHeight && 
+            Math.abs(vp.height - window.innerHeight) < 100) {
+          // visualViewport.height 看起来合理，使用它
+          actualHeight = vp.height;
+        } else {
+          // visualViewport.height 异常，使用 window.innerHeight
+          actualHeight = window.innerHeight;
+        }
+      } else if (isIOS17Standalone) {
+        // iOS 17+ 非 Dynamic Island 设备：强制使用 window.innerHeight
         actualHeight = window.innerHeight;
       } else {
         // iOS 15/16：可以使用 visualViewport.height（如果可用）
@@ -201,11 +260,15 @@
         canvas.style.transformOrigin = '0 0';
         
         // iOS 17+ 特殊处理：强制 Canvas 在 (0, 0) 位置
-        // 使用多重检查和修正，确保位置正确
+        // Dynamic Island 设备需要特殊处理
         function correctCanvasPosition() {
           requestAnimationFrame(function() {
             const rect = canvas.getBoundingClientRect();
-            const offsetY = rect.top;
+            const vp = window.visualViewport;
+            
+            // Dynamic Island 设备：需要考虑 visualViewport.offsetTop
+            const expectedTop = (hasDynamicIslandDevice && vp && vp.offsetTop !== 0) ? vp.offsetTop : 0;
+            const offsetY = rect.top - expectedTop;
             const offsetX = rect.left;
             
             // 允许 0.5px 的误差
@@ -215,9 +278,12 @@
               console.warn('[PWA_VIEWPORT_FIX] Canvas position mismatch detected:', {
                 top: rect.top,
                 left: rect.left,
+                expectedTop: expectedTop,
                 offsetY: offsetY,
                 offsetX: offsetX,
-                isIOS17: isIOS17Standalone
+                isIOS17: isIOS17Standalone,
+                hasDynamicIsland: hasDynamicIslandDevice,
+                visualViewportOffsetTop: vp ? vp.offsetTop : null
               });
               
               // iOS 17+：使用多重方法强制修正
@@ -230,17 +296,18 @@
                 canvas.style.marginLeft = (-offsetX) + 'px';
                 
                 // 方法 3：强制设置 top 和 left
-                canvas.style.top = '0px';
+                canvas.style.top = expectedTop + 'px';
                 canvas.style.left = '0px';
                 
                 // 验证修正是否成功（多次验证）
                 requestAnimationFrame(function() {
                   const newRect = canvas.getBoundingClientRect();
-                  const newOffsetY = newRect.top;
+                  const newOffsetY = newRect.top - expectedTop;
                   const newOffsetX = newRect.left;
                   if (Math.abs(newOffsetY) > tolerance || Math.abs(newOffsetX) > tolerance) {
                     console.warn('[PWA_VIEWPORT_FIX] First correction failed, trying again:', {
                       after: { top: newRect.top, left: newRect.left },
+                      expectedTop: expectedTop,
                       offsetY: newOffsetY,
                       offsetX: newOffsetX
                     });
