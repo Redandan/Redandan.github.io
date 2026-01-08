@@ -6,7 +6,8 @@
    * ============================ */
 
   const Env = {
-    isIOS: /iPad|iPhone|iPod|iOS/.test(navigator.userAgent),
+    isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent),
+    isIPhone17: /iPhone\s?17/i.test(navigator.userAgent), // ⚠️ 新機專用
     isStandalone() {
       try {
         return (
@@ -31,7 +32,7 @@
   const Viewport = {
     lastHeight: 0,
 
-    applyCSSVH() {
+    apply() {
       const height = window.innerHeight;
       if (height === this.lastHeight) return;
 
@@ -50,11 +51,11 @@
    * ============================ */
 
   const FlutterFix = {
-    stableCount: 0,
-    maxStableChecks: 3,
     lastRect: null,
+    stableCount: 0,
+    maxStable: 3,
 
-    getElements() {
+    get() {
       const sceneHost = document.querySelector('flt-scene-host');
       const glassPane = document.querySelector('flt-glass-pane');
       const canvas = sceneHost?.querySelector('canvas');
@@ -74,16 +75,25 @@
     },
 
     apply() {
-      const { sceneHost, canvas, glassPane } = this.getElements();
+      const { sceneHost, canvas, glassPane } = this.get();
       if (!sceneHost || !canvas) return false;
 
       const width = window.innerWidth;
       const height = window.innerHeight;
 
+      /* ----------------------------
+       * visualViewport compensation
+       * iPhone 17 必殺補丁
+       * ---------------------------- */
+      const vv = window.visualViewport;
+      const offsetTop = vv ? vv.offsetTop : 0;
+      const offsetLeft = vv ? vv.offsetLeft : 0;
+
       /* Scene Host */
       Object.assign(sceneHost.style, {
         position: 'fixed',
-        inset: '0',
+        top: -offsetTop + 'px',
+        left: -offsetLeft + 'px',
         width: width + 'px',
         height: height + 'px',
         margin: '0',
@@ -92,10 +102,16 @@
         zIndex: '1'
       });
 
-      /* Canvas */
+      /* Canvas DPR 同步（iPhone 17 關鍵） */
+      const dpr = window.devicePixelRatio || 1;
+
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+
       Object.assign(canvas.style, {
         position: 'absolute',
-        inset: '0',
+        top: offsetTop + 'px',
+        left: offsetLeft + 'px',
         width: width + 'px',
         height: height + 'px',
         margin: '0',
@@ -106,8 +122,8 @@
 
       const rect = canvas.getBoundingClientRect();
 
+      /* 偏移補救（只在不穩定時） */
       if (!this.isStable(rect) && isIOSStandalone) {
-        console.warn('[PWA_FIX] Canvas offset detected', rect);
         canvas.style.marginTop = -rect.top + 'px';
         canvas.style.marginLeft = -rect.left + 'px';
         this.stableCount = 0;
@@ -128,42 +144,53 @@
         });
       }
 
-      return this.stableCount >= this.maxStableChecks;
+      /* 通知 Flutter 重算 metrics */
+      if (isIOSStandalone) {
+        window.dispatchEvent(
+          new CustomEvent('pwa-viewport-updated', {
+            detail: {
+              width,
+              height,
+              dpr,
+              offsetTop,
+              offsetLeft
+            }
+          })
+        );
+      }
+
+      return this.stableCount >= this.maxStable;
     }
   };
 
   /* ============================
-   * Scheduler (No Infinite Loop)
+   * Scheduler（避免無限修）
    * ============================ */
 
-  function stabilizeFlutter(maxAttempts = 10, interval = 120) {
-    let attempts = 0;
+  function stabilize(max = 10, interval = 120) {
+    let count = 0;
     const timer = setInterval(() => {
-      attempts++;
+      count++;
       const done = FlutterFix.apply();
-      if (done || attempts >= maxAttempts) {
-        clearInterval(timer);
-      }
+      if (done || count >= max) clearInterval(timer);
     }, interval);
+  }
+
+  function onViewportChange() {
+    Viewport.apply();
+    stabilize();
   }
 
   /* ============================
    * Lifecycle Hooks
    * ============================ */
 
-  function onViewportChange() {
-    Viewport.applyCSSVH();
-    stabilizeFlutter();
-  }
-
-  /* DOM Ready */
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', onViewportChange);
   } else {
     onViewportChange();
   }
 
-  /* Window Events */
   window.addEventListener('resize', onViewportChange);
 
   document.addEventListener('visibilitychange', () => {
@@ -172,7 +199,6 @@
     }
   });
 
-  /* visualViewport */
   if (window.visualViewport) {
     visualViewport.addEventListener('resize', onViewportChange);
     visualViewport.addEventListener('scroll', () => {
@@ -180,10 +206,9 @@
     });
   }
 
-  /* Flutter First Frame */
   window.addEventListener('flutter-first-frame', () => {
     setTimeout(onViewportChange, 50);
-    if (isIOSStandalone) {
+    if (Env.isIPhone17) {
       setTimeout(onViewportChange, 150);
       setTimeout(onViewportChange, 300);
     }
