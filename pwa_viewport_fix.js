@@ -22,16 +22,64 @@
     return /iPad|iPhone|iPod|iOS/.test(navigator.userAgent);
   }
   
+  // 检测 iOS 版本
+  function getIOSVersion() {
+    try {
+      const match = navigator.userAgent.match(/OS (\d+)_(\d+)_?(\d+)?/);
+      if (match) {
+        return {
+          major: parseInt(match[1], 10),
+          minor: parseInt(match[2], 10),
+          patch: parseInt(match[3] || '0', 10)
+        };
+      }
+    } catch (e) {
+      // 忽略错误
+    }
+    return null;
+  }
+  
+  // 检测是否是 iOS 17 或更高版本
+  function isIOS17OrLater() {
+    const version = getIOSVersion();
+    return version && version.major >= 17;
+  }
+  
   if (!isStandaloneMode()) {
     return; // 非 PWA 模式，不需要修复
   }
   
   const isIOSStandalone = isIOS() && isStandaloneMode();
+  const isIOS17Standalone = isIOSStandalone && isIOS17OrLater();
   
   // 设置真实的视口高度（CSS 变量方法）
   function setRealViewportHeight() {
-    // 获取实际视口高度
-    const actualHeight = window.innerHeight;
+    // iOS 17+ 在 PWA standalone 模式下，visualViewport.height 可能不可靠
+    // 优先使用 window.innerHeight，但考虑 visualViewport.offsetTop
+    let actualHeight = window.innerHeight;
+    let offsetTop = 0;
+    
+    if (window.visualViewport) {
+      const vp = window.visualViewport;
+      offsetTop = vp.offsetTop || 0;
+      
+      // iOS 17+ 特殊处理：visualViewport.height 可能不可靠
+      // 但如果 offsetTop 不为 0，可能需要调整
+      if (isIOS17Standalone) {
+        // iOS 17+：如果 visualViewport.height 明显小于 window.innerHeight
+        // 且 offsetTop 不为 0，可能需要使用 visualViewport.height
+        if (offsetTop !== 0 && vp.height < window.innerHeight - 10) {
+          actualHeight = vp.height;
+        }
+        // 否则使用 window.innerHeight（更可靠）
+      } else {
+        // iOS 15/16：可以使用 visualViewport.height（如果可用）
+        if (vp.height > 0 && vp.height <= window.innerHeight) {
+          actualHeight = vp.height;
+        }
+      }
+    }
+    
     const vh = actualHeight * 0.01;
     
     // 设置 CSS 变量 --vh (1vh = 1% of viewport height)
@@ -44,6 +92,12 @@
         document.body.style.height = actualHeight + 'px';
       }
     }
+    
+    // 返回视口信息供其他函数使用
+    return {
+      height: actualHeight,
+      offsetTop: offsetTop
+    };
   }
   
   // 初始设置（立即执行）
@@ -74,18 +128,28 @@
   
   // 监听 visualViewport API（iOS Safari 支持，用于精确的视口变化）
   if (window.visualViewport) {
+    // iOS 17+ 特殊处理：visualViewport.resize 事件可能不可靠
+    // 使用防抖来避免过度触发
+    let visualViewportResizeTimer;
     window.visualViewport.addEventListener('resize', function() {
-      setRealViewportHeight();
-      // iOS 需要立即更新 Flutter 容器
-      if (isIOSStandalone) {
-        setTimeout(ensureFlutterViewport, 10);
-      }
+      clearTimeout(visualViewportResizeTimer);
+      visualViewportResizeTimer = setTimeout(function() {
+        const viewportInfo = setRealViewportHeight();
+        // iOS 需要立即更新 Flutter 容器
+        if (isIOSStandalone) {
+          setTimeout(ensureFlutterViewport, 10);
+        }
+      }, isIOS17Standalone ? 100 : 10); // iOS 17+ 需要更长的防抖时间
     });
     
     window.visualViewport.addEventListener('scroll', function() {
       // iOS 在滚动时也可能改变视口（状态栏相关）
       if (isIOSStandalone) {
-        setRealViewportHeight();
+        const viewportInfo = setRealViewportHeight();
+        // iOS 17+ 可能需要特殊处理
+        if (isIOS17Standalone && viewportInfo.offsetTop !== 0) {
+          setTimeout(ensureFlutterViewport, 50);
+        }
       }
     });
   }
@@ -140,20 +204,58 @@
         // 强制重置 canvas 的 transform-origin
         canvas.style.transformOrigin = '0 0';
         
-        // 确保 canvas 的 bounding box 从 (0,0) 开始
-        const rect = canvas.getBoundingClientRect();
-        if (rect.top !== 0 || rect.left !== 0) {
-          console.warn('[PWA_VIEWPORT_FIX] Canvas position mismatch detected:', {
-            top: rect.top,
-            left: rect.left,
-            expected: { top: 0, left: 0 }
-          });
-          // 尝试通过 CSS 强制修正
-          canvas.style.top = '0px';
-          canvas.style.left = '0px';
-          canvas.style.marginTop = (-rect.top) + 'px';
-          canvas.style.marginLeft = (-rect.left) + 'px';
-        }
+        // iOS 17+ 特殊处理：需要考虑 visualViewport.offsetTop
+        const vp = window.visualViewport;
+        const expectedTop = (isIOS17Standalone && vp) ? vp.offsetTop : 0;
+        
+        // 使用 requestAnimationFrame 确保在渲染后检查
+        requestAnimationFrame(function() {
+          const rect = canvas.getBoundingClientRect();
+          const offsetY = rect.top - expectedTop;
+          const offsetX = rect.left;
+          
+          // 允许 0.5px 的误差
+          const tolerance = 0.5;
+          
+          if (Math.abs(offsetY) > tolerance || Math.abs(offsetX) > tolerance) {
+            console.warn('[PWA_VIEWPORT_FIX] Canvas position mismatch detected:', {
+              top: rect.top,
+              left: rect.left,
+              expectedTop: expectedTop,
+              offsetY: offsetY,
+              offsetX: offsetX,
+              isIOS17: isIOS17Standalone
+            });
+            
+            // iOS 17+：使用 transform 修正（更可靠）
+            if (isIOS17Standalone) {
+              canvas.style.transform = `translate(${-offsetX}px, ${-offsetY}px)`;
+            } else {
+              // iOS 15/16：使用 margin 修正
+              canvas.style.top = '0px';
+              canvas.style.left = '0px';
+              canvas.style.marginTop = (-offsetY) + 'px';
+              canvas.style.marginLeft = (-offsetX) + 'px';
+            }
+            
+            // 验证修正是否成功
+            requestAnimationFrame(function() {
+              const newRect = canvas.getBoundingClientRect();
+              const newOffsetY = newRect.top - expectedTop;
+              const newOffsetX = newRect.left;
+              if (Math.abs(newOffsetY) > tolerance || Math.abs(newOffsetX) > tolerance) {
+                console.warn('[PWA_VIEWPORT_FIX] Canvas correction may not be sufficient:', {
+                  after: { top: newRect.top, left: newRect.left },
+                  offsetY: newOffsetY,
+                  offsetX: newOffsetX
+                });
+              }
+            });
+          } else {
+            // 如果位置正确，确保没有 transform
+            canvas.style.transform = 'none';
+          }
+        });
       }
       
       // 处理 glass pane
@@ -171,17 +273,23 @@
       // iOS 特殊处理：通知 Flutter 视口已更新（如果可能）
       if (isIOSStandalone && window.flutter) {
         try {
+          const vp = window.visualViewport;
+          const viewportInfo = setRealViewportHeight();
+          
           // 触发一个自定义事件，让 Flutter 知道视口已更新
           window.dispatchEvent(new CustomEvent('pwa-viewport-updated', {
             detail: {
               width: actualWidth,
-              height: actualHeight,
+              height: viewportInfo.height,
               innerHeight: window.innerHeight,
-              visualViewport: window.visualViewport ? {
-                width: window.visualViewport.width,
-                height: window.visualViewport.height,
-                offsetTop: window.visualViewport.offsetTop,
-                offsetLeft: window.visualViewport.offsetLeft
+              offsetTop: viewportInfo.offsetTop,
+              isIOS17: isIOS17Standalone,
+              visualViewport: vp ? {
+                width: vp.width,
+                height: vp.height,
+                offsetTop: vp.offsetTop,
+                offsetLeft: vp.offsetLeft,
+                scale: vp.scale || 1
               } : null
             }
           }));
@@ -218,16 +326,69 @@
   }
   
   // iOS 特殊处理：定期检查并修复（防止延迟的布局变化）
+  // iOS 17+ 需要更频繁的检查，因为 visualViewport 行为不稳定
   if (isIOSStandalone) {
     let checkCount = 0;
-    const maxChecks = 10;
+    const maxChecks = isIOS17Standalone ? 15 : 10; // iOS 17+ 需要更多检查
     const checkInterval = setInterval(function() {
       checkCount++;
-      ensureFlutterViewport();
+      // 使用 requestAnimationFrame 确保在渲染后检查
+      requestAnimationFrame(ensureFlutterViewport);
       if (checkCount >= maxChecks) {
         clearInterval(checkInterval);
       }
-    }, 200);
+    }, isIOS17Standalone ? 150 : 200); // iOS 17+ 检查间隔更短
+  }
+  
+  // 导出调试函数（仅在开发环境）
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    window.debugPWAViewport = function() {
+      const canvas = document.querySelector('flt-scene-host canvas');
+      const visualViewport = window.visualViewport;
+      const iosVersion = getIOSVersion();
+      
+      console.log('[PWA_VIEWPORT_DEBUG]', {
+        iosVersion: iosVersion,
+        isIOS17: isIOS17Standalone,
+        window: {
+          innerWidth: window.innerWidth,
+          innerHeight: window.innerHeight,
+          outerWidth: window.outerWidth,
+          outerHeight: window.outerHeight
+        },
+        visualViewport: visualViewport ? {
+          width: visualViewport.width,
+          height: visualViewport.height,
+          offsetTop: visualViewport.offsetTop,
+          offsetLeft: visualViewport.offsetLeft,
+          scale: visualViewport.scale
+        } : null,
+        canvas: canvas ? (function() {
+          const rect = canvas.getBoundingClientRect();
+          const computedStyle = window.getComputedStyle(canvas);
+          return {
+            boundingRect: {
+              top: rect.top,
+              left: rect.left,
+              width: rect.width,
+              height: rect.height
+            },
+            computedStyle: {
+              position: computedStyle.position,
+              top: computedStyle.top,
+              left: computedStyle.left,
+              transform: computedStyle.transform,
+              transformOrigin: computedStyle.transformOrigin,
+              marginTop: computedStyle.marginTop,
+              marginLeft: computedStyle.marginLeft
+            }
+          };
+        })() : null,
+        cssVariable: {
+          vh: getComputedStyle(document.documentElement).getPropertyValue('--vh')
+        }
+      });
+    };
   }
 })();
 
