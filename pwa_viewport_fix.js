@@ -235,15 +235,22 @@
             
             // 根据实际偏移量直接修正（参考 iPhone 12 的方法）
             // 使用 margin 修正，这是之前对 iPhone 12 有效的方法
-            // 对所有 iOS 设备（包括 iPhone 17）使用相同的方法
+            // iPhone 17 需要 1.5 倍的修正量
             canvas.style.position = 'absolute';
             canvas.style.top = '0px';
             canvas.style.left = '0px';
             
+            // 计算修正值
+            // iPhone 17 需要 1.5 倍的修正量，其他设备使用 1 倍
+            const correctionMultiplier = isIOS17Standalone ? 1.5 : 1.0;
+            const correctedOffsetY = offsetY * correctionMultiplier;
+            const correctedOffsetX = offsetX * correctionMultiplier;
+            
             // 直接使用检测到的偏移量进行修正
             // 如果向上偏移了 offsetY，就向下移动 -offsetY
-            canvas.style.marginTop = (-offsetY) + 'px';
-            canvas.style.marginLeft = (-offsetX) + 'px';
+            // iPhone 17 需要更大的修正量（1.5 倍）
+            canvas.style.marginTop = (-correctedOffsetY) + 'px';
+            canvas.style.marginLeft = (-correctedOffsetX) + 'px';
             
             // 调试日志
             if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
@@ -254,9 +261,10 @@
                   y: offsetRatioY.toFixed(2) + '%', 
                   x: offsetRatioX.toFixed(2) + '%' 
                 },
+                correctionMultiplier: correctionMultiplier,
                 correction: { 
-                  marginTop: (-offsetY).toFixed(2), 
-                  marginLeft: (-offsetX).toFixed(2) 
+                  marginTop: (-correctedOffsetY).toFixed(2), 
+                  marginLeft: (-correctedOffsetX).toFixed(2) 
                 },
                 viewport: { width: actualWidth, height: actualHeight },
                 isIOS17: isIOS17Standalone,
@@ -275,9 +283,14 @@
                 const currentMarginTop = parseFloat(canvas.style.marginTop) || 0;
                 const currentMarginLeft = parseFloat(canvas.style.marginLeft) || 0;
                 
-                // 累加剩余的偏移量
-                canvas.style.marginTop = (currentMarginTop - newOffsetY) + 'px';
-                canvas.style.marginLeft = (currentMarginLeft - newOffsetX) + 'px';
+                // iPhone 17 需要 1.5 倍的修正量，其他设备使用 1 倍
+                const correctionMultiplier = isIOS17Standalone ? 1.5 : 1.0;
+                const correctedRemainingOffsetY = newOffsetY * correctionMultiplier;
+                const correctedRemainingOffsetX = newOffsetX * correctionMultiplier;
+                
+                // 累加剩余的偏移量（iPhone 17 使用 1.5 倍）
+                canvas.style.marginTop = (currentMarginTop - correctedRemainingOffsetY) + 'px';
+                canvas.style.marginLeft = (currentMarginLeft - correctedRemainingOffsetX) + 'px';
                 
                 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
                   console.log('[PWA_VIEWPORT_FIX] Additional correction applied:', {
@@ -285,9 +298,10 @@
                       y: newOffsetY.toFixed(2), 
                       x: newOffsetX.toFixed(2) 
                     },
+                    correctionMultiplier: correctionMultiplier,
                     totalCorrection: { 
-                      marginTop: (currentMarginTop - newOffsetY).toFixed(2), 
-                      marginLeft: (currentMarginLeft - newOffsetX).toFixed(2) 
+                      marginTop: (currentMarginTop - correctedRemainingOffsetY).toFixed(2), 
+                      marginLeft: (currentMarginLeft - correctedRemainingOffsetX).toFixed(2) 
                     }
                   });
                 }
