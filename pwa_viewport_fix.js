@@ -212,36 +212,98 @@
       canvas.style.transform = 'none';
       
       // iOS 特殊处理：确保 canvas 的坐标系统正确
-      // 使用之前对 iPhone 12 有效的简单方法
+      // 使用基于偏移比例的动态修正方法（参考 iPhone 12 的有效方案）
       if (isIOSStandalone) {
         // 强制重置 canvas 的 transform-origin
         canvas.style.transformOrigin = '0 0';
         
-        // 使用简单方法：直接修正到 (0, 0)，不依赖 visualViewport.offsetTop
-        // 这是之前对 iPhone 12 有效的方法
-        const rect = canvas.getBoundingClientRect();
-        if (rect.top !== 0 || rect.left !== 0) {
-          // 简单方法：直接使用 margin 修正（之前对 iPhone 12 有效）
-          canvas.style.position = 'absolute';
-          canvas.style.top = '0px';
-          canvas.style.left = '0px';
-          canvas.style.marginTop = (-rect.top) + 'px';
-          canvas.style.marginLeft = (-rect.left) + 'px';
+        // 使用 requestAnimationFrame 确保在渲染后检查
+        requestAnimationFrame(function() {
+          // 检测实际偏移量
+          const rect = canvas.getBoundingClientRect();
+          const offsetY = rect.top;
+          const offsetX = rect.left;
           
-          // 调试日志
-          if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            console.log('[PWA_VIEWPORT_FIX] Canvas position corrected (simple method):', {
-              before: { top: rect.top, left: rect.left },
-              correction: { marginTop: -rect.top, marginLeft: -rect.left },
-              isIOS17: isIOS17Standalone,
-              hasDynamicIsland: hasDynamicIslandDevice
+          // 允许 0.5px 的误差
+          const tolerance = 0.5;
+          
+          if (Math.abs(offsetY) > tolerance || Math.abs(offsetX) > tolerance) {
+            // 计算偏移比例（相对于视口高度/宽度）
+            // 这样可以了解偏移的严重程度
+            const offsetRatioY = actualHeight > 0 ? (Math.abs(offsetY) / actualHeight) * 100 : 0;
+            const offsetRatioX = actualWidth > 0 ? (Math.abs(offsetX) / actualWidth) * 100 : 0;
+            
+            // 根据实际偏移量直接修正（参考 iPhone 12 的方法）
+            // 使用 margin 修正，这是之前对 iPhone 12 有效的方法
+            // 对所有 iOS 设备（包括 iPhone 17）使用相同的方法
+            canvas.style.position = 'absolute';
+            canvas.style.top = '0px';
+            canvas.style.left = '0px';
+            
+            // 直接使用检测到的偏移量进行修正
+            // 如果向上偏移了 offsetY，就向下移动 -offsetY
+            canvas.style.marginTop = (-offsetY) + 'px';
+            canvas.style.marginLeft = (-offsetX) + 'px';
+            
+            // 调试日志
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+              console.log('[PWA_VIEWPORT_FIX] Canvas position corrected (proportional method):', {
+                before: { top: rect.top, left: rect.left },
+                offset: { y: offsetY.toFixed(2), x: offsetX.toFixed(2) },
+                offsetRatio: { 
+                  y: offsetRatioY.toFixed(2) + '%', 
+                  x: offsetRatioX.toFixed(2) + '%' 
+                },
+                correction: { 
+                  marginTop: (-offsetY).toFixed(2), 
+                  marginLeft: (-offsetX).toFixed(2) 
+                },
+                viewport: { width: actualWidth, height: actualHeight },
+                isIOS17: isIOS17Standalone,
+                hasDynamicIsland: hasDynamicIslandDevice
+              });
+            }
+            
+            // 验证修正是否成功（在下一帧检查）
+            requestAnimationFrame(function() {
+              const newRect = canvas.getBoundingClientRect();
+              const newOffsetY = newRect.top;
+              const newOffsetX = newRect.left;
+              
+              if (Math.abs(newOffsetY) > tolerance || Math.abs(newOffsetX) > tolerance) {
+                // 如果第一次修正不够，累加修正值
+                const currentMarginTop = parseFloat(canvas.style.marginTop) || 0;
+                const currentMarginLeft = parseFloat(canvas.style.marginLeft) || 0;
+                
+                // 累加剩余的偏移量
+                canvas.style.marginTop = (currentMarginTop - newOffsetY) + 'px';
+                canvas.style.marginLeft = (currentMarginLeft - newOffsetX) + 'px';
+                
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                  console.log('[PWA_VIEWPORT_FIX] Additional correction applied:', {
+                    remainingOffset: { 
+                      y: newOffsetY.toFixed(2), 
+                      x: newOffsetX.toFixed(2) 
+                    },
+                    totalCorrection: { 
+                      marginTop: (currentMarginTop - newOffsetY).toFixed(2), 
+                      marginLeft: (currentMarginLeft - newOffsetX).toFixed(2) 
+                    }
+                  });
+                }
+              } else {
+                // 修正成功
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                  console.log('[PWA_VIEWPORT_FIX] Canvas position correction successful');
+                }
+              }
             });
+          } else {
+            // 如果位置正确，确保没有 margin
+            canvas.style.marginTop = '0px';
+            canvas.style.marginLeft = '0px';
           }
-        } else {
-          // 如果位置正确，确保没有 margin
-          canvas.style.marginTop = '0px';
-          canvas.style.marginLeft = '0px';
-        }
+        });
       }
       
       // 处理 glass pane
