@@ -54,8 +54,8 @@
   
   // 设置真实的视口高度（CSS 变量方法）
   function setRealViewportHeight() {
-    // iOS 17+ 在 PWA standalone 模式下，visualViewport.height 可能不可靠
-    // 优先使用 window.innerHeight，但考虑 visualViewport.offsetTop
+    // iOS 17+ 在 PWA standalone 模式下，visualViewport.height 完全不可靠
+    // 强制使用 window.innerHeight，忽略 visualViewport.height
     let actualHeight = window.innerHeight;
     let offsetTop = 0;
     
@@ -63,15 +63,11 @@
       const vp = window.visualViewport;
       offsetTop = vp.offsetTop || 0;
       
-      // iOS 17+ 特殊处理：visualViewport.height 可能不可靠
-      // 但如果 offsetTop 不为 0，可能需要调整
+      // iOS 17+ 特殊处理：完全忽略 visualViewport.height，只使用 window.innerHeight
+      // 因为 visualViewport.height 在 iOS 17 上非常不可靠
       if (isIOS17Standalone) {
-        // iOS 17+：如果 visualViewport.height 明显小于 window.innerHeight
-        // 且 offsetTop 不为 0，可能需要使用 visualViewport.height
-        if (offsetTop !== 0 && vp.height < window.innerHeight - 10) {
-          actualHeight = vp.height;
-        }
-        // 否则使用 window.innerHeight（更可靠）
+        // 强制使用 window.innerHeight，不考虑 visualViewport.height
+        actualHeight = window.innerHeight;
       } else {
         // iOS 15/16：可以使用 visualViewport.height（如果可用）
         if (vp.height > 0 && vp.height <= window.innerHeight) {
@@ -204,58 +200,85 @@
         // 强制重置 canvas 的 transform-origin
         canvas.style.transformOrigin = '0 0';
         
-        // iOS 17+ 特殊处理：需要考虑 visualViewport.offsetTop
-        const vp = window.visualViewport;
-        const expectedTop = (isIOS17Standalone && vp) ? vp.offsetTop : 0;
-        
-        // 使用 requestAnimationFrame 确保在渲染后检查
-        requestAnimationFrame(function() {
-          const rect = canvas.getBoundingClientRect();
-          const offsetY = rect.top - expectedTop;
-          const offsetX = rect.left;
-          
-          // 允许 0.5px 的误差
-          const tolerance = 0.5;
-          
-          if (Math.abs(offsetY) > tolerance || Math.abs(offsetX) > tolerance) {
-            console.warn('[PWA_VIEWPORT_FIX] Canvas position mismatch detected:', {
-              top: rect.top,
-              left: rect.left,
-              expectedTop: expectedTop,
-              offsetY: offsetY,
-              offsetX: offsetX,
-              isIOS17: isIOS17Standalone
-            });
+        // iOS 17+ 特殊处理：强制 Canvas 在 (0, 0) 位置
+        // 使用多重检查和修正，确保位置正确
+        function correctCanvasPosition() {
+          requestAnimationFrame(function() {
+            const rect = canvas.getBoundingClientRect();
+            const offsetY = rect.top;
+            const offsetX = rect.left;
             
-            // iOS 17+：使用 transform 修正（更可靠）
-            if (isIOS17Standalone) {
-              canvas.style.transform = `translate(${-offsetX}px, ${-offsetY}px)`;
-            } else {
-              // iOS 15/16：使用 margin 修正
-              canvas.style.top = '0px';
-              canvas.style.left = '0px';
-              canvas.style.marginTop = (-offsetY) + 'px';
-              canvas.style.marginLeft = (-offsetX) + 'px';
-            }
+            // 允许 0.5px 的误差
+            const tolerance = 0.5;
             
-            // 验证修正是否成功
-            requestAnimationFrame(function() {
-              const newRect = canvas.getBoundingClientRect();
-              const newOffsetY = newRect.top - expectedTop;
-              const newOffsetX = newRect.left;
-              if (Math.abs(newOffsetY) > tolerance || Math.abs(newOffsetX) > tolerance) {
-                console.warn('[PWA_VIEWPORT_FIX] Canvas correction may not be sufficient:', {
-                  after: { top: newRect.top, left: newRect.left },
-                  offsetY: newOffsetY,
-                  offsetX: newOffsetX
+            if (Math.abs(offsetY) > tolerance || Math.abs(offsetX) > tolerance) {
+              console.warn('[PWA_VIEWPORT_FIX] Canvas position mismatch detected:', {
+                top: rect.top,
+                left: rect.left,
+                offsetY: offsetY,
+                offsetX: offsetX,
+                isIOS17: isIOS17Standalone
+              });
+              
+              // iOS 17+：使用多重方法强制修正
+              if (isIOS17Standalone) {
+                // 方法 1：使用 transform（最可靠）
+                canvas.style.transform = `translate(${-offsetX}px, ${-offsetY}px)`;
+                
+                // 方法 2：同时设置 margin（双重保险）
+                canvas.style.marginTop = (-offsetY) + 'px';
+                canvas.style.marginLeft = (-offsetX) + 'px';
+                
+                // 方法 3：强制设置 top 和 left
+                canvas.style.top = '0px';
+                canvas.style.left = '0px';
+                
+                // 验证修正是否成功（多次验证）
+                requestAnimationFrame(function() {
+                  const newRect = canvas.getBoundingClientRect();
+                  const newOffsetY = newRect.top;
+                  const newOffsetX = newRect.left;
+                  if (Math.abs(newOffsetY) > tolerance || Math.abs(newOffsetX) > tolerance) {
+                    console.warn('[PWA_VIEWPORT_FIX] First correction failed, trying again:', {
+                      after: { top: newRect.top, left: newRect.left },
+                      offsetY: newOffsetY,
+                      offsetX: newOffsetX
+                    });
+                    // 再次尝试修正
+                    canvas.style.transform = `translate(${-newOffsetX}px, ${-newOffsetY}px)`;
+                    canvas.style.marginTop = (-newOffsetY) + 'px';
+                    canvas.style.marginLeft = (-newOffsetX) + 'px';
+                  }
                 });
+              } else {
+                // iOS 15/16：使用 margin 修正
+                canvas.style.top = '0px';
+                canvas.style.left = '0px';
+                canvas.style.marginTop = (-offsetY) + 'px';
+                canvas.style.marginLeft = (-offsetX) + 'px';
               }
-            });
-          } else {
-            // 如果位置正确，确保没有 transform
-            canvas.style.transform = 'none';
-          }
-        });
+            } else {
+              // 如果位置正确，确保没有 transform 和 margin
+              canvas.style.transform = 'none';
+              canvas.style.marginTop = '0px';
+              canvas.style.marginLeft = '0px';
+            }
+          });
+        }
+        
+        // 立即执行一次
+        correctCanvasPosition();
+        
+        // iOS 17+ 需要多次检查和修正
+        if (isIOS17Standalone) {
+          // 在多个渲染帧后再次检查
+          requestAnimationFrame(function() {
+            requestAnimationFrame(correctCanvasPosition);
+          });
+          setTimeout(correctCanvasPosition, 100);
+          setTimeout(correctCanvasPosition, 300);
+          setTimeout(correctCanvasPosition, 500);
+        }
       }
       
       // 处理 glass pane
@@ -329,7 +352,7 @@
   // iOS 17+ 需要更频繁的检查，因为 visualViewport 行为不稳定
   if (isIOSStandalone) {
     let checkCount = 0;
-    const maxChecks = isIOS17Standalone ? 15 : 10; // iOS 17+ 需要更多检查
+    const maxChecks = isIOS17Standalone ? 20 : 10; // iOS 17+ 需要更多检查
     const checkInterval = setInterval(function() {
       checkCount++;
       // 使用 requestAnimationFrame 确保在渲染后检查
@@ -337,7 +360,49 @@
       if (checkCount >= maxChecks) {
         clearInterval(checkInterval);
       }
-    }, isIOS17Standalone ? 150 : 200); // iOS 17+ 检查间隔更短
+    }, isIOS17Standalone ? 100 : 200); // iOS 17+ 检查间隔更短（100ms）
+  }
+  
+  // iOS 17+ 特殊处理：监听所有可能影响视口的事件
+  if (isIOS17Standalone) {
+    // 监听 orientationchange（屏幕旋转）
+    window.addEventListener('orientationchange', function() {
+      setTimeout(function() {
+        setRealViewportHeight();
+        ensureFlutterViewport();
+      }, 200);
+    });
+    
+    // 监听 focus 事件（可能触发视口变化）
+    window.addEventListener('focus', function() {
+      setTimeout(function() {
+        setRealViewportHeight();
+        ensureFlutterViewport();
+      }, 100);
+    });
+    
+    // 更频繁地监听 visualViewport 变化
+    if (window.visualViewport) {
+      // 监听 offsetTop 的变化（iOS 17 特有）
+      let lastOffsetTop = window.visualViewport.offsetTop;
+      const checkOffsetTop = setInterval(function() {
+        const currentOffsetTop = window.visualViewport ? window.visualViewport.offsetTop : 0;
+        if (Math.abs(currentOffsetTop - lastOffsetTop) > 1) {
+          console.log('[PWA_VIEWPORT_FIX] offsetTop changed:', {
+            from: lastOffsetTop,
+            to: currentOffsetTop
+          });
+          lastOffsetTop = currentOffsetTop;
+          setRealViewportHeight();
+          ensureFlutterViewport();
+        }
+      }, 50); // 每 50ms 检查一次
+      
+      // 10 秒后停止检查（避免无限运行）
+      setTimeout(function() {
+        clearInterval(checkOffsetTop);
+      }, 10000);
+    }
   }
   
   // 导出调试函数（仅在开发环境）
