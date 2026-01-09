@@ -178,7 +178,8 @@
   
   // 等待 Flutter 加载后，确保容器使用正确的视口高度和坐标
   function ensureFlutterViewport() {
-    console.log('[PWA_VIEWPORT_FIX] ensureFlutterViewport called');
+    try {
+      console.log('[PWA_VIEWPORT_FIX] ensureFlutterViewport called at ' + new Date().toISOString());
     const sceneHost = document.querySelector('flt-scene-host');
     const canvas = sceneHost?.querySelector('canvas');
     const glassPane = document.querySelector('flt-glass-pane');
@@ -380,13 +381,19 @@
             }
           }));
         } catch (e) {
-          // 忽略错误
+          console.warn('[PWA_VIEWPORT_FIX] Failed to dispatch pwa-viewport-updated event:', e);
         }
       }
+      
+      console.log('[PWA_VIEWPORT_FIX] ensureFlutterViewport completed successfully');
     } else {
       // 如果 Flutter 还没加载，等待一下
       console.log('[PWA_VIEWPORT_FIX] Flutter elements not ready, retrying...');
       setTimeout(ensureFlutterViewport, isIOSStandalone ? 50 : 100);
+    }
+    } catch (error) {
+      console.error('[PWA_VIEWPORT_FIX] Error in ensureFlutterViewport:', error);
+      console.error('[PWA_VIEWPORT_FIX] Stack:', error.stack);
     }
   }
   
