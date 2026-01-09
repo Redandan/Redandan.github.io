@@ -166,21 +166,26 @@
     });
   }
   
-  // 在页面可见性变化时更新（处理从后台恢复和页面切换的情况）
+  // 在页面可见性变化时更新（处理从后台恢复的情况）
   document.addEventListener('visibilitychange', function() {
     if (!document.hidden && isIOSStandalone) {
       setTimeout(function() {
         setRealViewportHeight();
         ensureFlutterViewport();
-        // 额外检查几次，确保修正完成（特别是页面切换时）
+      }, 100);
+    }
+  });
+  
+  // 监听自定义事件 'pwa-viewport-updated'（由 Flutter 路由变化时触发）
+  window.addEventListener('pwa-viewport-updated', function() {
+    if (isIOSStandalone) {
+      setTimeout(function() {
+        setRealViewportHeight();
+        ensureFlutterViewport();
+        // 额外检查几次，确保修正完成
         setTimeout(ensureFlutterViewport, 100);
         setTimeout(ensureFlutterViewport, 300);
-        // iPhone 17 需要更多检查
-        if (isIOS17Standalone) {
-          setTimeout(ensureFlutterViewport, 500);
-          setTimeout(ensureFlutterViewport, 800);
-        }
-      }, 100);
+      }, 50);
     }
   });
   
@@ -341,6 +346,65 @@
           // 忽略错误
         }
       }
+      
+      // iOS 特殊处理：设置 MutationObserver 监听 Canvas 样式变化
+      // 当布局重建导致 Canvas 位置被重置时，立即修正
+      if (isIOSStandalone && canvas && !canvas._pwaViewportObserverSet) {
+        canvas._pwaViewportObserverSet = true; // 标记已设置，避免重复设置
+        
+        const canvasObserver = new MutationObserver(function(mutations) {
+          // 如果 Canvas 的样式或类被改变，立即检查并修正位置
+          let shouldFix = false;
+          for (let i = 0; i < mutations.length; i++) {
+            const mutation = mutations[i];
+            if (mutation.type === 'attributes') {
+              const attrName = mutation.attributeName;
+              // 如果样式或类被改变，需要检查位置
+              if (attrName === 'style' || attrName === 'class') {
+                shouldFix = true;
+                break;
+              }
+            }
+          }
+          
+          if (shouldFix) {
+            // 使用 requestAnimationFrame 确保在渲染后检查
+            requestAnimationFrame(function() {
+              const rect = canvas.getBoundingClientRect();
+              const offsetY = rect.top;
+              const offsetX = rect.left;
+              const tolerance = 0.5;
+              
+              // 如果位置偏移，立即修正
+              if (Math.abs(offsetY) > tolerance || Math.abs(offsetX) > tolerance) {
+                canvas.style.position = 'absolute';
+                canvas.style.top = '0px';
+                canvas.style.left = '0px';
+                canvas.style.marginTop = (-offsetY) + 'px';
+                canvas.style.marginLeft = (-offsetX) + 'px';
+                
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                  console.log('[PWA_VIEWPORT_FIX] Canvas position corrected by MutationObserver:', {
+                    offset: { y: offsetY.toFixed(2), x: offsetX.toFixed(2) },
+                    correction: { marginTop: (-offsetY).toFixed(2), marginLeft: (-offsetX).toFixed(2) }
+                  });
+                }
+              }
+            });
+          }
+        });
+        
+        // 监听 Canvas 的样式和类变化
+        canvasObserver.observe(canvas, {
+          attributes: true,
+          attributeFilter: ['style', 'class'],
+          attributeOldValue: false
+        });
+        
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          console.log('[PWA_VIEWPORT_FIX] MutationObserver set up for canvas');
+        }
+      }
     } else {
       // 如果 Flutter 还没加载，等待一下
       setTimeout(ensureFlutterViewport, isIOSStandalone ? 50 : 100);
@@ -370,20 +434,17 @@
   }
   
   // iOS 特殊处理：定期检查并修复（防止延迟的布局变化）
-  // iPhone 17 需要更多检查次数和更频繁的检查
+  // 使用之前对 iPhone 12 有效的简单方法：10 次检查，间隔 200ms
   if (isIOSStandalone) {
     let checkCount = 0;
-    // iPhone 17 检查 20 次，其他设备检查 10 次
-    const maxChecks = isIOS17Standalone ? 20 : 10;
-    // iPhone 17 间隔 100ms，其他设备间隔 200ms
-    const checkInterval = isIOS17Standalone ? 100 : 200;
-    const checkIntervalId = setInterval(function() {
+    const maxChecks = 10; // 对所有 iOS 设备使用相同的检查次数
+    const checkInterval = setInterval(function() {
       checkCount++;
       ensureFlutterViewport();
       if (checkCount >= maxChecks) {
-        clearInterval(checkIntervalId);
+        clearInterval(checkInterval);
       }
-    }, checkInterval);
+    }, 200); // 对所有 iOS 设备使用相同的检查间隔
   }
   
   // 导出调试函数（仅在开发环境）
