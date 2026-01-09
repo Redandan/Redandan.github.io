@@ -176,19 +176,6 @@
     }
   });
   
-  // 监听自定义事件 'pwa-viewport-updated'（由 Flutter 路由变化时触发）
-  window.addEventListener('pwa-viewport-updated', function() {
-    if (isIOSStandalone) {
-      setTimeout(function() {
-        setRealViewportHeight();
-        ensureFlutterViewport();
-        // 额外检查几次，确保修正完成
-        setTimeout(ensureFlutterViewport, 100);
-        setTimeout(ensureFlutterViewport, 300);
-      }, 50);
-    }
-  });
-  
   // 等待 Flutter 加载后，确保容器使用正确的视口高度和坐标
   function ensureFlutterViewport() {
     const sceneHost = document.querySelector('flt-scene-host');
@@ -346,65 +333,6 @@
           // 忽略错误
         }
       }
-      
-      // iOS 特殊处理：设置 MutationObserver 监听 Canvas 样式变化
-      // 当布局重建导致 Canvas 位置被重置时，立即修正
-      if (isIOSStandalone && canvas && !canvas._pwaViewportObserverSet) {
-        canvas._pwaViewportObserverSet = true; // 标记已设置，避免重复设置
-        
-        const canvasObserver = new MutationObserver(function(mutations) {
-          // 如果 Canvas 的样式或类被改变，立即检查并修正位置
-          let shouldFix = false;
-          for (let i = 0; i < mutations.length; i++) {
-            const mutation = mutations[i];
-            if (mutation.type === 'attributes') {
-              const attrName = mutation.attributeName;
-              // 如果样式或类被改变，需要检查位置
-              if (attrName === 'style' || attrName === 'class') {
-                shouldFix = true;
-                break;
-              }
-            }
-          }
-          
-          if (shouldFix) {
-            // 使用 requestAnimationFrame 确保在渲染后检查
-            requestAnimationFrame(function() {
-              const rect = canvas.getBoundingClientRect();
-              const offsetY = rect.top;
-              const offsetX = rect.left;
-              const tolerance = 0.5;
-              
-              // 如果位置偏移，立即修正
-              if (Math.abs(offsetY) > tolerance || Math.abs(offsetX) > tolerance) {
-                canvas.style.position = 'absolute';
-                canvas.style.top = '0px';
-                canvas.style.left = '0px';
-                canvas.style.marginTop = (-offsetY) + 'px';
-                canvas.style.marginLeft = (-offsetX) + 'px';
-                
-                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                  console.log('[PWA_VIEWPORT_FIX] Canvas position corrected by MutationObserver:', {
-                    offset: { y: offsetY.toFixed(2), x: offsetX.toFixed(2) },
-                    correction: { marginTop: (-offsetY).toFixed(2), marginLeft: (-offsetX).toFixed(2) }
-                  });
-                }
-              }
-            });
-          }
-        });
-        
-        // 监听 Canvas 的样式和类变化
-        canvasObserver.observe(canvas, {
-          attributes: true,
-          attributeFilter: ['style', 'class'],
-          attributeOldValue: false
-        });
-        
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-          console.log('[PWA_VIEWPORT_FIX] MutationObserver set up for canvas');
-        }
-      }
     } else {
       // 如果 Flutter 还没加载，等待一下
       setTimeout(ensureFlutterViewport, isIOSStandalone ? 50 : 100);
@@ -446,6 +374,20 @@
       }
     }, 200); // 对所有 iOS 设备使用相同的检查间隔
   }
+  
+  // 导出修复函数，供 Flutter 调用
+  window.fixPWAViewport = function() {
+    if (isIOSStandalone) {
+      setRealViewportHeight();
+      ensureFlutterViewport();
+      // 额外检查几次，确保修正完成
+      setTimeout(ensureFlutterViewport, 100);
+      setTimeout(ensureFlutterViewport, 300);
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        console.log('[PWA_VIEWPORT_FIX] Viewport fix triggered by Flutter');
+      }
+    }
+  };
   
   // 导出调试函数（仅在开发环境）
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
