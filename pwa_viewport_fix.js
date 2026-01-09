@@ -375,20 +375,6 @@
     }, 200); // 对所有 iOS 设备使用相同的检查间隔
   }
   
-  // 导出修复函数，供 Flutter 调用
-  window.fixPWAViewport = function() {
-    if (isIOSStandalone) {
-      setRealViewportHeight();
-      ensureFlutterViewport();
-      // 额外检查几次，确保修正完成
-      setTimeout(ensureFlutterViewport, 100);
-      setTimeout(ensureFlutterViewport, 300);
-      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        console.log('[PWA_VIEWPORT_FIX] Viewport fix triggered by Flutter');
-      }
-    }
-  };
-  
   // 导出调试函数（仅在开发环境）
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
     window.debugPWAViewport = function() {
