@@ -177,24 +177,44 @@
   });
   
   // 等待 Flutter 加载后，确保容器使用正确的视口高度和坐标
+  let ensureFlutterViewportCallCount = 0;
+  const MAX_RETRY_COUNT = 20; // 最多重试20次（约1秒）
+  
   function ensureFlutterViewport() {
+    ensureFlutterViewportCallCount++;
+    const callId = ensureFlutterViewportCallCount;
+    
     try {
-      console.log('[PWA_VIEWPORT_FIX] ensureFlutterViewport called at ' + new Date().toISOString());
-    const sceneHost = document.querySelector('flt-scene-host');
-    const canvas = sceneHost?.querySelector('canvas');
-    const glassPane = document.querySelector('flt-glass-pane');
-    
-    if (!sceneHost) {
-      console.warn('[PWA_VIEWPORT_FIX] flt-scene-host not found, retrying in 50ms');
-      setTimeout(ensureFlutterViewport, 50);
-      return;
-    }
-    
-    if (!canvas) {
-      console.warn('[PWA_VIEWPORT_FIX] canvas not found, retrying in 50ms');
-      setTimeout(ensureFlutterViewport, 50);
-      return;
-    }
+      console.log('[PWA_VIEWPORT_FIX] ensureFlutterViewport called #' + callId + ' at ' + new Date().toISOString());
+      
+      // 如果重试次数过多，停止重试
+      if (ensureFlutterViewportCallCount > MAX_RETRY_COUNT) {
+        console.error('[PWA_VIEWPORT_FIX] Max retry count reached, stopping retries');
+        return;
+      }
+      
+      const sceneHost = document.querySelector('flt-scene-host');
+      const canvas = sceneHost?.querySelector('canvas');
+      const glassPane = document.querySelector('flt-glass-pane');
+      
+      if (!sceneHost) {
+        console.warn('[PWA_VIEWPORT_FIX] #' + callId + ' flt-scene-host not found, retrying in 100ms (attempt ' + ensureFlutterViewportCallCount + '/' + MAX_RETRY_COUNT + ')');
+        setTimeout(function() {
+          ensureFlutterViewport();
+        }, 100); // 增加延迟到100ms，给Flutter更多时间加载
+        return;
+      }
+      
+      if (!canvas) {
+        console.warn('[PWA_VIEWPORT_FIX] #' + callId + ' canvas not found, retrying in 100ms (attempt ' + ensureFlutterViewportCallCount + '/' + MAX_RETRY_COUNT + ')');
+        setTimeout(function() {
+          ensureFlutterViewport();
+        }, 100);
+        return;
+      }
+      
+      // 重置计数器（成功找到元素）
+      ensureFlutterViewportCallCount = 0;
     
     console.log('[PWA_VIEWPORT_FIX] Elements found, starting fix');
     
