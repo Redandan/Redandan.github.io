@@ -39,7 +39,9 @@
   <meta name="version" content="1.0.708+709">
 
   <script>
-    // iOS PWA ?«ï??¯é½æ¡€? - ?¹ï†³???????????—ï—¾î¦ƒç?ï¼¹î¨«?¢ï???é§î??å–³??
+    // iOS PWA ????«ï??¯é½æ¡€? - ?¹ï†³???????????—ï—¾î¦ƒç?ï¼¹î¨«??
+    // ?îº? iOS 17+ ?½æ???—î«¯???visualViewport.height ?????innerHeight
+    // ?œå†½??—î«³ç¥•è????«ï??¯é½æ¡€??é¤???pwa_viewport_fix.js ??
     (function() {
       'use strict';
       
@@ -54,56 +56,29 @@
         }
       }
       
-      // ?¡ï??¥é??„è”­?«ï??¯æ?î¦¶æ¼²?—ï—¾î¦ƒç?ï¼??ªï?î¨«ç¢???å–³??
-      function setViewportHeightImmediate() {
-        // ?¿è¼»?…æ‘°îµ??«ï??¯æ?î¦¶æ¼²?—ï—½?????100vh
-        const vh = window.innerHeight * 0.01;
+      // ????ˆæ???--vh CSS ?î¦??—ï—¾î¦ƒç?ï¼??ªï?î¨«ç¢?
+      // ?îº? iOS 17+ ?½æ???—î«¯???…è???visualViewport.height?—ï—º?????innerHeight
+      // ?‚è¡£??½æ???é¤???pwa_viewport_fix.js ?­ï??
+      function setEarlyViewportHeight() {
+        // iOS 17+ ?½æ???—î«¯???visualViewport.height ?????innerHeight
+        // ?îºè›¹ visualViewport.height ??innerHeight ??iOS 17+
+        const height = window.visualViewport
+          ? window.visualViewport.height
+          : window.innerHeight;
+        const vh = height * 0.01;
         document.documentElement.style.setProperty('--vh', `${vh}px`);
-        
-        // ?¡ï??¥é??„è”­ body ??html ????¨ä????«è¿«?è³?
-        if (document.documentElement) {
-          document.documentElement.style.height = window.innerHeight + 'px';
-          document.documentElement.style.overflow = 'hidden';
-        }
-        if (document.body) {
-          document.body.style.height = window.innerHeight + 'px';
-          document.body.style.overflow = 'hidden';
-          document.body.style.margin = '0';
-          document.body.style.padding = '0';
-        }
       }
       
-      // ?’î????iOS standalone ?…âˆª??—ï—¼???®ï¥??
+      // ?’î????iOS standalone ?…âˆª??—ï—¼???¾æŒ½??CSS ?î¦?
       if (isIOSStandalone()) {
-        // ?¡ï??????Â€?ˆâˆ´???DOM ?îº¡è¸???
-        setViewportHeightImmediate();
+        setEarlyViewportHeight();
         
-        // ??«î? DOMContentLoaded
+        // ??DOM ?îº¡è¸????ˆâ??½èµ?
         if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', setViewportHeightImmediate);
+          document.addEventListener('DOMContentLoaded', setEarlyViewportHeight);
         } else {
-          setViewportHeightImmediate();
+          setEarlyViewportHeight();
         }
-        
-        // ??«î??’î??¯æ†­???î¦??—ï???ç¥‰ï??î¼???„å…§/?????
-        let resizeTimer;
-        window.addEventListener('resize', function() {
-          clearTimeout(resizeTimer);
-          resizeTimer = setTimeout(setViewportHeightImmediate, 50);
-        });
-        
-        // ??«î? visualViewport API?—ïŒ¬OS Safari ??€???
-        if (window.visualViewport) {
-          window.visualViewport.addEventListener('resize', setViewportHeightImmediate);
-          window.visualViewport.addEventListener('scroll', setViewportHeightImmediate);
-        }
-        
-        // ??¸â–³?ï¼·î»?«î¼¼????î¡½î£ª?‹î?î­????­ï???î????³î»¸?­ï????¯ï???
-        document.addEventListener('visibilitychange', function() {
-          if (!document.hidden) {
-            setTimeout(setViewportHeightImmediate, 100);
-          }
-        });
       }
     })();
   </script>
@@ -236,40 +211,21 @@
       --color-accent: 106, 76, 147;
     }
 
-    /* ?¡ï??¥é??„è”­ body ??html ??»î??—ï—¾î¦ƒç?ï¼¹î¨«??¤î???*/
+    /* ?îº? iOS 17+ ?½æ???—î«¯??¬î¼¿? html/body ??position: fixed */
+    /* é¤ˆî???–æ½¸??layout viewport ??visual viewport ?????œî? */
+    /* ??¾æŒ½?µæ?î·?ç¥†î¹°?˜î»???Safari ?¿è¼»??layout viewport */
     html, body {
       margin: 0;
       padding: 0;
       width: 100%;
-      /* ?¿è¼»??CSS ?î¦? --vh ?è¹‚èª¨ 100vh?—ï—½???PWA ?…âˆª??ï???«ï??¯æ?î¦¶æ¼²?æ¡? */
-      height: calc(var(--vh, 1vh) * 100);
-      /* iOS standalone ?…âˆª??ï•§??¿è¼»?…æ‘°îµ??«ï??¯æ?î¦¶æ¼² */
-      min-height: calc(var(--vh, 1vh) * 100);
-      max-height: calc(var(--vh, 1vh) * 100);
+      height: 100%;
       background: #1A1A1A !important;
-      /* iOS standalone ?…âˆª??ï•§??î³??????²æ»¯?ç¶???«è¿«?è³? */
-      overflow: hidden;
-      /* ?–æ???¿ï???î¿›Â€?¶è¿¤??*/
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-    }
-    
-    /* iOS standalone ?…âˆª??ï???å¯??­ï?? */
-    @supports (-webkit-touch-callout: none) {
-      html, body {
-        /* iOS Safari ?å¯??­ï?? */
-        position: fixed;
-        width: 100vw;
-        /* ?½æ???—î«²å®??100vh?—ï—º?¶é›¿è¼»î? CSS ?î¦??—ï—¾î¼??—ï???*/
-        height: calc(var(--vh, 1vh) * 100);
-        overflow: hidden;
-      }
+      /* ?˜é?î¨?overflow: hidden ??position: fixed?—ï—½?Ÿæ†¿?Ÿî????œç?î«°ï? */
+      /* ??? Flutter ?°å­µî¨–å????î¼¼î®?èŠ·???*/
     }
 
     /* ?–æ?? Flutter ?°å­µî¨–ç??ï¼†é–¬???æ¸¯è‘µ?«ï??¯å??»ç“·?????*/
+    /* ?œå†½??—î«³??­î?î¹°æ?????.flutter-ready ??†Â€î¼??î¢??¿ï???î©??ç???ªï????*/
     flt-scene-host {
       position: fixed !important;
       top: 0 !important;
@@ -277,13 +233,10 @@
       right: 0 !important;
       bottom: 0 !important;
       width: 100% !important;
-      /* ?¿è¼»??CSS ?î¦? --vh ?è¹‚èª¨ 100vh */
       height: calc(var(--vh, 1vh) * 100) !important;
       margin: 0 !important;
       padding: 0 !important;
-      /* ?–æ???âŠ¥? transform ?¶å????? */
       transform: none !important;
-      /* ?–æ???¬ï???æ¸¯è‘µ?…î±??—ï—º??????¸ï???*/
       z-index: 1;
     }
 
@@ -294,7 +247,6 @@
       right: 0 !important;
       bottom: 0 !important;
       width: 100% !important;
-      /* ?¿è¼»??CSS ?î¦? --vh ?è¹‚èª¨ 100vh */
       height: calc(var(--vh, 1vh) * 100) !important;
       margin: 0 !important;
       padding: 0 !important;
@@ -309,7 +261,6 @@
       top: 0 !important;
       left: 0 !important;
       width: 100% !important;
-      /* ?¿è¼»??CSS ?î¦? --vh ?è¹‚èª¨ 100vh */
       height: calc(var(--vh, 1vh) * 100) !important;
       margin: 0 !important;
       padding: 0 !important;
@@ -545,21 +496,13 @@
       background: transparent;
       /* ?˜é?î¨’æ‘°??…²?ç®? padding?—ï—½??Flutter ?¨î??…æ†­?? */
       padding: 0 !important;
-      /* iOS standalone ?…âˆª??ï????fixed?—ï—¾î¦ƒç?ï¼ºæ­²??*/
-      position: fixed !important;
-      /* ?–æ?? body ??­è??›î«°?ƒå????î°??¬î?? */
-      overflow: hidden;
+      /* ?îº? iOS 17+ ?½æ???—î«¯??¬î¼¿? body ??position: fixed */
+      /* ??Safari ?¿è¼»??layout viewport?—ï•½lutter ?¿è¼»??visual viewport */
+      /* position: fixed ?¡î«°ç´?æ¸???ªï«??*/
     }
     
-    /* iOS standalone ?…âˆª??ï•§??–æ?? Flutter ?îº¡è¸????¡î«³æ­??*/
-    @supports (-webkit-touch-callout: none) {
-      .flutter-ready html,
-      .flutter-ready body {
-        position: fixed !important;
-        height: calc(var(--vh, 1vh) * 100) !important;
-        overflow: hidden !important;
-      }
-    }
+    /* ?îº? iOS 17+ ?½æ???—î«²å®??.flutter-ready ??†Â€î¼???html/body ?î¼? */
+    /* ?ï???˜ç??—é??„è”­ position: fixed ??height?—ï—½?Ÿæ†¿?Ÿî????œé›¿è¼»î? layout viewport */
 
     /* ?–æ?? Flutter ?¨î??…ç??ï¼†é–¬???æ¸¯è‘µ?«ï??¯å??»ç“·?????*/
     /* ?îº? ??²î??½æ???—î«¯???calc(var(--vh, 1vh) * 100) ?????100%?—ï—¼ï¼†é½î³‡î¯­ iOS PWA ?å???¨è?è¿¤è??*/
@@ -1034,356 +977,4 @@
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
