@@ -22,15 +22,90 @@
     return /iPad|iPhone|iPod|iOS/.test(navigator.userAgent);
   }
   
+  // 检测 iOS 版本
+  function getIOSVersion() {
+    try {
+      const match = navigator.userAgent.match(/OS (\d+)_(\d+)_?(\d+)?/);
+      if (match) {
+        return {
+          major: parseInt(match[1], 10),
+          minor: parseInt(match[2], 10),
+          patch: parseInt(match[3] || '0', 10)
+        };
+      }
+    } catch (e) {
+      // 忽略错误
+    }
+    return null;
+  }
+  
+  // 检测是否是 iOS 17 或更高版本
+  function isIOS17OrLater() {
+    const version = getIOSVersion();
+    return version && version.major >= 17;
+  }
+  
+  // 检测是否有 Dynamic Island（iPhone 14 Pro 及以后）
+  function hasDynamicIsland() {
+    try {
+      const iosVersion = getIOSVersion();
+      if (!iosVersion || iosVersion.major < 16) {
+        return false; // iOS 16 之前没有 Dynamic Island
+      }
+      
+      // 通过屏幕尺寸判断（Dynamic Island 设备通常是较新的 iPhone）
+      const screenHeight = window.screen.height;
+      const screenWidth = window.screen.width;
+      
+      // iPhone 14 Pro/15 Pro: 852x393, iPhone 14 Pro Max/15 Pro Max: 932x430
+      // iPhone 16 Pro: 932x430, iPhone 16 Pro Max: 1068x480
+      // 这些设备有 Dynamic Island
+      const dynamicIslandDevices = [
+        { width: 393, height: 852 }, // iPhone 14 Pro, 15 Pro
+        { width: 430, height: 932 }, // iPhone 14 Pro Max, 15 Pro Max, 16 Pro
+        { width: 480, height: 1068 } // iPhone 16 Pro Max
+      ];
+      
+      return dynamicIslandDevices.some(device => 
+        (screenWidth === device.width && screenHeight === device.height) ||
+        (screenWidth === device.height && screenHeight === device.width) // 横屏
+      );
+    } catch (e) {
+      return false;
+    }
+  }
+  
   if (!isStandaloneMode()) {
     return; // 非 PWA 模式，不需要修复
   }
   
   const isIOSStandalone = isIOS() && isStandaloneMode();
+  const isIOS17Standalone = isIOSStandalone && isIOS17OrLater();
+  const hasDynamicIslandDevice = hasDynamicIsland();
+  
+  // 记录设备信息（调试用）
+  if (isIOSStandalone && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    console.log('[PWA_VIEWPORT_FIX] Device Info:', {
+      iosVersion: getIOSVersion(),
+      isIOS17: isIOS17Standalone,
+      hasDynamicIsland: hasDynamicIslandDevice,
+      screen: {
+        width: window.screen.width,
+        height: window.screen.height
+      },
+      visualViewport: window.visualViewport ? {
+        width: window.visualViewport.width,
+        height: window.visualViewport.height,
+        offsetTop: window.visualViewport.offsetTop
+      } : null
+    });
+  }
   
   // 设置真实的视口高度（CSS 变量方法）
+  // 使用之前对 iPhone 12 有效的简单方法：直接使用 window.innerHeight
   function setRealViewportHeight() {
-    // 获取实际视口高度
+    // 简单方法：直接使用 window.innerHeight（之前对 iPhone 12 有效）
+    // 不依赖 visualViewport.height，因为它可能不可靠
     const actualHeight = window.innerHeight;
     const vh = actualHeight * 0.01;
     
@@ -73,6 +148,7 @@
   });
   
   // 监听 visualViewport API（iOS Safari 支持，用于精确的视口变化）
+  // 使用简单方法：只监听 resize，不依赖 visualViewport.height
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', function() {
       setRealViewportHeight();
@@ -90,12 +166,20 @@
     });
   }
   
-  // 在页面可见性变化时更新（处理从后台恢复的情况）
+  // 在页面可见性变化时更新（处理从后台恢复和页面切换的情况）
   document.addEventListener('visibilitychange', function() {
     if (!document.hidden && isIOSStandalone) {
       setTimeout(function() {
         setRealViewportHeight();
         ensureFlutterViewport();
+        // 额外检查几次，确保修正完成（特别是页面切换时）
+        setTimeout(ensureFlutterViewport, 100);
+        setTimeout(ensureFlutterViewport, 300);
+        // iPhone 17 需要更多检查
+        if (isIOS17Standalone) {
+          setTimeout(ensureFlutterViewport, 500);
+          setTimeout(ensureFlutterViewport, 800);
+        }
       }, 100);
     }
   });
@@ -136,24 +220,98 @@
       canvas.style.transform = 'none';
       
       // iOS 特殊处理：确保 canvas 的坐标系统正确
+      // 使用基于偏移比例的动态修正方法（参考 iPhone 12 的有效方案）
       if (isIOSStandalone) {
         // 强制重置 canvas 的 transform-origin
         canvas.style.transformOrigin = '0 0';
         
-        // 确保 canvas 的 bounding box 从 (0,0) 开始
-        const rect = canvas.getBoundingClientRect();
-        if (rect.top !== 0 || rect.left !== 0) {
-          console.warn('[PWA_VIEWPORT_FIX] Canvas position mismatch detected:', {
-            top: rect.top,
-            left: rect.left,
-            expected: { top: 0, left: 0 }
-          });
-          // 尝试通过 CSS 强制修正
-          canvas.style.top = '0px';
-          canvas.style.left = '0px';
-          canvas.style.marginTop = (-rect.top) + 'px';
-          canvas.style.marginLeft = (-rect.left) + 'px';
-        }
+        // 使用 requestAnimationFrame 确保在渲染后检查
+        requestAnimationFrame(function() {
+          // 检测实际偏移量
+          const rect = canvas.getBoundingClientRect();
+          const offsetY = rect.top;
+          const offsetX = rect.left;
+          
+          // 允许 0.5px 的误差
+          const tolerance = 0.5;
+          
+          if (Math.abs(offsetY) > tolerance || Math.abs(offsetX) > tolerance) {
+            // 计算偏移比例（相对于视口高度/宽度）
+            // 这样可以了解偏移的严重程度
+            const offsetRatioY = actualHeight > 0 ? (Math.abs(offsetY) / actualHeight) * 100 : 0;
+            const offsetRatioX = actualWidth > 0 ? (Math.abs(offsetX) / actualWidth) * 100 : 0;
+            
+            // 根据实际偏移量直接修正（参考 iPhone 12 的方法）
+            // 使用 margin 修正，这是之前对 iPhone 12 有效的方法
+            // 对所有 iOS 设备（包括 iPhone 17）使用相同的方法
+            canvas.style.position = 'absolute';
+            canvas.style.top = '0px';
+            canvas.style.left = '0px';
+            
+            // 直接使用检测到的偏移量进行修正
+            // 如果向上偏移了 offsetY，就向下移动 -offsetY
+            canvas.style.marginTop = (-offsetY) + 'px';
+            canvas.style.marginLeft = (-offsetX) + 'px';
+            
+            // 调试日志
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+              console.log('[PWA_VIEWPORT_FIX] Canvas position corrected (proportional method):', {
+                before: { top: rect.top, left: rect.left },
+                offset: { y: offsetY.toFixed(2), x: offsetX.toFixed(2) },
+                offsetRatio: { 
+                  y: offsetRatioY.toFixed(2) + '%', 
+                  x: offsetRatioX.toFixed(2) + '%' 
+                },
+                correction: { 
+                  marginTop: (-offsetY).toFixed(2), 
+                  marginLeft: (-offsetX).toFixed(2) 
+                },
+                viewport: { width: actualWidth, height: actualHeight },
+                isIOS17: isIOS17Standalone,
+                hasDynamicIsland: hasDynamicIslandDevice
+              });
+            }
+            
+            // 验证修正是否成功（在下一帧检查）
+            requestAnimationFrame(function() {
+              const newRect = canvas.getBoundingClientRect();
+              const newOffsetY = newRect.top;
+              const newOffsetX = newRect.left;
+              
+              if (Math.abs(newOffsetY) > tolerance || Math.abs(newOffsetX) > tolerance) {
+                // 如果第一次修正不够，累加修正值
+                const currentMarginTop = parseFloat(canvas.style.marginTop) || 0;
+                const currentMarginLeft = parseFloat(canvas.style.marginLeft) || 0;
+                
+                // 累加剩余的偏移量
+                canvas.style.marginTop = (currentMarginTop - newOffsetY) + 'px';
+                canvas.style.marginLeft = (currentMarginLeft - newOffsetX) + 'px';
+                
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                  console.log('[PWA_VIEWPORT_FIX] Additional correction applied:', {
+                    remainingOffset: { 
+                      y: newOffsetY.toFixed(2), 
+                      x: newOffsetX.toFixed(2) 
+                    },
+                    totalCorrection: { 
+                      marginTop: (currentMarginTop - newOffsetY).toFixed(2), 
+                      marginLeft: (currentMarginLeft - newOffsetX).toFixed(2) 
+                    }
+                  });
+                }
+              } else {
+                // 修正成功
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                  console.log('[PWA_VIEWPORT_FIX] Canvas position correction successful');
+                }
+              }
+            });
+          } else {
+            // 如果位置正确，确保没有 margin
+            canvas.style.marginTop = '0px';
+            canvas.style.marginLeft = '0px';
+          }
+        });
       }
       
       // 处理 glass pane
@@ -176,13 +334,7 @@
             detail: {
               width: actualWidth,
               height: actualHeight,
-              innerHeight: window.innerHeight,
-              visualViewport: window.visualViewport ? {
-                width: window.visualViewport.width,
-                height: window.visualViewport.height,
-                offsetTop: window.visualViewport.offsetTop,
-                offsetLeft: window.visualViewport.offsetLeft
-              } : null
+              innerHeight: window.innerHeight
             }
           }));
         } catch (e) {
@@ -218,16 +370,71 @@
   }
   
   // iOS 特殊处理：定期检查并修复（防止延迟的布局变化）
+  // iPhone 17 需要更多检查次数和更频繁的检查
   if (isIOSStandalone) {
     let checkCount = 0;
-    const maxChecks = 10;
-    const checkInterval = setInterval(function() {
+    // iPhone 17 检查 20 次，其他设备检查 10 次
+    const maxChecks = isIOS17Standalone ? 20 : 10;
+    // iPhone 17 间隔 100ms，其他设备间隔 200ms
+    const checkInterval = isIOS17Standalone ? 100 : 200;
+    const checkIntervalId = setInterval(function() {
       checkCount++;
       ensureFlutterViewport();
       if (checkCount >= maxChecks) {
-        clearInterval(checkInterval);
+        clearInterval(checkIntervalId);
       }
-    }, 200);
+    }, checkInterval);
+  }
+  
+  // 导出调试函数（仅在开发环境）
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    window.debugPWAViewport = function() {
+      const canvas = document.querySelector('flt-scene-host canvas');
+      const visualViewport = window.visualViewport;
+      const iosVersion = getIOSVersion();
+      
+      console.log('[PWA_VIEWPORT_DEBUG]', {
+        iosVersion: iosVersion,
+        isIOS17: isIOS17Standalone,
+        window: {
+          innerWidth: window.innerWidth,
+          innerHeight: window.innerHeight,
+          outerWidth: window.outerWidth,
+          outerHeight: window.outerHeight
+        },
+        visualViewport: visualViewport ? {
+          width: visualViewport.width,
+          height: visualViewport.height,
+          offsetTop: visualViewport.offsetTop,
+          offsetLeft: visualViewport.offsetLeft,
+          scale: visualViewport.scale
+        } : null,
+        canvas: canvas ? (function() {
+          const rect = canvas.getBoundingClientRect();
+          const computedStyle = window.getComputedStyle(canvas);
+          return {
+            boundingRect: {
+              top: rect.top,
+              left: rect.left,
+              width: rect.width,
+              height: rect.height
+            },
+            computedStyle: {
+              position: computedStyle.position,
+              top: computedStyle.top,
+              left: computedStyle.left,
+              transform: computedStyle.transform,
+              transformOrigin: computedStyle.transformOrigin,
+              marginTop: computedStyle.marginTop,
+              marginLeft: computedStyle.marginLeft
+            }
+          };
+        })() : null,
+        cssVariable: {
+          vh: getComputedStyle(document.documentElement).getPropertyValue('--vh')
+        }
+      });
+    };
   }
 })();
 
