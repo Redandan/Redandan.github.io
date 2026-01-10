@@ -101,23 +101,27 @@
     });
   }
   
-  // 设置真实的视口高度（CSS 变量方法）
-  // ⚠️ iOS 17+ 修复：使用 visualViewport.height 而不是 innerHeight
-  // 因为 visualViewport.height ≠ innerHeight 在 iOS 17+（由于 home bar / dynamic island）
+  // Update viewport height using visualViewport.height as single source of truth
+  // This fixes iOS 17+ touch offset issues without breaking iPhone 12
   function setRealViewportHeight() {
-    // iOS 17+ 修复：优先使用 visualViewport.height
-    // 这确保 Flutter、Canvas、Touch 事件都使用同一个坐标系统
-    const height = window.visualViewport
-      ? window.visualViewport.height
-      : window.innerHeight;
-    const vh = height * 0.01;
+    let viewportHeight;
     
-    // 设置 CSS 变量 --vh (1vh = 1% of viewport height)
+    // iOS 17+ requires visualViewport.height for accurate viewport
+    // Fallback to innerHeight for older iOS or non-iOS devices
+    if (window.visualViewport && window.visualViewport.height > 0) {
+      viewportHeight = window.visualViewport.height;
+    } else {
+      // Fallback for devices without visualViewport support
+      viewportHeight = window.innerHeight;
+    }
+    
+    // Calculate 1vh unit
+    const vh = viewportHeight * 0.01;
+    
+    // Set CSS variable --vh (1vh = 1% of viewport height)
     document.documentElement.style.setProperty('--vh', `${vh}px`);
     
-    // ⚠️ iOS 17+ 修复：不要强制设置 html 和 body 高度
-    // 这会导致 layout viewport 和 visual viewport 坐标扭曲
-    // 让 Safari 使用 layout viewport，Flutter 使用 visual viewport
+    // DO NOT set html/body height or position - causes touch offset issues
   }
   
   // 初始设置（立即执行）
@@ -146,21 +150,22 @@
     resizeTimeout = setTimeout(setRealViewportHeight, isIOSStandalone ? 50 : 100);
   });
   
-  // 监听 visualViewport API（iOS Safari 支持，用于精确的视口变化）
-  // 使用简单方法：只监听 resize，不依赖 visualViewport.height
+  // Listen to visualViewport API (critical for iOS 17+)
+  // visualViewport.height is the single source of truth
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', function() {
       setRealViewportHeight();
-      // iOS 需要立即更新 Flutter 容器
+      // Immediately update Flutter containers on iOS
       if (isIOSStandalone) {
         setTimeout(ensureFlutterViewport, 10);
       }
     });
     
     window.visualViewport.addEventListener('scroll', function() {
-      // iOS 在滚动时也可能改变视口（状态栏相关）
+      // iOS viewport may change on scroll (status bar related)
       if (isIOSStandalone) {
         setRealViewportHeight();
+        setTimeout(ensureFlutterViewport, 10);
       }
     });
   }
@@ -175,224 +180,80 @@
     }
   });
   
-  // 等待 Flutter 加载后，确保容器使用正确的视口高度和坐标
+  // Ensure Flutter containers match visualViewport exactly
+  // No canvas offset workarounds needed - root cause is fixed via visualViewport.height
   function ensureFlutterViewport() {
-    console.log('[PWA_VIEWPORT_FIX] ensureFlutterViewport called');
     const sceneHost = document.querySelector('flt-scene-host');
     const canvas = sceneHost?.querySelector('canvas');
     const glassPane = document.querySelector('flt-glass-pane');
     
-    if (!sceneHost) {
-      console.warn('[PWA_VIEWPORT_FIX] flt-scene-host not found, retrying in 50ms');
-      setTimeout(ensureFlutterViewport, 50);
-      return;
-    }
-    
-    if (!canvas) {
-      console.warn('[PWA_VIEWPORT_FIX] canvas not found, retrying in 50ms');
-      setTimeout(ensureFlutterViewport, 50);
-      return;
-    }
-    
-    console.log('[PWA_VIEWPORT_FIX] Elements found, starting fix');
-    
     if (sceneHost && canvas) {
-      // ⚠️ iOS 17+ 修复：使用 visualViewport 而不是 innerHeight/innerWidth
-      // 确保 Flutter、Canvas、Touch 事件都使用同一个坐标系统
-      const visualViewport = window.visualViewport;
-      const actualHeight = visualViewport
-        ? visualViewport.height
-        : window.innerHeight;
-      const actualWidth = visualViewport
-        ? visualViewport.width
-        : window.innerWidth;
+      // Get viewport dimensions from visualViewport (single source of truth)
+      let viewportWidth, viewportHeight;
       
-      // 强制设置容器位置和尺寸
+      if (window.visualViewport && window.visualViewport.width > 0 && window.visualViewport.height > 0) {
+        viewportWidth = window.visualViewport.width;
+        viewportHeight = window.visualViewport.height;
+      } else {
+        // Fallback for devices without visualViewport support
+        viewportWidth = window.innerWidth;
+        viewportHeight = window.innerHeight;
+      }
+      
+      // Ensure scene host matches visualViewport
       sceneHost.style.position = 'fixed';
       sceneHost.style.top = '0px';
       sceneHost.style.left = '0px';
-      sceneHost.style.width = actualWidth + 'px';
-      sceneHost.style.height = actualHeight + 'px';
+      sceneHost.style.width = viewportWidth + 'px';
+      // Height uses --vh CSS variable (calculated from visualViewport.height)
+      sceneHost.style.height = 'calc(var(--vh, 1vh) * 100)';
       sceneHost.style.margin = '0';
       sceneHost.style.padding = '0';
       sceneHost.style.transform = 'none';
       sceneHost.style.zIndex = '1';
       
-      // 强制设置 Canvas 位置和尺寸
-      const canvasRect = canvas.getBoundingClientRect();
-      console.log('[PWA_VIEWPORT_FIX] Canvas initial position:', {
-        top: canvasRect.top,
-        left: canvasRect.left,
-        width: canvasRect.width,
-        height: canvasRect.height,
-        visualViewportHeight: actualHeight,
-        innerHeight: window.innerHeight
-      });
-      
-      if (canvasRect.top !== 0 || canvasRect.left !== 0) {
-        console.log('[PWA_VIEWPORT_FIX] Canvas has offset, resetting position');
-        canvas.style.position = 'absolute';
-        canvas.style.top = '0px';
-        canvas.style.left = '0px';
-      }
-      canvas.style.width = actualWidth + 'px';
-      canvas.style.height = actualHeight + 'px';
+      // Ensure canvas matches visualViewport exactly
+      // No offset corrections needed - visualViewport.height fixes root cause
+      canvas.style.position = 'absolute';
+      canvas.style.top = '0px';
+      canvas.style.left = '0px';
+      canvas.style.width = viewportWidth + 'px';
+      // Height uses --vh CSS variable
+      canvas.style.height = 'calc(var(--vh, 1vh) * 100)';
       canvas.style.margin = '0';
       canvas.style.padding = '0';
       canvas.style.transform = 'none';
+      canvas.style.transformOrigin = '0 0';
       
-      console.log('[PWA_VIEWPORT_FIX] Canvas styles set:', {
-        width: actualWidth,
-        height: actualHeight,
-        position: canvas.style.position,
-        top: canvas.style.top,
-        left: canvas.style.left
-      });
-      
-      // iOS 特殊处理：确保 canvas 的坐标系统正确
-      // 使用基于偏移比例的动态修正方法（参考 iPhone 12 的有效方案）
-      if (isIOSStandalone) {
-        // 强制重置 canvas 的 transform-origin
-        canvas.style.transformOrigin = '0 0';
-        
-        // 使用 requestAnimationFrame 确保在渲染后检查
-        requestAnimationFrame(function() {
-          console.log('[PWA_VIEWPORT_FIX] Checking canvas position after initial setup');
-          // 检测实际偏移量
-          const rect = canvas.getBoundingClientRect();
-          const offsetY = rect.top;
-          const offsetX = rect.left;
-          
-          console.log('[PWA_VIEWPORT_FIX] Canvas position check:', {
-            top: rect.top,
-            left: rect.left,
-            offsetY: offsetY,
-            offsetX: offsetX
-          });
-          
-          // 允许 0.5px 的误差
-          const tolerance = 0.5;
-          
-          if (Math.abs(offsetY) > tolerance || Math.abs(offsetX) > tolerance) {
-            console.log('[PWA_VIEWPORT_FIX] Offset detected, applying correction');
-            // 计算偏移比例（相对于视口高度/宽度）
-            // 这样可以了解偏移的严重程度
-            const offsetRatioY = actualHeight > 0 ? (Math.abs(offsetY) / actualHeight) * 100 : 0;
-            const offsetRatioX = actualWidth > 0 ? (Math.abs(offsetX) / actualWidth) * 100 : 0;
-            
-            // 根据实际偏移量直接修正（参考 iPhone 12 的方法）
-            // 使用 margin 修正，这是之前对 iPhone 12 有效的方法
-            // 对所有 iOS 设备（包括 iPhone 17）使用相同的方法
-            canvas.style.position = 'absolute';
-            canvas.style.top = '0px';
-            canvas.style.left = '0px';
-            
-            // 直接使用检测到的偏移量进行修正
-            // 如果向上偏移了 offsetY，就向下移动 -offsetY
-            canvas.style.marginTop = (-offsetY) + 'px';
-            canvas.style.marginLeft = (-offsetX) + 'px';
-            
-            // 调试日志（始终输出，不限制环境）
-            console.log('[PWA_VIEWPORT_FIX] Canvas position corrected:', {
-              before: { top: rect.top, left: rect.left },
-              offset: { y: offsetY.toFixed(2), x: offsetX.toFixed(2) },
-              offsetRatio: { 
-                y: offsetRatioY.toFixed(2) + '%', 
-                x: offsetRatioX.toFixed(2) + '%' 
-              },
-              correction: { 
-                marginTop: (-offsetY).toFixed(2) + 'px', 
-                marginLeft: (-offsetX).toFixed(2) + 'px' 
-              },
-              viewport: { width: actualWidth, height: actualHeight },
-              isIOS17: isIOS17Standalone,
-              hasDynamicIsland: hasDynamicIslandDevice
-            });
-            
-            // 验证修正是否成功（在下一帧检查）
-            requestAnimationFrame(function() {
-              console.log('[PWA_VIEWPORT_FIX] Verifying correction');
-              const newRect = canvas.getBoundingClientRect();
-              const newOffsetY = newRect.top;
-              const newOffsetX = newRect.left;
-              
-              console.log('[PWA_VIEWPORT_FIX] Position after correction:', {
-                top: newRect.top,
-                left: newRect.left,
-                offsetY: newOffsetY,
-                offsetX: newOffsetX,
-                currentMarginTop: canvas.style.marginTop,
-                currentMarginLeft: canvas.style.marginLeft
-              });
-              
-              if (Math.abs(newOffsetY) > tolerance || Math.abs(newOffsetX) > tolerance) {
-                // 如果第一次修正不够，累加修正值
-                const currentMarginTop = parseFloat(canvas.style.marginTop) || 0;
-                const currentMarginLeft = parseFloat(canvas.style.marginLeft) || 0;
-                
-                // 累加剩余的偏移量
-                const newMarginTop = (currentMarginTop - newOffsetY) + 'px';
-                const newMarginLeft = (currentMarginLeft - newOffsetX) + 'px';
-                canvas.style.marginTop = newMarginTop;
-                canvas.style.marginLeft = newMarginLeft;
-                
-                console.log('[PWA_VIEWPORT_FIX] Additional correction applied:', {
-                  remainingOffset: { 
-                    y: newOffsetY.toFixed(2), 
-                    x: newOffsetX.toFixed(2) 
-                  },
-                  totalCorrection: { 
-                    marginTop: newMarginTop, 
-                    marginLeft: newMarginLeft
-                  }
-                });
-              } else {
-                // 修正成功
-                console.log('[PWA_VIEWPORT_FIX] ✅ Canvas position correction successful!', {
-                  finalPosition: { top: newRect.top, left: newRect.left },
-                  margin: { top: canvas.style.marginTop, left: canvas.style.marginLeft }
-                });
-              }
-            });
-          } else {
-            // 如果位置正确，确保没有 margin
-            console.log('[PWA_VIEWPORT_FIX] ✅ Canvas position is correct, no correction needed');
-            canvas.style.marginTop = '0px';
-            canvas.style.marginLeft = '0px';
-          }
-        });
-      }
-      
-      // 处理 glass pane
+      // Ensure glass pane matches visualViewport
       if (glassPane) {
         glassPane.style.position = 'fixed';
         glassPane.style.top = '0px';
         glassPane.style.left = '0px';
-        glassPane.style.width = actualWidth + 'px';
-        glassPane.style.height = actualHeight + 'px';
+        glassPane.style.width = viewportWidth + 'px';
+        // Height uses --vh CSS variable
+        glassPane.style.height = 'calc(var(--vh, 1vh) * 100)';
         glassPane.style.margin = '0';
         glassPane.style.padding = '0';
         glassPane.style.transform = 'none';
       }
       
-      // iOS 特殊处理：通知 Flutter 视口已更新（如果可能）
+      // Notify Flutter of viewport update (if available)
       if (isIOSStandalone && window.flutter) {
         try {
-          // 触发一个自定义事件，让 Flutter 知道视口已更新
           window.dispatchEvent(new CustomEvent('pwa-viewport-updated', {
             detail: {
-              width: actualWidth,
-              height: actualHeight,
-              innerHeight: window.innerHeight
+              width: viewportWidth,
+              height: viewportHeight,
+              visualViewportHeight: window.visualViewport ? window.visualViewport.height : null
             }
           }));
         } catch (e) {
-          // 忽略错误
+          // Ignore errors
         }
       }
     } else {
-      // 如果 Flutter 还没加载，等待一下
-      console.log('[PWA_VIEWPORT_FIX] Flutter elements not ready, retrying...');
+      // Flutter not loaded yet, retry
       setTimeout(ensureFlutterViewport, isIOSStandalone ? 50 : 100);
     }
   }
@@ -419,25 +280,22 @@
     setTimeout(ensureFlutterViewport, 100);
   }
   
-  // iOS 特殊处理：定期检查并修复（防止延迟的布局变化）
-  // 使用之前对 iPhone 12 有效的简单方法：10 次检查，间隔 200ms
+  // iOS: Periodic checks to ensure viewport alignment (handles delayed layout changes)
+  // Reduced checks since visualViewport.height fixes root cause
   if (isIOSStandalone) {
     let checkCount = 0;
-    const maxChecks = 10; // 对所有 iOS 设备使用相同的检查次数
+    const maxChecks = 5; // Reduced from 10 - visualViewport.height is more reliable
     const checkInterval = setInterval(function() {
       checkCount++;
+      setRealViewportHeight();
       ensureFlutterViewport();
       if (checkCount >= maxChecks) {
         clearInterval(checkInterval);
       }
-    }, 200); // 对所有 iOS 设备使用相同的检查间隔
+    }, 200);
   }
   
-  // 导出修复函数，供 Flutter 直接调用
-  window.ensureFlutterViewport = ensureFlutterViewport;
-  window.setRealViewportHeight = setRealViewportHeight;
-  
-  // 导出调试函数（仅在开发环境）
+  // Debug function (development only)
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
     window.debugPWAViewport = function() {
       const canvas = document.querySelector('flt-scene-host canvas');
@@ -478,11 +336,19 @@
               transformOrigin: computedStyle.transformOrigin,
               marginTop: computedStyle.marginTop,
               marginLeft: computedStyle.marginLeft
-            }
+            },
+            // Check alignment with visualViewport
+            alignment: visualViewport ? {
+              topOffset: rect.top,
+              leftOffset: rect.left,
+              heightMatch: Math.abs(rect.height - visualViewport.height) < 1,
+              widthMatch: Math.abs(rect.width - visualViewport.width) < 1
+            } : null
           };
         })() : null,
         cssVariable: {
-          vh: getComputedStyle(document.documentElement).getPropertyValue('--vh')
+          vh: getComputedStyle(document.documentElement).getPropertyValue('--vh'),
+          calculatedHeight: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--vh')) * 100
         }
       });
     };
