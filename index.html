@@ -458,18 +458,21 @@
     (function() {
       'use strict';
       
-      // æ£€??Flutter ?¯å¦å·²ç??†å?å¥?      function checkFlutterReady() {
+      // æ£€??Flutter ?¯å¦å·²ç??†å?å¥?
+      function checkFlutterReady() {
         // æ£€??Flutter ?ƒç??¯å¦å·²ç?å­˜åœ¨
         const hasFlutterElements = document.querySelector('flt-scene-host') !== null ||
                                   document.querySelector('flt-glass-pane') !== null ||
                                   document.querySelector('canvas') !== null;
         
-        // æ£€??body ?¯å¦å·²ç???flutter-ready ç±»ï?ä»ä??ç?ä¼šè?ï¼?        const isAlreadyReady = document.body && document.body.classList.contains('flutter-ready');
+        // æ£€??body ?¯å¦å·²ç???flutter-ready ç±»ï?ä»ä??ç?ä¼šè?ï¼?
+        const isAlreadyReady = document.body && document.body.classList.contains('flutter-ready');
         
         if (hasFlutterElements || isAlreadyReady) {
           console.log('[LOADING_SCREEN] Flutter already ready, hiding loading screen immediately (skipping animation)');
           
-          // ç«‹å³?è?? è½½å±å?ï¼Œè·³è¿‡åŠ¨??          if (document.body) {
+          // ç«‹å³?è?? è½½å±å?ï¼Œè·³è¿‡åŠ¨??
+          if (document.body) {
             document.body.classList.add('flutter-ready', 'immediate');
           }
           
@@ -487,7 +490,8 @@
         return false;
       }
       
-      // ç«‹å³?§è?ä¸€æ¬¡æ??¥ï?DOM ?¯èƒ½å·²ç?? è½½ï¼?      // ä½¿ç”¨ requestAnimationFrame ç¡®ä??¨ä?ä¸€å¸§æ??¥ï?ç»?Flutter ?ƒç?æ¸²æ??¶é—´
+      // ç«‹å³?§è?ä¸€æ¬¡æ??¥ï?DOM ?¯èƒ½å·²ç?? è½½ï¼?
+      // ä½¿ç”¨ requestAnimationFrame ç¡®ä??¨ä?ä¸€å¸§æ??¥ï?ç»?Flutter ?ƒç?æ¸²æ??¶é—´
       function scheduleCheck() {
         if (window.requestAnimationFrame) {
           requestAnimationFrame(function() {
@@ -502,7 +506,8 @@
         // DOM è¿˜åœ¨? è½½ï¼Œç?å¾?DOMContentLoaded
         document.addEventListener('DOMContentLoaded', scheduleCheck);
       } else {
-        // DOM å·²ç?? è½½ï¼Œç??³æ???        scheduleCheck();
+        // DOM å·²ç?? è½½ï¼Œç??³æ???
+        scheduleCheck();
       }
       
       // ä¹Ÿç???load äº‹ä»¶ï¼ˆæ??‰è?æºå?è½½å??ï?
@@ -510,10 +515,12 @@
         setTimeout(checkFlutterReady, 100);
       }, { once: true });
       
-      // ?ç»­?‘å¬ Flutter ?ƒç??„å‡º?°ï?ä½¿ç”¨ MutationObserverï¼?      if (document.body) {
+      // ?ç»­?‘å¬ Flutter ?ƒç??„å‡º?°ï?ä½¿ç”¨ MutationObserverï¼?
+      if (document.body) {
         const observer = new MutationObserver(function(mutations) {
           if (checkFlutterReady()) {
-            observer.disconnect(); // ?¾åˆ°?å?æ­¢è?å¯?          }
+            observer.disconnect(); // ?¾åˆ°?å?æ­¢è?å¯?
+          }
         });
         
         observer.observe(document.body, {
@@ -554,7 +561,8 @@
           console.log('[WEB_PUSH_API] Token:', token ? 'provided' : 'not provided');
           
           try {
-            // 1. æª¢æŸ¥?è¦½?¨æ”¯??            if (!this.checkBrowserSupport()) {
+            // 1. æª¢æŸ¥?è¦½?¨æ”¯??
+            if (!this.checkBrowserSupport()) {
               throw new Error('Browser does not support Web Push');
             }
             
@@ -570,7 +578,8 @@
               };
             }
             
-            // 3. ?µå»º?Ÿå¯¦?¨é€è???            const subscriptionData = await this.createPushSubscription(vapidKey);
+            // 3. ?µå»º?Ÿå¯¦?¨é€è???
+            const subscriptionData = await this.createPushSubscription(vapidKey);
             console.log('[WEB_PUSH_API] Push subscription created successfully');
             
             // è¿”å? JSON å­—ç¬¦ä¸²ï??¿å?é¡å?è½‰æ??é?
@@ -595,7 +604,8 @@
         },
         
         /**
-         * æª¢æŸ¥?è¦½?¨æ”¯??         * @returns {boolean} ?¯å¦?¯æ´
+         * æª¢æŸ¥?è¦½?¨æ”¯??
+         * @returns {boolean} ?¯å¦?¯æ´
          */
         checkBrowserSupport() {
           const hasServiceWorker = 'serviceWorker' in navigator;
@@ -612,7 +622,8 @@
         
         /**
          * è«‹æ??šçŸ¥æ¬Šé?
-         * @returns {Promise<string>} æ¬Šé??€??         */
+         * @returns {Promise<string>} æ¬Šé??€??
+         */
         async requestPermission() {
           console.log('[WEB_PUSH_API] Requesting notification permission...');
           
@@ -634,7 +645,8 @@
         },
         
         /**
-         * ?µå»º?¨é€è???         * @param {string} vapidKey - VAPID ?¬é‘°
+         * ?µå»º?¨é€è???
+         * @param {string} vapidKey - VAPID ?¬é‘°
          * @returns {Promise<Object>} è¨‚é–±?¸æ?
          */
         async createPushSubscription(vapidKey) {
@@ -645,7 +657,8 @@
             const registration = await navigator.serviceWorker.ready;
             console.log('[WEB_PUSH_API] Using existing Service Worker registration');
             
-            // 2. ?µå»º?¨é€è???            const subscription = await registration.pushManager.subscribe({
+            // 2. ?µå»º?¨é€è???
+            const subscription = await registration.pushManager.subscribe({
               userVisibleOnly: true,
               applicationServerKey: this.urlBase64ToUint8Array(vapidKey)
             });
@@ -653,7 +666,8 @@
             console.log('[WEB_PUSH_API] Push subscription created successfully');
             console.log('[WEB_PUSH_API] Subscription endpoint:', subscription.endpoint);
             
-            // 3. è½‰æ??ºå¯?³è¼¸?„æ ¼å¼?            const deviceInfo = this.generateDeviceInfo();
+            // 3. è½‰æ??ºå¯?³è¼¸?„æ ¼å¼?
+            const deviceInfo = this.generateDeviceInfo();
             const subscriptionData = {
               endpoint: subscription.endpoint,
               keys: {
@@ -728,14 +742,16 @@
           for (let i = 0; i < fingerprint.length; i++) {
             const char = fingerprint.charCodeAt(i);
             hash = ((hash << 5) - hash) + char;
-            hash = hash & hash; // è½‰æ???32 ä½æ•´??          }
+            hash = hash & hash; // è½‰æ???32 ä½æ•´??
+          }
           
           return Math.abs(hash).toString(36);
         },
         
         /**
          * å°?VAPID ?¬é‘°è½‰æ???Uint8Array
-         * @param {string} base64String - Base64 å­—ç¬¦ä¸?         * @returns {Uint8Array} Uint8Array
+         * @param {string} base64String - Base64 å­—ç¬¦ä¸?
+         * @returns {Uint8Array} Uint8Array
          */
         urlBase64ToUint8Array(base64String) {
           const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -756,7 +772,8 @@
         /**
          * å°?ArrayBuffer è½‰æ???Base64
          * @param {ArrayBuffer} buffer - ArrayBuffer
-         * @returns {string} Base64 å­—ç¬¦ä¸?         */
+         * @returns {string} Base64 å­—ç¬¦ä¸?
+         */
         arrayBufferToBase64(buffer) {
           const bytes = new Uint8Array(buffer);
           let binary = '';
@@ -792,9 +809,11 @@
       try {
         var savedPath = sessionStorage.getItem('_404_redirect_path');
         if (savedPath) {
-          // æ¸…é™¤ä¿å??„è·¯å¾?          sessionStorage.removeItem('_404_redirect_path');
+          // æ¸…é™¤ä¿å??„è·¯å¾?
+          sessionStorage.removeItem('_404_redirect_path');
           
-          // å¦‚æ?å½“å?è·¯å?ä¸æ˜¯ä¿å??„è·¯å¾„ï??™æ¢å¤?          var currentPath = window.location.pathname + window.location.search + window.location.hash;
+          // å¦‚æ?å½“å?è·¯å?ä¸æ˜¯ä¿å??„è·¯å¾„ï??™æ¢å¤?
+          var currentPath = window.location.pathname + window.location.search + window.location.hash;
           if (currentPath !== savedPath && savedPath !== '/index.html') {
             // ä½¿ç”¨ replaceState ?´æ–° URLï¼Œä?è§¦å?é¡µé¢?·æ–°
             // è¿™æ · Flutter è·¯ç”±ç³»ç??¯ä»¥?¹æ®?°ç? URL å¤„ç?è·¯ç”±
@@ -837,7 +856,8 @@
       window._messageHandler = callback;
     };
 
-    // ?•ç?ä¾†è‡ª Service Worker ?„æ???    window.handleServiceWorkerMessage = function(data) {
+    // ?•ç?ä¾†è‡ª Service Worker ?„æ???
+    window.handleServiceWorkerMessage = function(data) {
       if (window._messageHandler) {
         window._messageHandler(data);
       }
