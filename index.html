@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?àÊú¨?ñÁ∑©Â≠òÊ?Ë≠?-->
-    <meta name="cache-version" content="1.0.714">
+    <meta name="cache-version" content="1.0.715">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -23,7 +23,7 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.714+715">
+  <meta name="version" content="1.0.715+716">
 
   <!-- Fix 1: Removed vh-based viewport logic - conflicts with visualViewport root model -->
   
@@ -118,7 +118,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.714">
+  <link rel="manifest" href="manifest.json?v=1.0.715">
   
   <!-- PWA ÂÆâË??êÁ§∫?ØÊ? -->
   <meta name="application-name" content="Agora Market">
@@ -126,7 +126,7 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ?ßËÉΩ‰ºòÂ?ÔºöÈ??†ËΩΩ?≥ÈîÆËµÑÊ? -->
-  <link rel="preload" href="flutter_bootstrap.js?v=1.0.714" as="script">
+  <link rel="preload" href="flutter_bootstrap.js?v=1.0.715" as="script">
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -450,7 +450,7 @@
           <img src="icons/new_favicon/apple-touch-icon.png" alt="Agora Market" style="width: 116px; height: 116px; object-fit: contain;" />
         </div>
         <div class="loading-text" id="loading-text">Agora Market</div>
-        <div class="loading-version" id="version-display">v1.0.714</div>
+        <div class="loading-version" id="version-display">v1.0.715</div>
       </div>
     </div>
   </div>
@@ -794,7 +794,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.714" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.715" async></script>
   
   <!-- Fix 2: Removed pwa_viewport_fix.js - conflicts with visualViewport root model -->
   
@@ -868,27 +868,65 @@
   
   <!-- Patch 4: visualViewport synchronizer - critical for iOS 17+ touch fix -->
   <script>
-    (function () {
+    (function initViewportSync() {
       if (!window.visualViewport) return;
 
       const root = document.getElementById('flutter-root');
+      if (!root) {
+        // Â¶ÇÊ? root Ëøò‰?Â≠òÂú®ÔºåÁ?Âæ?DOM ?†ËΩΩ
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initViewportSync);
+          return;
+        }
+        // Â¶ÇÊ?ËøòÊòØ‰∏çÂ??®Ô?Âª∂Ë??çË?
+        setTimeout(initViewportSync, 10);
+        return;
+      }
 
       function sync() {
         const vv = window.visualViewport;
+        const root = document.getElementById('flutter-root');
+        if (!root) return;
+        
+        // È™åË??ºÊòØ?¶Â???
+        if (vv.width <= 0 || vv.height <= 0) {
+          console.warn('[VIEWPORT_SYNC] Invalid visualViewport dimensions:', vv.width, vv.height);
+          return;
+        }
+        
+        // Á´ãÂç≥ËÆæÁΩÆÊ≠?°Æ?ÑÂ∞∫ÂØ∏Ô???Flutter ?ùÂ??ñ‰??çÔ?
         root.style.width = vv.width + 'px';
         root.style.height = vv.height + 'px';
         root.style.transform = `translate(${vv.offsetLeft}px, ${vv.offsetTop}px)`;
+        
+        // Ë∞ÉË??•Â?Ôºà‰??®Â??ëÊ®°ÂºèÔ?
+        if (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1')) {
+          console.log('[VIEWPORT_SYNC]', {
+            width: vv.width,
+            height: vv.height,
+            offsetLeft: vv.offsetLeft,
+            offsetTop: vv.offsetTop,
+          });
+        }
       }
 
+      // Á´ãÂç≥?ßË?‰∏ÄÊ¨°Ô???Flutter ?ùÂ??ñ‰??çÔ?
+      sync();
+      
+      // ËÆæÁΩÆ?ëÂê¨??
       visualViewport.addEventListener('resize', sync);
       visualViewport.addEventListener('scroll', sync);
       window.addEventListener('orientationchange', sync);
-
-      sync();
+      
+      // ‰ΩøÁî® requestAnimationFrame Á°Æ‰??®‰?‰∏ÄÂ∏ß‰??ßË?ÔºàÂ???Flutter ?ùÂ??ñÊó∂?∫Ô?
+      requestAnimationFrame(function() {
+        sync();
+      });
     })();
   </script>
 </body>
 </html>
+
 
 
 
