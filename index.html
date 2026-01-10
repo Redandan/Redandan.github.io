@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?àÊú¨?ñÁ∑©Â≠òÊ?Ë≠?-->
-    <meta name="cache-version" content="1.0.708">
+    <meta name="cache-version" content="1.0.709">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -23,78 +23,9 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.708+709">
+  <meta name="version" content="1.0.709+710">
 
-  <script>
-    // iOS 17+ visualViewport-based viewport fix - Single source of truth
-    // Fixes touch offset and viewport shift on iPhone 15/16/17 without breaking iPhone 12
-    (function() {
-      'use strict';
-      
-      // Detect iOS (all versions)
-      function isIOS() {
-        return /iPad|iPhone|iPod|iOS/.test(navigator.userAgent);
-      }
-      
-      // Detect iOS PWA Standalone mode
-      function isIOSStandalone() {
-        try {
-          return (window.navigator.standalone === true) ||
-                 (window.matchMedia('(display-mode: standalone)').matches && isIOS());
-        } catch (e) {
-          return false;
-        }
-      }
-      
-      // Update --vh CSS variable using visualViewport.height as single source of truth
-      function updateViewportHeight() {
-        let viewportHeight;
-        
-        // iOS 17+ requires visualViewport.height for accurate viewport
-        // Fallback to innerHeight for older iOS or non-iOS devices
-        if (window.visualViewport && window.visualViewport.height > 0) {
-          viewportHeight = window.visualViewport.height;
-        } else {
-          // Fallback for devices without visualViewport support
-          viewportHeight = window.innerHeight;
-        }
-        
-        // Calculate 1vh unit
-        const vh = viewportHeight * 0.01;
-        document.documentElement.style.setProperty('--vh', `${vh}px`);
-      }
-      
-      // Initialize immediately
-      updateViewportHeight();
-      
-      // Update on DOM ready
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', updateViewportHeight);
-      } else {
-        updateViewportHeight();
-      }
-      
-      // Update on window resize (debounced)
-      let resizeTimer;
-      window.addEventListener('resize', function() {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(updateViewportHeight, 50);
-      });
-      
-      // Update on visualViewport changes (critical for iOS 17+)
-      if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', updateViewportHeight);
-        window.visualViewport.addEventListener('scroll', updateViewportHeight);
-      }
-      
-      // Update on visibility change (handles app resume)
-      document.addEventListener('visibilitychange', function() {
-        if (!document.hidden) {
-          setTimeout(updateViewportHeight, 100);
-        }
-      });
-    })();
-  </script>
+  <!-- Fix 1: Removed vh-based viewport logic - conflicts with visualViewport root model -->
   
   <script>
     // Early global error diagnostics to capture exact source of prod-only failures
@@ -187,7 +118,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.708">
+  <link rel="manifest" href="manifest.json?v=1.0.709">
   
   <!-- PWA ÂÆâË??êÁ§∫?ØÊ? -->
   <meta name="application-name" content="Agora Market">
@@ -195,8 +126,8 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ?ßËÉΩ‰ºòÂ?ÔºöÈ??†ËΩΩ?≥ÈîÆËµÑÊ? -->
-  <link rel="preload" href="flutter_bootstrap.js?v=1.0.708" as="script">
-  <link rel="preload" href="pwa_viewport_fix.js" as="script">
+  <link rel="preload" href="flutter_bootstrap.js?v=1.0.709" as="script">
+  <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.gstatic.com">
@@ -224,67 +155,57 @@
       --color-accent: 106, 76, 147;
     }
 
-    /* HTML and body: No fixed positioning - let them flow naturally */
-    html, body {
+    /* Patch 1: Removed all position: fixed - root cause of iOS 17 touch offset */
+    
+    /* Patch 3: Apple official viewport CSS */
+    html {
       margin: 0;
       padding: 0;
       width: 100%;
       height: 100%;
-      background: #1A1A1A !important;
       overflow: hidden;
-      /* DO NOT use position: fixed - causes touch offset issues on iOS 17+ */
+      -webkit-text-size-adjust: 100%;
+      background: #1A1A1A !important;
+      overscroll-behavior: none;
+      touch-action: manipulation;
+    }
+    
+    /* Final iOS 17 fix: body fixed (Apple-approved, viewport handled by #flutter-root) */
+    body {
+      position: fixed;
+      inset: 0;
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      -webkit-text-size-adjust: 100%;
+      background: #1A1A1A !important;
+      overscroll-behavior: none;
+      touch-action: manipulation;
     }
 
-    /* Flutter containers: Constrained to visualViewport height only */
-    flt-scene-host {
-      position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-      right: 0 !important;
-      bottom: 0 !important;
-      width: 100% !important;
-      /* Use --vh from visualViewport.height (single source of truth) */
-      height: calc(var(--vh, 1vh) * 100) !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      /* No transform - preserves touch coordinate system */
-      transform: none !important;
-      z-index: 1;
+    #flutter-root {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
     }
 
-    flt-glass-pane {
-      position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-      right: 0 !important;
-      bottom: 0 !important;
-      width: 100% !important;
-      /* Use --vh from visualViewport.height */
-      height: calc(var(--vh, 1vh) * 100) !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      transform: none !important;
-      pointer-events: none;
-      z-index: 2;
-    }
-
-    /* Canvas: Matches visualViewport exactly for correct touch coordinates */
-    flt-scene-host canvas {
+    flt-scene-host,
+    flt-glass-pane,
+    flutter-view,
+    canvas {
       position: absolute !important;
-      top: 0 !important;
-      left: 0 !important;
+      inset: 0 !important;
       width: 100% !important;
-      /* Use --vh from visualViewport.height */
-      height: calc(var(--vh, 1vh) * 100) !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      /* No transform - ensures touch coordinates match Flutter's coordinate system */
-      transform: none !important;
-      touch-action: none;
+      height: 100% !important;
+      max-width: none !important;
+      max-height: none !important;
     }
 
     #loading-screen {
-      position: fixed;
+      position: absolute;
       /* Ë¶ÜÁ??¥‰∏™Â±èÂ? */
       inset: 0;
       /* ?©Â??∞Â??®Âå∫?ü‰?Â§ñ‰ª•Á°Æ‰?ÂÆåÂÖ®Ë¶ÜÁ? */
@@ -514,51 +435,13 @@
       overflow: hidden;
     }
 
-    /* Flutter ready: Ensure containers match visualViewport exactly */
-    .flutter-ready flt-scene-host {
-      position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-      right: 0 !important;
-      bottom: 0 !important;
-      width: 100% !important;
-      /* Use --vh from visualViewport.height */
-      height: calc(var(--vh, 1vh) * 100) !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      transform: none !important;
-      background: transparent !important;
-    }
-
-    .flutter-ready flt-glass-pane {
-      position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-      right: 0 !important;
-      bottom: 0 !important;
-      width: 100% !important;
-      /* Use --vh from visualViewport.height */
-      height: calc(var(--vh, 1vh) * 100) !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      transform: none !important;
-      background: transparent !important;
-    }
-
-    .flutter-ready flt-scene-host canvas {
-      position: absolute !important;
-      top: 0 !important;
-      left: 0 !important;
-      width: 100% !important;
-      /* Use --vh from visualViewport.height */
-      height: calc(var(--vh, 1vh) * 100) !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      transform: none !important;
-    }
+    /* Patch 1: Removed all position: fixed from .flutter-ready rules */
   </style>
 </head>
 <body>
+  <!-- Patch 2: Flutter root container for iOS 17+ touch fix -->
+  <div id="flutter-root"></div>
+  
   <!-- Loading screen -->
   <div id="loading-screen">
     <div class="loading-container">
@@ -566,7 +449,7 @@
         <img src="icons/new_favicon/apple-touch-icon.png" alt="Agora Market" style="width: 116px; height: 116px; object-fit: contain;" />
       </div>
       <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.708</div>
+      <div class="loading-version" id="version-display">v1.0.709</div>
     </div>
   </div>
   
@@ -892,10 +775,9 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.708" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.709" async></script>
   
-  <!-- PWA ËßÜÂè£È´òÂ∫¶‰øÆÂ??öÊú¨ - Ëß?Ü≥ standalone Ê®°Â?‰∏ãÁ?Ëß¶Êë∏?êÊ??èÁßª?ÆÈ? -->
-  <script src="pwa_viewport_fix.js"></script>
+  <!-- Fix 2: Removed pwa_viewport_fix.js - conflicts with visualViewport root model -->
   
   <!-- Web Vitals ?ßËÉΩ?ëÊéß -->
   <script src="web_vitals.js"></script>
@@ -961,6 +843,29 @@
       }
     };
   </script>
+  
+  <!-- Patch 4: visualViewport synchronizer - critical for iOS 17+ touch fix -->
+  <script>
+    (function () {
+      if (!window.visualViewport) return;
+
+      const root = document.getElementById('flutter-root');
+
+      function sync() {
+        const vv = window.visualViewport;
+        root.style.width = vv.width + 'px';
+        root.style.height = vv.height + 'px';
+        root.style.transform = `translate(${vv.offsetLeft}px, ${vv.offsetTop}px)`;
+      }
+
+      visualViewport.addEventListener('resize', sync);
+      visualViewport.addEventListener('scroll', sync);
+      window.addEventListener('orientationchange', sync);
+
+      sync();
+    })();
+  </script>
 </body>
 </html>
+
 
