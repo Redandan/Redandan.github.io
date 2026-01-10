@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?ˆæœ¬?–ç·©å­˜æ?è­?-->
-    <meta name="cache-version" content="1.0.713">
+    <meta name="cache-version" content="1.0.714">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -23,7 +23,7 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.713+714">
+  <meta name="version" content="1.0.714+715">
 
   <!-- Fix 1: Removed vh-based viewport logic - conflicts with visualViewport root model -->
   
@@ -118,7 +118,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.713">
+  <link rel="manifest" href="manifest.json?v=1.0.714">
   
   <!-- PWA å®‰è??ç¤º?¯æ? -->
   <meta name="application-name" content="Agora Market">
@@ -126,7 +126,7 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ?§èƒ½ä¼˜å?ï¼šé?? è½½?³é”®èµ„æ? -->
-  <link rel="preload" href="flutter_bootstrap.js?v=1.0.713" as="script">
+  <link rel="preload" href="flutter_bootstrap.js?v=1.0.714" as="script">
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -162,7 +162,7 @@
       margin: 0;
       padding: 0;
       width: 100%;
-      height: var(--vvh, 100vh);
+      height: 100%;
       overflow: hidden;
       -webkit-text-size-adjust: 100%;
       background: #1A1A1A !important;
@@ -170,16 +170,13 @@
       touch-action: manipulation;
     }
     
-    /* Final iOS 17 fix: body fixed (Apple-approved, viewport handled by #flutter-root) */
+    /* Final iOS 17 fix: body relative (Apple-approved, viewport handled by #flutter-root) */
     body {
-      position: fixed;
-      top: var(--vvo, 0px);
-      left: 0;
-      right: 0;
+      position: relative;
       margin: 0;
       padding: 0;
       width: 100%;
-      height: var(--vvh, 100vh);
+      height: 100%;
       overflow: hidden;
       -webkit-text-size-adjust: 100%;
       background: #1A1A1A !important;
@@ -188,8 +185,11 @@
     }
 
     #flutter-root {
-      position: absolute;
-      inset: 0;
+      position: fixed;
+      top: 0;
+      left: 0;
+      will-change: transform;
+      transform-origin: 0 0;
       width: 100%;
       height: 100%;
     }
@@ -218,7 +218,7 @@
       justify-content: center;
       align-items: center;
       z-index: 9999;
-      pointer-events: none;
+      pointer-events: auto;
       color: white;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       overflow: hidden;
@@ -439,48 +439,19 @@
 
     /* Patch 1: Removed all position: fixed from .flutter-ready rules */
   </style>
-  
-  <!-- iOS PWA Viewport Fix: 100% effective for keyboard handling -->
-  <script>
-    (function () {
-      function fixIOSPWAViewport() {
-        if (!window.visualViewport) return;
-
-        const vv = window.visualViewport;
-
-        function apply() {
-          const height = vv.height;
-          const offsetTop = vv.offsetTop;
-
-          document.documentElement.style.setProperty(
-            "--vvh", height + "px"
-          );
-          document.documentElement.style.setProperty(
-            "--vvo", offsetTop + "px"
-          );
-        }
-
-        vv.addEventListener("resize", apply);
-        vv.addEventListener("scroll", apply);
-        apply();
-      }
-
-      fixIOSPWAViewport();
-    })();
-  </script>
 </head>
 <body>
   <!-- Patch 2: Flutter root container for iOS 17+ touch fix -->
-  <div id="flutter-root"></div>
-  
-  <!-- Loading screen -->
-  <div id="loading-screen">
-    <div class="loading-container">
-      <div class="loading-logo">
-        <img src="icons/new_favicon/apple-touch-icon.png" alt="Agora Market" style="width: 116px; height: 116px; object-fit: contain;" />
+  <div id="flutter-root">
+    <!-- Loading screen: å¿…é¡»??flutter-root ?…ï?è·Ÿé? visualViewport transform -->
+    <div id="loading-screen">
+      <div class="loading-container">
+        <div class="loading-logo">
+          <img src="icons/new_favicon/apple-touch-icon.png" alt="Agora Market" style="width: 116px; height: 116px; object-fit: contain;" />
+        </div>
+        <div class="loading-text" id="loading-text">Agora Market</div>
+        <div class="loading-version" id="version-display">v1.0.714</div>
       </div>
-      <div class="loading-text" id="loading-text">Agora Market</div>
-      <div class="loading-version" id="version-display">v1.0.713</div>
     </div>
   </div>
   
@@ -823,7 +794,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.713" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.714" async></script>
   
   <!-- Fix 2: Removed pwa_viewport_fix.js - conflicts with visualViewport root model -->
   
@@ -918,6 +889,7 @@
   </script>
 </body>
 </html>
+
 
 
 
