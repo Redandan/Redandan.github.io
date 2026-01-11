@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?ˆæœ¬?–ç·©å­˜æ?è­?-->
-    <meta name="cache-version" content="1.0.716">
+    <meta name="cache-version" content="1.0.715">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -23,7 +23,7 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.716+717">
+  <meta name="version" content="1.0.715+716">
 
   <!-- Fix 1: Removed vh-based viewport logic - conflicts with visualViewport root model -->
   
@@ -118,7 +118,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.716">
+  <link rel="manifest" href="manifest.json?v=1.0.715">
   
   <!-- PWA å®‰è??ç¤º?¯æ? -->
   <meta name="application-name" content="Agora Market">
@@ -126,7 +126,7 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ?§èƒ½ä¼˜å?ï¼šé?? è½½?³é”®èµ„æ? -->
-  <link rel="preload" href="flutter_bootstrap.js?v=1.0.716" as="script">
+  <link rel="preload" href="flutter_bootstrap.js?v=1.0.715" as="script">
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -450,7 +450,7 @@
           <img src="icons/new_favicon/apple-touch-icon.png" alt="Agora Market" style="width: 116px; height: 116px; object-fit: contain;" />
         </div>
         <div class="loading-text" id="loading-text">Agora Market</div>
-        <div class="loading-version" id="version-display">v1.0.716</div>
+        <div class="loading-version" id="version-display">v1.0.715</div>
       </div>
     </div>
   </div>
@@ -460,21 +460,18 @@
     (function() {
       'use strict';
       
-      // æ£€??Flutter ?¯å¦å·²ç??†å?å¥?
-      function checkFlutterReady() {
+      // æ£€??Flutter ?¯å¦å·²ç??†å?å¥?      function checkFlutterReady() {
         // æ£€??Flutter ?ƒç??¯å¦å·²ç?å­˜åœ¨
         const hasFlutterElements = document.querySelector('flt-scene-host') !== null ||
                                   document.querySelector('flt-glass-pane') !== null ||
                                   document.querySelector('canvas') !== null;
         
-        // æ£€??body ?¯å¦å·²ç???flutter-ready ç±»ï?ä»ä??ç?ä¼šè?ï¼?
-        const isAlreadyReady = document.body && document.body.classList.contains('flutter-ready');
+        // æ£€??body ?¯å¦å·²ç???flutter-ready ç±»ï?ä»ä??ç?ä¼šè?ï¼?        const isAlreadyReady = document.body && document.body.classList.contains('flutter-ready');
         
         if (hasFlutterElements || isAlreadyReady) {
           console.log('[LOADING_SCREEN] Flutter already ready, hiding loading screen immediately (skipping animation)');
           
-          // ç«‹å³?è?? è½½å±å?ï¼Œè·³è¿‡åŠ¨??
-          if (document.body) {
+          // ç«‹å³?è?? è½½å±å?ï¼Œè·³è¿‡åŠ¨??          if (document.body) {
             document.body.classList.add('flutter-ready', 'immediate');
           }
           
@@ -492,8 +489,7 @@
         return false;
       }
       
-      // ç«‹å³?§è?ä¸€æ¬¡æ??¥ï?DOM ?¯èƒ½å·²ç?? è½½ï¼?
-      // ä½¿ç”¨ requestAnimationFrame ç¡®ä??¨ä?ä¸€å¸§æ??¥ï?ç»?Flutter ?ƒç?æ¸²æ??¶é—´
+      // ç«‹å³?§è?ä¸€æ¬¡æ??¥ï?DOM ?¯èƒ½å·²ç?? è½½ï¼?      // ä½¿ç”¨ requestAnimationFrame ç¡®ä??¨ä?ä¸€å¸§æ??¥ï?ç»?Flutter ?ƒç?æ¸²æ??¶é—´
       function scheduleCheck() {
         if (window.requestAnimationFrame) {
           requestAnimationFrame(function() {
@@ -508,8 +504,7 @@
         // DOM è¿˜åœ¨? è½½ï¼Œç?å¾?DOMContentLoaded
         document.addEventListener('DOMContentLoaded', scheduleCheck);
       } else {
-        // DOM å·²ç?? è½½ï¼Œç??³æ???
-        scheduleCheck();
+        // DOM å·²ç?? è½½ï¼Œç??³æ???        scheduleCheck();
       }
       
       // ä¹Ÿç???load äº‹ä»¶ï¼ˆæ??‰è?æºå?è½½å??ï?
@@ -517,12 +512,10 @@
         setTimeout(checkFlutterReady, 100);
       }, { once: true });
       
-      // ?ç»­?‘å¬ Flutter ?ƒç??„å‡º?°ï?ä½¿ç”¨ MutationObserverï¼?
-      if (document.body) {
+      // ?ç»­?‘å¬ Flutter ?ƒç??„å‡º?°ï?ä½¿ç”¨ MutationObserverï¼?      if (document.body) {
         const observer = new MutationObserver(function(mutations) {
           if (checkFlutterReady()) {
-            observer.disconnect(); // ?¾åˆ°?å?æ­¢è?å¯?
-          }
+            observer.disconnect(); // ?¾åˆ°?å?æ­¢è?å¯?          }
         });
         
         observer.observe(document.body, {
@@ -563,8 +556,7 @@
           console.log('[WEB_PUSH_API] Token:', token ? 'provided' : 'not provided');
           
           try {
-            // 1. æª¢æŸ¥?è¦½?¨æ”¯??
-            if (!this.checkBrowserSupport()) {
+            // 1. æª¢æŸ¥?è¦½?¨æ”¯??            if (!this.checkBrowserSupport()) {
               throw new Error('Browser does not support Web Push');
             }
             
@@ -580,8 +572,7 @@
               };
             }
             
-            // 3. ?µå»º?Ÿå¯¦?¨é€è???
-            const subscriptionData = await this.createPushSubscription(vapidKey);
+            // 3. ?µå»º?Ÿå¯¦?¨é€è???            const subscriptionData = await this.createPushSubscription(vapidKey);
             console.log('[WEB_PUSH_API] Push subscription created successfully');
             
             // è¿”å? JSON å­—ç¬¦ä¸²ï??¿å?é¡å?è½‰æ??é?
@@ -606,8 +597,7 @@
         },
         
         /**
-         * æª¢æŸ¥?è¦½?¨æ”¯??
-         * @returns {boolean} ?¯å¦?¯æ´
+         * æª¢æŸ¥?è¦½?¨æ”¯??         * @returns {boolean} ?¯å¦?¯æ´
          */
         checkBrowserSupport() {
           const hasServiceWorker = 'serviceWorker' in navigator;
@@ -624,8 +614,7 @@
         
         /**
          * è«‹æ??šçŸ¥æ¬Šé?
-         * @returns {Promise<string>} æ¬Šé??€??
-         */
+         * @returns {Promise<string>} æ¬Šé??€??         */
         async requestPermission() {
           console.log('[WEB_PUSH_API] Requesting notification permission...');
           
@@ -647,8 +636,7 @@
         },
         
         /**
-         * ?µå»º?¨é€è???
-         * @param {string} vapidKey - VAPID ?¬é‘°
+         * ?µå»º?¨é€è???         * @param {string} vapidKey - VAPID ?¬é‘°
          * @returns {Promise<Object>} è¨‚é–±?¸æ?
          */
         async createPushSubscription(vapidKey) {
@@ -659,8 +647,7 @@
             const registration = await navigator.serviceWorker.ready;
             console.log('[WEB_PUSH_API] Using existing Service Worker registration');
             
-            // 2. ?µå»º?¨é€è???
-            const subscription = await registration.pushManager.subscribe({
+            // 2. ?µå»º?¨é€è???            const subscription = await registration.pushManager.subscribe({
               userVisibleOnly: true,
               applicationServerKey: this.urlBase64ToUint8Array(vapidKey)
             });
@@ -668,8 +655,7 @@
             console.log('[WEB_PUSH_API] Push subscription created successfully');
             console.log('[WEB_PUSH_API] Subscription endpoint:', subscription.endpoint);
             
-            // 3. è½‰æ??ºå¯?³è¼¸?„æ ¼å¼?
-            const deviceInfo = this.generateDeviceInfo();
+            // 3. è½‰æ??ºå¯?³è¼¸?„æ ¼å¼?            const deviceInfo = this.generateDeviceInfo();
             const subscriptionData = {
               endpoint: subscription.endpoint,
               keys: {
@@ -744,16 +730,14 @@
           for (let i = 0; i < fingerprint.length; i++) {
             const char = fingerprint.charCodeAt(i);
             hash = ((hash << 5) - hash) + char;
-            hash = hash & hash; // è½‰æ???32 ä½æ•´??
-          }
+            hash = hash & hash; // è½‰æ???32 ä½æ•´??          }
           
           return Math.abs(hash).toString(36);
         },
         
         /**
          * å°?VAPID ?¬é‘°è½‰æ???Uint8Array
-         * @param {string} base64String - Base64 å­—ç¬¦ä¸?
-         * @returns {Uint8Array} Uint8Array
+         * @param {string} base64String - Base64 å­—ç¬¦ä¸?         * @returns {Uint8Array} Uint8Array
          */
         urlBase64ToUint8Array(base64String) {
           const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -774,8 +758,7 @@
         /**
          * å°?ArrayBuffer è½‰æ???Base64
          * @param {ArrayBuffer} buffer - ArrayBuffer
-         * @returns {string} Base64 å­—ç¬¦ä¸?
-         */
+         * @returns {string} Base64 å­—ç¬¦ä¸?         */
         arrayBufferToBase64(buffer) {
           const bytes = new Uint8Array(buffer);
           let binary = '';
@@ -794,7 +777,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.716" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.715" async></script>
   
   <!-- Fix 2: Removed pwa_viewport_fix.js - conflicts with visualViewport root model -->
   
@@ -811,11 +794,9 @@
       try {
         var savedPath = sessionStorage.getItem('_404_redirect_path');
         if (savedPath) {
-          // æ¸…é™¤ä¿å??„è·¯å¾?
-          sessionStorage.removeItem('_404_redirect_path');
+          // æ¸…é™¤ä¿å??„è·¯å¾?          sessionStorage.removeItem('_404_redirect_path');
           
-          // å¦‚æ?å½“å?è·¯å?ä¸æ˜¯ä¿å??„è·¯å¾„ï??™æ¢å¤?
-          var currentPath = window.location.pathname + window.location.search + window.location.hash;
+          // å¦‚æ?å½“å?è·¯å?ä¸æ˜¯ä¿å??„è·¯å¾„ï??™æ¢å¤?          var currentPath = window.location.pathname + window.location.search + window.location.hash;
           if (currentPath !== savedPath && savedPath !== '/index.html') {
             // ä½¿ç”¨ replaceState ?´æ–° URLï¼Œä?è§¦å?é¡µé¢?·æ–°
             // è¿™æ · Flutter è·¯ç”±ç³»ç??¯ä»¥?¹æ®?°ç? URL å¤„ç?è·¯ç”±
@@ -858,8 +839,7 @@
       window._messageHandler = callback;
     };
 
-    // ?•ç?ä¾†è‡ª Service Worker ?„æ???
-    window.handleServiceWorkerMessage = function(data) {
+    // ?•ç?ä¾†è‡ª Service Worker ?„æ???    window.handleServiceWorkerMessage = function(data) {
       if (window._messageHandler) {
         window._messageHandler(data);
       }
@@ -868,65 +848,27 @@
   
   <!-- Patch 4: visualViewport synchronizer - critical for iOS 17+ touch fix -->
   <script>
-    (function initViewportSync() {
+    (function () {
       if (!window.visualViewport) return;
 
       const root = document.getElementById('flutter-root');
-      if (!root) {
-        // å¦‚æ? root è¿˜ä?å­˜åœ¨ï¼Œç?å¾?DOM ? è½½
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', initViewportSync);
-          return;
-        }
-        // å¦‚æ?è¿˜æ˜¯ä¸å??¨ï?å»¶è??è?
-        setTimeout(initViewportSync, 10);
-        return;
-      }
 
       function sync() {
         const vv = window.visualViewport;
-        const root = document.getElementById('flutter-root');
-        if (!root) return;
-        
-        // éªŒè??¼æ˜¯?¦å???
-        if (vv.width <= 0 || vv.height <= 0) {
-          console.warn('[VIEWPORT_SYNC] Invalid visualViewport dimensions:', vv.width, vv.height);
-          return;
-        }
-        
-        // ç«‹å³è®¾ç½®æ­?¡®?„å°ºå¯¸ï???Flutter ?å??–ä??ï?
         root.style.width = vv.width + 'px';
         root.style.height = vv.height + 'px';
         root.style.transform = `translate(${vv.offsetLeft}px, ${vv.offsetTop}px)`;
-        
-        // è°ƒè??¥å?ï¼ˆä??¨å??‘æ¨¡å¼ï?
-        if (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1')) {
-          console.log('[VIEWPORT_SYNC]', {
-            width: vv.width,
-            height: vv.height,
-            offsetLeft: vv.offsetLeft,
-            offsetTop: vv.offsetTop,
-          });
-        }
       }
 
-      // ç«‹å³?§è?ä¸€æ¬¡ï???Flutter ?å??–ä??ï?
-      sync();
-      
-      // è®¾ç½®?‘å¬??
       visualViewport.addEventListener('resize', sync);
       visualViewport.addEventListener('scroll', sync);
       window.addEventListener('orientationchange', sync);
-      
-      // ä½¿ç”¨ requestAnimationFrame ç¡®ä??¨ä?ä¸€å¸§ä??§è?ï¼ˆå???Flutter ?å??–æ—¶?ºï?
-      requestAnimationFrame(function() {
-        sync();
-      });
+
+      sync();
     })();
   </script>
 </body>
 </html>
-
 
 
 
