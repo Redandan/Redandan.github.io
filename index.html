@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?ˆæœ¬?–ç·©å­˜æ?è­?-->
-    <meta name="cache-version" content="1.0.717">
+    <meta name="cache-version" content="1.0.718">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -23,7 +23,7 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.717+718">
+  <meta name="version" content="1.0.718+719">
 
   <!-- Fix 1: Removed vh-based viewport logic - conflicts with visualViewport root model -->
   
@@ -118,7 +118,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.717">
+  <link rel="manifest" href="manifest.json?v=1.0.718">
   
   <!-- PWA å®‰è??ç¤º?¯æ? -->
   <meta name="application-name" content="Agora Market">
@@ -126,7 +126,7 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ?§èƒ½ä¼˜å?ï¼šé?? è½½?³é”®èµ„æ? -->
-  <link rel="preload" href="flutter_bootstrap.js?v=1.0.717" as="script">
+  <link rel="preload" href="flutter_bootstrap.js?v=1.0.718" as="script">
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -450,7 +450,7 @@
           <img src="icons/new_favicon/apple-touch-icon.png" alt="Agora Market" style="width: 116px; height: 116px; object-fit: contain;" />
         </div>
         <div class="loading-text" id="loading-text">Agora Market</div>
-        <div class="loading-version" id="version-display">v1.0.717</div>
+        <div class="loading-version" id="version-display">v1.0.718</div>
       </div>
     </div>
   </div>
@@ -794,7 +794,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.717" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.718" async></script>
   
   <!-- Fix 2: Removed pwa_viewport_fix.js - conflicts with visualViewport root model -->
   
@@ -870,38 +870,44 @@
   <!-- iOS 17 PWA fix: Filter out incorrect offsetTop that includes toolbar/safeArea ghost space -->
   <script>
     (function () {
-  if (!window.visualViewport) return;
-
-  const root = document.getElementById('flutter-root');
-  if (!root) return;
-
-  function sync() {
-    const vv = window.visualViewport;
-    const keyboardSpace = Math.max(0, window.screen.height - vv.height);
-    const safeTop = Math.max(0, vv.offsetTop - keyboardSpace);
-
-    root.style.width = vv.width + 'px';
-    root.style.height = vv.height + 'px';
-    root.style.transform = `translate(${vv.offsetLeft}px, ${safeTop}px)`;
-  }
-
-  // Phase 1: immediate (for iOS 16, Android, Safari)
-  sync();
-
-  // Phase 2: iOS 17 PWA compositor + safeArea settle
-  setTimeout(sync, 50);
-  setTimeout(sync, 150);
-  setTimeout(sync, 300);
-  setTimeout(sync, 600);   // <- this one fixes iPhone 17
-
-  visualViewport.addEventListener('resize', sync);
-  visualViewport.addEventListener('scroll', sync);
-  window.addEventListener('orientationchange', () => {
-    setTimeout(sync, 300);
-    setTimeout(sync, 600);
-  });
-})();
-  </script>
+      if (!window.visualViewport) return;
+    
+      const root = document.getElementById('flutter-root');
+      if (!root) return;
+    
+      function sync() {
+        const vv = window.visualViewport;
+    
+        // iOS 17 PWA bug fix:
+        // Filter out ghost toolbar / safe-area space from offsetTop
+        const keyboardSpace = Math.max(0, window.screen.height - vv.height);
+        const safeTop = Math.max(0, vv.offsetTop - keyboardSpace);
+    
+        root.style.width = vv.width + 'px';
+        root.style.height = vv.height + 'px';
+        root.style.transform = `translate(${vv.offsetLeft}px, ${safeTop}px)`;
+      }
+    
+      // Phase 1 ??immediate (for iOS 16, Android, Safari)
+      sync();
+    
+      // Phase 2 ??iOS 17 PWA compositor + safe-area settle
+      setTimeout(sync, 50);
+      setTimeout(sync, 150);
+      setTimeout(sync, 300);
+      setTimeout(sync, 600);   // <- this one fixes iPhone 17 cold start
+    
+      visualViewport.addEventListener('resize', sync);
+      visualViewport.addEventListener('scroll', sync);
+    
+      window.addEventListener('orientationchange', () => {
+        // orientation change also triggers the same race condition
+        setTimeout(sync, 300);
+        setTimeout(sync, 600);
+      });
+    })();
+    </script>
+    
 </body>
 </html>
 
