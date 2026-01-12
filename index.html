@@ -11,7 +11,7 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <!-- ?»îš¥???¹ï??—î«²ï¼†é½î³??«ï?î¨??¸ï????????HTML -->
+  <!-- ç¼“å??§åˆ¶ï¼šç¡®ä¿æ?è§ˆå™¨?ªåŠ¨?·å??€??HTML -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -87,9 +87,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="mobile-web-app-capable" content="yes">
   
-  <!-- theme-color: ?ˆæ??­é?ç®¸æ???–è??å¯??îº¡è¸?…î±??—ï—¼????????ï????media query ?äº¦ï¼†é½î³??????? -->
+  <!-- theme-color: è®¾ç½®ä¸ºæ·±?²ä»¥?¹é?? è½½å±å?ï¼Œç??³å??¨ï?ä¸ä½¿??media query ä»¥ç¡®ä¿ç??³ç??ˆï? -->
   <meta name="theme-color" content="#1A1A1A">
-  <!-- ??»î£ª?ç®¸æ¥??«è??˜î²??˜î???–æ???é????-->
+  <!-- ?Œæ—¶ä¸ºæ·±?²æ¨¡å¼æ?ä¾›æ?ç¡®ç?ä¸»é???-->
   <meta name="theme-color" content="#1A1A1A" media="(prefers-color-scheme: dark)">
   <meta name="theme-color" content="#2196F3" media="(prefers-color-scheme: light)">
 
@@ -98,7 +98,7 @@
 
   <!-- iOS meta tags & icons -->
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <!-- ?¿è¼»??black-translucent ?–æ????†Â€î¼???¯æ??ç?î¨?????»î?????—ï????‡æ??????? -->
+  <!-- ä½¿ç”¨ black-translucent ç¡®ä??¶æ€æ??…å®¹ä¸ºç™½?²ï??Œæ™¯?æ?ï¼ˆé??ˆæ·±?²è??¯ï? -->
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Agora Market">
   
@@ -120,19 +120,19 @@
   <title>Agora Market</title>
   <link rel="manifest" href="manifest.json?v=1.0.717">
   
-  <!-- PWA ?°ï¦???å…§??€? -->
+  <!-- PWA å®‰è??ç¤º?¯æ? -->
   <meta name="application-name" content="Agora Market">
   <meta name="msapplication-TileColor" content="#2196F3">
   <meta name="msapplication-tap-highlight" content="no">
   
-  <!-- ??¯ï??¡î¦¶??—î«´??îº¡è¸??²î??ï?? -->
+  <!-- ?§èƒ½ä¼˜å?ï¼šé?? è½½?³é”®èµ„æ? -->
   <link rel="preload" href="flutter_bootstrap.js?v=1.0.717" as="script">
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.gstatic.com">
   
-  <!-- SEO ??¼å??­æ???­æ¬?Open Graph - ?¿è¼»??PNG -->
+  <!-- SEO ?Œç¤¾äº¤å?äº«ï?Open Graph - ä½¿ç”¨ PNG -->
   <meta property="og:title" content="Agora Market">
   <meta property="og:description" content="Agora Market - Your Trading Community">
   <meta property="og:image" content="/icons/new_favicon/web-app-manifest-512x512.png">
@@ -141,7 +141,7 @@
   <meta property="og:type" content="website">
   <meta property="og:locale" content="zh_TW">
   
-  <!-- Twitter Card - ?¿è¼»??PNG -->
+  <!-- Twitter Card - ä½¿ç”¨ PNG -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Agora Market">
   <meta name="twitter:description" content="Agora Market - Your Trading Community">
@@ -208,9 +208,9 @@
 
     #loading-screen {
       position: absolute;
-      /* ?¬ï???æ¸¯è‘µ?…î±? */
+      /* è¦†ç??´ä¸ªå±å? */
       inset: 0;
-      /* ????????¸ï??î¸€??­î¡»èª‘è?æ¡??°ï—º?²é–¬?? */
+      /* ?©å??°å??¨åŒº?Ÿä?å¤–ä»¥ç¡®ä?å®Œå…¨è¦†ç? */
       margin: 0;
       background: linear-gradient(135deg, #1A1A1A 0%, #2D2D2D 100%);
       display: flex;
@@ -224,7 +224,7 @@
       overflow: hidden;
     }
     
-    /* ?ç???§è³¢???½æº¶?îº???¸ï???padding?—ï—¼ï¼†é½î³??°å«£??¡æ€ï??î¼???¼ï–¶ */
+    /* ä¸ºå?è½½å®¹?¨æ·»? å??¨åŒº??paddingï¼Œç¡®ä¿å?å®¹ä?è¢«çŠ¶?æ??®æŒ¡ */
     .loading-container {
       position: relative;
       z-index: 1;
@@ -273,8 +273,8 @@
       width: 120px;
       height: 120px;
       margin: 0 auto 32px;
-      background: #ffffff; /* ?è³ªï°??? */
-      border-radius: 50%; /* ?å¯§î¾­??¥è€?*/
+      background: #ffffff; /* ?½è‰²?“æ? */
+      border-radius: 50%; /* ?¹ç‚º?“å½¢ */
       display: flex;
       align-items: center;
       justify-content: center;
@@ -284,7 +284,7 @@
         0 3px 10px rgba(0, 0, 0, 0.05);
       position: relative;
       overflow: hidden;
-      /* iOS 17+ WKWebView ?†î¼»??îµ¨Â€??—î«°??????°â…¡?½î????? */
+      /* iOS 17+ WKWebView è£å‰ª?é€€ï¼šå??è??ªç¢ºä¿ä??²è? */
       clip-path: circle(50% at 50% 50%);
       -webkit-mask-image: radial-gradient(circle, #fff 99%, transparent 100%);
       mask-image: radial-gradient(circle, #fff 99%, transparent 100%);
@@ -329,7 +329,7 @@
     }
     
     .loading-logo img {
-      width: 116px; /* ?“îµ¤ä¹????—ï—º?µç?????(120 - 2*2 = 116) */
+      width: 116px; /* å¢å¤§?¾æ?ï¼Œå¡«æ»¡å?æ¡?(120 - 2*2 = 116) */
       height: 116px;
       image-rendering: crisp-edges;
       object-fit: contain;
@@ -413,7 +413,7 @@
       pointer-events: none;
     }
     
-    /* ?¡ï??????…âˆª??—î«²?…éˆ­?”ç¿°?î¸??ï½??å”¾???½î???*/
+    /* ç«‹å³?è?æ¨¡å?ï¼šç”¨äºå¿«?Ÿå??¢ï?è·³è??¨ç”»ï¼?*/
     .flutter-ready.immediate #loading-screen {
       opacity: 0 !important;
       visibility: hidden !important;
@@ -443,7 +443,7 @@
 <body>
   <!-- Patch 2: Flutter root container for iOS 17+ touch fix -->
   <div id="flutter-root">
-    <!-- Loading screen: ?¹ï†³???flutter-root ????î?? visualViewport transform -->
+    <!-- Loading screen: å¿…é¡»??flutter-root ?…ï?è·Ÿé? visualViewport transform -->
     <div id="loading-screen">
       <div class="loading-container">
         <div class="loading-logo">
@@ -455,30 +455,30 @@
     </div>
   </div>
   
-  <!-- ?¹æ??î¸??šï•§??’î?? Flutter ?Œè„©?????Ÿè???¡ï??????îº¡è¸?…î±??—ï?æ­²é??©ï??é³? -->
+  <!-- å¿«é€Ÿæ?æµ‹ï?å¦‚æ? Flutter å·²ç??†å?å¥½ï?ç«‹å³?è?? è½½å±å?ï¼ˆè·³è¿‡åŠ¨?»ï? -->
   <script>
     (function() {
       'use strict';
       
-      // ?‰Â€??Flutter ??¬î??Œè„©??????
+      // æ£€??Flutter ?¯å¦å·²ç??†å?å¥?
       function checkFlutterReady() {
-        // ?‰Â€??Flutter ?????¬î??Œè„©??®î¦¶î¯?
+        // æ£€??Flutter ?ƒç??¯å¦å·²ç?å­˜åœ¨
         const hasFlutterElements = document.querySelector('flt-scene-host') !== null ||
                                   document.querySelector('flt-glass-pane') !== null ||
                                   document.querySelector('canvas') !== null;
         
-        // ?‰Â€??body ??¬î??Œè„©???flutter-ready ?é³´??î??????¡î«³???
+        // æ£€??body ?¯å¦å·²ç???flutter-ready ç±»ï?ä»ä??ç?ä¼šè?ï¼?
         const isAlreadyReady = document.body && document.body.classList.contains('flutter-ready');
         
         if (hasFlutterElements || isAlreadyReady) {
           console.log('[LOADING_SCREEN] Flutter already ready, hiding loading screen immediately (skipping animation)');
           
-          // ?¡ï??????îº¡è¸?…î±??—ï—½æ­²é??©ï???
+          // ç«‹å³?è?? è½½å±å?ï¼Œè·³è¿‡åŠ¨??
           if (document.body) {
             document.body.classList.add('flutter-ready', 'immediate');
           }
           
-          // ?–æ?? Flutter ??????
+          // ç¡®ä? Flutter ?ƒç??¯è?
           const flutterElements = document.querySelectorAll('flt-scene-host, flt-glass-pane, canvas');
           flutterElements.forEach(function(element) {
             element.style.opacity = '1';
@@ -492,8 +492,8 @@
         return false;
       }
       
-      // ?¡ï??????Â€?ˆâŠ¥??ä¼?DOM ??ªï??Œè„©??îº¡è¸??
-      // ?¿è¼»??requestAnimationFrame ?–æ??????Â€??‰³??ä¼???Flutter ????œè„«???’î£¨
+      // ç«‹å³?§è?ä¸€æ¬¡æ??¥ï?DOM ?¯èƒ½å·²ç?? è½½ï¼?
+      // ä½¿ç”¨ requestAnimationFrame ç¡®ä??¨ä?ä¸€å¸§æ??¥ï?ç»?Flutter ?ƒç?æ¸²æ??¶é—´
       function scheduleCheck() {
         if (window.requestAnimationFrame) {
           requestAnimationFrame(function() {
@@ -505,23 +505,23 @@
       }
       
       if (document.readyState === 'loading') {
-        // DOM é¤ˆî¦¶î¯?îº¡è¸?—ï—¼???DOMContentLoaded
+        // DOM è¿˜åœ¨? è½½ï¼Œç?å¾?DOMContentLoaded
         document.addEventListener('DOMContentLoaded', scheduleCheck);
       } else {
-        // DOM ?Œè„©??îº¡è¸?—ï—¼??????
+        // DOM å·²ç?? è½½ï¼Œç??³æ???
         scheduleCheck();
       }
       
-      // ?‹î????load ?­ï?è¾????????î???§è³¢????
+      // ä¹Ÿç???load äº‹ä»¶ï¼ˆæ??‰è?æºå?è½½å??ï?
       window.addEventListener('load', function() {
         setTimeout(checkFlutterReady, 100);
       }, { once: true });
       
-      // ?î¼½è???«î? Flutter ?????’ïŠ¾????¿è¼»??MutationObserver??
+      // ?ç»­?‘å¬ Flutter ?ƒç??„å‡º?°ï?ä½¿ç”¨ MutationObserverï¼?
       if (document.body) {
         const observer = new MutationObserver(function(mutations) {
           if (checkFlutterReady()) {
-            observer.disconnect(); // ??‰ï?????‡ï¼º???
+            observer.disconnect(); // ?¾åˆ°?å?æ­¢è?å¯?
           }
         });
         
@@ -530,7 +530,7 @@
           subtree: true
         });
         
-        // 5 ?˜î????¸ï?????«î???—ï?î¼????®î¦·??î»?
+        // 5 ç§’å??ªåŠ¨?­å?è§‚å?ï¼ˆé¿?å?å­˜æ?æ¼ï?
         setTimeout(function() {
           observer.disconnect();
         }, 5000);
@@ -542,20 +542,20 @@
   
   <!-- Web Push JavaScript API -->
   <script>
-    // Web Push ?ˆï???¢ï???????API
+    // Web Push æ¬Šé?è«‹æ??‡è???API
     (function() {
       'use strict';
       
       console.log('[WEB_PUSH_API] Web Push API initializing...');
       
-      // ??? Web Push API ? ï???
+      // ?¨å? Web Push API å°è±¡
       window.WebPushAPI = {
         
         /**
-         * ?¢ï???î«²î??ˆï??
-         * @param {string} vapidKey - VAPID ?ç¥‡î”¶ (?½î????¶î²?ä¹©??î¼¼î????†æ‘°?
-         * @param {string} token - ?¤ï?? token (?½î????¶î²?ä¹©??î¼¼î????†æ‘°?
-         * @returns {Promise<Object>} ?ˆï???¯î?? (??JSON ??è¾£)
+         * è«‹æ??šçŸ¥æ¬Šé?
+         * @param {string} vapidKey - VAPID ?¬é‘° (ä¿ç??ƒæ•¸ä»¥ä??æ¥??…¼å®?
+         * @param {string} token - èªè? token (ä¿ç??ƒæ•¸ä»¥ä??æ¥??…¼å®?
+         * @returns {Promise<Object>} æ¬Šé?çµæ? (ç´?JSON ?©ä»¶)
          */
         async requestNotificationPermission(vapidKey, token) {
           console.log('[WEB_PUSH_API] Starting permission request process...');
@@ -563,12 +563,12 @@
           console.log('[WEB_PUSH_API] Token:', token ? 'provided' : 'not provided');
           
           try {
-            // 1. ?¼ï¼¸î·??´æ???½î???
+            // 1. æª¢æŸ¥?è¦½?¨æ”¯??
             if (!this.checkBrowserSupport()) {
               throw new Error('Browser does not support Web Push');
             }
             
-            // 2. ?¢ï???î«²î??ˆï??
+            // 2. è«‹æ??šçŸ¥æ¬Šé?
             const permissionResult = await this.requestPermission();
             console.log('[WEB_PUSH_API] Permission request result:', permissionResult);
             
@@ -580,11 +580,11 @@
               };
             }
             
-            // 3. ??„é£?î¸ç???¸Â€î¼???
+            // 3. ?µå»º?Ÿå¯¦?¨é€è???
             const subscriptionData = await this.createPushSubscription(vapidKey);
             console.log('[WEB_PUSH_API] Push subscription created successfully');
             
-            // é¤ˆî?? JSON ?®î?æ³µé????è¸??¿îµ¤??§ï¤????
+            // è¿”å? JSON å­—ç¬¦ä¸²ï??¿å?é¡å?è½‰æ??é?
             const result = {
               success: true,
               status: 'permission_granted',
@@ -606,8 +606,8 @@
         },
         
         /**
-         * ?¼ï¼¸î·??´æ???½î???
-         * @returns {boolean} ??¬î???€?€
+         * æª¢æŸ¥?è¦½?¨æ”¯??
+         * @returns {boolean} ?¯å¦?¯æ´
          */
         checkBrowserSupport() {
           const hasServiceWorker = 'serviceWorker' in navigator;
@@ -623,8 +623,8 @@
         },
         
         /**
-         * ?¢ï???î«²î??ˆï??
-         * @returns {Promise<string>} ?ˆï??????
+         * è«‹æ??šçŸ¥æ¬Šé?
+         * @returns {Promise<string>} æ¬Šé??€??
          */
         async requestPermission() {
           console.log('[WEB_PUSH_API] Requesting notification permission...');
@@ -639,7 +639,7 @@
             return 'denied';
           }
           
-          // ?¢ï???ˆï??
+          // è«‹æ?æ¬Šé?
           const permission = await Notification.requestPermission();
           console.log('[WEB_PUSH_API] Permission request result:', permission);
           
@@ -647,19 +647,19 @@
         },
         
         /**
-         * ??„é£??¸Â€î¼???
-         * @param {string} vapidKey - VAPID ?ç¥‡î”¶
-         * @returns {Promise<Object>} ?®î?î¡?è±?
+         * ?µå»º?¨é€è???
+         * @param {string} vapidKey - VAPID ?¬é‘°
+         * @returns {Promise<Object>} è¨‚é–±?¸æ?
          */
         async createPushSubscription(vapidKey) {
           console.log('[WEB_PUSH_API] Starting push subscription creation...');
           
           try {
-            // 1. ?î¡???????Flutter?—ï³ervice Worker ?®é??
+            // 1. ?–å??¾æ??„ï?Flutterï¼‰Service Worker è¨»å?
             const registration = await navigator.serviceWorker.ready;
             console.log('[WEB_PUSH_API] Using existing Service Worker registration');
             
-            // 2. ??„é£??¸Â€î¼???
+            // 2. ?µå»º?¨é€è???
             const subscription = await registration.pushManager.subscribe({
               userVisibleOnly: true,
               applicationServerKey: this.urlBase64ToUint8Array(vapidKey)
@@ -668,7 +668,7 @@
             console.log('[WEB_PUSH_API] Push subscription created successfully');
             console.log('[WEB_PUSH_API] Subscription endpoint:', subscription.endpoint);
             
-            // 3. ?§ï¤??ç®î»??¾æ???“î¹µ??
+            // 3. è½‰æ??ºå¯?³è¼¸?„æ ¼å¼?
             const deviceInfo = this.generateDeviceInfo();
             const subscriptionData = {
               endpoint: subscription.endpoint,
@@ -690,8 +690,8 @@
         },
         
         /**
-         * ?î¸??®å???½âŠ¥î¼?
-         * @returns {Object} ?®å???½âŠ¥î¼?
+         * ?Ÿæ?è¨­å?ä¿¡æ¯
+         * @returns {Object} è¨­å?ä¿¡æ¯
          */
         generateDeviceInfo() {
           const userAgent = navigator.userAgent;
@@ -721,8 +721,8 @@
         },
         
         /**
-         * ?î¸??®å?? ID
-         * @returns {string} ?®å?? ID
+         * ?Ÿæ?è¨­å? ID
+         * @returns {string} è¨­å? ID
          */
         generateDeviceId() {
           const canvas = document.createElement('canvas');
@@ -739,20 +739,20 @@
             canvas.toDataURL()
           ].join('|');
           
-          // ?ªâˆªî¡??hash ?è³?²
+          // ç°¡å–®??hash ?½æ•¸
           let hash = 0;
           for (let i = 0; i < fingerprint.length; i++) {
             const char = fingerprint.charCodeAt(i);
             hash = ((hash << 5) - hash) + char;
-            hash = hash & hash; // ?§ï¤???32 ?¿ï????
+            hash = hash & hash; // è½‰æ???32 ä½æ•´??
           }
           
           return Math.abs(hash).toString(36);
         },
         
         /**
-         * ??VAPID ?ç¥‡î”¶?§ï¤???Uint8Array
-         * @param {string} base64String - Base64 ?®î?æ³µé??
+         * å°?VAPID ?¬é‘°è½‰æ???Uint8Array
+         * @param {string} base64String - Base64 å­—ç¬¦ä¸?
          * @returns {Uint8Array} Uint8Array
          */
         urlBase64ToUint8Array(base64String) {
@@ -772,9 +772,9 @@
         },
         
         /**
-         * ??ArrayBuffer ?§ï¤???Base64
+         * å°?ArrayBuffer è½‰æ???Base64
          * @param {ArrayBuffer} buffer - ArrayBuffer
-         * @returns {string} Base64 ?®î?æ³µé??
+         * @returns {string} Base64 å­—ç¬¦ä¸?
          */
         arrayBufferToBase64(buffer) {
           const bytes = new Uint8Array(buffer);
@@ -788,7 +788,7 @@
       
       console.log('[WEB_PUSH_API] Web Push API initialization completed');
       
-      // ?æ¹§î¯·????è³?²??Flutter ?¤è¼»??
+      // ?´éœ²?¨å??½æ•¸ä¾?Flutter èª¿ç”¨
       window.requestNotificationPermission = window.WebPushAPI.requestNotificationPermission.bind(window.WebPushAPI);
       
     })();
@@ -798,27 +798,27 @@
   
   <!-- Fix 2: Removed pwa_viewport_fix.js - conflicts with visualViewport root model -->
   
-  <!-- Web Vitals ??¯ï???¬î? -->
+  <!-- Web Vitals ?§èƒ½?‘æ§ -->
   <script src="web_vitals.js"></script>
   
-  <!-- ?³é??ªæ†¿?Ÿî??­ï?? -->
+  <!-- ç¦»çº¿é¡µé¢å¤„ç? -->
   <script src="offline_handler.js"></script>
   
-  <!-- GitHub Pages 404 ?????¬î»¸??-->
+  <!-- GitHub Pages 404 ?å??‘æ¢å¤?-->
   <script>
-    // ?ï¼???404.html ???????î¸??è‡¬?
+    // ?¢å?ä»?404.html ?å??‘ç??Ÿå?è·¯å?
     (function() {
       try {
         var savedPath = sessionStorage.getItem('_404_redirect_path');
         if (savedPath) {
-          // ?œï†³î¨’é½î³???•æ???
+          // æ¸…é™¤ä¿å??„è·¯å¾?
           sessionStorage.removeItem('_404_redirect_path');
           
-          // ?’î???¶îš¥??è‡¬??ï?î¦€?½î????•æ??ºï???î©”î»¸??
+          // å¦‚æ?å½“å?è·¯å?ä¸æ˜¯ä¿å??„è·¯å¾„ï??™æ¢å¤?
           var currentPath = window.location.pathname + window.location.search + window.location.hash;
           if (currentPath !== savedPath && savedPath !== '/index.html') {
-            // ?¿è¼»??replaceState ?æ¹”î? URL?—ï—¹??«è???¿è?î²??Ÿî?
-            // é¤ˆî?î¹?Flutter ?è??è?é¤???­è??å¯ï???? URL ?­ï???è???
+            // ä½¿ç”¨ replaceState ?´æ–° URLï¼Œä?è§¦å?é¡µé¢?·æ–°
+            // è¿™æ · Flutter è·¯ç”±ç³»ç??¯ä»¥?¹æ®?°ç? URL å¤„ç?è·¯ç”±
             window.history.replaceState(null, '', savedPath);
             console.log('[404_REDIRECT] Restored path:', savedPath);
           }
@@ -829,7 +829,7 @@
     })();
   </script>
   
-  <!-- OAuth ?é¤??‰Â€?šï•§??æ¹”î??îº¡è¸?…î±???å…§ -->
+  <!-- OAuth ?»å?æ£€æµ‹ï??´æ–°? è½½å±å??ç¤º -->
   <script>
     // Detect OAuth callback and update loading screen
     (function() {
@@ -853,12 +853,12 @@
     })();
   </script>
   <script>
-    // ?®é???¨ï?î¼?????? Flutter ?¤è¼»??
+    // è¨»å?æ¶ˆæ¯?•ç??¨ä? Flutter èª¿ç”¨
     window.registerMessageHandler = function(callback) {
       window._messageHandler = callback;
     };
 
-    // ????˜ï???Service Worker ?????
+    // ?•ç?ä¾†è‡ª Service Worker ?„æ???
     window.handleServiceWorkerMessage = function(data) {
       if (window._messageHandler) {
         window._messageHandler(data);
@@ -870,41 +870,38 @@
   <!-- iOS 17 PWA fix: Filter out incorrect offsetTop that includes toolbar/safeArea ghost space -->
   <script>
     (function () {
-      if (!window.visualViewport) return;
+  if (!window.visualViewport) return;
 
-      const root = document.getElementById('flutter-root');
-      if (!root) return;
+  const root = document.getElementById('flutter-root');
+  if (!root) return;
 
-      function sync() {
-        const vv = window.visualViewport;
-        
-        // iOS 17 PWA bug fix: Filter out incorrect offsetTop
-        // WebKit incorrectly includes toolbar/safeArea ghost space in offsetTop
-        // Calculate keyboard space and subtract it from offsetTop
-        const keyboardSpace = Math.max(0, window.screen.height - vv.height);
-        const safeTop = Math.max(0, vv.offsetTop - keyboardSpace);
+  function sync() {
+    const vv = window.visualViewport;
+    const keyboardSpace = Math.max(0, window.screen.height - vv.height);
+    const safeTop = Math.max(0, vv.offsetTop - keyboardSpace);
 
-        root.style.width = vv.width + 'px';
-        root.style.height = vv.height + 'px';
-        root.style.transform = `translate(${vv.offsetLeft}px, ${safeTop}px)`;
-      }
+    root.style.width = vv.width + 'px';
+    root.style.height = vv.height + 'px';
+    root.style.transform = `translate(${vv.offsetLeft}px, ${safeTop}px)`;
+  }
 
-      visualViewport.addEventListener('resize', sync);
-      visualViewport.addEventListener('scroll', sync);
-      window.addEventListener('orientationchange', sync);
+  // Phase 1: immediate (for iOS 16, Android, Safari)
+  sync();
 
-      sync();
-    })();
+  // Phase 2: iOS 17 PWA compositor + safeArea settle
+  setTimeout(sync, 50);
+  setTimeout(sync, 150);
+  setTimeout(sync, 300);
+  setTimeout(sync, 600);   // <- this one fixes iPhone 17
+
+  visualViewport.addEventListener('resize', sync);
+  visualViewport.addEventListener('scroll', sync);
+  window.addEventListener('orientationchange', () => {
+    setTimeout(sync, 300);
+    setTimeout(sync, 600);
+  });
+})();
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
 
