@@ -867,6 +867,7 @@
   </script>
   
   <!-- Patch 4: visualViewport synchronizer - critical for iOS 17+ touch fix -->
+  <!-- iOS 17 PWA fix: Filter out incorrect offsetTop that includes toolbar/safeArea ghost space -->
   <script>
     (function () {
       if (!window.visualViewport) return;
@@ -874,100 +875,24 @@
       const root = document.getElementById('flutter-root');
       if (!root) return;
 
-      // ?‰Â€??iOS 17+
-      function isIOS17OrLater() {
-        try {
-          const match = navigator.userAgent.match(/OS (\d+)_(\d+)_?(\d+)?/);
-          if (match) {
-            return parseInt(match[1], 10) >= 17;
-          }
-        } catch (e) {}
-        return false;
-      }
-
-      const isIOS17 = isIOS17OrLater();
-      let lastOffsetTop = null;
-      let lastOffsetLeft = null;
-      let syncCount = 0;
-
       function sync() {
         const vv = window.visualViewport;
-        if (!vv) return;
-
-        // ?‰Â€??offset ??¬î?????î¦??—ïŒ¬OS 17 ?î³???ªï???0??
-        const currentOffsetTop = vv.offsetTop;
-        const currentOffsetLeft = vv.offsetLeft;
-
-        // iOS 17 ?å¯??­ï???—î«°???offset ??0 ?î¦µè›¹??0?—ï—½ç§????¬î¼¼î­??
-        if (isIOS17) {
-          // ?’î???‹ï?? offset ??0?—ï—¼??????0?—ï—º???†î???
-          if (lastOffsetTop === 0 && currentOffsetTop !== 0) {
-            console.log('[VIEWPORT_SYNC] iOS 17 offset corrected:', {
-              from: { top: lastOffsetTop, left: lastOffsetLeft },
-              to: { top: currentOffsetTop, left: currentOffsetLeft }
-            });
-          }
-        }
-
-        lastOffsetTop = currentOffsetTop;
-        lastOffsetLeft = currentOffsetLeft;
+        
+        // iOS 17 PWA bug fix: Filter out incorrect offsetTop
+        // WebKit incorrectly includes toolbar/safeArea ghost space in offsetTop
+        // Calculate keyboard space and subtract it from offsetTop
+        const keyboardSpace = Math.max(0, window.screen.height - vv.height);
+        const safeTop = Math.max(0, vv.offsetTop - keyboardSpace);
 
         root.style.width = vv.width + 'px';
         root.style.height = vv.height + 'px';
-        root.style.transform = `translate(${currentOffsetLeft}px, ${currentOffsetTop}px)`;
-
-        syncCount++;
+        root.style.transform = `translate(${vv.offsetLeft}px, ${safeTop}px)`;
       }
 
-      // ?˜ç????»é??è³?ª?—ï??…éˆ­?iOS 17 ?î³??îº¡è¸?æ¡???
-      function forceSync() {
-        if (!window.visualViewport) return;
-        const vv = window.visualViewport;
-        
-        // ?¿è¼»??requestAnimationFrame ?–æ??????Â€??‰³?¥éŠµ?
-        requestAnimationFrame(function() {
-          sync();
-        });
-      }
-
-      // ??«î?????¥î??????
       visualViewport.addEventListener('resize', sync);
       visualViewport.addEventListener('scroll', sync);
       window.addEventListener('orientationchange', sync);
-      
-      // iOS 17 ?å¯??­ï???—î«²??ç¥ˆåœ»?è¨??å?î²‡é–«è¡€??æ¹”î?
-      if (isIOS17) {
-        // ??«î??«è??¾æ???ªï???îš¦??—ï—½??­î???å—¡??«è?? visualViewport ?æ¹”î?
-        document.addEventListener('touchstart', forceSync, { passive: true });
-        document.addEventListener('touchend', forceSync, { passive: true });
-        
-        // ??«î??¿è?î²???????î¢??î????³î»¸?­ï?î£ªå??
-        document.addEventListener('visibilitychange', function() {
-          if (!document.hidden) {
-            setTimeout(forceSync, 100);
-          }
-        });
 
-        // iOS 17 ?î³??îº¡è¸?æ¡??—î«°è¾??î¸??ˆâˆª???
-        // ?î³???offset ??ªï???0?—ï—¾??¬î¼½???visualViewport ?”å–³?
-        setTimeout(forceSync, 50);
-        setTimeout(forceSync, 150);
-        setTimeout(forceSync, 300);
-        setTimeout(forceSync, 500);
-        
-        // ??«î? DOMContentLoaded ??load ?­ï?è¾?
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', forceSync);
-        } else {
-          forceSync();
-        }
-        
-        window.addEventListener('load', function() {
-          setTimeout(forceSync, 100);
-        });
-      }
-
-      // ?î³???»é?
       sync();
     })();
   </script>
