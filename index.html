@@ -874,15 +874,25 @@
        root.style.width = vv.width + 'px';
        root.style.height = vv.height + 'px';
        root.style.transform = `translate(${vv.offsetLeft}px, ${vv.offsetTop}px)`;
-       alert('resetVisualViewport');
       }
 
-      setTimeout(function() {
+    window.addEventListener('beforeunload', function() {
         resetVisualViewport();
-        }, 300);
+      });
+
+      window.addEventListener('pagehide', function() {
+        resetVisualViewport();
+      });
+
+      document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+          resetVisualViewport();
+        }
+      });
  </script>
 </body>
 </html>
+
 
 
 
