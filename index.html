@@ -868,24 +868,27 @@
   
   <!-- Patch 4: visualViewport synchronizer - critical for iOS 17+ touch fix -->
   <script>
-    function adjustViewport() {
-      const root = document.getElementById('flutter-root');
-      const vv = window.visualViewport;
-      if (!root || !vv) return;
+    (function () {
+      if (!window.visualViewport) return;
 
-      // ‰ΩøÁî® requestAnimationFrame Á¢∫‰??®ÁÄèË¶Ω?®Ê∏≤?ìÂ??∑Ë?
-      window.requestAnimationFrame(() => {
+      const root = document.getElementById('flutter-root');
+
+      function sync() {
+        const vv = window.visualViewport;
         root.style.width = vv.width + 'px';
         root.style.height = vv.height + 'px';
-        // ?úÈçµÔºöÂ? root ?ñÂ??®Ë?Ë¶∫Ë?Á™óÁ?Â∑¶‰?Ëß?
         root.style.transform = `translate(${vv.offsetLeft}px, ${vv.offsetTop}px)`;
-      });
-    }
+      }
+
+      visualViewport.addEventListener('resize', sync);
+      visualViewport.addEventListener('scroll', sync);
+      window.addEventListener('orientationchange', sync);
+
+      sync();
+    })();
   </script>
 </body>
 </html>
-
-
 
 
 
