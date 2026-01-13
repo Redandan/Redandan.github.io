@@ -868,25 +868,38 @@
   
   <!-- Patch 4: visualViewport synchronizer - critical for iOS 17+ touch fix -->
   <script>
-    (function () {
-      if (!window.visualViewport) return;
-
+    function adjustViewport() {
       const root = document.getElementById('flutter-root');
+      const vv = window.visualViewport;
+      if (!root || !vv) return;
 
-      function sync() {
-        console.log('sync');
-        const vv = window.visualViewport;
+      // ä½¿ç”¨ requestAnimationFrame ç¢ºä??¨ç€è¦½?¨æ¸²?“å??·è?
+      window.requestAnimationFrame(() => {
         root.style.width = vv.width + 'px';
         root.style.height = vv.height + 'px';
+        // ?œéµï¼šå? root ?–å??¨è?è¦ºè?çª—ç?å·¦ä?è§?
         root.style.transform = `translate(${vv.offsetLeft}px, ${vv.offsetTop}px)`;
+      });
+      alert('adjustViewport');
+    }
+
+    // 1. ?³æ???½ï¼šåªè¦è?çª—å¤§å°æ”¹è®Šæ?æ»¾å?ï¼ˆä?å¦‚éµ?¤å??ºæ?ç¸®å?ï¼‰å°±ä¿®æ­£
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', adjustViewport);
+      window.visualViewport.addEventListener('scroll', adjustViewport);
+    }
+
+    // 2. ?¢é?/?‡æ??‚åŸ·è¡?(ç¢ºä?å¿«å??€?‹æ­£ç¢?
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        adjustViewport();
       }
+    });
 
-      visualViewport.addEventListener('resize', sync);
-      visualViewport.addEventListener('scroll', sync);
-      window.addEventListener('orientationchange', sync);
-
-      sync();
-    })();
+    // 3. ?žä??‚åŸ·è¡?(?²æ­¢å¾?BFCache ?žå¾©?‚è???
+    window.addEventListener('pageshow', (event) => {
+      adjustViewport();
+    });
   </script>
 </body>
 </html>
