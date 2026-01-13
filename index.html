@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?ˆæœ¬?–ç·©å­˜æ?è­?-->
-    <meta name="cache-version" content="1.0.719">
+    <meta name="cache-version" content="1.0.720">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -23,7 +23,7 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.719+720">
+  <meta name="version" content="1.0.720+721">
 
   <!-- Fix 1: Removed vh-based viewport logic - conflicts with visualViewport root model -->
   
@@ -118,7 +118,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.719">
+  <link rel="manifest" href="manifest.json?v=1.0.720">
   
   <!-- PWA å®‰è??ç¤º?¯æ? -->
   <meta name="application-name" content="Agora Market">
@@ -126,7 +126,7 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ?§èƒ½ä¼˜å?ï¼šé?? è½½?³é”®èµ„æ? -->
-  <link rel="preload" href="flutter_bootstrap.js?v=1.0.719" as="script">
+  <link rel="preload" href="flutter_bootstrap.js?v=1.0.720" as="script">
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -450,7 +450,7 @@
           <img src="icons/new_favicon/apple-touch-icon.png" alt="Agora Market" style="width: 116px; height: 116px; object-fit: contain;" />
         </div>
         <div class="loading-text" id="loading-text">Agora Market</div>
-        <div class="loading-version" id="version-display">v1.0.719</div>
+        <div class="loading-version" id="version-display">v1.0.720</div>
       </div>
     </div>
   </div>
@@ -794,7 +794,7 @@
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.719" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.720" async></script>
   
   <!-- Fix 2: Removed pwa_viewport_fix.js - conflicts with visualViewport root model -->
   
@@ -871,16 +871,19 @@
     function adjustViewport() {
       const root = document.getElementById('flutter-root');
       const vv = window.visualViewport;
-      // if (!root || !vv) return;
+      if (!root || !vv) return;
 
-      // ä½¿ç”¨ requestAnimationFrame ç¢ºä??¨ç€è¦½?¨æ¸²?“å??·è?
+      // ä½¿ç”¨?™é? requestAnimationFrame ç¢ºä??¨ç€è¦½?¨å??å?å±€è¨ˆç?å¾ŒåŸ·è¡?
+      // ç¬¬ä?å±?RAFï¼šç?å¾…ç•¶?æ¸²?“å?å®Œæ?
       window.requestAnimationFrame(() => {
-        root.style.width = vv.width + 'px';
-        root.style.height = vv.height + 'px';
-        // ?œéµï¼šå? root ?–å??¨è?è¦ºè?çª—ç?å·¦ä?è§?
-        root.style.transform = `translate(${vv.offsetLeft}px, ${vv.offsetTop}px)`;
+        // ç¬¬ä?å±?RAFï¼šç¢ºä¿åœ¨ä¸‹ä?å¹€?·è?ï¼Œæ­¤??visualViewport ?¼å·²?´æ–°
+        window.requestAnimationFrame(() => {
+          root.style.width = vv.width + 'px';
+          root.style.height = vv.height + 'px';
+          // ?œéµï¼šå? root ?–å??¨è?è¦ºè?çª—ç?å·¦ä?è§?
+          root.style.transform = `translate(${vv.offsetLeft}px, ${vv.offsetTop}px)`;
+        });
       });
- 
     }
 
     // 1. ?³æ???½ï¼šåªè¦è?çª—å¤§å°æ”¹è®Šæ?æ»¾å?ï¼ˆä?å¦‚éµ?¤å??ºæ?ç¸®å?ï¼‰å°±ä¿®æ­£
@@ -900,9 +903,24 @@
     window.addEventListener('pageshow', (event) => {
       adjustViewport();
     });
-    adjustViewport();
+
+    // 4. ?å??·è?ï¼šç¢ºä¿?DOM ??visualViewport ?½æ??™å¥½
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        // ä½¿ç”¨?™é? RAF ç¢ºä??¨å?å±€å®Œæ?å¾ŒåŸ·è¡?
+        requestAnimationFrame(() => {
+          requestAnimationFrame(adjustViewport);
+        });
+      });
+    } else {
+      // DOM å·²æ??™å¥½ï¼Œç›´?¥ä½¿?¨é???RAF
+      requestAnimationFrame(() => {
+        requestAnimationFrame(adjustViewport);
+      });
+    }
  </script>
 </body>
 </html>
+
 
 
