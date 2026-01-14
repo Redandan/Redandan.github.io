@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?àÊú¨?ñÁ∑©Â≠òÊ?Ë≠?-->
-    <meta name="cache-version" content="1.0.718">
+    <meta name="cache-version" content="1.0.719">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -23,7 +23,7 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.718+719">
+  <meta name="version" content="1.0.719+720">
 
   <!-- Fix 1: Removed vh-based viewport logic - conflicts with visualViewport root model -->
   
@@ -175,7 +175,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.718">
+  <link rel="manifest" href="manifest.json?v=1.0.719">
   
   <!-- PWA ?∞Ôê¶???êÂÖß??Ä? -->
   <meta name="application-name" content="Agora Market">
@@ -183,7 +183,7 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ??ØÔ??°Ó¶∂??óÓ´¥??Ó∫°Ëù∏??≤Ó??èÔ?? -->
-  <link rel="preload" href="flutter_bootstrap.js?v=1.0.718" as="script">
+  <link rel="preload" href="flutter_bootstrap.js?v=1.0.719" as="script">
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -507,7 +507,7 @@
           <img src="icons/new_favicon/apple-touch-icon.png" alt="Agora Market" style="width: 116px; height: 116px; object-fit: contain;" />
         </div>
         <div class="loading-text" id="loading-text">Agora Market</div>
-        <div class="loading-version" id="version-display">v1.0.718</div>
+        <div class="loading-version" id="version-display">v1.0.719</div>
       </div>
     </div>
   </div>
@@ -519,8 +519,7 @@
       
       // ?â¬Ä??Flutter ??¨Ó??åËÑ©??????
       function checkFlutterReady() {
-        // ?â¬Ä??Flutter ?????¨Ó??åËÑ©??ÆÓ¶∂ÓØ?
-        const hasFlutterElements = document.querySelector('flt-scene-host') !== null ||
+        // ?â¬Ä??Flutter ?????¨Ó??åËÑ©??ÆÓ¶∂ÓØ?        const hasFlutterElements = document.querySelector('flt-scene-host') !== null ||
                                   document.querySelector('flt-glass-pane') !== null ||
                                   document.querySelector('canvas') !== null;
         
@@ -605,8 +604,7 @@
       
       console.log('[WEB_PUSH_API] Web Push API initializing...');
       
-      // ??? Web Push API ?†Ô???
-      window.WebPushAPI = {
+      // ??? Web Push API ?†Ô???      window.WebPushAPI = {
         
         /**
          * ?¢Ô???Ó´≤Ó??àÔ??
@@ -747,9 +745,7 @@
         },
         
         /**
-         * ?Ó∏??ÆÂ???Ω‚ä•Óº?
-         * @returns {Object} ?ÆÂ???Ω‚ä•Óº?
-         */
+         * ?Ó∏??ÆÂ???Ω‚ä•Óº?         * @returns {Object} ?ÆÂ???Ω‚ä•Óº?         */
         generateDeviceInfo() {
           const userAgent = navigator.userAgent;
           const deviceName = navigator.platform + ' - ' + (navigator.userAgentData?.brands?.[0]?.brand || 'Unknown Browser');
@@ -845,13 +841,12 @@
       
       console.log('[WEB_PUSH_API] Web Push API initialization completed');
       
-      // ?ÊπßÓØ∑????Ë≥?û≤??Flutter ?§Ëºª??
-      window.requestNotificationPermission = window.WebPushAPI.requestNotificationPermission.bind(window.WebPushAPI);
+      // ?ÊπßÓØ∑????Ë≥?û≤??Flutter ?§Ëºª??      window.requestNotificationPermission = window.WebPushAPI.requestNotificationPermission.bind(window.WebPushAPI);
       
     })();
   </script>
   
-  <script src="flutter_bootstrap.js?v=1.0.718" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.719" async></script>
   
   <!-- Fix 2: Removed pwa_viewport_fix.js - conflicts with visualViewport root model -->
   
@@ -875,8 +870,7 @@
           var currentPath = window.location.pathname + window.location.search + window.location.hash;
           if (currentPath !== savedPath && savedPath !== '/index.html') {
             // ?øËºª??replaceState ?ÊπîÓ? URL?óÔóπ??´Ë???øË?Ó≤??üÓ?
-            // È§àÓ?Óπ?Flutter ?ùË??éË?È§???≠Ë??ÂØûÔ???? URL ?≠Ô???ùË???
-            window.history.replaceState(null, '', savedPath);
+            // È§àÓ?Óπ?Flutter ?ùË??éË?È§???≠Ë??ÂØûÔ???? URL ?≠Ô???ùË???            window.history.replaceState(null, '', savedPath);
             console.log('[404_REDIRECT] Restored path:', savedPath);
           }
         }
@@ -910,8 +904,7 @@
     })();
   </script>
   <script>
-    // ?ÆÈ???®Ô?Óº?????? Flutter ?§Ëºª??
-    window.registerMessageHandler = function(callback) {
+    // ?ÆÈ???®Ô?Óº?????? Flutter ?§Ëºª??    window.registerMessageHandler = function(callback) {
       window._messageHandler = callback;
     };
 
@@ -946,6 +939,7 @@
   </script>
 </body>
 </html>
+
 
 
 
