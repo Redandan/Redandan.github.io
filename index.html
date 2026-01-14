@@ -51,6 +51,63 @@
       });
       console.log('[DIAG] index.html diagnostics installed, version meta:', (document.querySelector('meta[name="version"]')||{}).content);
     })();
+
+    // ??ƒï? console.log/error/warn/info?—ï—¾?î«? CustomEvent ?æ½®Â€î¼½ç? Flutter
+    (function(){
+      if (window.__consoleHooksInstalled) return; window.__consoleHooksInstalled = true;
+      
+      function interceptConsole(originalMethod, level) {
+        return function(...args) {
+          // ??†î??µï—º??ªï?? console ?å¯?
+          originalMethod.apply(console, args);
+          
+          // ?æ¾??î¡????????­î«°????è³?
+          const message = args.map(arg => {
+            if (typeof arg === 'object') {
+              try {
+                return JSON.stringify(arg, null, 2);
+              } catch(e) {
+                return String(arg);
+              }
+            }
+            return String(arg);
+          }).join(' ');
+          
+          // ?æ½®Â€?CustomEvent ??Flutter
+          try {
+            const event = new CustomEvent('pwa-console-log', {
+              detail: {
+                level: level,
+                message: message,
+                timestamp: new Date().toISOString(),
+                stack: new Error().stack || null
+              }
+            });
+            window.dispatchEvent(event);
+          } catch(e) {
+            // ?î°??­æ???—ï—¾î¼??—è”£?è¸µè¿¤??console ?î¸„ï?
+          }
+        };
+      }
+      
+      // ??ƒï???”è? console ?å¯?
+      if (console.log) {
+        const originalLog = console.log.bind(console);
+        console.log = interceptConsole(originalLog, 'INFO');
+      }
+      if (console.error) {
+        const originalError = console.error.bind(console);
+        console.error = interceptConsole(originalError, 'ERROR');
+      }
+      if (console.warn) {
+        const originalWarn = console.warn.bind(console);
+        console.warn = interceptConsole(originalWarn, 'WARN');
+      }
+      if (console.info) {
+        const originalInfo = console.info.bind(console);
+        console.info = interceptConsole(originalInfo, 'INFO');
+      }
+    })();
   </script>
   
 
@@ -864,35 +921,6 @@
         window._messageHandler(data);
       }
     };
-
-    // ??î¼?î¼¿î????????î¢??¼ï¼¸???½ï???Google ????…î???î¼???
-    // ????ï¼??æ¢??ˆï?î¾????î¿??«è?î¨????¢æ???å—¡? Flutter ?¼ï¼¸??
-    (function() {
-      let wasHidden = false;
-      
-      document.addEventListener('visibilitychange', function() {
-        if (document.hidden) {
-          wasHidden = true;
-        } else if (wasHidden && !document.hidden) {
-          // ?î¼¿î??ºîµ¨îª????ç®î»?¬ï•§???ªï???î????????…î???î¼???
-          wasHidden = false;
-          
-          // ?¼ï¼¸î·??¬î???Google OAuth2 ?é§??šî¼½??…î??
-          try {
-            const isInProgress = sessionStorage.getItem('google_oauth2_in_progress');
-            if (isInProgress === 'true') {
-              // ?«è?î¨????¢æ???å???î«²î? Flutter ?¼ï¼¸î·????
-              window.dispatchEvent(new CustomEvent('google_oauth2_visibility_change', {
-                detail: { timestamp: Date.now() }
-              }));
-              console.log('[GOOGLE_OAUTH2] ?î¼¿î????????î¢??«è?î¨ªç‘¼ï¼¸î??­ï?è¾?);
-            }
-          } catch (e) {
-            console.warn('[GOOGLE_OAUTH2] ?¼ï¼¸î·?é§?????ä???', e);
-          }
-        }
-      });
-    })();
   </script>
   
   <!-- Patch 4: visualViewport synchronizer - critical for iOS 17+ touch fix -->
