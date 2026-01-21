@@ -192,7 +192,7 @@
       will-change: transform;
       transform-origin: 0 0;
       overflow: hidden;
-      /* width/height are bound to visualViewport (px) by JS sync */
+      /* width/height are set by visualViewport sync script */
     }
 
     #loading-screen {
@@ -801,7 +801,8 @@
       })();
 
       if (!isIOS || !isStandalone || !window.visualViewport) return;
-      // Guard: prevent any legacy viewport fix scripts from double-applying.
+
+      // Guard to avoid double-application with legacy scripts
       window.__AGORA_VV_SYNC_INSTALLED = true;
 
       const vv = window.visualViewport;
@@ -810,7 +811,7 @@
         return document.getElementById('flutter-root');
       }
 
-      // Ensure Flutter engine DOM nodes are inside #flutter-root so a single transform fixes both visuals and hit-test.
+      // Move Flutter engine DOM into #flutter-root so a single transform controls visuals + hit-test
       function ensureFlutterElementsInRoot(root) {
         if (!root) return;
         const selectors = ['flutter-view', 'flt-glass-pane', 'flt-scene-host'];
@@ -818,14 +819,12 @@
           const el = document.querySelector(selectors[i]);
           if (!el) continue;
           if (el.parentElement === root) continue;
-          // Put Flutter behind the loading screen (which lives inside root)
           root.insertBefore(el, root.firstChild);
         }
       }
 
       function computeSafeOffsets() {
-        // iOS 17 WebKit bug: vv.offsetTop may incorrectly include toolbar/safe-area ghost space.
-        // Filter by subtracting the inferred keyboard space.
+        // iOS 17 WebKit bug: offsetTop may include toolbar/safe-area ghost space
         const keyboardSpace = Math.max(0, (window.screen && window.screen.height ? window.screen.height : 0) - vv.height);
         const safeTop = Math.max(0, vv.offsetTop - keyboardSpace);
         const safeLeft = Math.max(0, vv.offsetLeft);
@@ -834,18 +833,13 @@
 
       function applyToRoot(root) {
         if (!root) return;
-
         const { safeTop, safeLeft } = computeSafeOffsets();
-
         root.style.width = vv.width + 'px';
         root.style.height = vv.height + 'px';
         root.style.willChange = 'transform';
         root.style.transformOrigin = '0 0';
-        // translate3d forces a compositor layer to keep hit-test aligned
         root.style.transform = 'translate3d(' + safeLeft + 'px,' + safeTop + 'px,0)';
-
-        // Force reflow to help iOS apply compositor updates deterministically (fixes "looks right but taps are off")
-        try { root.getBoundingClientRect(); } catch (_) {}
+        try { root.getBoundingClientRect(); } catch (_) {} // force reflow for compositor alignment
       }
 
       let rafPending = false;
@@ -863,7 +857,6 @@
       }
 
       function delayedSync() {
-        // visualViewport state settles asynchronously in iOS PWA; delayed sync mimics the "back-swipe fixes it" behavior.
         queueSync();
         setTimeout(queueSync, 60);
         setTimeout(queueSync, 600);
@@ -873,19 +866,17 @@
       vv.addEventListener('resize', queueSync, { passive: true });
       vv.addEventListener('scroll', queueSync, { passive: true });
       window.addEventListener('orientationchange', delayedSync, { passive: true });
-      window.addEventListener('pageshow', delayedSync, { passive: true }); // covers back/forward-cache & swipe-back settle
+      window.addEventListener('pageshow', delayedSync, { passive: true });
       document.addEventListener('visibilitychange', function () {
         if (!document.hidden) delayedSync();
       });
 
-      // Keep Flutter nodes inside root even if the engine inserts them later
       if (window.MutationObserver) {
         const mo = new MutationObserver(function () { queueSync(); });
         mo.observe(document.body, { childList: true, subtree: true });
         setTimeout(function () { try { mo.disconnect(); } catch (_) {} }, 10000);
       }
 
-      // Initial + delayed (critical for first load)
       delayedSync();
     })();
   </script>
@@ -893,7 +884,7 @@
   <script src="flutter_bootstrap.js?v=1.0.724" async></script>
 
   <!-- Fix 2: Removed pwa_viewport_fix.js - conflicts with visualViewport root model -->
-  
+
   <!-- Web Vitals ?§èƒ½?‘æŽ§ -->
   <script src="web_vitals.js"></script>
   
@@ -962,6 +953,27 @@
     };
   </script>
   
+  <!-- Patch 4: visualViewport synchronizer - critical for iOS 17+ touch fix -->
+  <script>
+    (function () {
+      if (!window.visualViewport) return;
+
+      const root = document.getElementById('flutter-root');
+
+      function sync() {
+        const vv = window.visualViewport;
+        root.style.width = vv.width + 'px';
+        root.style.height = vv.height + 'px';
+        root.style.transform = `translate(${vv.offsetLeft}px, ${vv.offsetTop}px)`;
+      }
+
+      visualViewport.addEventListener('resize', sync);
+      visualViewport.addEventListener('scroll', sync);
+      window.addEventListener('orientationchange', sync);
+
+      sync();
+    })();
+  </script>
 </body>
 </html>
 
