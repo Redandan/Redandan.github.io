@@ -5,6 +5,13 @@
 
 (function() {
   'use strict';
+
+  // Legacy script guard:
+  // `web/index.html` now owns the iOS 17+ PWA visualViewport sync (transform root + offset filtering + delayed sync).
+  // If that synchronizer is present, do nothing here to avoid double-applying conflicting styles.
+  if (window.__AGORA_VV_SYNC_INSTALLED) {
+    return;
+  }
   
   // 检测是否在 PWA Standalone 模式
   function isStandaloneMode() {
