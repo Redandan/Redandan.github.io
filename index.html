@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?ˆæœ¬?–ç·©å­˜æ?è­?-->
-    <meta name="cache-version" content="1.0.729">
+    <meta name="cache-version" content="1.0.730">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -23,7 +23,7 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.729+730">
+  <meta name="version" content="1.0.730+731">
 
   <!-- Fix 1: Removed vh-based viewport logic - conflicts with visualViewport root model -->
   
@@ -118,7 +118,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.729">
+  <link rel="manifest" href="manifest.json?v=1.0.730">
   
   <!-- PWA å®‰è??ç¤º?¯æ? -->
   <meta name="application-name" content="Agora Market">
@@ -126,7 +126,7 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ?§èƒ½ä¼˜å?ï¼šé?? è½½?³é”®èµ„æ? -->
-  <link rel="preload" href="flutter_bootstrap.js?v=1.0.729" as="script">
+  <link rel="preload" href="flutter_bootstrap.js?v=1.0.730" as="script">
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -439,7 +439,7 @@
           <img src="icons/new_favicon/apple-touch-icon.png" alt="Agora Market" style="width: 116px; height: 116px; object-fit: contain;" />
         </div>
         <div class="loading-text" id="loading-text">Agora Market</div>
-        <div class="loading-version" id="version-display">v1.0.729</div>
+        <div class="loading-version" id="version-display">v1.0.730</div>
       </div>
     </div>
   </div>
@@ -824,22 +824,10 @@
       }
 
       function computeSafeOffsets() {
-        // iOS 17+ WebKit bug: offsetTop may include toolbar/safe-area ghost space
-        // For iOS 18.7+: offsetTop directly represents the visual offset we need to compensate
-        const keyboardSpace = Math.max(0, (window.screen && window.screen.height ? window.screen.height : 0) - vv.height);
-        
-        // If offsetTop equals keyboardSpace, it's likely keyboard space, filter it out
-        // Otherwise, offsetTop represents the actual visual offset we need to compensate
-        let safeTop = 0;
-        if (vv.offsetTop > keyboardSpace) {
-          // offsetTop includes both keyboard space and visual offset
-          safeTop = -(vv.offsetTop - keyboardSpace);
-        } else if (vv.offsetTop > 0 && keyboardSpace === 0) {
-          // No keyboard, but offsetTop exists - this is the visual offset we need to compensate
-          safeTop = -vv.offsetTop;
-        }
-        // If offsetTop <= keyboardSpace and keyboardSpace > 0, safeTop = 0 (keyboard space only)
-        
+        // iOS 17+ WebKit bug: offsetTop represents the visual offset we need to compensate
+        // We directly use -offsetTop to compensate for the visual viewport offset
+        // This ensures hit-test coordinates align with visual coordinates
+        const safeTop = -vv.offsetTop;
         const safeLeft = -vv.offsetLeft;
         return { safeTop, safeLeft };
       }
@@ -894,7 +882,7 @@
     })();
   </script>
 
-  <script src="flutter_bootstrap.js?v=1.0.729" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.730" async></script>
 
   <!-- Fix 2: Removed pwa_viewport_fix.js - conflicts with visualViewport root model -->
 
@@ -968,6 +956,7 @@
   
 </body>
 </html>
+
 
 
 
