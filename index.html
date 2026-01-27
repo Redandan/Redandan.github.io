@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?ˆæœ¬?–ç·©å­˜æ?è­?-->
-    <meta name="cache-version" content="1.0.733">
+    <meta name="cache-version" content="1.0.734">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -23,7 +23,7 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.733+734">
+  <meta name="version" content="1.0.734+735">
 
   <!-- Fix 1: Removed vh-based viewport logic - conflicts with visualViewport root model -->
   
@@ -118,7 +118,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.733">
+  <link rel="manifest" href="manifest.json?v=1.0.734">
   
   <!-- PWA å®‰è??ç¤º?¯æ? -->
   <meta name="application-name" content="Agora Market">
@@ -126,7 +126,7 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ?§èƒ½ä¼˜å?ï¼šé?? è½½?³é”®èµ„æ? -->
-  <link rel="preload" href="flutter_bootstrap.js?v=1.0.733" as="script">
+  <link rel="preload" href="flutter_bootstrap.js?v=1.0.734" as="script">
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -439,7 +439,7 @@
           <img src="icons/new_favicon/apple-touch-icon.png" alt="Agora Market" style="width: 116px; height: 116px; object-fit: contain;" />
         </div>
         <div class="loading-text" id="loading-text">Agora Market</div>
-        <div class="loading-version" id="version-display">v1.0.733</div>
+        <div class="loading-version" id="version-display">v1.0.734</div>
       </div>
     </div>
   </div>
@@ -800,58 +800,155 @@
         }
       })();
 
-      if (!isIOS || !isStandalone || !window.visualViewport) return;
+      // Initialize log storage even if skipped
+      if (!window.__VV_SYNC_LOGS) {
+        window.__VV_SYNC_LOGS = [];
+      }
+      
+      function logSync(message, level) {
+        level = level || 'info';
+        const timestamp = new Date().toISOString();
+        const logEntry = { timestamp: timestamp, level: level, message: message };
+        window.__VV_SYNC_LOGS.push(logEntry);
+        if (window.__VV_SYNC_LOGS.length > 100) {
+          window.__VV_SYNC_LOGS.shift();
+        }
+        if (level === 'error') {
+          console.error('[VV_SYNC]', message);
+        } else if (level === 'warn') {
+          console.warn('[VV_SYNC]', message);
+        } else {
+          console.log('[VV_SYNC]', message);
+        }
+      }
+      
+      if (!isIOS || !isStandalone || !window.visualViewport) {
+        logSync('Skipped: isIOS=' + isIOS + ', isStandalone=' + isStandalone + ', visualViewport=' + !!window.visualViewport);
+        return;
+      }
 
       // Guard to avoid double-application with legacy scripts
       window.__AGORA_VV_SYNC_INSTALLED = true;
+      
+      // Initialize log storage for viewport debug page
+      if (!window.__VV_SYNC_LOGS) {
+        window.__VV_SYNC_LOGS = [];
+      }
+      
+      function logSync(message, level) {
+        level = level || 'info';
+        const timestamp = new Date().toISOString();
+        const logEntry = { timestamp: timestamp, level: level, message: message };
+        window.__VV_SYNC_LOGS.push(logEntry);
+        // Keep only last 100 logs
+        if (window.__VV_SYNC_LOGS.length > 100) {
+          window.__VV_SYNC_LOGS.shift();
+        }
+        // Also log to console
+        if (level === 'error') {
+          console.error('[VV_SYNC]', message);
+        } else if (level === 'warn') {
+          console.warn('[VV_SYNC]', message);
+        } else {
+          console.log('[VV_SYNC]', message);
+        }
+      }
+      
+      logSync('Initializing visualViewport synchronizer');
 
       const vv = window.visualViewport;
 
       function getRoot() {
-        return document.getElementById('flutter-root');
+        const root = document.getElementById('flutter-root');
+        if (!root) {
+          logSync('#flutter-root not found', 'warn');
+        }
+        return root;
       }
 
       // Move Flutter engine DOM into #flutter-root so a single transform controls visuals + hit-test
       function ensureFlutterElementsInRoot(root) {
         if (!root) return;
         const selectors = ['flutter-view', 'flt-glass-pane', 'flt-scene-host'];
+        let movedCount = 0;
         for (let i = 0; i < selectors.length; i++) {
           const el = document.querySelector(selectors[i]);
           if (!el) continue;
           if (el.parentElement === root) continue;
           root.insertBefore(el, root.firstChild);
+          movedCount++;
+        }
+        if (movedCount > 0) {
+          logSync('Moved ' + movedCount + ' Flutter elements into #flutter-root');
         }
       }
 
       function computeSafeOffsets() {
         // iOS 17+ WebKit bug: offsetTop represents visual viewport offset
-        // For iOS 18.7: offsetTop = 62px, but actual tap offset is 56px
-        // The 6px difference might be due to other factors
+        // For iOS 26.2: offsetTop contains incorrect offset that needs compensation
         // We compensate the full offsetTop to align visual and hit-test coordinates
-        // Note: The 56px offset in debug page is normal (AppBar height difference
-        // between global and local coordinates), not a bug
         const safeTop = -vv.offsetTop;
         const safeLeft = -vv.offsetLeft;
+        
+        // Debug logging (only log when offset is significant)
+        if (Math.abs(vv.offsetTop) > 5 || Math.abs(vv.offsetLeft) > 5) {
+          logSync('offsetTop=' + vv.offsetTop + ', offsetLeft=' + vv.offsetLeft + 
+                 ', safeTop=' + safeTop + ', safeLeft=' + safeLeft);
+        }
+        
         return { safeTop, safeLeft };
       }
 
       function applyToRoot(root) {
-        if (!root) return;
+        if (!root) {
+          logSync('applyToRoot: root is null', 'warn');
+          return;
+        }
         const { safeTop, safeLeft } = computeSafeOffsets();
         root.style.width = vv.width + 'px';
         root.style.height = vv.height + 'px';
         root.style.willChange = 'transform';
         root.style.transformOrigin = '0 0';
-        root.style.transform = 'translate3d(' + safeLeft + 'px,' + safeTop + 'px,0)';
-        try { root.getBoundingClientRect(); } catch (_) {} // force reflow for compositor alignment
+        const transform = 'translate3d(' + safeLeft + 'px,' + safeTop + 'px,0)';
+        root.style.transform = transform;
+        
+        // Verify transform was applied
+        const computedStyle = window.getComputedStyle(root);
+        const appliedTransform = computedStyle.transform;
+        if (appliedTransform === 'none' && (safeTop !== 0 || safeLeft !== 0)) {
+          logSync('Transform not applied! Expected: ' + transform + ', Got: ' + appliedTransform, 'error');
+        } else if (appliedTransform !== 'none') {
+          logSync('Transform applied: ' + appliedTransform);
+        }
+        
+        try { 
+          root.getBoundingClientRect(); // force reflow for compositor alignment
+        } catch (e) {
+          logSync('getBoundingClientRect failed: ' + e.message, 'warn');
+        }
       }
 
       let rafPending = false;
+      let syncCount = 0;
       function syncNow() {
         rafPending = false;
         const root = getRoot();
+        if (!root) {
+          // Retry later if root doesn't exist yet
+          if (syncCount < 50) { // Try for ~5 seconds (50 * 100ms)
+            syncCount++;
+            setTimeout(queueSync, 100);
+          } else {
+            logSync('#flutter-root not found after 50 attempts', 'error');
+          }
+          return;
+        }
         ensureFlutterElementsInRoot(root);
         applyToRoot(root);
+        syncCount++;
+        if (syncCount === 1) {
+          logSync('First sync completed');
+        }
       }
 
       function queueSync() {
@@ -885,7 +982,7 @@
     })();
   </script>
 
-  <script src="flutter_bootstrap.js?v=1.0.733" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.734" async></script>
 
   <!-- Fix 2: Removed pwa_viewport_fix.js - conflicts with visualViewport root model -->
 
@@ -959,6 +1056,7 @@
   
 </body>
 </html>
+
 
 
 
