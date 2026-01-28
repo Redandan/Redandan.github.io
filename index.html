@@ -995,10 +995,17 @@
       window.addEventListener('orientationchange', delayedSync, { passive: true });
       window.addEventListener('pageshow', delayedSync, { passive: true });
       document.addEventListener('visibilitychange', function () {
-        if (!document.hidden) delayedSync();
+        if (!document.hidden) {
+          delayedSync();
+          // ?ºîµ¤??î¼??˜ï???˜ï?? Google ????î¼?????é¤ƒï…¯?î½??—î«°???ˆå—¾?ˆâˆªè¾??sync?—ï—¼? viewport ?›æ??
+          setTimeout(delayedSync, 400);
+          setTimeout(delayedSync, 1000);
+        }
       });
+      window.addEventListener('focus', function () {
+        if (!document.hidden) delayedSync();
+      }, { passive: true });
 
-      // ??Flutter ??SPA ? î???ºï—½å­?æ½??’î?? OAuth ??ªç??î¼??é¤ƒï…¯?î½??—ï—¾î¼??™îž¥?ï¼??½î????¾ï™§????¨è‰¾?????³å?
       window.__AGORA_VV_SYNC_TRIGGER = function () { delayedSync(); };
 
       if (window.MutationObserver) {
