@@ -94,6 +94,32 @@
   }
 
   /**
+   * 判斷是否需要恢復
+   */
+  function shouldRecover() {
+    const vv = window.visualViewport;
+    if (!vv) return false;
+    const keyboardHeight = window.innerHeight - vv.height;
+    const activeElement = document.activeElement;
+    const isInputFocused = activeElement &&
+      (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
+
+    // 鍵盤高度大於 40px 或存在可疑偏移時嘗試恢復
+    return keyboardHeight > 40 || (!isInputFocused && keyboardHeight > 0);
+  }
+
+  /**
+   * 安排多段恢復（避免 iOS PWA 事件延遲）
+   */
+  function scheduleRecovery(tag) {
+    console.log(`[OAUTH2_RECOVERY] 🧭 scheduleRecovery: ${tag}`);
+    recoverViewport();
+    requestAnimationFrame(() => recoverViewport());
+    setTimeout(recoverViewport, 120);
+    setTimeout(recoverViewport, 360);
+  }
+
+  /**
    * 監聽頁面可見性變化（從 Google OAuth TAB 回到當前 TAB）
    * 這是最可靠的恢復觸發點
    */
@@ -105,18 +131,9 @@
       if (state === 'visible') {
         console.log('[OAUTH2_RECOVERY] 📲 Page became visible (returning from Google OAuth)');
         logCurrentState('Visibility Change');
-        
-        // 立即執行恢復（不等待）
-        recoverViewport();
-        
-        // 再次確認（延遲 500ms）
-        setTimeout(() => {
-          logCurrentState('Double Check');
-          if (window.visualViewport && window.visualViewport.height < window.innerHeight - 100) {
-            console.log('[OAUTH2_RECOVERY] ⚠️ Keyboard still visible, attempting second recovery');
-            recoverViewport();
-          }
-        }, 500);
+        if (shouldRecover()) {
+          scheduleRecovery('visibilitychange');
+        }
       }
     });
   }
@@ -126,15 +143,27 @@
    */
   window.addEventListener('focus', () => {
     console.log('[OAUTH2_RECOVERY] 🔍 Window focus event');
-    
-    // 檢查是否有 OAuth 回調參數
-    const params = new URLSearchParams(window.location.search);
-    if (params.has('tokenId') || params.has('error')) {
-      console.log('[OAUTH2_RECOVERY] 📲 OAuth2 callback detected, recovering viewport');
-      logCurrentState('Window Focus + OAuth Callback');
-      setTimeout(recoverViewport, 100);
+    logCurrentState('Window Focus');
+    if (shouldRecover()) {
+      scheduleRecovery('focus');
     }
   });
+
+  window.addEventListener('pageshow', () => {
+    console.log('[OAUTH2_RECOVERY] 🔍 pageshow event');
+    logCurrentState('Page Show');
+    if (shouldRecover()) {
+      scheduleRecovery('pageshow');
+    }
+  });
+
+  // iOS PWA: 用戶首次點擊時強制恢復一次
+  document.addEventListener('touchstart', () => {
+    if (shouldRecover()) {
+      console.log('[OAUTH2_RECOVERY] 🔍 touchstart recovery trigger');
+      scheduleRecovery('touchstart');
+    }
+  }, { passive: true, once: true });
 
   /**
    * 監聽 visualViewport 變化（實時監控）
