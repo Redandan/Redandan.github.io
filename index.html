@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?àÊú¨?ñÁ∑©Â≠òÊ?Ë≠?-->
-    <meta name="cache-version" content="1.0.742">
+    <meta name="cache-version" content="1.0.739">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -23,7 +23,7 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.742+743">
+  <meta name="version" content="1.0.739+740">
 
   <!-- Fix 1: Removed vh-based viewport logic - conflicts with visualViewport root model -->
   
@@ -118,7 +118,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.742">
+  <link rel="manifest" href="manifest.json?v=1.0.739">
   
   <!-- PWA ??ÜÓ?????éÔÖ±???? -->
   <meta name="application-name" content="Agora Market">
@@ -126,7 +126,7 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ??????µÊú±??Ó§¢Â???Ëπé‚?Ó≤???????? -->
-  <link rel="preload" href="flutter_bootstrap.js?v=1.0.742" as="script">
+  <link rel="preload" href="flutter_bootstrap.js?v=1.0.739" as="script">
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -439,7 +439,7 @@
           <img src="icons/new_favicon/apple-touch-icon.png" alt="Agora Market" style="width: 116px; height: 116px; object-fit: contain;" />
         </div>
         <div class="loading-text" id="loading-text">Agora Market</div>
-        <div class="loading-version" id="version-display">v1.0.742</div>
+        <div class="loading-version" id="version-display">v1.0.739</div>
       </div>
     </div>
   </div>
@@ -887,28 +887,12 @@
         // iOS 17+ WebKit bug: offsetTop represents visual viewport offset
         // For iOS 26.2: offsetTop contains incorrect offset that needs compensation
         // We compensate the full offsetTop to align visual and hit-test coordinates
-        const pageTop = (typeof vv.pageTop === 'number')
-          ? vv.pageTop
-          : (window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0);
-        const pageLeft = (typeof vv.pageLeft === 'number')
-          ? vv.pageLeft
-          : (window.pageXOffset || document.documentElement.scrollLeft || document.body.scrollLeft || 0);
-
-        let safeTop = -vv.offsetTop;
-        let safeLeft = -vv.offsetLeft;
-
-        // Fallback: offsetTop can be 0 while pageTop/scrollTop holds the real offset (iOS PWA hit-test bug)
-        if (Math.abs(vv.offsetTop) <= 1 && Math.abs(pageTop) > 5) {
-          safeTop = -pageTop;
-        }
-        if (Math.abs(vv.offsetLeft) <= 1 && Math.abs(pageLeft) > 5) {
-          safeLeft = -pageLeft;
-        }
+        const safeTop = -vv.offsetTop;
+        const safeLeft = -vv.offsetLeft;
         
         // Debug logging (only log when offset is significant)
-        if (Math.abs(vv.offsetTop) > 5 || Math.abs(vv.offsetLeft) > 5 || Math.abs(pageTop) > 5 || Math.abs(pageLeft) > 5) {
-          logSync('offsetTop=' + vv.offsetTop + ', offsetLeft=' + vv.offsetLeft +
-                 ', pageTop=' + pageTop + ', pageLeft=' + pageLeft +
+        if (Math.abs(vv.offsetTop) > 5 || Math.abs(vv.offsetLeft) > 5) {
+          logSync('offsetTop=' + vv.offsetTop + ', offsetLeft=' + vv.offsetLeft + 
                  ', safeTop=' + safeTop + ', safeLeft=' + safeLeft);
         }
         
@@ -979,19 +963,11 @@
           return;
         }
         ensureFlutterElementsInRoot(root);
-        // iOS PWA: docScroll/pageTop can introduce hit-test offset; clear scroll so only #flutter-root transform applies.
-        const pageTop = (typeof vv.pageTop === 'number')
-          ? vv.pageTop
-          : (window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0);
-        const pageLeft = (typeof vv.pageLeft === 'number')
-          ? vv.pageLeft
-          : (window.pageXOffset || document.documentElement.scrollLeft || document.body.scrollLeft || 0);
-        if (Math.abs(vv.offsetTop) > 5 || Math.abs(vv.offsetLeft) > 5 || Math.abs(pageTop) > 5 || Math.abs(pageLeft) > 5) {
+        // iOS PWA: docScroll matches offsetTop (e.g. 62), so body is already at -62; our transform adds another -62 => double offset. Zero document scroll so only #flutter-root transform applies.
+        if (Math.abs(vv.offsetTop) > 5 || Math.abs(vv.offsetLeft) > 5) {
           try {
             document.documentElement.scrollTop = 0;
             document.body.scrollTop = 0;
-            document.documentElement.scrollLeft = 0;
-            document.body.scrollLeft = 0;
           } catch (_) {}
         }
         applyToRoot(root);
@@ -1022,6 +998,12 @@
         if (!document.hidden) delayedSync();
       });
 
+      // ??ÅΩ OAuth2 recovery ÂÆåÊ?‰∫ã‰ª∂Ôºà‰øÆÂæ?iOS PWA visualViewport Âª∂ÈÅ≤?èÈ?Ôº?
+      window.addEventListener('_vv_recovery_height_stable', function(event) {
+        logSync('OAuth2 recovery: height stable event received');
+        delayedSync(); // Á´ãÂç≥?åÊ≠•
+      }, { passive: true });
+
       if (window.MutationObserver) {
         const mo = new MutationObserver(function () { queueSync(); });
         mo.observe(document.body, { childList: true, subtree: true });
@@ -1032,16 +1014,88 @@
     })();
   </script>
 
-  <script src="flutter_bootstrap.js?v=1.0.742" async></script>
+  <!-- iOS PWA: ?ôÁî®Ëº™Ë©¢Ê©üÂà∂ (?≤Ê≠¢ visualViewport ‰∏çËß∏??resize ‰∫ã‰ª∂) -->
+  <script>
+    (function() {
+      'use strict';
+      
+      // Ê™¢Êü•?ØÂê¶?ÄË¶ÅÂ??®Ëº™Ë©¢Â??®ÊñπÊ°?
+      const ua = navigator.userAgent || '';
+      const isIOS = /iPad|iPhone|iPod/.test(ua);
+      const isStandalone = (function () {
+        try {
+          return window.matchMedia('(display-mode: standalone)').matches ||
+                 window.navigator.standalone === true ||
+                 window.matchMedia('(display-mode: fullscreen)').matches;
+        } catch (_) {
+          return false;
+        }
+      })();
+
+      if (!isIOS || !isStandalone || !window.visualViewport) {
+        return;
+      }
+
+      // iOS PWA Ë¶ñÁ?È´òÂ∫¶Ëº™Ë©¢?????
+      // ?ê‰? iOS ?àÊú¨??visualViewport resize ‰∫ã‰ª∂?ØËÉΩ‰∏çËß∏??
+      // Ê≠§Ëº™Ë©¢‰??∫Â??®ÊñπÊ°àÁ¢∫‰øùÈ?Â∫¶Â?Ê≠?
+      const vv = window.visualViewport;
+      let lastRecordedHeight = vv.height;
+      let lastRecordedWidth = vv.width;
+      let pollCount = 0;
+
+      const pollInterval = setInterval(function() {
+        pollCount++;
+        const currentHeight = vv.height;
+        const currentWidth = vv.width;
+
+        if (currentHeight !== lastRecordedHeight || currentWidth !== lastRecordedWidth) {
+          // È´òÂ∫¶?ñÂØ¨Â∫¶Áôº?üË???
+          const heightDelta = Math.abs(currentHeight - lastRecordedHeight);
+          const widthDelta = Math.abs(currentWidth - lastRecordedWidth);
+          
+          // ?™Ë??ÑÊ??èÁæ©?ÑË???(> 5px)
+          if (heightDelta > 5 || widthDelta > 5) {
+            console.log('[VV_POLL] Height/width changed: ' + lastRecordedWidth + 'x' + lastRecordedHeight + 
+                       ' ??' + currentWidth + 'x' + currentHeight + ' (delta: ' + widthDelta.toFixed(0) + 'x' + heightDelta.toFixed(0) + ')');
+            
+            lastRecordedHeight = currentHeight;
+            lastRecordedWidth = currentWidth;
+            
+            // Ëß∏Áôº flutter-root ?ÑÊõ¥??
+            try {
+              const root = document.getElementById('flutter-root');
+              if (root) {
+                root.style.width = currentWidth + 'px';
+                root.style.height = currentHeight + 'px';
+                console.log('[VV_POLL] Updated flutter-root to ' + currentWidth + 'x' + currentHeight);
+                
+                // Ëß∏Áôº reflow
+                root.offsetHeight;
+              }
+            } catch (e) {
+              console.warn('[VV_POLL] Error updating root:', e);
+            }
+          }
+        }
+      }, 200); // ÊØ?200ms Ëº™Ë©¢‰∏ÄÊ¨?(?©Â??µÁõ§?ìÈ?/?úÈ??ÑÊ??ìÂ∞∫Â∫?
+
+      // ?úÊ≠¢Ëº™Ë©¢?ÑÊ?‰ª∂Ô??ØÈÅ∏Ôº?
+      // Â¶ÇÊ??âÁî®Â∑≤Á?Á©©Â?ËøêË?Ë∂ÖË? 60 ÁßíÔ??Ø‰ª•?úÊ≠¢Ëº™Ë©¢‰ª•Á??ÅÊÄßËÉΩ
+      setTimeout(function() {
+        clearInterval(pollInterval);
+        console.log('[VV_POLL] Polling stopped after 60s (app stable)');
+      }, 60000);
+    })();
+  </script>
+
+  <script src="flutter_bootstrap.js?v=1.0.739" async></script>
 
   <!-- Fix 2: Removed pwa_viewport_fix.js - conflicts with visualViewport root model -->
 
   <!-- Web Vitals ??????Áß? -->
   <script src="web_vitals.js"></script>
   
-  <!-- OAuth2 keyboard recovery -->
-  <script src="oauth2_keyboard_recovery.js"></script>
-
   <!-- ??????à¶?Ó∏????? -->
   <script src="offline_handler.js"></script>
   
@@ -1109,9 +1163,6 @@
   
 </body>
 </html>
-
-
-
 
 
 

@@ -47,6 +47,11 @@
 
   /**
    * 恢復視口狀態 - 主恢復邏輯
+   * 
+   * 修復 iOS PWA visualViewport 延遲更新問題：
+   * - 當用戶返回 OAuth2 頁面時，虛擬鍵盤關閉需要時間
+   * - iOS 的 vv.height 更新延遲，直接用舊值會導致高度同步錯誤
+   * - 解決方案：等待 vv.height 穩定後再設置
    */
   function recoverViewport() {
     console.log('[OAUTH2_RECOVERY] 🔄 Starting viewport recovery...');
@@ -66,31 +71,102 @@
         }
       }
 
-      // 2. 強制 Flutter root 重新渲染
-      const flutterRoot = document.getElementById('flutter-root');
-      if (flutterRoot) {
-        const vv = window.visualViewport;
-        if (vv) {
-          console.log('[OAUTH2_RECOVERY] ✅ Updating flutter-root height from visualViewport');
-          flutterRoot.style.height = vv.height + 'px';
-          flutterRoot.style.width = vv.width + 'px';
-          
-          // 觸發 reflow
-          flutterRoot.offsetHeight;
-          console.log(`[OAUTH2_RECOVERY] ✅ Updated flutter-root to ${vv.width}x${vv.height}`);
-        }
+      // 2. 等待 visualViewport 高度穩定（iOS 延遲更新問題）
+      const vv = window.visualViewport;
+      if (!vv) {
+        console.warn('[OAUTH2_RECOVERY] ⚠️ visualViewport not available');
+        return;
       }
 
-      // 3. 延遲再次確認恢復
-      setTimeout(() => {
-        logCurrentState('Recovery After Delay');
+      // 等待鍵盤真正關閉並且 vv.height 穩定
+      waitForStableHeight(function() {
+        // 3. 現在 vv.height 已經穩定，更新 Flutter root
+        const flutterRoot = document.getElementById('flutter-root');
+        if (flutterRoot) {
+          const stableHeight = vv.height;
+          const stableWidth = vv.width;
+          
+          console.log('[OAUTH2_RECOVERY] ✅ Updating flutter-root to stable dimensions: ' + stableWidth + 'x' + stableHeight);
+          flutterRoot.style.height = stableHeight + 'px';
+          flutterRoot.style.width = stableWidth + 'px';
+          
+          // 觸發 reflow 確保 CSS 應用
+          flutterRoot.offsetHeight;
+          
+          // 觸發手動事件給 visualViewport sync 脚本
+          console.log('[OAUTH2_RECOVERY] ✅ Triggering viewport update event');
+          try {
+            window.dispatchEvent(new CustomEvent('_vv_recovery_height_stable', {
+              detail: { width: stableWidth, height: stableHeight }
+            }));
+          } catch (_) {}
+        }
+
+        logCurrentState('Recovery After Stable Height');
         console.log('[OAUTH2_RECOVERY] ✅ Viewport recovery completed');
-      }, 300);
+      });
 
     } catch (e) {
       console.warn('[OAUTH2_RECOVERY] ❌ Error during recovery:', e);
       logCurrentState('Recovery Error');
     }
+  }
+
+  /**
+   * 等待 visualViewport.height 穩定
+   * 
+   * iOS PWA 鍵盤關閉時，vv.height 更新有延遲
+   * 本函數輪詢 vv.height，直到連續 3 次讀數相同
+   */
+  function waitForStableHeight(callback) {
+    const vv = window.visualViewport;
+    if (!vv) {
+      callback();
+      return;
+    }
+
+    let stableCount = 0;
+    let lastHeight = vv.height;
+    let lastWidth = vv.width;
+    let checkCount = 0;
+    const maxChecks = 100; // 最多檢查 100 次 (5秒 @ 50ms 間隔)
+
+    console.log('[OAUTH2_RECOVERY] 🔍 Waiting for visualViewport height to stabilize...');
+    console.log('[OAUTH2_RECOVERY] Current height: ' + lastHeight + ', width: ' + lastWidth);
+
+    const checkInterval = setInterval(function() {
+      checkCount++;
+      const currentHeight = vv.height;
+      const currentWidth = vv.width;
+
+      if (currentHeight === lastHeight && currentWidth === lastWidth) {
+        stableCount++;
+        console.log('[OAUTH2_RECOVERY] 📊 Height stable: ' + currentHeight + 'x' + currentWidth + ' (count: ' + stableCount + '/3)');
+        
+        if (stableCount >= 3) {
+          // 穩定了！
+          clearInterval(checkInterval);
+          console.log('[OAUTH2_RECOVERY] ✅ visualViewport height is now stable!');
+          callback();
+          return;
+        }
+      } else {
+        stableCount = 0;
+        if (currentHeight !== lastHeight || currentWidth !== lastWidth) {
+          console.log('[OAUTH2_RECOVERY] 📊 Height changed: ' + lastHeight + 'x' + lastWidth + ' → ' + currentHeight + 'x' + currentWidth);
+        }
+        lastHeight = currentHeight;
+        lastWidth = currentWidth;
+      }
+
+      // 超過最大檢查次數，放棄等待
+      if (checkCount >= maxChecks) {
+        clearInterval(checkInterval);
+        console.warn('[OAUTH2_RECOVERY] ⏱️ Timeout waiting for stable height, using current: ' + lastHeight + 'x' + lastWidth);
+        callback();
+        return;
+      }
+    }, 50); // 每 50ms 檢查一次
   }
 
   /**
@@ -110,13 +186,13 @@
 
   /**
    * 安排多段恢復（避免 iOS PWA 事件延遲）
+   * 
+   * 修改：只調用一次 recoverViewport()，因為新版本已經有內部等待邏輯
    */
   function scheduleRecovery(tag) {
     console.log(`[OAUTH2_RECOVERY] 🧭 scheduleRecovery: ${tag}`);
+    // 主恢復（含內部穩定性等待）
     recoverViewport();
-    requestAnimationFrame(() => recoverViewport());
-    setTimeout(recoverViewport, 120);
-    setTimeout(recoverViewport, 360);
   }
 
   /**
