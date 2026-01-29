@@ -53,6 +53,36 @@
     })();
   </script>
   
+  <!-- iOS PWA: ??ÅΩ‰∏¶Ë???resize ‰∫ã‰ª∂ÔºåÂπ´?©Ë®∫?∑Â?Ê®ôÊ?Â∞ÑÂ?È°?-->
+  <script>
+    (function() {
+      'use strict';
+      
+      const ua = navigator.userAgent || '';
+      const isIOS = /iPad|iPhone|iPod/.test(ua);
+      
+      if (!isIOS) return;
+      
+      let resizeCount = 0;
+      let lastLogTime = 0;
+      
+      window.addEventListener('resize', function() {
+        resizeCount++;
+        const now = Date.now();
+        
+        // ?øÂ??éÂ∫¶?•Ë?Ëº∏Âá∫ÔºåÊ? 500ms ?ÄÂ§öË??Ñ‰?Ê¨?
+        if (now - lastLogTime > 500) {
+          const vv = window.visualViewport;
+          console.log('[VIEWPORT_SYNC] Resize event #' + resizeCount + ' - vv: ' + 
+                     (vv ? vv.width + 'x' + vv.height : 'N/A'));
+          lastLogTime = now;
+        }
+      }, { passive: true });
+      
+      console.log('[VIEWPORT_SYNC] iOS viewport resize monitor installed');
+    })();
+  </script>
+  
 
   <style>
     #update-banner {
@@ -998,12 +1028,6 @@
         if (!document.hidden) delayedSync();
       });
 
-      // ??ÅΩ OAuth2 recovery ÂÆåÊ?‰∫ã‰ª∂Ôºà‰øÆÂæ?iOS PWA visualViewport Âª∂ÈÅ≤?èÈ?Ôº?
-      window.addEventListener('_vv_recovery_height_stable', function(event) {
-        logSync('OAuth2 recovery: height stable event received');
-        delayedSync(); // Á´ãÂç≥?åÊ≠•
-      }, { passive: true });
-
       if (window.MutationObserver) {
         const mo = new MutationObserver(function () { queueSync(); });
         mo.observe(document.body, { childList: true, subtree: true });
@@ -1014,81 +1038,6 @@
     })();
   </script>
 
-  <!-- iOS PWA: ?ôÁî®Ëº™Ë©¢Ê©üÂà∂ (?≤Ê≠¢ visualViewport ‰∏çËß∏??resize ‰∫ã‰ª∂) -->
-  <script>
-    (function() {
-      'use strict';
-      
-      // Ê™¢Êü•?ØÂê¶?ÄË¶ÅÂ??®Ëº™Ë©¢Â??®ÊñπÊ°?
-      const ua = navigator.userAgent || '';
-      const isIOS = /iPad|iPhone|iPod/.test(ua);
-      const isStandalone = (function () {
-        try {
-          return window.matchMedia('(display-mode: standalone)').matches ||
-                 window.navigator.standalone === true ||
-                 window.matchMedia('(display-mode: fullscreen)').matches;
-        } catch (_) {
-          return false;
-        }
-      })();
-
-      if (!isIOS || !isStandalone || !window.visualViewport) {
-        return;
-      }
-
-      // iOS PWA Ë¶ñÁ?È´òÂ∫¶Ëº™Ë©¢?????
-      // ?ê‰? iOS ?àÊú¨??visualViewport resize ‰∫ã‰ª∂?ØËÉΩ‰∏çËß∏??
-      // Ê≠§Ëº™Ë©¢‰??∫Â??®ÊñπÊ°àÁ¢∫‰øùÈ?Â∫¶Â?Ê≠?
-      const vv = window.visualViewport;
-      let lastRecordedHeight = vv.height;
-      let lastRecordedWidth = vv.width;
-      let pollCount = 0;
-
-      const pollInterval = setInterval(function() {
-        pollCount++;
-        const currentHeight = vv.height;
-        const currentWidth = vv.width;
-
-        if (currentHeight !== lastRecordedHeight || currentWidth !== lastRecordedWidth) {
-          // È´òÂ∫¶?ñÂØ¨Â∫¶Áôº?üË???
-          const heightDelta = Math.abs(currentHeight - lastRecordedHeight);
-          const widthDelta = Math.abs(currentWidth - lastRecordedWidth);
-          
-          // ?™Ë??ÑÊ??èÁæ©?ÑË???(> 5px)
-          if (heightDelta > 5 || widthDelta > 5) {
-            console.log('[VV_POLL] Height/width changed: ' + lastRecordedWidth + 'x' + lastRecordedHeight + 
-                       ' ??' + currentWidth + 'x' + currentHeight + ' (delta: ' + widthDelta.toFixed(0) + 'x' + heightDelta.toFixed(0) + ')');
-            
-            lastRecordedHeight = currentHeight;
-            lastRecordedWidth = currentWidth;
-            
-            // Ëß∏Áôº flutter-root ?ÑÊõ¥??
-            try {
-              const root = document.getElementById('flutter-root');
-              if (root) {
-                root.style.width = currentWidth + 'px';
-                root.style.height = currentHeight + 'px';
-                console.log('[VV_POLL] Updated flutter-root to ' + currentWidth + 'x' + currentHeight);
-                
-                // Ëß∏Áôº reflow
-                root.offsetHeight;
-              }
-            } catch (e) {
-              console.warn('[VV_POLL] Error updating root:', e);
-            }
-          }
-        }
-      }, 200); // ÊØ?200ms Ëº™Ë©¢‰∏ÄÊ¨?(?©Â??µÁõ§?ìÈ?/?úÈ??ÑÊ??ìÂ∞∫Â∫?
-
-      // ?úÊ≠¢Ëº™Ë©¢?ÑÊ?‰ª∂Ô??ØÈÅ∏Ôº?
-      // Â¶ÇÊ??âÁî®Â∑≤Á?Á©©Â?ËøêË?Ë∂ÖË? 60 ÁßíÔ??Ø‰ª•?úÊ≠¢Ëº™Ë©¢‰ª•Á??ÅÊÄßËÉΩ
-      setTimeout(function() {
-        clearInterval(pollInterval);
-        console.log('[VV_POLL] Polling stopped after 60s (app stable)');
-      }, 60000);
-    })();
-  </script>
-
   <script src="flutter_bootstrap.js?v=1.0.739" async></script>
 
   <!-- Fix 2: Removed pwa_viewport_fix.js - conflicts with visualViewport root model -->
@@ -1096,6 +1045,9 @@
   <!-- Web Vitals ??????Áß? -->
   <script src="web_vitals.js"></script>
   
+  <!-- OAuth2 keyboard recovery -->
+  <script src="oauth2_keyboard_recovery.js"></script>
+
   <!-- ??????à¶?Ó∏????? -->
   <script src="offline_handler.js"></script>
   
@@ -1163,6 +1115,8 @@
   
 </body>
 </html>
+
+
 
 
 
