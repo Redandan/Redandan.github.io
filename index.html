@@ -52,46 +52,6 @@
       console.log('[DIAG] index.html diagnostics installed, version meta:', (document.querySelector('meta[name="version"]')||{}).content);
     })();
   </script>
-
-  <!-- iOS PWA: ??? visualViewport é«˜åº¦è®Šå?ï¼Œç¢ºä¿å?æ¨™ç³»çµ±æ›´??-->
-  <script>
-    (function() {
-      'use strict';
-      
-      const ua = navigator.userAgent || '';
-      const isIOS = /iPad|iPhone|iPod/.test(ua);
-      
-      if (!isIOS) return;
-      
-      const vv = window.visualViewport;
-      if (!vv) return;
-      
-      console.log('[VIEWPORT_HEIGHT_MONITOR] Installed on iOS device');
-      
-      // ??? visualViewport é«˜åº¦è®Šå?
-      // ?¶é?åº¦è??–æ?ï¼ˆç‰¹?¥æ˜¯?µç›¤?“é?/?œé?ï¼‰ï?ä¸»å?è§¸ç™¼?æ?ç³»çµ±?´æ–°
-      let lastHeight = vv.height;
-      let lastWidth = vv.width;
-      
-      vv.addEventListener('resize', function() {
-        const currentHeight = vv.height;
-        const currentWidth = vv.width;
-        const heightChange = Math.abs(currentHeight - lastHeight);
-        
-        // ?ªåœ¨?‰é¡¯?—è??–æ?è¨˜é?ï¼? 5pxï¼?
-        if (heightChange > 5 || Math.abs(currentWidth - lastWidth) > 5) {
-          console.log('[VIEWPORT_HEIGHT_MONITOR] Height changed: ' + lastHeight + ' ??' + currentHeight + 
-                     ' (delta: ' + heightChange.toFixed(0) + 'px)');
-          
-          // ?´æ–°é«˜åº¦ï¼Œä?ä¹‹å?ä½¿ç”¨
-          lastHeight = currentHeight;
-          lastWidth = currentWidth;
-        }
-      }, { passive: true });
-      
-      console.log('[VIEWPORT_HEIGHT_MONITOR] Initial size: ' + vv.width + 'x' + vv.height);
-    })();
-  </script>
   
 
   <style>
