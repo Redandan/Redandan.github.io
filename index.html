@@ -52,8 +52,8 @@
       console.log('[DIAG] index.html diagnostics installed, version meta:', (document.querySelector('meta[name="version"]')||{}).content);
     })();
   </script>
-  
-  <!-- iOS PWA: ??½ä¸¦è???resize äº‹ä»¶ï¼Œå¹«?©è¨º?·å?æ¨™æ?å°„å?é¡?-->
+
+  <!-- iOS PWA: ??? visualViewport é«˜åº¦è®Šå?ï¼Œç¢ºä¿å?æ¨™ç³»çµ±æ›´??-->
   <script>
     (function() {
       'use strict';
@@ -63,23 +63,33 @@
       
       if (!isIOS) return;
       
-      let resizeCount = 0;
-      let lastLogTime = 0;
+      const vv = window.visualViewport;
+      if (!vv) return;
       
-      window.addEventListener('resize', function() {
-        resizeCount++;
-        const now = Date.now();
+      console.log('[VIEWPORT_HEIGHT_MONITOR] Installed on iOS device');
+      
+      // ??? visualViewport é«˜åº¦è®Šå?
+      // ?¶é?åº¦è??–æ?ï¼ˆç‰¹?¥æ˜¯?µç›¤?“é?/?œé?ï¼‰ï?ä¸»å?è§¸ç™¼?æ?ç³»çµ±?´æ–°
+      let lastHeight = vv.height;
+      let lastWidth = vv.width;
+      
+      vv.addEventListener('resize', function() {
+        const currentHeight = vv.height;
+        const currentWidth = vv.width;
+        const heightChange = Math.abs(currentHeight - lastHeight);
         
-        // ?¿å??Žåº¦?¥è?è¼¸å‡ºï¼Œæ? 500ms ?€å¤šè??„ä?æ¬?
-        if (now - lastLogTime > 500) {
-          const vv = window.visualViewport;
-          console.log('[VIEWPORT_SYNC] Resize event #' + resizeCount + ' - vv: ' + 
-                     (vv ? vv.width + 'x' + vv.height : 'N/A'));
-          lastLogTime = now;
+        // ?ªåœ¨?‰é¡¯?—è??–æ?è¨˜é?ï¼? 5pxï¼?
+        if (heightChange > 5 || Math.abs(currentWidth - lastWidth) > 5) {
+          console.log('[VIEWPORT_HEIGHT_MONITOR] Height changed: ' + lastHeight + ' ??' + currentHeight + 
+                     ' (delta: ' + heightChange.toFixed(0) + 'px)');
+          
+          // ?´æ–°é«˜åº¦ï¼Œä?ä¹‹å?ä½¿ç”¨
+          lastHeight = currentHeight;
+          lastWidth = currentWidth;
         }
       }, { passive: true });
       
-      console.log('[VIEWPORT_SYNC] iOS viewport resize monitor installed');
+      console.log('[VIEWPORT_HEIGHT_MONITOR] Initial size: ' + vv.width + 'x' + vv.height);
     })();
   </script>
   
@@ -1045,9 +1055,6 @@
   <!-- Web Vitals ??????ç§? -->
   <script src="web_vitals.js"></script>
   
-  <!-- OAuth2 keyboard recovery -->
-  <script src="oauth2_keyboard_recovery.js"></script>
-
   <!-- ??????ˆ¦?î¸????? -->
   <script src="offline_handler.js"></script>
   
@@ -1115,8 +1122,6 @@
   
 </body>
 </html>
-
-
 
 
 

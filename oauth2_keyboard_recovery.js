@@ -82,31 +82,39 @@
       }
 
       // 3. ⭐ 強制 Flutter 框架重新計算坐標映射系統
-      // 問題：返回 OAuth2 後，visualViewport 尺寸可能變化（e.g. 620 → 676）
-      // 但 Flutter 內部的坐標系統沒有跟著更新，導致點擊坐標偏移
-      // 解決：觸發 resize 事件，促使 Flutter 重新初始化
+      // 根本問題分析：
+      // - 設備屏幕: 402 × 874px
+      // - 窗口（VisualViewport）: 402 × 676px （差 198px 給系統 UI）
+      // - 鍵盤打開時: vv.height = 620px （差 56px 給鍵盤）
+      // 
+      // 返回 OAuth2 後的坐標偏移原因：
+      // - vv.height 從 620px（鍵盤打開）→ 676px（鍵盤關閉）
+      // - 但 Flutter 的坐標系統仍基於 620px 計算
+      // - 導致 hit-test 坐標偏低 56px
+      //
+      // 解決方案：觸發 resize 事件，強制 Flutter 重新讀取 visualViewport 的新高度
       setTimeout(() => {
-        console.log('[OAUTH2_RECOVERY] ⭐ Triggering resize events to update Flutter coordinate system');
+        const vv = window.visualViewport;
+        console.log('[OAUTH2_RECOVERY] ⭐ Viewport size change detected: ' + vv.width + 'x' + vv.height);
+        console.log('[OAUTH2_RECOVERY] ⭐ Triggering resize to update Flutter coordinate system');
         
         try {
-          // 觸發 resize 事件（Flutter 框架監聽此事件）
           window.dispatchEvent(new Event('resize'));
           console.log('[OAUTH2_RECOVERY] ✅ Dispatched resize event');
-        } catch (resizeErr) {
-          console.warn('[OAUTH2_RECOVERY] ⚠️ Error dispatching resize:', resizeErr);
+        } catch (e) {
+          console.warn('[OAUTH2_RECOVERY] ⚠️ Error dispatching resize:', e);
         }
         
         try {
-          // 觸發 orientationchange 事件（額外觸發，確保更新）
           window.dispatchEvent(new Event('orientationchange'));
           console.log('[OAUTH2_RECOVERY] ✅ Dispatched orientationchange event');
-        } catch (orientErr) {
-          console.warn('[OAUTH2_RECOVERY] ⚠️ Error dispatching orientationchange:', orientErr);
+        } catch (e) {
+          console.warn('[OAUTH2_RECOVERY] ⚠️ Error dispatching orientationchange:', e);
         }
         
         logCurrentState('Recovery After Resize Events');
         console.log('[OAUTH2_RECOVERY] ✅ Viewport recovery completed - coordinate system updated');
-      }, 300);
+      }, 200);  // 鍵盤關閉通常需要 100-200ms
 
     } catch (e) {
       console.warn('[OAUTH2_RECOVERY] ❌ Error during recovery:', e);
