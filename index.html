@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?ˆæœ¬?–ç·©å­˜æ?è­?-->
-    <meta name="cache-version" content="1.0.740">
+    <meta name="cache-version" content="1.0.741">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -23,7 +23,7 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.740+741">
+  <meta name="version" content="1.0.741+742">
 
   <!-- Fix 1: Removed vh-based viewport logic - conflicts with visualViewport root model -->
   
@@ -118,7 +118,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.740">
+  <link rel="manifest" href="manifest.json?v=1.0.741">
   
   <!-- PWA ??†î?????Žï…±???? -->
   <meta name="application-name" content="Agora Market">
@@ -126,7 +126,7 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ??????µæœ±??î¤¢å???è¹Žâ?î²???????? -->
-  <link rel="preload" href="flutter_bootstrap.js?v=1.0.740" as="script">
+  <link rel="preload" href="flutter_bootstrap.js?v=1.0.741" as="script">
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -439,7 +439,7 @@
           <img src="icons/new_favicon/apple-touch-icon.png" alt="Agora Market" style="width: 116px; height: 116px; object-fit: contain;" />
         </div>
         <div class="loading-text" id="loading-text">Agora Market</div>
-        <div class="loading-version" id="version-display">v1.0.740</div>
+        <div class="loading-version" id="version-display">v1.0.741</div>
       </div>
     </div>
   </div>
@@ -887,12 +887,28 @@
         // iOS 17+ WebKit bug: offsetTop represents visual viewport offset
         // For iOS 26.2: offsetTop contains incorrect offset that needs compensation
         // We compensate the full offsetTop to align visual and hit-test coordinates
-        const safeTop = -vv.offsetTop;
-        const safeLeft = -vv.offsetLeft;
+        const pageTop = (typeof vv.pageTop === 'number')
+          ? vv.pageTop
+          : (window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0);
+        const pageLeft = (typeof vv.pageLeft === 'number')
+          ? vv.pageLeft
+          : (window.pageXOffset || document.documentElement.scrollLeft || document.body.scrollLeft || 0);
+
+        let safeTop = -vv.offsetTop;
+        let safeLeft = -vv.offsetLeft;
+
+        // Fallback: offsetTop can be 0 while pageTop/scrollTop holds the real offset (iOS PWA hit-test bug)
+        if (Math.abs(vv.offsetTop) <= 1 && Math.abs(pageTop) > 5) {
+          safeTop = -pageTop;
+        }
+        if (Math.abs(vv.offsetLeft) <= 1 && Math.abs(pageLeft) > 5) {
+          safeLeft = -pageLeft;
+        }
         
         // Debug logging (only log when offset is significant)
-        if (Math.abs(vv.offsetTop) > 5 || Math.abs(vv.offsetLeft) > 5) {
-          logSync('offsetTop=' + vv.offsetTop + ', offsetLeft=' + vv.offsetLeft + 
+        if (Math.abs(vv.offsetTop) > 5 || Math.abs(vv.offsetLeft) > 5 || Math.abs(pageTop) > 5 || Math.abs(pageLeft) > 5) {
+          logSync('offsetTop=' + vv.offsetTop + ', offsetLeft=' + vv.offsetLeft +
+                 ', pageTop=' + pageTop + ', pageLeft=' + pageLeft +
                  ', safeTop=' + safeTop + ', safeLeft=' + safeLeft);
         }
         
@@ -963,11 +979,19 @@
           return;
         }
         ensureFlutterElementsInRoot(root);
-        // iOS PWA: docScroll matches offsetTop (e.g. 62), so body is already at -62; our transform adds another -62 => double offset. Zero document scroll so only #flutter-root transform applies.
-        if (Math.abs(vv.offsetTop) > 5 || Math.abs(vv.offsetLeft) > 5) {
+        // iOS PWA: docScroll/pageTop can introduce hit-test offset; clear scroll so only #flutter-root transform applies.
+        const pageTop = (typeof vv.pageTop === 'number')
+          ? vv.pageTop
+          : (window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0);
+        const pageLeft = (typeof vv.pageLeft === 'number')
+          ? vv.pageLeft
+          : (window.pageXOffset || document.documentElement.scrollLeft || document.body.scrollLeft || 0);
+        if (Math.abs(vv.offsetTop) > 5 || Math.abs(vv.offsetLeft) > 5 || Math.abs(pageTop) > 5 || Math.abs(pageLeft) > 5) {
           try {
             document.documentElement.scrollTop = 0;
             document.body.scrollTop = 0;
+            document.documentElement.scrollLeft = 0;
+            document.body.scrollLeft = 0;
           } catch (_) {}
         }
         applyToRoot(root);
@@ -1008,7 +1032,7 @@
     })();
   </script>
 
-  <script src="flutter_bootstrap.js?v=1.0.740" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.741" async></script>
 
   <!-- Fix 2: Removed pwa_viewport_fix.js - conflicts with visualViewport root model -->
 
@@ -1085,6 +1109,7 @@
   
 </body>
 </html>
+
 
 
 
