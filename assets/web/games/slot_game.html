@@ -1476,12 +1476,30 @@ function doSpin() {
 }
 
 // ===== Back button – cancel auto-spin =====
+/** Cancels auto-spin if it is currently active.
+ *  Returns true if auto-spin was running (and has now been cancelled),
+ *  false if nothing needed to be done.
+ *  Exposed on window so the Flutter layer can call it via evaluateJavascript.
+ */
+window.cancelAutoSpin = function() {
+  if (!autoSpin) return false;
+  autoSpin = false;
+  spinBtn.style.outline = '';
+  clearTimeout(autoTimer);
+  addLog('自動旋轉已取消', 'info');
+  return true;
+};
+
 document.getElementById('btn-back').addEventListener('click', () => {
-  if (autoSpin) {
-    autoSpin = false;
-    spinBtn.style.outline = '';
-    clearTimeout(autoTimer);
-    addLog('自動旋轉已取消', 'info');
+  if (!window.cancelAutoSpin()) {
+    // Navigate back to Flutter.
+    // On mobile InAppWebView: use the native JS handler channel.
+    // On Flutter Web (iframe): postMessage to the parent Flutter window.
+    if (window.flutter_inappwebview) {
+      window.flutter_inappwebview.callHandler('goBack');
+    } else {
+      try { window.parent.postMessage({ action: 'slotGameGoBack' }, window.location.origin); } catch (e) {}
+    }
   }
 });
 
