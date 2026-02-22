@@ -119,12 +119,12 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 }
 .pt-col{flex:1; display:flex; flex-direction:column; gap:1px}
 .pt-row{
-  display:flex; align-items:center; height:28px;
+  display:flex; align-items:center; height:clamp(22px,3.8vh,28px);
   border-bottom:1px solid rgba(100,110,220,.18); gap:4px;
 }
 .pt-row:last-child{border-bottom:none}
-.pt-syms{font-size:18px; line-height:1; flex:1; color:#eee; letter-spacing:-1px}
-.pt-val{color:#c0ccff; font-size:18px; font-weight:bold; text-shadow:0 0 6px rgba(192,204,255,.55); min-width:38px; text-align:right}
+.pt-syms{font-size:clamp(13px,4.2vw,18px); line-height:1; flex:1; color:#eee; letter-spacing:-1px}
+.pt-val{color:#c0ccff; font-size:clamp(13px,4.2vw,18px); font-weight:bold; text-shadow:0 0 6px rgba(192,204,255,.55); min-width:38px; text-align:right}
 .pt-syms-any{font-size:13px; color:#c0ccff; letter-spacing:0}
 .pt-div{flex:0 0 1px; background:linear-gradient(180deg,transparent,#6065d8 30%,#6065d8 70%,transparent); align-self:stretch; margin:3px 0}
 /* Wild badge */
@@ -168,7 +168,7 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
    ============================================================ */
 #reel-section {
   flex:0 0 auto;
-  height:260px;
+  height:min(260px,36vh);
   margin:2px 3px;
   position:relative;
   background:#040215;
@@ -185,8 +185,8 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
   will-change:transform;
 }
 @keyframes scanSweep{
-  0%  {transform:translateY(-260px)}
-  100%{transform:translateY(260px)}
+  0%  {transform:translateY(-100%)}
+  100%{transform:translateY(100%)}
 }
 #reel-canvas-wrap{position:absolute; inset:0; z-index:1}
 #reel-canvas-wrap canvas{display:block; width:100%!important; height:100%!important}
@@ -754,21 +754,11 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 }
 </style>
 
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-  }
-}
-</script>
 </head>
 <body>
 
 <!-- ========== GAME VIEWPORT ========== -->
 <div id="gv">
-
-  <!-- 1. Temple top -->
   <div id="temple-top">
     <div id="roof-bar"></div>
     <div id="eave-line"></div>
@@ -822,7 +812,7 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
   <!-- 3. Jackpot banner -->
   <div id="jackpot-banner">月光舞台大獎高達5000倍！</div>
 
-  <!-- 4. Reel section (Three.js WebGPU / WebGL2) -->
+  <!-- 4. Reel section (Three.js WebGL2) -->
   <div id="reel-section">
     <div id="reel-canvas-wrap"></div>
     <div id="reel-chrome">
@@ -969,8 +959,8 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 </div>
 
 <script type="module">
-import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
 
 // ===== Loading screen =====
 const gameLoader   = document.getElementById('game-loader');
@@ -1022,26 +1012,12 @@ console.error = (...a) => { _err.apply(console, a);  addLog(formatLogArgs(a), 'e
 window.addEventListener('error', e => addLog(`Runtime: ${e.message} at ${e.filename}:${e.lineno}`, 'error'));
 window.addEventListener('unhandledrejection', e => addLog(`Unhandled: ${e.reason}`, 'error'));
 
-// ===== WebGPU / WebGL2 detection =====
-// PWA on iOS / Firefox / older Android does not expose navigator.gpu.
-// Fall back to THREE.WebGLRenderer so the game remains fully playable.
-let USE_WEBGPU = !!navigator.gpu;
-if (!USE_WEBGPU) {
-  addLog('WebGPU 不可用，切換至 WebGL2 降級模式', 'warn');
-}
-// Only fetch WebGPURenderer when the browser actually supports WebGPU.
-// Dynamic import avoids downloading ~500 KB of WebGPU-specific code on
-// iOS / Firefox / older Android, and handles CDN timeouts gracefully.
-let WebGPURenderer = null;
-if (USE_WEBGPU) {
-  try {
-    const m = await import('three/addons/renderers/webgpu/WebGPURenderer.js');
-    WebGPURenderer = m.default;
-  } catch (_e) {
-    USE_WEBGPU = false;
-    addLog(`WebGPURenderer 載入失敗，改用 WebGL2 (${_e?.message ?? _e})`, 'warn');
-  }
-}
+// ===== WebGL2 renderer (WebGPU removed for broad iOS/Android compatibility) =====
+// Using THREE.WebGLRenderer ensures the game works on iOS 10.1+ WKWebView and
+// older Android WebView without requiring importmaps or top-level await.
+// Top-level await (needed for dynamic WebGPU import) is only available in
+// iOS 15+ modules, so removing it makes the module load on iOS 12–14 as well.
+const USE_WEBGPU = false;
 
 // ===== Three.js scene setup (reel section only) =====
 const reelSection = document.getElementById('reel-section');
@@ -1057,9 +1033,7 @@ const camera = new THREE.PerspectiveCamera(38, W / H, 0.1, 60);
 camera.position.set(0, 0, 6.8);
 camera.lookAt(0, 0, 0);
 
-const renderer = USE_WEBGPU
-  ? new WebGPURenderer({ antialias: true, alpha: false })
-  : new THREE.WebGLRenderer({ antialias: true, alpha: false });
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
 renderer.setSize(W, H);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -1095,9 +1069,7 @@ const charCamera   = new THREE.PerspectiveCamera(50, charW / charH, 0.1, 50);
 charCamera.position.set(0, 0.9, 3.04); // updated post-load to camZ = CHAR_FIT_TARGET * 1.2
 charCamera.lookAt(0, 0.9, 0);
 
-const charRenderer = USE_WEBGPU
-  ? new WebGPURenderer({ antialias: true, alpha: true })
-  : new THREE.WebGLRenderer({ antialias: true, alpha: true });
+const charRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 charRenderer.setSize(charW, charH);
 charRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 charRenderer.setClearColor(0x000000, 0); // fully transparent background
@@ -1642,7 +1614,7 @@ renderer.setAnimationLoop(() => {
   charRenderer.render(charScene, charCamera);
 });
 
-console.log(`💃 月光舞台 v3.0 已加載 – ${USE_WEBGPU ? 'WebGPU' : 'WebGL2'} 模式`);
+console.log('💃 月光舞台 v3.0 已加載 – WebGL2 模式');
 </script>
 
 </body>
