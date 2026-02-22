@@ -3,9 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-<meta http-equiv="Pragma" content="no-cache" />
-<meta http-equiv="Expires" content="0" />
+<meta http-equiv="Cache-Control" content="no-cache" />
 <title>月光舞台 - 夜舞老虎機</title>
 <style>
 /* ===== Reset ===== */
@@ -824,7 +822,7 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
   <!-- 3. Jackpot banner -->
   <div id="jackpot-banner">月光舞台大獎高達5000倍！</div>
 
-  <!-- 4. Reel section (Three.js WebGPU) -->
+  <!-- 4. Reel section (Three.js WebGPU / WebGL2) -->
   <div id="reel-section">
     <div id="reel-canvas-wrap"></div>
     <div id="reel-chrome">
@@ -972,7 +970,6 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 
 <script type="module">
 import * as THREE from 'three';
-import WebGPURenderer from 'three/addons/renderers/webgpu/WebGPURenderer.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 // ===== Loading screen =====
@@ -1025,10 +1022,25 @@ console.error = (...a) => { _err.apply(console, a);  addLog(formatLogArgs(a), 'e
 window.addEventListener('error', e => addLog(`Runtime: ${e.message} at ${e.filename}:${e.lineno}`, 'error'));
 window.addEventListener('unhandledrejection', e => addLog(`Unhandled: ${e.reason}`, 'error'));
 
-// ===== WebGPU check =====
-if (!navigator.gpu) {
-  alert('您的瀏覽器不支持 WebGPU，請使用 Chrome 113+ 或 Edge 113+');
-  throw new Error('WebGPU not supported');
+// ===== WebGPU / WebGL2 detection =====
+// PWA on iOS / Firefox / older Android does not expose navigator.gpu.
+// Fall back to THREE.WebGLRenderer so the game remains fully playable.
+let USE_WEBGPU = !!navigator.gpu;
+if (!USE_WEBGPU) {
+  addLog('WebGPU 不可用，切換至 WebGL2 降級模式', 'warn');
+}
+// Only fetch WebGPURenderer when the browser actually supports WebGPU.
+// Dynamic import avoids downloading ~500 KB of WebGPU-specific code on
+// iOS / Firefox / older Android, and handles CDN timeouts gracefully.
+let WebGPURenderer = null;
+if (USE_WEBGPU) {
+  try {
+    const m = await import('three/addons/renderers/webgpu/WebGPURenderer.js');
+    WebGPURenderer = m.default;
+  } catch (_e) {
+    USE_WEBGPU = false;
+    addLog(`WebGPURenderer 載入失敗，改用 WebGL2 (${_e?.message ?? _e})`, 'warn');
+  }
 }
 
 // ===== Three.js scene setup (reel section only) =====
@@ -1045,7 +1057,9 @@ const camera = new THREE.PerspectiveCamera(38, W / H, 0.1, 60);
 camera.position.set(0, 0, 6.8);
 camera.lookAt(0, 0, 0);
 
-const renderer = new WebGPURenderer({ antialias: true, alpha: false });
+const renderer = USE_WEBGPU
+  ? new WebGPURenderer({ antialias: true, alpha: false })
+  : new THREE.WebGLRenderer({ antialias: true, alpha: false });
 renderer.setSize(W, H);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -1081,7 +1095,9 @@ const charCamera   = new THREE.PerspectiveCamera(50, charW / charH, 0.1, 50);
 charCamera.position.set(0, 0.9, 3.04); // updated post-load to camZ = CHAR_FIT_TARGET * 1.2
 charCamera.lookAt(0, 0.9, 0);
 
-const charRenderer = new WebGPURenderer({ antialias: true, alpha: true });
+const charRenderer = USE_WEBGPU
+  ? new WebGPURenderer({ antialias: true, alpha: true })
+  : new THREE.WebGLRenderer({ antialias: true, alpha: true });
 charRenderer.setSize(charW, charH);
 charRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 charRenderer.setClearColor(0x000000, 0); // fully transparent background
@@ -1626,7 +1642,7 @@ renderer.setAnimationLoop(() => {
   charRenderer.render(charScene, charCamera);
 });
 
-console.log('💃 月光舞台 v3.0 已加載 – WebGPU 模式');
+console.log(`💃 月光舞台 v3.0 已加載 – ${USE_WEBGPU ? 'WebGPU' : 'WebGL2'} 模式`);
 </script>
 
 </body>
