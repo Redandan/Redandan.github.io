@@ -691,6 +691,69 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
   100%{opacity:1; transform:scale(1) rotate(0)}
 }
 .hidden{display:none!important}
+
+/* ===== Loading screen ===== */
+#game-loader{
+  position:fixed; inset:0; z-index:9999;
+  background:linear-gradient(160deg,#050218 0%,#0d0535 40%,#130848 70%,#050218 100%);
+  display:flex; align-items:center; justify-content:center;
+  transition:opacity 0.6s ease, visibility 0.6s ease;
+}
+#game-loader.fade-out{ opacity:0; visibility:hidden; pointer-events:none; }
+#gl-inner{
+  display:flex; flex-direction:column; align-items:center; gap:14px;
+  width:min(320px,85vw);
+}
+#gl-logo{
+  font-size:clamp(28px,7vw,40px); font-weight:900; letter-spacing:6px;
+  color:#c0ccff;
+  text-shadow:0 0 18px rgba(140,160,255,.9), 0 0 40px rgba(100,130,255,.55), 0 0 70px rgba(80,100,255,.3);
+  animation:glLogoPulse 2.2s ease-in-out infinite;
+}
+@keyframes glLogoPulse{
+  0%,100%{text-shadow:0 0 18px rgba(140,160,255,.9),0 0 40px rgba(100,130,255,.55),0 0 70px rgba(80,100,255,.3)}
+  50%{text-shadow:0 0 28px rgba(180,200,255,1),0 0 60px rgba(140,170,255,.75),0 0 100px rgba(110,140,255,.45)}
+}
+#gl-sub{
+  font-size:clamp(11px,3vw,14px); letter-spacing:4px; text-transform:uppercase;
+  color:rgba(160,175,255,.55); margin-top:-8px;
+}
+#gl-spinner{
+  position:relative; width:52px; height:52px;
+  margin:6px 0;
+}
+.gl-dot{
+  position:absolute; width:10px; height:10px; border-radius:50%;
+  background:#c0ccff;
+  box-shadow:0 0 8px rgba(160,180,255,.8);
+  animation:glDotOrbit 1.4s linear infinite;
+}
+.gl-dot.d0{animation-delay:0s}
+.gl-dot.d1{animation-delay:-.23s}
+.gl-dot.d2{animation-delay:-.46s}
+.gl-dot.d3{animation-delay:-.70s}
+.gl-dot.d4{animation-delay:-.93s}
+.gl-dot.d5{animation-delay:-1.16s}
+@keyframes glDotOrbit{
+  0%  {transform:rotate(0deg)   translateX(20px) scale(1);   opacity:1}
+  50% {transform:rotate(180deg) translateX(20px) scale(0.5); opacity:0.4}
+  100%{transform:rotate(360deg) translateX(20px) scale(1);   opacity:1}
+}
+#gl-bar-wrap{
+  width:100%; height:6px; background:rgba(255,255,255,.08);
+  border-radius:3px; overflow:hidden;
+  border:1px solid rgba(160,180,255,.18);
+}
+#gl-bar{
+  height:100%; width:0%; border-radius:3px;
+  background:linear-gradient(90deg,#6065d8,#9098ff,#c0ccff);
+  box-shadow:0 0 8px rgba(160,180,255,.6);
+  transition:width 0.25s ease;
+}
+#gl-status{
+  font-size:clamp(11px,2.5vw,13px); color:rgba(160,175,255,.6);
+  letter-spacing:1px; min-height:18px;
+}
 </style>
 
 <script type="importmap">
@@ -883,6 +946,24 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
   <div id="log-toggle">📊 日誌 (點擊收起)</div>
 </div>
 
+<!-- Loading screen overlay -->
+<div id="game-loader">
+  <div id="gl-inner">
+    <div id="gl-logo">月光舞台</div>
+    <div id="gl-sub">Moon Dance Stage</div>
+    <div id="gl-spinner">
+      <span class="gl-dot d0"></span>
+      <span class="gl-dot d1"></span>
+      <span class="gl-dot d2"></span>
+      <span class="gl-dot d3"></span>
+      <span class="gl-dot d4"></span>
+      <span class="gl-dot d5"></span>
+    </div>
+    <div id="gl-bar-wrap"><div id="gl-bar"></div></div>
+    <div id="gl-status">載入中...</div>
+  </div>
+</div>
+
 <!-- Big win overlay -->
 <div id="big-win" class="hidden">
   <div id="bw-title">BIG WIN!</div>
@@ -893,6 +974,26 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 import * as THREE from 'three';
 import WebGPURenderer from 'three/addons/renderers/webgpu/WebGPURenderer.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+// ===== Loading screen =====
+const gameLoader   = document.getElementById('game-loader');
+const glBar        = document.getElementById('gl-bar');
+const glStatus     = document.getElementById('gl-status');
+let   _loaderHidden = false;
+
+function setLoadProgress(pct, msg) {
+  glBar.style.width = pct + '%';
+  if (msg) glStatus.textContent = msg;
+}
+
+function hideLoader() {
+  if (_loaderHidden) return;
+  _loaderHidden = true;
+  setLoadProgress(100, '載入完成！');
+  setTimeout(() => gameLoader.classList.add('fade-out'), 300);
+}
+
+setLoadProgress(5, '初始化引擎...');
 
 // ===== Log system =====
 const logPanel = document.getElementById('log-panel');
@@ -935,6 +1036,8 @@ const reelSection = document.getElementById('reel-section');
 const W = reelSection.clientWidth;
 const H = reelSection.clientHeight;
 
+setLoadProgress(10, '建立場景...');
+
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x040215);
 
@@ -948,6 +1051,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.35;
 document.getElementById('reel-canvas-wrap').appendChild(renderer.domElement);
+setLoadProgress(20, '初始化渲染器...');
 
 // ===== Lighting =====
 scene.add(new THREE.AmbientLight(0xb0b8ff, 0.7));
@@ -1040,6 +1144,7 @@ gltfLoader.register(parser => ({
   }
 }));
 
+setLoadProgress(30, '載入 3D 模型...');
 gltfLoader.load('./moon_dance.glb',
   (gltf) => {
     charModel = gltf.scene;
@@ -1108,15 +1213,19 @@ gltfLoader.load('./moon_dance.glb',
     // Hide emoji placeholder — 3D model loaded
     document.getElementById('pig-char').classList.add('hidden');
     console.log('✅ Character model loaded (moon_dance.glb)');
+    hideLoader();
   },
   (xhr) => {
     if (xhr.lengthComputable) {
-      console.log(`Model loading: ${Math.round(xhr.loaded / xhr.total * 100)}%`);
+      const pct = Math.round(xhr.loaded / xhr.total * 100);
+      // Map model loading 0-100% to overall progress 30-90%
+      setLoadProgress(30 + Math.round(pct * 0.6), `載入模型 ${pct}%`);
+      console.log(`Model loading: ${pct}%`);
     }
   },
   (err) => {
     console.error('Character model failed to load:', err?.message || String(err));
-    // Pig emoji fallback stays visible automatically
+    hideLoader(); // hide loader even on error so game is accessible
   }
 );
 
