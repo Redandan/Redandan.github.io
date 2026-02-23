@@ -1522,10 +1522,13 @@ window.cancelAutoSpin = function() {
 document.getElementById('btn-back').addEventListener('click', () => {
   if (!window.cancelAutoSpin()) {
     // Navigate back to Flutter.
-    // On mobile InAppWebView: use the native JS handler channel.
-    // On Flutter Web desktop (iframe): postMessage to the parent Flutter window.
+    // On native Android/iOS InAppWebView (not inside an iframe): use the
+    // native JS handler channel – window.parent === window in this context.
+    // On Flutter Web desktop (rendered as an iframe): postMessage to the
+    // parent Flutter window regardless of whether flutter_inappwebview is
+    // injected, because callHandler is unreliable inside an iframe.
     // On mobile browser (direct navigation, not in iframe): use history.back().
-    if (window.flutter_inappwebview) {
+    if (window.flutter_inappwebview && window.parent === window) {
       window.flutter_inappwebview.callHandler('goBack');
     } else if (window.parent !== window) {
       try { window.parent.postMessage({ action: 'slotGameGoBack' }, window.location.origin); } catch (e) {}
