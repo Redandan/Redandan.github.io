@@ -1523,11 +1523,14 @@ document.getElementById('btn-back').addEventListener('click', () => {
   if (!window.cancelAutoSpin()) {
     // Navigate back to Flutter.
     // On mobile InAppWebView: use the native JS handler channel.
-    // On Flutter Web (iframe): postMessage to the parent Flutter window.
+    // On Flutter Web desktop (iframe): postMessage to the parent Flutter window.
+    // On mobile browser (direct navigation, not in iframe): use history.back().
     if (window.flutter_inappwebview) {
       window.flutter_inappwebview.callHandler('goBack');
-    } else {
+    } else if (window.parent !== window) {
       try { window.parent.postMessage({ action: 'slotGameGoBack' }, window.location.origin); } catch (e) {}
+    } else {
+      window.history.back();
     }
   }
 });
