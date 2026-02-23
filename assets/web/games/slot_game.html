@@ -628,6 +628,7 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
    7. LOG PANEL
    ============================================================ */
 #log-panel{
+  display:none; /* hidden from screen; logs are still accumulated for copy-log */
   position:fixed; bottom:0; right:0;
   width:min(340px,90vw); max-height:200px;
   background:rgba(0,0,0,.92); border:2px solid #6065d8;
@@ -642,7 +643,26 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 #log-toggle{color:#c0ccff; font-weight:bold; cursor:pointer; user-select:none}
 
 /* ============================================================
-   8. BIG WIN OVERLAY
+   8. MENU POPUP
+   ============================================================ */
+#menu-popup{
+  display:none; position:fixed; z-index:600;
+  background:rgba(8,5,32,.97); border:1.5px solid #6065d8;
+  border-radius:10px; padding:6px 0; min-width:140px;
+  box-shadow:0 4px 24px rgba(0,0,0,.7);
+  font-family:'Arial',sans-serif;
+}
+#menu-popup.open{ display:block; }
+.menu-item{
+  display:block; width:100%; padding:10px 18px;
+  background:none; border:none; cursor:pointer;
+  color:#c0ccff; font-size:13px; text-align:left;
+  white-space:nowrap; letter-spacing:.4px;
+}
+.menu-item:active{ background:rgba(96,101,216,.25); }
+
+/* ============================================================
+   9. BIG WIN OVERLAY
    ============================================================ */
 #big-win{
   position:fixed; inset:0; z-index:500; pointer-events:none;
@@ -899,9 +919,14 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 
 </div><!-- #gv -->
 
-<!-- Log panel -->
+<!-- Log panel (hidden from screen; accumulates logs for copy-log feature) -->
 <div id="log-panel">
   <div id="log-toggle">📊 日誌 (點擊收起)</div>
+</div>
+
+<!-- Function menu popup (opened by ≡ btn-menu) -->
+<div id="menu-popup">
+  <button class="menu-item" id="menu-copy-log">📋 複製日誌</button>
 </div>
 
 <!-- Loading screen overlay -->
@@ -1412,6 +1437,47 @@ document.getElementById('btn-bet').addEventListener('click', () => {
   betLabel.style.animation = 'betFlash .4s ease';
 });
 
+// ===== Function menu (≡ button) =====
+const menuPopup = document.getElementById('menu-popup');
+
+function openMenu() {
+  const btn = document.getElementById('btn-menu');
+  const rect = btn.getBoundingClientRect();
+  // Position popup above the button, anchored to its right edge.
+  menuPopup.style.bottom = (window.innerHeight - rect.top + 6) + 'px';
+  menuPopup.style.right  = (window.innerWidth - rect.right) + 'px';
+  menuPopup.style.left   = 'auto';
+  menuPopup.classList.add('open');
+}
+function closeMenu() { menuPopup.classList.remove('open'); }
+
+document.getElementById('btn-menu').addEventListener('click', (e) => {
+  e.stopPropagation();
+  menuPopup.classList.contains('open') ? closeMenu() : openMenu();
+});
+document.addEventListener('click', (e) => {
+  if (!menuPopup.contains(e.target)) closeMenu();
+});
+
+document.getElementById('menu-copy-log').addEventListener('click', () => {
+  closeMenu();
+  // Collect all log entries (skip the header toggle element at index 0).
+  const lines = [];
+  const kids = logPanel.children;
+  for (let i = 1; i < kids.length; i++) lines.push(kids[i].textContent);
+  const text = lines.join('\n') || '(no logs)';
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text)
+      .then(() => addLog('日誌已複製到剪貼板', 'info'))
+      .catch(() => {
+        // Clipboard API blocked (e.g. file:// origin) — fall back to prompt.
+        prompt('複製以下日誌內容:', text);
+      });
+  } else {
+    prompt('複製以下日誌內容:', text);
+  }
+});
+
 // ===== Auto-spin state =====
 let autoSpin   = false;
 let autoTimer  = null;
@@ -1521,21 +1587,33 @@ window.cancelAutoSpin = function() {
 
 document.getElementById('btn-back').addEventListener('click', () => {
   if (!window.cancelAutoSpin()) {
+    // Diagnostic: log which path will be taken so the user can copy the log.
+    addLog(`返回: _flutterNative=${!!window._flutterNative} bridge=${!!window.flutter_inappwebview} inIframe=${window.parent !== window}`, 'info');
     // Navigate back to Flutter.
     // On native Android/iOS InAppWebView: window._flutterNative is injected
-    // at document-start by Dart (initialUserScripts), so it is guaranteed to
-    // be true before any user interaction.  We navigate to flutter://goback
-    // which Dart intercepts via shouldOverrideUrlLoading → _navigateBack().
-    // This avoids any dependency on the window.flutter_inappwebview bridge
-    // object, which can be unavailable in some WebView configurations.
+    // at document-start by Dart (initialUserScripts), guaranteed before any
+    // user interaction.
+    //   - If window.flutter_inappwebview is available (always on iOS WKWebView,
+    //     sometimes on Android): use callHandler('goBack').  This sends a
+    //     message without triggering page navigation — safe on iOS 17 WKWebView.
+    //   - Otherwise (Android where the bridge may be absent): navigate to
+    //     flutter://goback, intercepted via shouldOverrideUrlLoading in Dart.
     // On Flutter Web desktop (rendered as an iframe): postMessage to the
     // parent Flutter window — handled by listenForGoBack in Dart.
     // On mobile browser (direct navigation, not in iframe): use history.back().
     if (window._flutterNative) {
-      window.location.href = 'flutter://goback';
+      if (window.flutter_inappwebview) {
+        addLog('返回路徑: callHandler(goBack)', 'info');
+        window.flutter_inappwebview.callHandler('goBack');
+      } else {
+        addLog('返回路徑: flutter://goback URL scheme', 'info');
+        window.location.href = 'flutter://goback';
+      }
     } else if (window.parent !== window) {
+      addLog('返回路徑: postMessage (iframe)', 'info');
       try { window.parent.postMessage({ action: 'slotGameGoBack' }, window.location.origin); } catch (e) {}
     } else {
+      addLog('返回路徑: history.back()', 'info');
       window.history.back();
     }
   }
