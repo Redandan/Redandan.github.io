@@ -1800,6 +1800,10 @@ renderer.setAnimationLoop(() => {
 });
 
 console.log('💃 月光舞台 v3.0 已加載 – WebGL2 模式');
+// Startup diagnostics: log the page context so back-navigation failures can
+// be identified without a debugger.
+addLog(`啟動: href=${location.href.slice(0,80)} _flutterNative=${!!window._flutterNative}`, 'info');
+addLog(`UA: ${navigator.userAgent.slice(0,120)}`, 'info');
 </script>
 
 </body>
