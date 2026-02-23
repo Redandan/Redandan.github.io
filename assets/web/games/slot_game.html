@@ -10,12 +10,13 @@
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 
-/* ===== Game Viewport – mobile portrait ===== */
+/* ===== Game Viewport – fixed design canvas, scaled to fit ===== */
 #gv {
-  position:relative;
-  width:min(430px,100vw);
-  height:100dvh;
-  margin:0 auto;
+  position:fixed;
+  top:0; left:0;
+  width:430px;
+  height:900px;
+  transform-origin:top left;
   display:flex;
   flex-direction:column;
   overflow:hidden;
@@ -50,58 +51,9 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
   100%{opacity:.4}
 }
 
-/* ============================================================
-   1. TEMPLE TOP
-   ============================================================ */
-#temple-top {
-  flex:0 0 52px;
-  position:relative;
-  overflow:visible;
-  z-index:10;
-}
-/* Green tiled roof bar */
-#roof-bar {
-  position:absolute;
-  top:0; left:0; right:0; height:30px;
-  background:linear-gradient(180deg,#0d0540 0%,#180868 55%,#0a0430 100%);
-  border-bottom:3px solid #6065d8;
-  overflow:hidden;
-}
-/* Tile groove pattern */
-#roof-bar::before {
-  content:'';
-  position:absolute; inset:0;
-  background:repeating-linear-gradient(90deg,
-    transparent 0px,transparent 20px,
-    rgba(120,140,255,.15) 20px,rgba(120,140,255,.15) 22px);
-}
-/* Round tile caps at bottom edge */
-#roof-bar::after {
-  content:'';
-  position:absolute; bottom:-3px; left:0; right:0; height:6px;
-  background:repeating-linear-gradient(90deg,
-    #6065d8 0px,#6065d8 20px,
-    #0a0430 20px,#0a0430 22px);
-}
-/* Gold shimmer line */
-#eave-line {
-  position:absolute; top:30px; left:0; right:0; height:3px;
-  background:linear-gradient(90deg,transparent,#9098ff 20%,#c0ccff 50%,#9098ff 80%,transparent);
-  background-size:200% 100%;
-  animation:shimmer 2.4s linear infinite;
-}
 @keyframes shimmer {
   0%{background-position:200% 0} 100%{background-position:-200% 0}
 }
-/* Lanterns */
-
-/* Cherry blossoms */
-.blossom{position:absolute; font-size:15px; opacity:.85; animation:blossomBob 3s ease-in-out infinite}
-.blossom.b1{top:3px;left:52px;animation-delay:0s}
-.blossom.b2{top:8px;left:76px;animation-delay:.6s;font-size:12px}
-.blossom.b3{top:3px;right:52px;animation-delay:.35s}
-.blossom.b4{top:8px;right:76px;animation-delay:.95s;font-size:12px}
-@keyframes blossomBob{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(3px) rotate(5deg)}}
 
 /* ============================================================
    2. PAYTABLE PANEL
@@ -119,12 +71,12 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 }
 .pt-col{flex:1; display:flex; flex-direction:column; gap:1px}
 .pt-row{
-  display:flex; align-items:center; height:clamp(22px,3.8vh,28px);
+  display:flex; align-items:center; height:24px;
   border-bottom:1px solid rgba(100,110,220,.18); gap:4px;
 }
 .pt-row:last-child{border-bottom:none}
-.pt-syms{font-size:clamp(13px,4.2vw,18px); line-height:1; flex:1; color:#eee; letter-spacing:-1px}
-.pt-val{color:#c0ccff; font-size:clamp(13px,4.2vw,18px); font-weight:bold; text-shadow:0 0 6px rgba(192,204,255,.55); min-width:38px; text-align:right}
+.pt-syms{font-size:15px; line-height:1; flex:1; color:#eee; letter-spacing:-1px}
+.pt-val{color:#c0ccff; font-size:15px; font-weight:bold; text-shadow:0 0 6px rgba(192,204,255,.55); min-width:38px; text-align:right}
 .pt-syms-any{font-size:13px; color:#c0ccff; letter-spacing:0}
 .pt-div{flex:0 0 1px; background:linear-gradient(180deg,transparent,#6065d8 30%,#6065d8 70%,transparent); align-self:stretch; margin:3px 0}
 /* Wild badge */
@@ -150,7 +102,7 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
   background:linear-gradient(90deg,#040215,#0a0535 25%,#120840 50%,#0a0535 75%,#040215);
   border-top:2px solid #5560c8; border-bottom:2px solid #5560c8;
   text-align:center; color:#c0ccff;
-  font-size:clamp(14px,4.2vw,18px); font-weight:bold;
+  font-size:17px; font-weight:bold;
   padding:6px; letter-spacing:1px;
   position:relative; overflow:hidden;
   animation:jackpotPulse 2.6s ease-in-out infinite;
@@ -168,7 +120,7 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
    ============================================================ */
 #reel-section {
   flex:0 0 auto;
-  height:min(260px,36vh);
+  height:260px;
   margin:2px 3px;
   position:relative;
   background:#040215;
@@ -377,7 +329,7 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 }
 #logo-title{
   display:block;
-  font-size:clamp(18px,5.5vw,24px);
+  font-size:22px;
   font-weight:900; letter-spacing:4px;
   color:#e8eaff;
   text-shadow:
@@ -389,7 +341,7 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 }
 #logo-sub{
   display:block;
-  font-size:clamp(9px,2.5vw,11px);
+  font-size:11px;
   letter-spacing:5px;
   color:#8890cc;
   text-transform:uppercase;
@@ -434,7 +386,7 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 #moon-gate{
   position:absolute;
   top:50%; left:50%; transform:translate(-50%,-54%);
-  width:min(210px,55vw); height:min(210px,55vw);
+  width:210px; height:210px;
   border-radius:50%;
   border:6px solid #5560c8;
   background:linear-gradient(145deg,#050220,#020115);
@@ -486,7 +438,7 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 }
 #char-canvas-wrap canvas{display:block; width:100%!important; height:100%!important}
 #pig-emoji{
-  font-size:clamp(60px,16vw,76px);
+  font-size:68px;
   filter:drop-shadow(0 6px 16px rgba(180,80,0,.7));
   animation:pigBob 2.2s ease-in-out infinite;
   line-height:1;
@@ -759,14 +711,6 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 
 <!-- ========== GAME VIEWPORT ========== -->
 <div id="gv">
-  <div id="temple-top">
-    <div id="roof-bar"></div>
-    <div id="eave-line"></div>
-    <span class="blossom b1">✨</span>
-    <span class="blossom b2">💫</span>
-    <span class="blossom b3">✨</span>
-    <span class="blossom b4">💫</span>
-  </div>
 
   <!-- 2. Paytable -->
   <div id="paytable">
@@ -959,8 +903,8 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 </div>
 
 <script type="module">
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+import * as THREE from 'https://esm.sh/three@0.160.0';
+import { GLTFLoader } from 'https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
 
 // ===== Loading screen =====
 const gameLoader   = document.getElementById('game-loader');
@@ -991,6 +935,21 @@ const LOG_ICONS = { error: '❌', warn: '⚠️', info: 'ℹ️' };
 
 logToggle.addEventListener('click', () => logPanel.classList.toggle('collapsed'));
 logPanel.classList.add('collapsed'); // start collapsed on mobile
+
+// ===== Uniform viewport scaling =====
+// #gv is a fixed 430×900 design canvas. Scale it as one unit to fit the screen.
+const gvEl = document.getElementById('gv');
+let _fitRaf = 0;
+function fitGame() {
+  cancelAnimationFrame(_fitRaf);
+  _fitRaf = requestAnimationFrame(() => {
+    const scale = Math.min(window.innerWidth / 430, window.innerHeight / 900);
+    const offsetX = (window.innerWidth - 430 * scale) / 2;
+    gvEl.style.transform = `translate(${offsetX}px,0) scale(${scale})`;
+  });
+}
+fitGame();
+window.addEventListener('resize', fitGame);
 
 function formatLogArgs(args) {
   return args.map(x => typeof x === 'object' ? JSON.stringify(x) : String(x)).join(' ');
