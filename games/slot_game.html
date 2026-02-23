@@ -927,6 +927,7 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 <!-- Function menu popup (opened by ≡ btn-menu) -->
 <div id="menu-popup">
   <button class="menu-item" id="menu-copy-log">📋 複製日誌</button>
+  <button class="menu-item" id="menu-clear-log">🗑 清除日誌</button>
 </div>
 
 <!-- Loading screen overlay -->
@@ -981,11 +982,39 @@ setLoadProgress(5, '初始化引擎...');
 const logPanel = document.getElementById('log-panel');
 const logToggle = document.getElementById('log-toggle');
 let logCount = 0;
-const MAX_LOGS = 30;
+const MAX_LOGS = 200; // keep more entries so the log survives multiple sessions
 const LOG_ICONS = { error: '❌', warn: '⚠️', info: 'ℹ️' };
+const LOG_STORAGE_KEY = 'slot_game_log';
 
 logToggle.addEventListener('click', () => logPanel.classList.toggle('collapsed'));
 logPanel.classList.add('collapsed'); // start collapsed on mobile
+
+// --- Persistence helpers ---
+// In-memory mirror of what is in localStorage so addLog never re-parses JSON.
+let _logEntries = [];
+function _saveStoredLogs() {
+  try { localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(_logEntries)); } catch (e) {
+    // Use the original console.warn (not the patched version that calls addLog)
+    // to avoid a recursive loop.
+    typeof _warn !== 'undefined' && _warn.call(console, 'slot_game: failed to persist logs:', e);
+  }
+}
+
+// Replay any logs saved from a previous session into the DOM on page load.
+(function _restoreLogs() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(LOG_STORAGE_KEY) || '[]');
+    // Honour MAX_LOGS: if more entries were somehow stored, keep only the newest.
+    _logEntries = stored.slice(-MAX_LOGS);
+  } catch (_) { _logEntries = []; }
+  for (const e of _logEntries) {
+    const d = document.createElement('div');
+    d.className = `log-${e.type}`;
+    d.textContent = e.text;
+    logPanel.appendChild(d);
+    logCount++;
+  }
+})();
 
 // ===== Uniform viewport scaling =====
 // #gv is a fixed 430×900 design canvas. Scale it as one unit to fit the screen.
@@ -1007,12 +1036,18 @@ function formatLogArgs(args) {
 }
 
 function addLog(msg, type = 'info') {
+  const text = `${LOG_ICONS[type] ?? 'ℹ️'} [${new Date().toLocaleTimeString()}] ${msg}`;
   const d = document.createElement('div');
   d.className = `log-${type}`;
-  d.textContent = `${LOG_ICONS[type] ?? 'ℹ️'} [${new Date().toLocaleTimeString()}] ${msg}`;
+  d.textContent = text;
   logPanel.appendChild(d);
   if (++logCount > MAX_LOGS) { logPanel.removeChild(logPanel.children[1]); logCount--; }
   logPanel.scrollTop = logPanel.scrollHeight;
+  // Persist to localStorage so the log survives back-navigation and page reload.
+  // _logEntries is the in-memory mirror — no JSON.parse on every call.
+  _logEntries.push({ type, text });
+  if (_logEntries.length >= MAX_LOGS) _logEntries.shift();
+  _saveStoredLogs();
 }
 
 const _log = console.log, _warn = console.warn, _err = console.error;
@@ -1475,6 +1510,18 @@ document.getElementById('menu-copy-log').addEventListener('click', () => {
       });
   } else {
     prompt('複製以下日誌內容:', text);
+  }
+});
+
+document.getElementById('menu-clear-log').addEventListener('click', () => {
+  closeMenu();
+  // Remove all log entries from the DOM (keep the header toggle at index 0).
+  while (logPanel.children.length > 1) logPanel.removeChild(logPanel.lastChild);
+  logCount = 0;
+  // Wipe the in-memory array and localStorage.
+  _logEntries = [];
+  try { localStorage.removeItem(LOG_STORAGE_KEY); } catch (e) {
+    typeof _warn !== 'undefined' && _warn.call(console, 'slot_game: failed to clear stored logs:', e);
   }
 });
 
