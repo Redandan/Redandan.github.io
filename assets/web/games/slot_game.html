@@ -992,12 +992,18 @@ logPanel.classList.add('collapsed'); // start collapsed on mobile
 // --- Persistence helpers ---
 // In-memory mirror of what is in localStorage so addLog never re-parses JSON.
 let _logEntries = [];
+let _saveTimer = 0;
 function _saveStoredLogs() {
-  try { localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(_logEntries)); } catch (e) {
-    // Use the original console.warn (not the patched version that calls addLog)
-    // to avoid a recursive loop.
-    typeof _warn !== 'undefined' && _warn.call(console, 'slot_game: failed to persist logs:', e);
-  }
+  // Debounce: batch rapid-fire addLog calls (e.g. model-loading progress) into
+  // a single localStorage write 300 ms after the last call.
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(() => {
+    try { localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(_logEntries)); } catch (e) {
+      // Use the original console.warn (not the patched version that calls addLog)
+      // to avoid a recursive loop.
+      typeof _warn !== 'undefined' && _warn.call(console, 'slot_game: failed to persist logs:', e);
+    }
+  }, 300);
 }
 
 // Replay any logs saved from a previous session into the DOM on page load.
@@ -1042,12 +1048,13 @@ function addLog(msg, type = 'info') {
   d.textContent = text;
   logPanel.appendChild(d);
   if (++logCount > MAX_LOGS) { logPanel.removeChild(logPanel.children[1]); logCount--; }
-  logPanel.scrollTop = logPanel.scrollHeight;
   // Persist to localStorage so the log survives back-navigation and page reload.
   // _logEntries is the in-memory mirror — no JSON.parse on every call.
   _logEntries.push({ type, text });
-  if (_logEntries.length >= MAX_LOGS) _logEntries.shift();
+  if (_logEntries.length > MAX_LOGS) _logEntries.shift();
   _saveStoredLogs();
+  // scrollTop forces a layout reflow; skip it when the panel is hidden (display:none).
+  if (logPanel.offsetParent !== null) logPanel.scrollTop = logPanel.scrollHeight;
 }
 
 const _log = console.log, _warn = console.warn, _err = console.error;
@@ -1247,7 +1254,6 @@ function loadCharModel() {
     });
     const worldSize   = worldBox.getSize(new THREE.Vector3());
     const worldCenter = worldBox.getCenter(new THREE.Vector3());
-    console.log(`📐 REST POSE world bounds — size: ${worldSize.x.toFixed(3)}×${worldSize.y.toFixed(3)}×${worldSize.z.toFixed(3)}, min.y: ${worldBox.min.y.toFixed(3)}`);
 
     // Step 2 – fit: scale so the tallest dimension = CHAR_FIT_TARGET world units.
     // Use multiplyScalar (not setScalar) to PRESERVE the GLB's existing root scale
@@ -1292,7 +1298,10 @@ function loadCharModel() {
       const pct = Math.round(xhr.loaded / xhr.total * 100);
       // Map model loading 0-100% to overall progress 30-90%
       if (!IS_MOBILE) setLoadProgress(30 + Math.round(pct * 0.6), `載入模型 ${pct}%`);
-      console.log(`Model loading: ${pct}%`);
+      // Only log at start / midpoint / completion — XHR fires 80+ progress events
+      // per load and each one appends a DOM node to the hidden log panel.
+      // pct===0 never fires (XHR loaded>0 on first event), so use <10 for the start.
+      if (pct < 10 || pct === 50 || pct >= 100) console.log(`Model loading: ${pct}%`);
     }
   },
   (err) => {
@@ -1518,8 +1527,9 @@ document.getElementById('menu-clear-log').addEventListener('click', () => {
   // Remove all log entries from the DOM (keep the header toggle at index 0).
   while (logPanel.children.length > 1) logPanel.removeChild(logPanel.lastChild);
   logCount = 0;
-  // Wipe the in-memory array and localStorage.
+  // Wipe the in-memory array and cancel any pending debounced write.
   _logEntries = [];
+  clearTimeout(_saveTimer);
   try { localStorage.removeItem(LOG_STORAGE_KEY); } catch (e) {
     typeof _warn !== 'undefined' && _warn.call(console, 'slot_game: failed to clear stored logs:', e);
   }
@@ -1634,8 +1644,6 @@ window.cancelAutoSpin = function() {
 
 document.getElementById('btn-back').addEventListener('click', () => {
   if (!window.cancelAutoSpin()) {
-    // Diagnostic: log which path will be taken so the user can copy the log.
-    addLog(`返回: _flutterNative=${!!window._flutterNative} bridge=${!!window.flutter_inappwebview} inIframe=${window.parent !== window}`, 'info');
     // Navigate back to Flutter.
     // On native Android/iOS InAppWebView: window._flutterNative is injected
     // at document-start by Dart (initialUserScripts), guaranteed before any
@@ -1648,19 +1656,27 @@ document.getElementById('btn-back').addEventListener('click', () => {
     // On Flutter Web desktop (rendered as an iframe): postMessage to the
     // parent Flutter window — handled by listenForGoBack in Dart.
     // On mobile browser (direct navigation, not in iframe): use history.back().
+    let path;
+    if (window._flutterNative) {
+      path = window.flutter_inappwebview ? 'callHandler' : 'flutter://goback';
+    } else {
+      path = window.parent !== window ? 'postMessage' : 'history.back()';
+    }
+    addLog(`返回 [${path}] native=${!!window._flutterNative} bridge=${!!window.flutter_inappwebview} iframe=${window.parent !== window}`, 'info');
+    // Flush the debounced localStorage write immediately so the log entry is
+    // persisted before any navigation that may unload the page (history.back,
+    // location.href assignment).
+    clearTimeout(_saveTimer);
+    try { localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(_logEntries)); } catch (_) {}
     if (window._flutterNative) {
       if (window.flutter_inappwebview) {
-        addLog('返回路徑: callHandler(goBack)', 'info');
         window.flutter_inappwebview.callHandler('goBack');
       } else {
-        addLog('返回路徑: flutter://goback URL scheme', 'info');
         window.location.href = 'flutter://goback';
       }
     } else if (window.parent !== window) {
-      addLog('返回路徑: postMessage (iframe)', 'info');
       try { window.parent.postMessage({ action: 'slotGameGoBack' }, window.location.origin); } catch (e) {}
     } else {
-      addLog('返回路徑: history.back()', 'info');
       window.history.back();
     }
   }
@@ -1800,10 +1816,7 @@ renderer.setAnimationLoop(() => {
 });
 
 console.log('💃 月光舞台 v3.0 已加載 – WebGL2 模式');
-// Startup diagnostics: log the page context so back-navigation failures can
-// be identified without a debugger.
-addLog(`啟動: href=${location.href.slice(0,80)} _flutterNative=${!!window._flutterNative}`, 'info');
-addLog(`UA: ${navigator.userAgent.slice(0,120)}`, 'info');
+addLog(`啟動: native=${!!window._flutterNative} href=${location.href.slice(0,60)} UA=${navigator.userAgent.slice(0,80)}`, 'info');
 </script>
 
 </body>
