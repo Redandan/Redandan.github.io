@@ -39,7 +39,7 @@
 
 ## 三、餘額是假的（未連接錢包）
 
-**問題：** `slot_game.html` 中的餘額系統完全是本地假數據：
+**問題：** `slot_game_moon_dance.html` 中的餘額系統完全是本地假數據：
 
 ```js
 const INITIAL_BALANCE = 10000;   // 固定假金額
@@ -120,7 +120,7 @@ const MULTIPLIER_RANGE = 12;    // 倍率 5x–17x — 寫死
 
 ## 八、iOS 不支持 WebGPU
 
-**問題：** `slot_game.html` 使用 `WebGPURenderer`，iOS Safari/WKWebView 截至 2026 年仍不支持 WebGPU。
+**問題：** `slot_game_moon_dance.html` 使用 `WebGPURenderer`，iOS Safari/WKWebView 截至 2026 年仍不支持 WebGPU。
 目前已有 WebGL fallback 邏輯，但 3D 字符模型在 iOS 上可能渲染異常。
 
 **需要實現：**

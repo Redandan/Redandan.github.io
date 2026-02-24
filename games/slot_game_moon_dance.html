@@ -1,0 +1,1896 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<meta http-equiv="Cache-Control" content="no-cache" />
+<title>月光舞台 - 夜舞老虎機</title>
+<!-- Shared Flutter ↔ WebView bridge (loaded before the game module script) -->
+<script src="_runtime/flutter_bridge.js"></script>
+<style>
+/* ===== Reset ===== */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
+
+/* ===== Game Viewport – fixed design canvas, scaled to fit ===== */
+#gv {
+  position:fixed;
+  top:0; left:0;
+  width:430px;
+  height:900px;
+  transform-origin:top left;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  font-family:'Arial',sans-serif;
+  background:linear-gradient(180deg,#0d0535 0%,#130848 14%,#0e062e 30%,#0a0428 52%,#080320 72%,#050218 100%);
+}
+/* ── Star field: tiny twinkling dots on the background ── */
+#gv::before{
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:0;
+  background-image:
+    radial-gradient(1px 1px at  7%  6%,rgba(255,255,255,.80),transparent),
+    radial-gradient(1px 1px at 18% 12%,rgba(200,220,255,.70),transparent),
+    radial-gradient(1px 1px at 32%  4%,rgba(255,255,255,.60),transparent),
+    radial-gradient(1px 1px at 47%  9%,rgba(180,200,255,.75),transparent),
+    radial-gradient(1px 1px at 61%  3%,rgba(255,255,255,.55),transparent),
+    radial-gradient(1px 1px at 75%  8%,rgba(200,210,255,.80),transparent),
+    radial-gradient(1px 1px at 89% 14%,rgba(255,255,255,.65),transparent),
+    radial-gradient(1px 1px at  4% 22%,rgba(180,200,255,.70),transparent),
+    radial-gradient(1px 1px at 23% 19%,rgba(255,255,255,.50),transparent),
+    radial-gradient(1px 1px at 55% 17%,rgba(200,220,255,.65),transparent),
+    radial-gradient(1px 1px at 82% 21%,rgba(255,255,255,.70),transparent),
+    radial-gradient(1px 1px at 12% 35%,rgba(180,200,255,.55),transparent),
+    radial-gradient(1px 1px at 38% 30%,rgba(255,255,255,.45),transparent),
+    radial-gradient(1px 1px at 68% 28%,rgba(200,210,255,.60),transparent),
+    radial-gradient(1px 1px at 93% 32%,rgba(255,255,255,.75),transparent);
+  animation:starTwinkle 4s ease-in-out infinite alternate;
+}
+@keyframes starTwinkle{
+  0%  {opacity:.55}
+  33% {opacity:1}
+  66% {opacity:.7}
+  100%{opacity:.4}
+}
+
+@keyframes shimmer {
+  0%{background-position:200% 0} 100%{background-position:-200% 0}
+}
+
+/* ============================================================
+   2. PAYTABLE PANEL
+   ============================================================ */
+#paytable {
+  flex:0 0 auto;
+  margin:2px 3px;
+  background:#080520;
+  border:2.5px solid #5560c8;
+  border-radius:8px;
+  padding:3px 14px;
+  display:flex;
+  align-items:center;
+  gap:4px;
+}
+.pt-col{flex:1; display:flex; flex-direction:column; gap:1px}
+.pt-row{
+  display:flex; align-items:center; height:24px;
+  border-bottom:1px solid rgba(100,110,220,.18); gap:4px;
+}
+.pt-row:last-child{border-bottom:none}
+.pt-syms{font-size:15px; line-height:1; flex:1; color:#eee; letter-spacing:-1px}
+.pt-val{color:#c0ccff; font-size:15px; font-weight:bold; text-shadow:0 0 6px rgba(192,204,255,.55); min-width:38px; text-align:right}
+.pt-syms-any{font-size:13px; color:#c0ccff; letter-spacing:0}
+.pt-div{flex:0 0 1px; background:linear-gradient(180deg,transparent,#6065d8 30%,#6065d8 70%,transparent); align-self:stretch; margin:3px 0}
+/* Wild badge */
+#pt-wild{flex:0 0 68px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px}
+#wild-badge{
+  width:58px; height:58px; border-radius:50%;
+  background:radial-gradient(circle at 38% 30%,#6688ff,#2244cc 55%,#001166);
+  border:2.5px solid #c0ccff;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  box-shadow:0 0 14px rgba(80,100,255,.6),0 0 28px rgba(60,80,255,.3);
+  animation:wildPulse 2s ease-in-out infinite;
+  will-change:filter;
+}
+@keyframes wildPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.5)}}
+.wi-pig{font-size:24px; line-height:1}
+.wi-mult{color:#c0ccff; font-size:13px; font-weight:bold; text-shadow:0 0 5px #c0ccff}
+#wild-label{color:#c0ccff; font-size:12px; font-weight:bold; letter-spacing:2px; text-shadow:0 0 5px rgba(192,204,255,.6)}
+
+/* ============================================================
+   3. JACKPOT BANNER
+   ============================================================ */
+#jackpot-banner {
+  flex:0 0 auto;
+  background:linear-gradient(90deg,#040215,#0a0535 25%,#120840 50%,#0a0535 75%,#040215);
+  border-top:2px solid #5560c8; border-bottom:2px solid #5560c8;
+  text-align:center; color:#c0ccff;
+  font-size:17px; font-weight:bold;
+  padding:6px; letter-spacing:1px;
+  position:relative; overflow:hidden;
+  text-shadow:0 0 8px rgba(192,204,255,.6);
+  animation:jackpotPulse 2.6s ease-in-out infinite;
+  will-change:filter;
+}
+#jackpot-banner::before{
+  content:''; position:absolute; top:0; left:-80%; width:40%; height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.14),transparent);
+  animation:jSheen 3.4s linear infinite;
+  will-change:transform;
+}
+/* Use transform:translateX instead of left to avoid layout triggers.
+   left:-80% keeps element off-screen in base state; translateX(500%) = 5×own_width =
+   200% of parent → final position −80%+200%=120% of parent (off right). */
+@keyframes jSheen{0%{transform:translateX(0)}100%{transform:translateX(500%)}}
+@keyframes jackpotPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.5)}}
+
+/* ============================================================
+   4. REEL SECTION
+   ============================================================ */
+#reel-section {
+  flex:0 0 auto;
+  height:260px;
+  margin:2px 3px;
+  position:relative;
+  background:#040215;
+  border:3px solid #5560c8;
+  border-radius:6px;
+  overflow:hidden;
+  box-shadow:0 0 30px rgba(80,100,255,.55),0 0 60px rgba(60,80,255,.2),inset 0 0 40px rgba(0,0,0,.6);
+}
+/* Scan-line light sweep over reels */
+#reel-section::before{
+  content:''; position:absolute; inset:0; z-index:3; pointer-events:none;
+  background:linear-gradient(180deg,transparent 0%,rgba(140,160,255,.07) 48%,rgba(180,200,255,.14) 50%,rgba(140,160,255,.07) 52%,transparent 100%);
+  animation:scanSweep 4s linear infinite;
+  will-change:transform;
+}
+@keyframes scanSweep{
+  0%  {transform:translateY(-100%)}
+  100%{transform:translateY(100%)}
+}
+#reel-canvas-wrap{position:absolute; inset:0; z-index:1}
+#reel-canvas-wrap canvas{display:block; width:100%!important; height:100%!important}
+/* Chrome overlay */
+#reel-chrome{position:absolute; inset:0; z-index:2; pointer-events:none}
+/* Top/bottom shadow vignette */
+#reel-chrome::before{
+  content:''; position:absolute; top:0; left:0; right:0; height:36px;
+  background:linear-gradient(180deg,rgba(0,0,0,.6),transparent);
+}
+#reel-chrome::after{
+  content:''; position:absolute; bottom:0; left:0; right:0; height:36px;
+  background:linear-gradient(0deg,rgba(0,0,0,.6),transparent);
+}
+/* Gold separator bars */
+.reel-sep{
+  position:absolute; top:0; bottom:0; width:5px;
+  background:linear-gradient(180deg,#2233aa,#6070ff 35%,#4455cc 65%,#1a2288);
+  box-shadow:0 0 8px rgba(100,120,255,.45);
+}
+.reel-sep.s1{left:calc(33.33% - 2px)} .reel-sep.s2{left:calc(66.66% - 2px)}
+/* Payline stripe */
+#payline{
+  position:absolute; top:50%; left:0; right:0; height:2px;
+  background:rgba(140,160,255,.22); transform:translateY(-50%);
+}
+#payline::before,#payline::after{
+  content:''; position:absolute; top:50%; transform:translateY(-50%);
+  width:8px; height:8px; border-radius:50%; background:#c0ccff;
+  box-shadow:0 0 6px #c0ccff; animation:paylinePulse .85s ease-in-out infinite alternate;
+}
+#payline::before{left:6px} #payline::after{right:6px}
+@keyframes paylinePulse{0%{opacity:.35}100%{opacity:1}}
+/* Moon deco at reel bottom corners */
+.reel-bamboo{
+  position:absolute; bottom:0; width:22px; height:30px;
+  background:linear-gradient(90deg,#0a0840,#1a1880 50%,#0a0840);
+  border-radius:4px 4px 0 0; border:1.5px solid #2a3498; border-bottom:none;
+}
+.rb-l{left:7px} .rb-r{right:7px}
+.rb-m1{left:calc(33.33% + 4px)} .rb-m2{left:calc(66.66% + 4px)}
+/* Motion blur during fast spin – replaced with subtle opacity for mobile GPU efficiency */
+#reel-canvas-wrap.reel-spinning{opacity:.92; transition:opacity .15s}
+#reel-canvas-wrap{transition:opacity .25s}
+/* Winner window – opacity pulse instead of border-color+box-shadow (GPU composited) */
+#winner-win{
+  position:absolute; z-index:3; pointer-events:none;
+  left:7px; right:7px; top:50%;
+  height:87px; transform:translateY(-50%);
+  border:3px solid rgba(180,200,255,.75);
+  border-radius:4px;
+  background:linear-gradient(180deg,rgba(100,120,255,.04),rgba(140,160,255,.10),rgba(100,120,255,.04));
+  box-shadow:0 0 14px rgba(160,180,255,.25),inset 0 0 6px rgba(120,140,255,.08);
+  animation:winWndPulse 1.8s ease-in-out infinite;
+  will-change:opacity;
+}
+#winner-win::before{content:'▶'; position:absolute; left:-13px; top:50%; transform:translateY(-50%); font-size:10px; color:rgba(180,200,255,.7)}
+#winner-win::after{ content:'◀'; position:absolute; right:-13px; top:50%; transform:translateY(-50%); font-size:10px; color:rgba(180,200,255,.7)}
+@keyframes winWndPulse{
+  0%,100%{opacity:.65}
+  50%{opacity:1}
+}
+/* Reel section win flash */
+#reel-section.reel-win{animation:reelWinFlash .32s ease-in-out 5}
+@keyframes reelWinFlash{
+  0%,100%{border-color:#5560c8;box-shadow:0 0 22px rgba(80,100,200,.3),inset 0 0 40px rgba(0,0,0,.6)}
+  50%{border-color:#c0ccff;box-shadow:0 0 55px rgba(180,200,255,.95),0 0 110px rgba(100,120,255,.55),inset 0 0 22px rgba(160,180,255,.12)}
+}
+/* Coin rain (big win) */
+@keyframes coinFall{
+  0%{transform:translateY(0) rotate(0deg);opacity:1}
+  80%{opacity:.8}
+  100%{transform:translateY(110vh) rotate(720deg);opacity:0}
+}
+/* Idle coin sparkles in scene area */
+.s-coin{
+  position:absolute; pointer-events:none; z-index:4;
+  animation:sCoinRise linear infinite;
+  will-change:transform, opacity;
+}
+@keyframes sCoinRise{
+  0%{transform:translateY(0) rotate(0deg);opacity:0}
+  8%{opacity:.8}
+  88%{opacity:.5}
+  100%{transform:translateY(-90px) rotate(200deg);opacity:0}
+}
+/* Bet label change flash */
+@keyframes betFlash{0%,100%{color:#c0ccff}50%{color:#fff;text-shadow:0 0 8px #fff}}
+
+/* ============================================================
+   5. SCENE AREA  (pillars + moon gate + pig placeholder)
+   ============================================================ */
+#scene-area{
+  flex:1; position:relative; min-height:0;
+  display:flex; align-items:stretch; overflow:hidden;
+}
+/* Greek-key border top */
+#scene-top-border{
+  position:absolute; top:0; left:0; right:0; height:14px;
+  background:repeating-linear-gradient(90deg,
+    #080520 0px,#080520 12px,#5560c8 12px,#5560c8 14px);
+  z-index:6;
+}
+/* Purple pillars */
+.pillar{
+  flex:0 0 46px;
+  background:linear-gradient(90deg,#0d0030,#3300aa 30%,#6600ff 50%,#3300aa 70%,#0d0030);
+  border-right:2.5px solid #5560c8; border-left:2.5px solid #5560c8;
+  position:relative; overflow:visible;
+  display:flex; flex-direction:column; align-items:center;
+  padding-top:14px;
+}
+.pillar.right{border-left:2.5px solid #5560c8; border-right:none}
+.p-ring{width:100%; height:7px; background:linear-gradient(180deg,#c0ccff 0%,#6070c8 100%); margin:8px 0}
+/* Couplet scroll on pillar */
+.couplet{
+  position:absolute; top:20px;
+  width:42px; min-height:140px;
+  background:linear-gradient(180deg,#1a0060 0%,#2a0088 30%,#1a0070 60%,#0a0040 100%);
+  border:2px solid #9098ff; border-radius:4px;
+  padding:6px 3px;
+  display:flex; flex-direction:column; align-items:center; justify-content:space-evenly;
+  box-shadow:0 0 14px rgba(120,80,255,.55),0 0 30px rgba(80,60,200,.25),inset 0 0 10px rgba(0,0,0,.5);
+  z-index:5;
+}
+/* Top and bottom scroll roller nubs */
+.couplet::before,.couplet::after{
+  content:''; position:absolute; left:50%; transform:translateX(-50%);
+  width:48px; height:6px;
+  background:linear-gradient(90deg,#2a1a88,#9088ff 40%,#c0ccff 50%,#9088ff 60%,#2a1a88);
+  border-radius:3px; border:1px solid #6070cc;
+}
+.couplet::before{top:-4px}
+.couplet::after{bottom:-4px}
+/* Couplet characters – opacity pulse instead of text-shadow (GPU composited) */
+.c-char{
+  color:#c0ccff; font-size:16px; font-weight:bold;
+  text-shadow:0 0 7px rgba(180,200,255,.85), 0 0 14px rgba(100,120,255,.5);
+  line-height:1.35;
+  animation:charShimmer 3.6s ease-in-out infinite alternate;
+  will-change:opacity;
+}
+.couplet .c-char:nth-child(2){animation-delay:.4s}
+.couplet .c-char:nth-child(3){animation-delay:.8s}
+.couplet .c-char:nth-child(4){animation-delay:1.2s}
+.couplet .c-char:nth-child(5){animation-delay:1.6s}
+@keyframes charShimmer{
+  0%  {opacity:.7}
+  100%{opacity:1}
+}
+
+/* Center stage */
+#center-stage{
+  flex:1; position:relative;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:flex-end;
+  overflow:hidden;
+}
+/* ── Stage logo spotlight ── */
+#stage-logo{
+  position:absolute; top:0; left:0; right:0;
+  height:52px; z-index:8; pointer-events:none;
+  display:flex; align-items:center; justify-content:center;
+}
+/* Two converging spotlight beams from top-left and top-right */
+#stage-logo::before,#stage-logo::after{
+  content:''; position:absolute; top:0;
+  width:0; height:0; pointer-events:none;
+  will-change:opacity, transform;
+}
+#stage-logo::before{
+  left:8%;
+  border-left:20px solid transparent;
+  border-right:20px solid transparent;
+  border-top:52px solid rgba(180,160,255,.12);
+  filter:blur(6px);
+  animation:spotLeft 4s ease-in-out infinite alternate;
+}
+#stage-logo::after{
+  right:8%;
+  border-left:20px solid transparent;
+  border-right:20px solid transparent;
+  border-top:52px solid rgba(120,160,255,.12);
+  filter:blur(6px);
+  animation:spotRight 4s ease-in-out infinite alternate;
+}
+/* Use transform instead of left/right to avoid layout triggers */
+@keyframes spotLeft{0%{opacity:.5}100%{opacity:1;transform:translateX(17px)}}
+@keyframes spotRight{0%{opacity:.5}100%{opacity:1;transform:translateX(-17px)}}
+/* Logo text container */
+#logo-text{
+  position:relative; z-index:2;
+  text-align:center; line-height:1;
+}
+#logo-title{
+  display:block;
+  font-size:22px;
+  font-weight:900; letter-spacing:4px;
+  color:#e8eaff;
+  text-shadow:
+    0 0 8px rgba(180,200,255,1),
+    0 0 20px rgba(120,140,255,.9),
+    0 0 40px rgba(80,100,255,.6),
+    0 0 70px rgba(60,80,200,.4);
+  animation:logoGlow 2.8s ease-in-out infinite alternate;
+  will-change:opacity;
+}
+#logo-sub{
+  display:block;
+  font-size:11px;
+  letter-spacing:5px;
+  color:#8890cc;
+  text-transform:uppercase;
+  margin-top:2px;
+  text-shadow:0 0 6px rgba(120,140,255,.55);
+}
+/* Horizontal shimmer bar under logo */
+#logo-bar{
+  display:block; width:100%; height:1px; margin-top:5px;
+  background:linear-gradient(90deg,transparent 0%,#6070ff 20%,#c0ccff 50%,#6070ff 80%,transparent 100%);
+  background-size:200% 100%;
+  animation:shimmer 2.2s linear infinite;
+}
+/* Logo glow – opacity pulse keeps static text-shadow always visible (GPU composited) */
+@keyframes logoGlow{
+  0%{opacity:.75}
+  100%{opacity:1}
+}
+/* Stage spotlight beams – opacity only (no filter change); static blur cached by GPU */
+#center-stage::before{
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:3;
+  background:
+    conic-gradient(from 238deg at 0% 0%,    transparent 0deg, rgba(120,100,255,.07) 10deg, transparent 20deg),
+    conic-gradient(from 292deg at 100% 0%,  transparent 0deg, rgba(80,120,255,.07)  10deg, transparent 20deg);
+  filter:blur(2px);
+  animation:beamSway 6s ease-in-out infinite alternate;
+}
+@keyframes beamSway{
+  0%  {opacity:.6}
+  50% {opacity:1}
+  100%{opacity:.55}
+}
+/* Upgraded spotlight behind model for depth */
+#center-stage::after{
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:4;
+  background:radial-gradient(ellipse 70% 85% at 50% 65%, rgba(120,100,255,.18) 0%, rgba(60,40,180,.06) 55%, transparent 75%);
+  animation:stagePulse 3.5s ease-in-out infinite alternate;
+  will-change:opacity;
+}
+@keyframes stagePulse{
+  0%  {opacity:.6}
+  100%{opacity:1}
+}
+/* Moon gate – opacity pulse replaces box-shadow animation (GPU composited) */
+#moon-gate{
+  position:absolute;
+  top:50%; left:50%; transform:translate(-50%,-54%);
+  width:210px; height:210px;
+  border-radius:50%;
+  border:6px solid #5560c8;
+  background:linear-gradient(145deg,#050220,#020115);
+  box-shadow:0 0 0 3px #2a2a88,0 0 24px rgba(60,80,200,.35),inset 0 0 20px rgba(0,0,0,.6);
+  overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+  animation:gateGlow 3s ease-in-out infinite alternate;
+  will-change:opacity;
+}
+@keyframes gateGlow{
+  0%  {opacity:.75}
+  100%{opacity:1}
+}
+#moon-gate::before{
+  content:''; position:absolute; inset:8px; border-radius:50%;
+  border:2px solid rgba(100,120,255,.3);
+}
+/* Wooden door inside gate */
+#gate-door{
+  width:56%; height:80%;
+  background:linear-gradient(90deg,#050218 49%,#020112 51%);
+  border-radius:48% 48% 0 0;
+  border:1.5px solid #1a1860;
+  position:relative;
+}
+/* Door studs */
+#gate-door::before{
+  content:'· · · ·'; position:absolute; top:30px; left:50%; transform:translateX(-50%);
+  color:#3a3a88; font-size:12px; letter-spacing:6px; writing-mode:horizontal-tb;
+}
+/* Door knocker rings */
+#gate-door::after{
+  content:''; position:absolute;
+  top:52%; left:50%; transform:translate(-50%,-50%);
+  width:54%; height:5px;
+  border-top:2px solid #5560c8;
+}
+
+/* Pig character placeholder (3D model – leave as emoji placeholder) */
+#pig-char{
+  position:absolute; bottom:0; left:50%; transform:translateX(-50%);
+  display:flex; flex-direction:column; align-items:center;
+  z-index:5;
+}
+#pig-char.hidden{display:none}
+/* 3D character canvas wrapper */
+#char-canvas-wrap{
+  position:absolute; bottom:0; left:0; right:0; top:0;
+  z-index:5; pointer-events:none; overflow:hidden;
+}
+#char-canvas-wrap canvas{display:block; width:100%!important; height:100%!important}
+#pig-emoji{
+  font-size:68px;
+  filter:drop-shadow(0 6px 16px rgba(180,80,0,.7));
+  animation:pigBob 2.2s ease-in-out infinite;
+  line-height:1;
+  will-change:transform;
+}
+#pig-shadow{
+  width:52px; height:10px;
+  background:radial-gradient(ellipse,rgba(0,0,0,.55),transparent);
+  margin-top:-6px;
+  animation:pigShadow 2.2s ease-in-out infinite;
+  will-change:transform, opacity;
+}
+@keyframes pigBob{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-7px) scale(1.03)}}
+@keyframes pigShadow{0%,100%{transform:scaleX(1); opacity:.6}50%{transform:scaleX(.8); opacity:.4}}
+/* Red envelope in pig's hand (decorative) */
+#pig-char::before{
+  content:'🧧'; position:absolute; bottom:22px; right:-12px;
+  font-size:22px; animation:envBob 2.2s .4s ease-in-out infinite;
+  will-change:transform;
+}
+@keyframes envBob{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(4deg) translateY(-3px)}}
+
+/* Stage floor planks */
+#stage-floor{
+  position:absolute; bottom:22px; left:0; right:0; height:28px;
+  background:
+    repeating-linear-gradient(90deg,
+      rgba(100,80,200,.06) 0px, rgba(100,80,200,.06) 1px,
+      transparent 1px, transparent 60px),
+    linear-gradient(180deg,
+      rgba(60,40,160,.0) 0%,
+      rgba(100,80,200,.18) 40%,
+      rgba(140,120,255,.25) 60%,
+      rgba(80,60,180,.12) 100%);
+  z-index:6; pointer-events:none;
+}
+/* Stage footlights row */
+#stage-footlights{
+  position:absolute; bottom:4px; left:0; right:0; height:18px;
+  display:flex; align-items:center; justify-content:space-evenly;
+  padding:0 8%; z-index:7; pointer-events:none;
+}
+/* Stage footlights – opacity pulse instead of box-shadow animation (GPU composited) */
+.footlight{
+  display:block; width:10px; height:10px; border-radius:50%;
+  background:radial-gradient(circle,#fff 0%,#b0a0ff 40%,#6040cc 80%,transparent 100%);
+  box-shadow:0 0 10px 5px rgba(140,120,255,.75), 0 0 22px 7px rgba(80,60,200,.45);
+  animation:footlightPulse 2.4s ease-in-out infinite alternate;
+  will-change:opacity;
+}
+.footlight.fl0{animation-delay:0s}
+.footlight.fl1{animation-delay:.3s}
+.footlight.fl2{animation-delay:.6s}
+.footlight.fl3{animation-delay:.9s}
+.footlight.fl4{animation-delay:1.2s}
+.footlight.fl5{animation-delay:1.5s}
+.footlight.fl6{animation-delay:1.8s}
+.footlight.fl7{animation-delay:2.1s}
+@keyframes footlightPulse{
+  0%  {opacity:.45}
+  100%{opacity:1}
+}
+
+/* ============================================================
+   6. CONTROL BAR
+   ============================================================ */
+#control-bar{
+  flex:0 0 auto;
+  background:#080520;
+  border-top:3px solid #3a3a88;
+  padding:0 10px 4px;
+  position:relative; z-index:20;
+}
+#control-bar::before{
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,transparent,#9098ff 30%,#c0ccff 50%,#9098ff 70%,transparent);
+  background-size:200% 100%;
+  animation:shimmer 2.8s linear infinite;
+}
+/* Floor glow — use transform instead of width to avoid layout triggers.
+   left:50% + translateX(-50%) centers the element; scaleX replaces width animation. */
+#control-bar::after{
+  content:''; position:absolute; bottom:0; left:50%;
+  width:160px; height:30px; pointer-events:none;
+  background:radial-gradient(ellipse at 50% 100%,rgba(120,100,255,.35),transparent 70%);
+  animation:floorGlow 2.8s ease-in-out infinite alternate;
+  will-change:opacity, transform;
+}
+@keyframes floorGlow{
+  0%  {opacity:.5; transform:translateX(-50%) scaleX(.75)}
+  100%{opacity:1;  transform:translateX(-50%) scaleX(1)}
+}
+/* Button row */
+#ctrl-row1{
+  display:flex; align-items:center; justify-content:space-between;
+  height:74px; position:relative;
+}
+/* Generic control button */
+.ctrl-btn{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:3px; background:none; border:none; cursor:pointer; color:#ddd;
+  -webkit-tap-highlight-color:transparent; padding:2px; min-width:52px;
+}
+.cb-disc{
+  width:40px; height:40px; border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.12),rgba(0,0,0,.6));
+  border:2px solid #3a3a88;
+  display:flex; align-items:center; justify-content:center;
+  font-size:19px; color:#c0ccff;
+  transition:transform .12s,box-shadow .12s;
+}
+.ctrl-btn:active .cb-disc{transform:scale(.88)}
+.ctrl-btn:active .cb-disc{box-shadow:inset 0 2px 6px rgba(0,0,0,.7)}
+.cb-label{font-size:9px; color:#aaa; letter-spacing:.4px; white-space:nowrap}
+
+/* BIG SPIN BUTTON – elevated center */
+#spin-wrap{
+  position:absolute; left:50%; transform:translateX(-50%);
+  bottom:4px; display:flex; align-items:center; justify-content:center;
+}
+/* Rotating gold ring – filter:brightness instead of box-shadow animation (GPU composited) */
+#spin-ring{
+  width:82px; height:82px; border-radius:50%;
+  background:conic-gradient(from 0deg,#8090ff,#aa66ff,#c0ccff,#5566cc,#8090ff);
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 0 24px rgba(120,140,255,.7),0 0 50px rgba(80,60,255,.35);
+  animation:ringPulse 2.2s ease-in-out infinite alternate;
+  will-change:filter;
+}
+@keyframes ringPulse{
+  0%  {filter:brightness(1)}
+  100%{filter:brightness(1.6)}
+}
+#spin-btn{
+  width:70px; height:70px; border-radius:50%; border:none; cursor:pointer;
+  background:
+    radial-gradient(circle at 34% 27%,rgba(255,255,255,.28),transparent 52%),
+    radial-gradient(circle at center,#182060,#0d1548 48%,#050820);
+  box-shadow:inset 0 3px 10px rgba(255,255,255,.18),inset 0 -4px 8px rgba(0,0,0,.7),
+             0 4px 14px rgba(0,0,0,.85);
+  display:flex; align-items:center; justify-content:center;
+  font-size:28px; position:relative; overflow:hidden;
+  transition:transform .1s;
+  -webkit-tap-highlight-color:transparent;
+}
+/* Sheen sweep */
+#spin-btn::before{
+  content:''; position:absolute; top:-50%; left:-50%; width:200%; height:200%;
+  background:linear-gradient(45deg,transparent 38%,rgba(255,255,255,.22) 50%,transparent 62%);
+  animation:btnSheen 2.6s ease-in-out infinite;
+}
+@keyframes btnSheen{0%{transform:translateX(-120%) translateY(-120%)}100%{transform:translateX(70%) translateY(70%)}}
+#spin-btn:active{transform:scale(.93)}
+#spin-btn:disabled{opacity:.5; cursor:not-allowed}
+.spin-ic{position:relative; z-index:1; font-size:28px; pointer-events:none}
+
+/* Balance row */
+#ctrl-row2{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:3px 2px 2px;
+  border-top:1px solid rgba(139,96,16,.35);
+}
+.bal-item{display:flex; align-items:center; gap:5px; font-size:12px}
+.bal-icon{font-size:14px}
+.bal-lbl{color:#8888cc}
+.bal-val{color:#c0ccff; font-weight:bold; font-size:14px; min-width:54px}
+
+/* ============================================================
+   7. LOG PANEL
+   ============================================================ */
+#log-panel{
+  display:none; /* hidden from screen; logs are still accumulated for copy-log */
+  position:fixed; bottom:0; right:0;
+  width:min(340px,90vw); max-height:200px;
+  background:rgba(0,0,0,.92); border:2px solid #6065d8;
+  border-radius:8px 0 0 0;
+  padding:8px; font-family:monospace; font-size:10px;
+  color:#88aaff; overflow-y:auto; z-index:999;
+  transition:max-height .3s, opacity .3s;
+}
+#log-panel.collapsed{max-height:26px; overflow:hidden; opacity:.4}
+#log-panel div{margin:2px 0; border-bottom:1px solid #222}
+.log-error{color:#ff6666} .log-warn{color:#ffaa44} .log-info{color:#88aaff}
+#log-toggle{color:#c0ccff; font-weight:bold; cursor:pointer; user-select:none}
+
+/* ============================================================
+   8. MENU POPUP
+   ============================================================ */
+#menu-popup{
+  display:none; position:fixed; z-index:600;
+  background:rgba(8,5,32,.97); border:1.5px solid #6065d8;
+  border-radius:10px; padding:6px 0; min-width:140px;
+  box-shadow:0 4px 24px rgba(0,0,0,.7);
+  font-family:'Arial',sans-serif;
+}
+#menu-popup.open{ display:block; }
+.menu-item{
+  display:block; width:100%; padding:10px 18px;
+  background:none; border:none; cursor:pointer;
+  color:#c0ccff; font-size:13px; text-align:left;
+  white-space:nowrap; letter-spacing:.4px;
+}
+.menu-item:active{ background:rgba(96,101,216,.25); }
+
+/* ============================================================
+   9. BIG WIN OVERLAY
+   ============================================================ */
+#big-win{
+  position:fixed; inset:0; z-index:500; pointer-events:none;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background:radial-gradient(ellipse at center,rgba(40,30,120,.55),transparent 70%);
+}
+#bw-title{
+  font-size:clamp(66px,18vw,90px); font-weight:900; color:#c0ccff;
+  text-shadow:0 0 20px #c0ccff,0 0 40px #8899ff,0 0 80px #6677ff,
+              0 4px 0 #223388,0 8px 0 #111844;
+  -webkit-text-stroke:2px #5566ff; line-height:1;
+  animation:bwPop .5s cubic-bezier(.175,.885,.32,1.275) both;
+}
+#bw-amount{
+  font-size:clamp(40px,11vw,58px); font-weight:bold; color:#fff;
+  text-shadow:0 0 14px #c0ccff,0 0 28px #8899ff;
+  animation:bwPop .5s .2s cubic-bezier(.175,.885,.32,1.275) both;
+}
+@keyframes bwPop{
+  0%{opacity:0; transform:scale(.1) rotate(-10deg)}
+  70%{transform:scale(1.12) rotate(2deg)}
+  100%{opacity:1; transform:scale(1) rotate(0)}
+}
+.hidden{display:none!important}
+
+/* ===== Loading screen ===== */
+#game-loader{
+  position:fixed; inset:0; z-index:9999;
+  background:linear-gradient(160deg,#050218 0%,#0d0535 40%,#130848 70%,#050218 100%);
+  display:flex; align-items:center; justify-content:center;
+  transition:opacity 0.6s ease, visibility 0.6s ease;
+}
+#game-loader.fade-out{ opacity:0; visibility:hidden; pointer-events:none; }
+#gl-inner{
+  display:flex; flex-direction:column; align-items:center; gap:14px;
+  width:min(320px,85vw);
+}
+#gl-logo{
+  font-size:clamp(28px,7vw,40px); font-weight:900; letter-spacing:6px;
+  color:#c0ccff;
+  text-shadow:0 0 18px rgba(140,160,255,.9), 0 0 40px rgba(100,130,255,.55), 0 0 70px rgba(80,100,255,.3);
+  animation:glLogoPulse 2.2s ease-in-out infinite;
+}
+@keyframes glLogoPulse{
+  0%,100%{text-shadow:0 0 18px rgba(140,160,255,.9),0 0 40px rgba(100,130,255,.55),0 0 70px rgba(80,100,255,.3)}
+  50%{text-shadow:0 0 28px rgba(180,200,255,1),0 0 60px rgba(140,170,255,.75),0 0 100px rgba(110,140,255,.45)}
+}
+#gl-sub{
+  font-size:clamp(11px,3vw,14px); letter-spacing:4px; text-transform:uppercase;
+  color:rgba(160,175,255,.55); margin-top:-8px;
+}
+#gl-spinner{
+  position:relative; width:52px; height:52px;
+  margin:6px 0;
+}
+.gl-dot{
+  position:absolute; width:10px; height:10px; border-radius:50%;
+  background:#c0ccff;
+  box-shadow:0 0 8px rgba(160,180,255,.8);
+  animation:glDotOrbit 1.4s linear infinite;
+}
+.gl-dot.d0{animation-delay:0s}
+.gl-dot.d1{animation-delay:-.23s}
+.gl-dot.d2{animation-delay:-.46s}
+.gl-dot.d3{animation-delay:-.70s}
+.gl-dot.d4{animation-delay:-.93s}
+.gl-dot.d5{animation-delay:-1.16s}
+@keyframes glDotOrbit{
+  0%  {transform:rotate(0deg)   translateX(20px) scale(1);   opacity:1}
+  50% {transform:rotate(180deg) translateX(20px) scale(0.5); opacity:0.4}
+  100%{transform:rotate(360deg) translateX(20px) scale(1);   opacity:1}
+}
+#gl-bar-wrap{
+  width:100%; height:6px; background:rgba(255,255,255,.08);
+  border-radius:3px; overflow:hidden;
+  border:1px solid rgba(160,180,255,.18);
+}
+#gl-bar{
+  height:100%; width:0%; border-radius:3px;
+  background:linear-gradient(90deg,#6065d8,#9098ff,#c0ccff);
+  box-shadow:0 0 8px rgba(160,180,255,.6);
+  transition:width 0.25s ease;
+}
+#gl-status{
+  font-size:clamp(11px,2.5vw,13px); color:rgba(160,175,255,.6);
+  letter-spacing:1px; min-height:18px;
+}
+</style>
+
+</head>
+<body>
+
+<!-- ========== GAME VIEWPORT ========== -->
+<div id="gv">
+
+  <!-- 2. Paytable -->
+  <div id="paytable">
+    <div class="pt-col">
+      <div class="pt-row">
+        <span class="pt-syms">🌙🌙🌙</span><span class="pt-val">500</span>
+      </div>
+      <div class="pt-row">
+        <span class="pt-syms">🌙🌙&thinsp;</span><span class="pt-val">10</span>
+      </div>
+      <div class="pt-row">
+        <span class="pt-syms">💃💃💃</span><span class="pt-val">20</span>
+      </div>
+      <div class="pt-row">
+        <span class="pt-syms">⭐⭐⭐</span><span class="pt-val">15</span>
+      </div>
+    </div>
+    <div class="pt-div"></div>
+    <div id="pt-wild">
+      <div id="wild-badge">
+        <span class="wi-pig">🌙</span>
+      </div>
+      <span id="wild-label">百搭</span>
+    </div>
+    <div class="pt-div"></div>
+    <div class="pt-col">
+      <div class="pt-row">
+        <span class="pt-syms">🎵🎵🎵</span><span class="pt-val">10</span>
+      </div>
+      <div class="pt-row">
+        <span class="pt-syms">💫💫💫</span><span class="pt-val">8</span>
+      </div>
+      <div class="pt-row">
+        <span class="pt-syms">🌟🌟&thinsp;</span><span class="pt-val">3</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Jackpot banner -->
+  <div id="jackpot-banner">月光舞台大獎高達500倍！</div>
+
+  <!-- 4. Reel section (Three.js WebGL2) -->
+  <div id="reel-section">
+    <div id="reel-canvas-wrap"></div>
+    <div id="reel-chrome">
+      <div class="reel-sep s1"></div>
+      <div class="reel-sep s2"></div>
+      <div id="payline"></div>
+      <div class="reel-bamboo rb-l"></div>
+      <div class="reel-bamboo rb-m1"></div>
+      <div class="reel-bamboo rb-m2"></div>
+      <div class="reel-bamboo rb-r"></div>
+      <div id="winner-win"></div>
+    </div>
+  </div>
+
+  <!-- 5. Scene area -->
+  <div id="scene-area">
+    <div id="scene-top-border"></div>
+    <!-- Left pillar -->
+    <div class="pillar left">
+      <div class="p-ring"></div>
+      <div class="p-ring"></div>
+      <div class="couplet">
+        <span class="c-char">夜</span><span class="c-char">舞</span>
+        <span class="c-char">生</span><span class="c-char">輝</span>
+      </div>
+    </div>
+    <!-- Center -->
+    <div id="center-stage">
+      <!-- Spotlight LOGO at top of stage -->
+      <div id="stage-logo">
+        <div id="logo-text">
+          <span id="logo-title">月光舞台</span>
+          <span id="logo-sub">Moon Dance Stage</span>
+          <span id="logo-bar"></span>
+        </div>
+      </div>
+      <div id="moon-gate"><div id="gate-door"></div></div>
+      <!-- Character: emoji fallback while 3D model loads -->
+      <div id="pig-char">
+        <div id="pig-emoji">🌙</div>
+        <div id="pig-shadow"></div>
+      </div>
+      <!-- 3D character model (moon_dance.glb) -->
+      <div id="char-canvas-wrap"></div>
+      <!-- Idle coin sparkles -->
+      <span class="s-coin" style="left:18%;bottom:28%;animation-duration:3.2s;animation-delay:0s;font-size:15px">💫</span>
+      <span class="s-coin" style="left:72%;bottom:20%;animation-duration:4.1s;animation-delay:1.3s;font-size:13px">⭐</span>
+      <span class="s-coin" style="left:38%;bottom:14%;animation-duration:3.7s;animation-delay:0.6s;font-size:12px">✨</span>
+      <span class="s-coin" style="left:55%;bottom:32%;animation-duration:4.8s;animation-delay:2.0s;font-size:14px">💫</span>
+      <span class="s-coin" style="left:80%;bottom:40%;animation-duration:3.5s;animation-delay:0.9s;font-size:11px">🌙</span>
+    </div>
+    <!-- Right pillar -->
+    <div class="pillar right">
+      <div class="p-ring"></div>
+      <div class="p-ring"></div>
+      <div class="couplet">
+        <span class="c-char">月</span><span class="c-char">光</span>
+        <span class="c-char">閃</span><span class="c-char">耀</span>
+      </div>
+    </div>
+    <div id="stage-floor"></div>
+    <div id="stage-footlights">
+      <span class="footlight fl0"></span>
+      <span class="footlight fl1"></span>
+      <span class="footlight fl2"></span>
+      <span class="footlight fl3"></span>
+      <span class="footlight fl4"></span>
+      <span class="footlight fl5"></span>
+      <span class="footlight fl6"></span>
+      <span class="footlight fl7"></span>
+    </div>
+  </div>
+
+  <!-- 6. Control bar -->
+  <div id="control-bar">
+    <div id="ctrl-row1">
+      <button class="ctrl-btn" id="btn-back" aria-label="返回">
+        <div class="cb-disc">←</div>
+        <span class="cb-label">&nbsp;</span>
+      </button>
+      <button class="ctrl-btn" id="btn-spinset" aria-label="旋轉設置">
+        <div class="cb-disc">▶</div>
+        <span class="cb-label">旋轉設置</span>
+      </button>
+      <div id="spin-wrap">
+        <div id="spin-ring">
+          <button id="spin-btn" aria-label="旋轉">
+            <span class="spin-ic">▶</span>
+          </button>
+        </div>
+      </div>
+      <button class="ctrl-btn" id="btn-bet" aria-label="投注">
+        <div class="cb-disc">$</div>
+        <span class="cb-label" id="bet-label">投注 ¥2.50</span>
+      </button>
+      <button class="ctrl-btn" id="btn-menu" aria-label="菜單">
+        <div class="cb-disc">≡</div>
+        <span class="cb-label">&nbsp;</span>
+      </button>
+    </div>
+    <div id="ctrl-row2">
+      <div class="bal-item">
+        <span class="bal-icon">💎</span>
+        <span class="bal-lbl">余額</span>
+        <span class="bal-val" id="balance-val">¥0.00</span>
+      </div>
+      <div class="bal-item">
+        <span class="bal-icon">🏆</span>
+        <span class="bal-lbl">贏獎</span>
+        <span class="bal-val" id="win-val">¥0.00</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- #gv -->
+
+<!-- Log panel (hidden from screen; accumulates logs for copy-log feature) -->
+<div id="log-panel">
+  <div id="log-toggle">📊 日誌 (點擊收起)</div>
+</div>
+
+<!-- Function menu popup (opened by ≡ btn-menu) -->
+<div id="menu-popup">
+  <button class="menu-item" id="menu-copy-log">📋 複製日誌</button>
+  <button class="menu-item" id="menu-clear-log">🗑 清除日誌</button>
+</div>
+
+<!-- Loading screen overlay -->
+<div id="game-loader">
+  <div id="gl-inner">
+    <div id="gl-logo">月光舞台</div>
+    <div id="gl-sub">Moon Dance Stage</div>
+    <div id="gl-spinner">
+      <span class="gl-dot d0"></span>
+      <span class="gl-dot d1"></span>
+      <span class="gl-dot d2"></span>
+      <span class="gl-dot d3"></span>
+      <span class="gl-dot d4"></span>
+      <span class="gl-dot d5"></span>
+    </div>
+    <div id="gl-bar-wrap"><div id="gl-bar"></div></div>
+    <div id="gl-status">載入中...</div>
+  </div>
+</div>
+
+<!-- Big win overlay -->
+<div id="big-win" class="hidden">
+  <div id="bw-title">BIG WIN!</div>
+  <div id="bw-amount">+¥0</div>
+</div>
+
+<script type="module">
+import * as THREE from 'https://esm.sh/three@0.160.0';
+import { GLTFLoader } from 'https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+
+// ===== Loading screen =====
+const gameLoader   = document.getElementById('game-loader');
+const glBar        = document.getElementById('gl-bar');
+const glStatus     = document.getElementById('gl-status');
+let   _loaderHidden = false;
+
+function setLoadProgress(pct, msg) {
+  glBar.style.width = pct + '%';
+  if (msg) glStatus.textContent = msg;
+}
+
+function hideLoader() {
+  if (_loaderHidden) return;
+  _loaderHidden = true;
+  setLoadProgress(100, '載入完成！');
+  setTimeout(() => gameLoader.classList.add('fade-out'), 300);
+}
+
+setLoadProgress(5, '初始化引擎...');
+
+// ===== Log system =====
+const logPanel = document.getElementById('log-panel');
+const logToggle = document.getElementById('log-toggle');
+let logCount = 0;
+const MAX_LOGS = 200; // keep more entries so the log survives multiple sessions
+const LOG_ICONS = { error: '❌', warn: '⚠️', info: 'ℹ️' };
+const LOG_STORAGE_KEY = 'slot_game_log';
+
+logToggle.addEventListener('click', () => logPanel.classList.toggle('collapsed'));
+logPanel.classList.add('collapsed'); // start collapsed on mobile
+
+// --- Persistence helpers ---
+// In-memory mirror of what is in localStorage so addLog never re-parses JSON.
+let _logEntries = [];
+let _saveTimer = 0;
+function _saveStoredLogs() {
+  // Debounce: batch rapid-fire addLog calls (e.g. model-loading progress) into
+  // a single localStorage write 300 ms after the last call.
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(() => {
+    try { localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(_logEntries)); } catch (e) {
+      // Use the original console.warn (not the patched version that calls addLog)
+      // to avoid a recursive loop.
+      typeof _warn !== 'undefined' && _warn.call(console, 'slot_game: failed to persist logs:', e);
+    }
+  }, 300);
+}
+
+// Replay any logs saved from a previous session into the DOM on page load.
+(function _restoreLogs() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(LOG_STORAGE_KEY) || '[]');
+    // Honour MAX_LOGS: if more entries were somehow stored, keep only the newest.
+    _logEntries = stored.slice(-MAX_LOGS);
+  } catch (_) { _logEntries = []; }
+  for (const e of _logEntries) {
+    const d = document.createElement('div');
+    d.className = `log-${e.type}`;
+    d.textContent = e.text;
+    logPanel.appendChild(d);
+    logCount++;
+  }
+})();
+
+// ===== Uniform viewport scaling =====
+// #gv is a fixed 430×900 design canvas. Scale it as one unit to fit the screen.
+const gvEl = document.getElementById('gv');
+let _fitRaf = 0;
+function fitGame() {
+  cancelAnimationFrame(_fitRaf);
+  _fitRaf = requestAnimationFrame(() => {
+    const scale = Math.min(window.innerWidth / 430, window.innerHeight / 900);
+    const offsetX = (window.innerWidth - 430 * scale) / 2;
+    gvEl.style.transform = `translate(${offsetX}px,0) scale(${scale})`;
+  });
+}
+fitGame();
+window.addEventListener('resize', fitGame);
+
+function formatLogArgs(args) {
+  return args.map(x => typeof x === 'object' ? JSON.stringify(x) : String(x)).join(' ');
+}
+
+function addLog(msg, type = 'info') {
+  const text = `${LOG_ICONS[type] ?? 'ℹ️'} [${new Date().toLocaleTimeString()}] ${msg}`;
+  const d = document.createElement('div');
+  d.className = `log-${type}`;
+  d.textContent = text;
+  logPanel.appendChild(d);
+  if (++logCount > MAX_LOGS) { logPanel.removeChild(logPanel.children[1]); logCount--; }
+  // Persist to localStorage so the log survives back-navigation and page reload.
+  // _logEntries is the in-memory mirror — no JSON.parse on every call.
+  _logEntries.push({ type, text });
+  if (_logEntries.length > MAX_LOGS) _logEntries.shift();
+  _saveStoredLogs();
+  // scrollTop forces a layout reflow; skip it when the panel is hidden (display:none).
+  if (logPanel.offsetParent !== null) logPanel.scrollTop = logPanel.scrollHeight;
+}
+
+const _log = console.log, _warn = console.warn, _err = console.error;
+console.log   = (...a) => { _log.apply(console, a);  addLog(formatLogArgs(a)); };
+console.warn  = (...a) => { _warn.apply(console, a); addLog(formatLogArgs(a), 'warn'); };
+console.error = (...a) => { _err.apply(console, a);  addLog(formatLogArgs(a), 'error'); };
+window.addEventListener('error', e => addLog(`Runtime: ${e.message} at ${e.filename}:${e.lineno}`, 'error'));
+window.addEventListener('unhandledrejection', e => addLog(`Unhandled: ${e.reason}`, 'error'));
+
+// ===== Mobile performance detection =====
+// Lower rendering quality on mobile to avoid GPU/CPU overload (laggy scrolling)
+const IS_MOBILE = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 768;
+// DPR cap: 1 on mobile (reduces render area up to 4× vs cap-2), 1.5 on desktop
+// (1.5 covers all high-DPI displays adequately while avoiding the 4× area of DPR=2 with cap=2)
+const DPR_CAP = IS_MOBILE ? 1 : 1.5;
+
+// ===== WebGL2 renderer (WebGPU removed for broad iOS/Android compatibility) =====
+// Using THREE.WebGLRenderer ensures the game works on iOS 10.1+ WKWebView and
+// older Android WebView without requiring importmaps or top-level await.
+// Top-level await (needed for dynamic WebGPU import) is only available in
+// iOS 15+ modules, so removing it makes the module load on iOS 12–14 as well.
+const USE_WEBGPU = false;
+
+// ===== Three.js scene setup (reel section only) =====
+const reelSection = document.getElementById('reel-section');
+const W = reelSection.clientWidth;
+const H = reelSection.clientHeight;
+
+setLoadProgress(10, '建立場景...');
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x040215);
+
+const camera = new THREE.PerspectiveCamera(38, W / H, 0.1, 60);
+camera.position.set(0, 0, 6.8);
+camera.lookAt(0, 0, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: !IS_MOBILE, alpha: false });
+renderer.setSize(W, H);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, DPR_CAP));
+// ACES filmic tone mapping is expensive on mobile — use linear for better throughput
+renderer.toneMapping = IS_MOBILE ? THREE.LinearToneMapping : THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.35;
+document.getElementById('reel-canvas-wrap').appendChild(renderer.domElement);
+setLoadProgress(20, '初始化渲染器...');
+
+// ===== Lighting =====
+scene.add(new THREE.AmbientLight(0xb0b8ff, 0.7));
+const keyLight = new THREE.DirectionalLight(0xd0d8ff, 2.2);
+keyLight.position.set(4, 8, 8);
+scene.add(keyLight);
+const rimLight = new THREE.DirectionalLight(0x6644ff, 1.6);
+rimLight.position.set(-5, 3, -3);
+scene.add(rimLight);
+const fillLight = new THREE.PointLight(0x8844ff, 1.4, 22);
+fillLight.position.set(0, 2, 6);
+scene.add(fillLight);
+// Two colored orbiting point lights for disco/stage feel
+// Skip on mobile — dynamic point lights require per-fragment shader computation every frame
+const orbitLightA = new THREE.PointLight(0xaa44ff, 1.8, 18); // purple
+const orbitLightB = new THREE.PointLight(0x44aaff, 1.6, 16); // blue
+if (!IS_MOBILE) {
+  scene.add(orbitLightA);
+  scene.add(orbitLightB);
+}
+
+// ===== Character scene (moon_dance.glb) =====
+const charWrap     = document.getElementById('char-canvas-wrap');
+const charW        = charWrap.clientWidth  || 200;
+const charH        = charWrap.clientHeight || 200;
+
+const charScene    = new THREE.Scene();
+
+const charCamera   = new THREE.PerspectiveCamera(50, charW / charH, 0.1, 50);
+charCamera.position.set(0, 0.9, 3.04); // updated post-load to camZ = CHAR_FIT_TARGET * 1.2
+charCamera.lookAt(0, 0.9, 0);
+
+const charRenderer = new THREE.WebGLRenderer({ antialias: !IS_MOBILE, alpha: true });
+charRenderer.setSize(charW, charH);
+charRenderer.setPixelRatio(Math.min(window.devicePixelRatio, DPR_CAP));
+charRenderer.setClearColor(0x000000, 0); // fully transparent background
+charWrap.appendChild(charRenderer.domElement);
+
+// Character lighting — neutral white so GLB material colours render correctly
+charScene.add(new THREE.AmbientLight(0xffffff, 0.6));
+const charKey = new THREE.DirectionalLight(0xfff8f0, 1.8); // slightly warm white key
+charKey.position.set(2, 6, 5);
+charScene.add(charKey);
+const charRim = new THREE.DirectionalLight(0xddeeff, 0.8); // cool blue rim for depth
+charRim.position.set(-4, 2, -2);
+charScene.add(charRim);
+// Stage spotlight from above — purple hue to match moon dance theme
+const charSpot = new THREE.SpotLight(0xaa88ff, 2.5, 12, Math.PI / 5, 0.35);
+charSpot.position.set(0, 8, 3);
+charSpot.target.position.set(0, 1, 0); // aim at chest height
+charScene.add(charSpot);
+charScene.add(charSpot.target);
+
+let charMixer  = null;
+let charModel  = null;
+let charAction = null;
+let charAnimating = false;   // true only while win dance animation is playing
+let charFrameSkip = 0;       // frame counter for idle render throttling (render ~15fps when idle)
+
+const gltfLoader = new GLTFLoader();
+
+// moon_dance.glb uses the KHR_materials_pbrSpecularGlossiness extension which
+// Three.js removed from core in r156.  Without this plugin every material falls
+// back to a plain gray MeshStandardMaterial.  The plugin converts:
+//   diffuseFactor/diffuseTexture  → color / map
+//   glossinessFactor              → roughness = 1 − glossiness
+//   specularGlossinessTexture     → roughnessMap (approximation)
+const SPEC_GLOSS_EXT = 'KHR_materials_pbrSpecularGlossiness';
+gltfLoader.register(parser => ({
+  name: SPEC_GLOSS_EXT,
+  getMaterialType(materialIndex) {
+    const mat = parser.json.materials?.[materialIndex];
+    if (!mat?.extensions?.[SPEC_GLOSS_EXT]) return null;
+    return THREE.MeshStandardMaterial;
+  },
+  extendMaterialParams(materialIndex, materialParams) {
+    const mat = parser.json.materials?.[materialIndex];
+    if (!mat?.extensions?.[SPEC_GLOSS_EXT]) return Promise.resolve();
+    const ext     = mat.extensions[SPEC_GLOSS_EXT];
+    const pending = [];
+    if (Array.isArray(ext.diffuseFactor)) {
+      const [r, g, b, a] = ext.diffuseFactor;
+      materialParams.color   = new THREE.Color(r, g, b);
+      materialParams.opacity = a ?? 1;
+    }
+    if (ext.diffuseTexture !== undefined) {
+      pending.push(parser.assignTexture(materialParams, 'map', ext.diffuseTexture, THREE.SRGBColorSpace));
+    }
+    materialParams.metalness = 0;
+    materialParams.roughness = ext.glossinessFactor !== undefined ? 1 - ext.glossinessFactor : 1;
+    if (ext.specularGlossinessTexture !== undefined) {
+      pending.push(parser.assignTexture(materialParams, 'roughnessMap', ext.specularGlossinessTexture));
+    }
+    return Promise.all(pending);
+  }
+}));
+
+// On mobile: show a "ready" state immediately and start model background fetch later
+setLoadProgress(IS_MOBILE ? 100 : 30, IS_MOBILE ? '遊戲就緒' : '載入 3D 模型...');
+
+// ===== Lazy 3D model loading =====
+// On mobile, the game becomes interactive immediately with the emoji placeholder.
+// The GLB is loaded in the background after a short delay so it doesn't block
+// the first spin and doesn't compete with the reel renderer for bandwidth.
+//
+// On desktop (or fast connections), load immediately as before.
+//
+// Connection speed gate: if navigator.connection reports slow-2g/2g, skip the
+// 3D model entirely to avoid blocking on a high-latency mobile network.
+function shouldSkipGlb() {
+  // Network Information API — only unprefixed form is in the current spec;
+  // prefixed moz/webkit variants were experimental and removed, kept here only as
+  // a defensive fallback for very old WebView builds.
+  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  if (!conn) return false;
+  return conn.effectiveType === 'slow-2g' || conn.effectiveType === '2g';
+}
+
+function loadCharModel() {
+  if (shouldSkipGlb()) {
+    console.warn('⚠️ 慢速網絡 — 跳過 3D 模型載入');
+    hideLoader();
+    return;
+  }
+  gltfLoader.load('./moon_dance.glb',
+  (gltf) => {
+    charModel = gltf.scene;
+    const CHAR_FIT_TARGET = 2.535; // 1.95 × 1.3 = 2.535 (second 30 % enlargement)
+    const CHAR_Y_OFFSET   = -0.55; // shift model down so raised arms don't clip top edge
+
+    // Step 1 – add to scene so updateWorldMatrix propagates the full hierarchy
+    // (including Node 4's built-in 0.0254 inches→metres scale matrix).
+    charScene.add(charModel);
+    charModel.updateWorldMatrix(true, true);
+
+    // expandByObject is intentionally NOT used here.  Three.js r155+ made it call
+    // SkinnedMesh.computeBoundingBox() which applies bone-weight transforms; but
+    // bone matrices are uninitialised before the first render, so every skinned
+    // vertex collapses near the origin → returns ~0.087 m instead of ~2.9 m.
+    // Instead we do a manual traverse: setFromBufferAttribute gives the REST-POSE
+    // local bounds (no bones), then applyMatrix4(matrixWorld) converts them to the
+    // correct world-space extent.
+    const worldBox = new THREE.Box3();
+    const _meshBox = new THREE.Box3();
+    charModel.traverse(node => {
+      if (!node.isMesh) return;
+      const pos = node.geometry.getAttribute('position');
+      if (!pos) return;
+      _meshBox.setFromBufferAttribute(pos);   // REST-POSE local bounds
+      _meshBox.applyMatrix4(node.matrixWorld); // world-space transform
+      worldBox.union(_meshBox);
+    });
+    const worldSize   = worldBox.getSize(new THREE.Vector3());
+    const worldCenter = worldBox.getCenter(new THREE.Vector3());
+
+    // Step 2 – fit: scale so the tallest dimension = CHAR_FIT_TARGET world units.
+    // Use multiplyScalar (not setScalar) to PRESERVE the GLB's existing root scale
+    // (e.g. 0.01 for a Mixamo cm→m conversion).  setScalar would overwrite it,
+    // making the model ~100× taller than intended and showing only the shoes.
+    const fitScale = CHAR_FIT_TARGET / Math.max(worldSize.x, worldSize.y, worldSize.z);
+    charModel.scale.multiplyScalar(fitScale);
+
+    // Step 3 – reposition: feet at y=0, centered on x/z.
+    // worldBox was measured before the multiplicative scale, so we still multiply
+    // by fitScale to convert old-world coords → new-world coords.
+    charModel.position.set(
+      -worldCenter.x * fitScale,
+      -worldBox.min.y * fitScale + CHAR_Y_OFFSET,  // feet at y=0 + downward offset
+      -worldCenter.z * fitScale
+    );
+
+    // Step 4 – aim camera at waist/chest level (40% of model height from ground).
+    const modelWorldH = worldSize.y * fitScale;   // ≈ CHAR_FIT_TARGET
+    const scaledMidY  = modelWorldH * 0.35;       // slightly below centre → headroom for raised arms
+    const camZ        = CHAR_FIT_TARGET * 1.2;    // model fills ~87% of frame height (almost full section, slight breathing room)
+    charCamera.position.set(0, scaledMidY, camZ);
+    charCamera.lookAt(0, scaledMidY, 0);
+    charCamera.updateProjectionMatrix();
+    // Set up animation — idle (rest pose); only plays on win
+    if (gltf.animations && gltf.animations.length > 0) {
+      charMixer = new THREE.AnimationMixer(charModel);
+      charAction = charMixer.clipAction(gltf.animations[0]);
+      charAction.setLoop(THREE.LoopOnce);
+      charAction.clampWhenFinished = false; // return to rest pose (t=0) on finish
+      // charMixer 'finished' fires when a LoopOnce action ends → stop resets to t=0
+      charMixer.addEventListener('finished', () => { charAction.stop(); charAnimating = false; });
+      // Do NOT call .play() — model stays in rest pose until a win
+    }
+    // Hide emoji placeholder — 3D model loaded
+    document.getElementById('pig-char').classList.add('hidden');
+    console.log('✅ Character model loaded (moon_dance.glb)');
+    hideLoader();
+  },
+  (xhr) => {
+    if (xhr.lengthComputable) {
+      const pct = Math.round(xhr.loaded / xhr.total * 100);
+      // Map model loading 0-100% to overall progress 30-90%
+      if (!IS_MOBILE) setLoadProgress(30 + Math.round(pct * 0.6), `載入模型 ${pct}%`);
+      // Only log at start / midpoint / completion — XHR fires 80+ progress events
+      // per load and each one appends a DOM node to the hidden log panel.
+      // pct===0 never fires (XHR loaded>0 on first event), so use <10 for the start.
+      if (pct < 10 || pct === 50 || pct >= 100) console.log(`Model loading: ${pct}%`);
+    }
+  },
+  (err) => {
+    console.error('Character model failed to load:', err?.message || String(err));
+    hideLoader(); // hide loader even on error so game is accessible
+  }
+  );
+}
+
+// Delay (ms) before the background GLB fetch starts on mobile — long enough for the
+// reel renderer to complete its first frame and textures to upload to GPU.
+const MOBILE_MODEL_LOAD_DELAY_MS = 1500;
+
+if (IS_MOBILE) {
+  // Mobile: hide loader immediately (game is playable with emoji) and fetch model
+  // quietly in the background so it doesn't compete with the first render.
+  hideLoader();
+  setTimeout(loadCharModel, MOBILE_MODEL_LOAD_DELAY_MS);
+} else {
+  loadCharModel();
+}
+
+// ===== Symbol texture factory =====
+const SYMBOLS = [
+  { emoji:'🌙', label:'月亮', bg:'#0a0428', glow:'#aa88ff' },
+  { emoji:'💃', label:'舞者', bg:'#0c0830', glow:'#c0ccff' },
+  { emoji:'⭐', label:'星星', bg:'#000e30', glow:'#88aaff' },
+  { emoji:'🎵', label:'音符', bg:'#080425', glow:'#aabbff' },
+  { emoji:'💫', label:'流星', bg:'#001030', glow:'#88ddff' },
+  { emoji:'🌟', label:'閃星', bg:'#080518', glow:'#c0ccff' },
+];
+
+// Use 256×256 on mobile (4× less GPU memory bandwidth vs 512×512)
+function makeSymbolTex(sym) {
+  const cv = document.createElement('canvas');
+  const TEX = IS_MOBILE ? 256 : 512;
+  const f   = TEX / 512;           // scale factor: 0.5 on mobile, 1 on desktop
+  cv.width = cv.height = TEX;
+  const ctx = cv.getContext('2d');
+
+  // Helper: clip/stroke a rounded rectangle path
+  function roundRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);      ctx.arcTo(x + w, y,     x + w, y + r,     r);
+    ctx.lineTo(x + w, y + h - r);  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    ctx.lineTo(x + r, y + h);      ctx.arcTo(x,     y + h, x,         y + h - r, r);
+    ctx.lineTo(x, y + r);          ctx.arcTo(x,     y,     x + r,     y,         r);
+    ctx.closePath();
+  }
+
+  // Card background gradient
+  const bgGrd = ctx.createLinearGradient(0, 0, 0, TEX);
+  bgGrd.addColorStop(0, '#000');
+  bgGrd.addColorStop(0.45, sym.bg);
+  bgGrd.addColorStop(1, '#000');
+  roundRect(4*f, 4*f, 504*f, 504*f, 32*f);
+  ctx.fillStyle = bgGrd;
+  ctx.fill();
+
+  // Inner radial glow (brighter for better symbol pop)
+  const glowGrd = ctx.createRadialGradient(256*f, 210*f, 20*f, 256*f, 210*f, 210*f);
+  glowGrd.addColorStop(0, sym.glow + '99');
+  glowGrd.addColorStop(1, 'rgba(0,0,0,0)');
+  roundRect(4*f, 4*f, 504*f, 504*f, 32*f);
+  ctx.fillStyle = glowGrd;
+  ctx.fill();
+
+  // Gold border
+  roundRect(4*f, 4*f, 504*f, 504*f, 32*f);
+  ctx.strokeStyle = sym.glow;
+  ctx.lineWidth = 5*f;
+  ctx.stroke();
+  // Inner thin border
+  roundRect(14*f, 14*f, 484*f, 484*f, 26*f);
+  ctx.strokeStyle = sym.glow + '55';
+  ctx.lineWidth = 2*f;
+  ctx.stroke();
+
+  // Emoji – centered in the full card (no label area)
+  ctx.font = `${280*f}px serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = sym.glow;
+  ctx.shadowBlur = 36*f;
+  ctx.fillStyle = '#fff';
+  ctx.fillText(sym.emoji, 256*f, 256*f);
+  ctx.shadowBlur = 0;
+
+  return new THREE.CanvasTexture(cv);
+}
+
+const symTextures = SYMBOLS.map(makeSymbolTex);
+
+// ===== Reel construction (vertical strip – 3 symbols visible: top / winner / bottom) =====
+// Derive geometry from the camera so reels always fill the visible frustum exactly.
+// VISIBLE_H = 2 × tan(FOV/2) × z   →   3 equal rows fill the full height
+// VISIBLE_W = VISIBLE_H × aspect   →   3 equal columns fill the full width
+const REEL_GAP = 0.06; // world-unit gap between adjacent reels (also used for CARD_GAP)
+const CARD_GAP = REEL_GAP;
+
+function computeReelGeometry(w, h) {
+  const fovRad   = camera.fov * Math.PI / 180;
+  const visibleH = 2 * Math.tan(fovRad / 2) * camera.position.z;
+  const visibleW = visibleH * (w / h);
+  const CARD_W   = (visibleW - 2 * REEL_GAP) / 3;
+  const CARD_H   = visibleH / 3;
+  const REEL_X   = [-(CARD_W + REEL_GAP), 0, CARD_W + REEL_GAP];
+  return { CARD_W, CARD_H, REEL_X };
+}
+
+let { CARD_W, CARD_H, REEL_X } = computeReelGeometry(W, H);
+// Custom weighted reel strips — symbol index × stop count per reel.
+// Weights: 🌙=1  💃=3  ⭐=4  🎵=6  💫=6  🌟=6  (N=26 stops each)
+// Theoretical RTP ≈ 96.6%   Hit rate ≈ 18.6%
+const REEL_STRIPS = [
+  [0, 1,1,1, 2,2,2,2, 3,3,3,3,3,3, 4,4,4,4,4,4, 5,5,5,5,5,5], // R0: 🌙 leads
+  [5,5,5,5,5,5, 0, 1,1,1, 2,2,2,2, 3,3,3,3,3,3, 4,4,4,4,4,4], // R1: 🌟 leads
+  [3,3,3,3,3,3, 4,4,4,4,4,4, 5,5,5,5,5,5, 0, 1,1,1, 2,2,2,2], // R2: 🎵 leads
+];
+const N_STRIP   = REEL_STRIPS[0].length; // 26 stops per reel
+const N_SYMBOLS = SYMBOLS.length;        // 6 distinct symbols
+// Recycling clip boundary: one card beyond the top/bottom of the visible area
+let STRIP_CLIP = (Math.floor(N_STRIP / 2) + 1) * CARD_H;
+
+const reelGroups = [];
+
+REEL_X.forEach((rx, ri) => {
+  const strip = new THREE.Group();
+  strip.position.set(rx, 0, 0);
+
+  for (let i = 0; i < N_STRIP; i++) {
+    const symIdx = REEL_STRIPS[ri][i];
+    const mat = new THREE.MeshStandardMaterial({
+      map: symTextures[symIdx],
+      metalness: 0.06, roughness: 0.88,
+    });
+    const card = new THREE.Mesh(
+      new THREE.PlaneGeometry(CARD_W, CARD_H - CARD_GAP),
+      mat
+    );
+    // Center the strip: card at index Math.floor(N_STRIP/2) sits at y=0 (winner row)
+    card.position.y = (i - Math.floor(N_STRIP / 2)) * CARD_H;
+    card.position.z = 0;
+    card.userData.symIdx = symIdx;   // tracked so evaluatePayline() can read it after snap
+    strip.add(card);
+  }
+
+  strip.userData = { spinning: false, speed: 0 };
+  scene.add(strip);
+  reelGroups.push(strip);
+});
+
+// ===== Game state =====
+let isSpinning  = false;
+const INITIAL_BALANCE  = 10000;
+let balance     = INITIAL_BALANCE;
+const BET_LEVELS   = [25, 50, 100, 250, 500];
+let betIdx         = 3;                          // start at ¥2.50 (250 units)
+const currentBet   = () => BET_LEVELS[betIdx];
+const MAX_SPIN_SPEED   = 0.32;
+const MIN_SPIN_SPEED   = 0.002; // minimum speed threshold before reel comes to rest
+const AUTO_SPIN_PRESS_DELAY = 500;  // ms long-press to activate auto-spin
+const AUTO_SPIN_INTERVAL    = 600;  // ms pause between normal auto-spin rounds
+const BIG_WIN_DISPLAY_MS    = 3200; // 2300ms fade-start + 900ms fade-out = total big-win overlay duration
+const WIN_DISPLAY_MS        = 2100; // 1200ms fade-start + 900ms fade-out = regular win overlay duration
+
+
+const balanceEl = document.getElementById('balance-val');
+const winEl     = document.getElementById('win-val');
+const betLabel  = document.getElementById('bet-label');
+const spinBtn   = document.getElementById('spin-btn');
+balanceEl.textContent = '¥' + balance.toLocaleString();
+betLabel.textContent  = '投注 ¥' + (currentBet() / 100).toFixed(2);
+
+// ===== Bet cycling =====
+document.getElementById('btn-bet').addEventListener('click', () => {
+  if (isSpinning) return;
+  betIdx = (betIdx + 1) % BET_LEVELS.length;
+  betLabel.textContent = '投注 ¥' + (currentBet() / 100).toFixed(2);
+  betLabel.style.animation = 'none';
+  void betLabel.offsetWidth; // force reflow to restart the CSS animation from the beginning
+  betLabel.style.animation = 'betFlash .4s ease';
+});
+
+// ===== Function menu (≡ button) =====
+const menuPopup = document.getElementById('menu-popup');
+
+function openMenu() {
+  const btn = document.getElementById('btn-menu');
+  const rect = btn.getBoundingClientRect();
+  // Position popup above the button, anchored to its right edge.
+  menuPopup.style.bottom = (window.innerHeight - rect.top + 6) + 'px';
+  menuPopup.style.right  = (window.innerWidth - rect.right) + 'px';
+  menuPopup.style.left   = 'auto';
+  menuPopup.classList.add('open');
+}
+function closeMenu() { menuPopup.classList.remove('open'); }
+
+document.getElementById('btn-menu').addEventListener('click', (e) => {
+  e.stopPropagation();
+  menuPopup.classList.contains('open') ? closeMenu() : openMenu();
+});
+document.addEventListener('click', (e) => {
+  if (!menuPopup.contains(e.target)) closeMenu();
+});
+
+document.getElementById('menu-copy-log').addEventListener('click', () => {
+  closeMenu();
+  // Collect all log entries (skip the header toggle element at index 0).
+  const lines = [];
+  const kids = logPanel.children;
+  for (let i = 1; i < kids.length; i++) lines.push(kids[i].textContent);
+  const text = lines.join('\n') || '(no logs)';
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text)
+      .then(() => addLog('日誌已複製到剪貼板', 'info'))
+      .catch(() => {
+        // Clipboard API blocked (e.g. file:// origin) — fall back to prompt.
+        prompt('複製以下日誌內容:', text);
+      });
+  } else {
+    prompt('複製以下日誌內容:', text);
+  }
+});
+
+document.getElementById('menu-clear-log').addEventListener('click', () => {
+  closeMenu();
+  // Remove all log entries from the DOM (keep the header toggle at index 0).
+  while (logPanel.children.length > 1) logPanel.removeChild(logPanel.lastChild);
+  logCount = 0;
+  // Wipe the in-memory array and cancel any pending debounced write.
+  _logEntries = [];
+  clearTimeout(_saveTimer);
+  try { localStorage.removeItem(LOG_STORAGE_KEY); } catch (e) {
+    typeof _warn !== 'undefined' && _warn.call(console, 'slot_game: failed to clear stored logs:', e);
+  }
+});
+
+// ===== Auto-spin state =====
+let autoSpin      = false;
+let autoTimer     = null;
+let pressTimer    = null;
+let demoSpinCount = 0; // demo: guarantee win every 3rd spin
+
+// Long-press spin button → toggle auto-spin
+spinBtn.addEventListener('pointerdown', () => {
+  pressTimer = setTimeout(() => {
+    autoSpin = !autoSpin;
+    if (!autoSpin) clearTimeout(autoTimer); // toggling off: cancel pending scheduled spin
+    spinBtn.style.outline = autoSpin ? '3px solid #c0ccff' : '';
+    if (autoSpin && !isSpinning) doSpin();
+  }, AUTO_SPIN_PRESS_DELAY);
+});
+['pointerup', 'pointerleave', 'pointercancel'].forEach(ev =>
+  spinBtn.addEventListener(ev, () => clearTimeout(pressTimer))
+);
+
+// ===== Spin button – normal tap =====
+spinBtn.addEventListener('click', () => { if (!autoSpin) doSpin(); });
+
+// ── Paytable evaluation ──────────────────────────────────────────────────────
+// Symbols: 0=🌙(月亮/WILD), 1=💃(舞者), 2=⭐(星星), 3=🎵(音符), 4=💫(流星), 5=🌟(閃星)
+// Paytable (multiplier applied to current bet):
+//   🌙🌙🌙 = 500×    🌙🌙 + any = 10×
+//   💃💃💃 = 20×     ⭐⭐⭐ = 15×    🎵🎵🎵 = 10×    💫💫💫 = 8×    🌟🌟 + any = 3×
+//   🌙 WILD: substitutes for any symbol at base rate (no bonus multiplier)
+//   🌟🌟 + any = 3×   no match = 0 (LOSS)
+function evaluatePayline(s0, s1, s2) {
+  const WILD = 0; // 🌙 — also acts as wild
+  const STAR = 5; // 🌟 — consolation 2-of-kind
+  const syms      = [s0, s1, s2];
+  const moonCount = syms.filter(s => s === WILD).length;
+  const others    = syms.filter(s => s !== WILD);
+
+  if (moonCount === 3) return 500;                                          // 🌙🌙🌙
+  if (moonCount === 2) return 10;                                           // 🌙🌙 + any
+  if (moonCount === 1 && others.length === 2 && others[0] === others[1]) { // 🌙 wild completes 3-of-kind
+    return [500, 20, 15, 10, 8, 3][others[0]] ?? 0;                        //   → base payout (no bonus)
+  }
+  if (s0 === s1 && s1 === s2) {                                             // 3-of-kind (no wilds)
+    return [500, 20, 15, 10, 8, 3][s0] ?? 0;
+  }
+  if (syms.filter(s => s === STAR).length >= 2) return 3;   // 🌟🌟 + any = consolation
+  return 0;                                                  // no match = LOSS
+}
+
+function doSpin() {
+  if (isSpinning) return;
+  if (balance < currentBet()) {
+    // Re-top-up when out of funds
+    balance = INITIAL_BALANCE;
+    balanceEl.textContent = '¥' + balance.toLocaleString();
+    addLog(`餘額不足，已自動補充至 ¥${INITIAL_BALANCE.toLocaleString()}`, 'warn');
+  }
+  isSpinning = true;
+  spinBtn.disabled = true;
+  winEl.textContent = '¥0.00';
+
+  balance -= currentBet();
+  balanceEl.textContent = '¥' + balance.toLocaleString();
+
+  // Demo mode: pre-determine a guaranteed win every 3rd spin so reels visually match the paytable.
+  // forcedSyms is resolved before the reels stop, so the snap logic can steer each reel to the
+  // correct symbol — the resolve block then reads the actual landed symbols with no override needed.
+  demoSpinCount++;
+  const forcedSyms = (demoSpinCount % 3 === 0) ? [5, 5, 5] : null; // 🌟🌟🌟 = 3× consolation
+
+  // Launch all reels with gradual acceleration (start at 10% speed, ramp up over ~20 frames)
+  reelGroups.forEach(g => { g.userData.spinning = true; g.userData.speed = MAX_SPIN_SPEED * 0.1; });
+  document.getElementById('reel-canvas-wrap').classList.add('reel-spinning');
+
+  // Stop reels staggered (600 / 1050 / 1500 ms)
+  const stopDelays = [600, 1050, 1500];
+  stopDelays.forEach((delay, i) => {
+    setTimeout(() => {
+      const strip = reelGroups[i];
+      strip.userData.spinning = false;
+      // Snap: find the card to land on the payline (y=0).
+      // For demo win spins, pick the card matching the forced symbol closest to y=0 so the
+      // visible combination matches a paytable row instead of showing a losing combination.
+      let closest = null;
+      if (forcedSyms !== null) {
+        const target = forcedSyms[i];
+        let minDist = Infinity;
+        strip.children.forEach(card => {
+          if (card.userData.symIdx === target) {
+            const d = Math.abs(card.position.y);
+            if (d < minDist) { minDist = d; closest = card; }
+          }
+        });
+      }
+      // Fall back to geometrically-closest card (natural spin result or missing forced symbol)
+      if (closest === null) {
+        let minDist = Infinity;
+        strip.children.forEach(card => {
+          const d = Math.abs(card.position.y);
+          if (d < minDist) { minDist = d; closest = card; }
+        });
+      }
+      const snapShift = -closest.position.y;
+      strip.children.forEach(card => { card.position.y += snapShift; });
+      strip.userData.speed = 0;
+      // Remove motion blur when the last reel stops
+      if (i === stopDelays.length - 1) {
+        document.getElementById('reel-canvas-wrap').classList.remove('reel-spinning');
+      }
+    }, delay);
+  });
+
+  // Resolve spin — all 3 reel stop timeouts (600 / 1050 / 1500 ms) have fired by now.
+  setTimeout(() => {
+    isSpinning = false;
+    spinBtn.disabled = false;
+
+    // Read the snapped symbol for each reel (find the card closest to y=0).
+    const landedSymbols = reelGroups.map(strip => {
+      let closest = strip.children[0];
+      let minDist  = Infinity;
+      strip.children.forEach(card => {
+        const d = Math.abs(card.position.y);
+        if (d < minDist) { minDist = d; closest = card; }
+      });
+      // Use the last valid symbol index (🌟, index 5) as safe fallback if userData is missing.
+      // This avoids accidentally awarding the highest-value WILD (index 0 = 🌙) on a bug.
+      return closest.userData.symIdx != null ? closest.userData.symIdx : N_SYMBOLS - 1;
+    });
+
+    const naturalMultiplier = evaluatePayline(landedSymbols[0], landedSymbols[1], landedSymbols[2]);
+    // Demo guaranteed win is achieved by steering the reel snap (forcedSyms above), so no
+    // post-hoc override is needed here — the landed symbols already satisfy the paytable.
+    const multiplier = naturalMultiplier;
+    addLog(`花色: ${landedSymbols.map(i => SYMBOLS[i]?.emoji ?? '?').join(' ')} → ×${multiplier}`, multiplier >= 10 ? 'info' : 'warn');
+
+    if (multiplier > 0) {
+      const prize = currentBet() * multiplier;
+      balance += prize;
+      balanceEl.textContent = '¥' + balance.toLocaleString();
+      winEl.textContent     = '+¥' + prize.toLocaleString();
+
+      // Flash reel section border — remove first to restart animation if already playing
+      const rs = document.getElementById('reel-section');
+      rs.classList.remove('reel-win');
+      void rs.offsetHeight; // force reflow so the removal takes effect before re-adding
+      rs.classList.add('reel-win');
+      rs.addEventListener('animationend', () => rs.classList.remove('reel-win'), { once: true });
+
+      // Play character dance animation on win
+      if (charAction) { charAnimating = true; charAction.reset().play(); }
+
+      // Mobile haptic
+      if (navigator.vibrate) navigator.vibrate([80, 40, 160]);
+
+      // Win announcement overlay + coin rain for all wins
+      const winTitle = multiplier >= 20 ? 'BIG WIN!' : multiplier >= 10 ? 'NICE WIN!' : 'WIN!';
+      showBigWin(prize, winTitle);
+    }
+
+    // Continue auto-spin: wait for any win overlay to dismiss first
+    const overlayMs = multiplier >= 20 ? BIG_WIN_DISPLAY_MS : multiplier >= 3 ? WIN_DISPLAY_MS : 0;
+    if (autoSpin) autoTimer = setTimeout(doSpin, overlayMs > 0 ? overlayMs : AUTO_SPIN_INTERVAL);
+  }, 2000);
+}
+
+// ===== Back button – cancel auto-spin =====
+/** Cancels auto-spin if it is currently active.
+ *  Returns true if auto-spin was running (and has now been cancelled),
+ *  false if nothing needed to be done.
+ *  Exposed on window so the Flutter layer can call it via evaluateJavascript.
+ */
+window.cancelAutoSpin = function() {
+  if (!autoSpin) return false;
+  autoSpin = false;
+  spinBtn.style.outline = '';
+  clearTimeout(autoTimer);
+  addLog('自動旋轉已取消', 'info');
+  return true;
+};
+
+document.getElementById('btn-back').addEventListener('click', () => {
+  if (!window.cancelAutoSpin()) {
+    // Navigate back to Flutter.
+    // On native Android/iOS InAppWebView: window._flutterNative is injected
+    // at document-start by Dart (initialUserScripts), guaranteed before any
+    // user interaction.
+    //   - If window.flutter_inappwebview is available (always on iOS WKWebView,
+    //     sometimes on Android): use callHandler('goBack').  This sends a
+    //     message without triggering page navigation — safe on iOS 17 WKWebView.
+    //   - Otherwise (Android where the bridge may be absent): navigate to
+    //     flutter://goback, intercepted via shouldOverrideUrlLoading in Dart.
+    // On Flutter Web desktop (rendered as an iframe): postMessage to the
+    // parent Flutter window — handled by listenForGoBack in Dart.
+    // On mobile browser (direct navigation, not in iframe): use history.back().
+    let path;
+    if (window._flutterNative) {
+      path = window.flutter_inappwebview ? 'callHandler' : 'flutter://goback';
+    } else {
+      path = window.parent !== window ? 'postMessage' : 'history.back()';
+    }
+    addLog(`返回 [${path}] native=${!!window._flutterNative} bridge=${!!window.flutter_inappwebview} iframe=${window.parent !== window}`, 'info');
+    // Flush the debounced localStorage write immediately so the log entry is
+    // persisted before any navigation that may unload the page (history.back,
+    // location.href assignment).
+    clearTimeout(_saveTimer);
+    try { localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(_logEntries)); } catch (_) {}
+    window._flutterBridge.goBack();
+  }
+});
+
+// ===== Big Win display =====
+function spawnCoinRain() {
+  const coins = ['💫', '⭐', '✨', '🌙', '🎊'];
+  for (let i = 0; i < 22; i++) {
+    const c = document.createElement('span');
+    c.textContent = coins[Math.floor(Math.random() * coins.length)];
+    c.style.cssText =
+      `position:fixed;pointer-events:none;z-index:495;` +
+      `font-size:${16 + Math.random() * 18}px;` +
+      `left:${Math.random() * 100}%;top:-32px;` +
+      `animation:coinFall ${1.3 + Math.random() * 1.8}s ${Math.random() * 0.9}s ease-in forwards`;
+    document.body.appendChild(c);
+    c.addEventListener('animationend', () => c.remove(), { once: true });
+  }
+}
+
+function showBigWin(amount, title = 'BIG WIN!') {
+  const bw  = document.getElementById('big-win');
+  // Guard against reentrancy: if overlay is already showing, skip to avoid
+  // orphaned setTimeout closures from concurrent calls fighting over the same element.
+  if (!bw.classList.contains('hidden')) return;
+  const bwT = document.getElementById('bw-title');
+  const bwA = document.getElementById('bw-amount');
+  bwT.textContent = title;
+  bwA.textContent = '+¥' + amount.toLocaleString();
+  bw.classList.remove('hidden');
+  bwT.style.animation = bwA.style.animation = 'none';
+  void bw.offsetHeight; // 強制 reflow 以重置 CSS animation 狀態，使動畫可以重新播放 (reading offsetHeight triggers synchronous layout)
+  bwT.style.animation = bwA.style.animation = '';
+  spawnCoinRain();
+  // Big wins stay longer; regular wins use a shorter display time
+  const stayMs = title === 'BIG WIN!' ? 2300 : 1200;
+  setTimeout(() => {
+    bw.style.opacity = '0';
+    bw.style.transition = 'opacity 0.9s';
+    setTimeout(() => { bw.classList.add('hidden'); bw.style.opacity = ''; bw.style.transition = ''; }, 900);
+  }, stayMs);
+}
+
+// ===== Resize handler =====
+window.addEventListener('resize', () => {
+  const nW = reelSection.clientWidth;
+  const nH = reelSection.clientHeight;
+  camera.aspect = nW / nH;
+  camera.updateProjectionMatrix();
+  renderer.setSize(nW, nH);
+  // Recompute reel geometry so cards still fill the (re-sized) frustum exactly
+  const geo = computeReelGeometry(nW, nH);
+  // Guard: only rebuild card geometries when dimensions actually changed
+  if (Math.abs(geo.CARD_W - CARD_W) < 1e-4) return;
+  CARD_W = geo.CARD_W; CARD_H = geo.CARD_H; REEL_X = geo.REEL_X;
+  STRIP_CLIP = (Math.floor(N_STRIP / 2) + 1) * CARD_H;
+  reelGroups.forEach((strip, ri) => {
+    strip.position.x = REEL_X[ri];
+    strip.children.forEach((card, i) => {
+      card.geometry.dispose();
+      card.geometry = new THREE.PlaneGeometry(CARD_W, CARD_H - CARD_GAP);
+      card.position.y = (i - Math.floor(N_STRIP / 2)) * CARD_H;
+    });
+  });
+  // Resize character renderer to match new center-stage dimensions
+  const cW = charWrap.clientWidth  || nW;
+  const cH = charWrap.clientHeight || nH;
+  charCamera.aspect = cW / cH;
+  charCamera.updateProjectionMatrix();
+  charRenderer.setSize(cW, cH);
+});
+
+// ===== Animation loop =====
+let lastTime = performance.now();
+renderer.setAnimationLoop(() => {
+  const now = performance.now();
+  const dt  = Math.min((now - lastTime) / 1000, 0.033);
+  lastTime  = now;
+  const t   = now / 1000;
+
+  // Vertical strip scroll with card recycling and smooth spin-up
+  reelGroups.forEach(strip => {
+    let { spinning, speed } = strip.userData;
+
+    // Smooth spin-up: ramp to MAX_SPIN_SPEED over first ~20 frames
+    if (spinning && speed < MAX_SPIN_SPEED) {
+      speed = Math.min(speed + MAX_SPIN_SPEED / 20, MAX_SPIN_SPEED);
+      strip.userData.speed = speed;
+    }
+
+    // Decelerate after stop signal
+    if (!spinning && speed > MIN_SPIN_SPEED) {
+      speed *= 0.88;
+      strip.userData.speed = speed;
+    }
+
+    const delta = speed > MIN_SPIN_SPEED ? speed : 0;
+    if (delta === 0) return;
+
+    // Move cards downward (classic slot reel fall direction)
+    // Compute maxY once per strip per frame to avoid O(n²) inner-loop during recycling
+    let stripMaxY = -Infinity;
+    strip.children.forEach(c => { if (c.position.y > stripMaxY) stripMaxY = c.position.y; });
+    strip.children.forEach(card => {
+      card.position.y -= delta;
+      // Recycle: card falls below strip bottom → teleport to above current top
+      if (card.position.y < -STRIP_CLIP) {
+        card.position.y = stripMaxY + CARD_H;
+        stripMaxY = card.position.y; // update so next recycled card stacks correctly
+      }
+    });
+  });
+
+  // Fill light ember flicker (living idle)
+  fillLight.intensity = 1.4 + Math.sin(t * 6.8) * 0.3 + Math.sin(t * 13.5) * 0.12;
+
+  // Orbiting stage lights — desktop only (per-fragment cost every frame)
+  if (!IS_MOBILE) {
+    const ORBIT_R = 6;
+    orbitLightA.position.set(Math.cos(t * 0.7) * ORBIT_R, Math.sin(t * 0.5) * 1.5, Math.sin(t * 0.7) * ORBIT_R);
+    orbitLightB.position.set(Math.sin(t * 0.55 + 1.5) * ORBIT_R, Math.cos(t * 0.65) * 1.2, Math.cos(t * 0.55 + 1.5) * ORBIT_R);
+    orbitLightA.intensity = 1.4 + Math.sin(t * 1.1) * 0.6;
+    orbitLightB.intensity = 1.2 + Math.cos(t * 0.9) * 0.5;
+  }
+
+  renderer.render(scene, camera);
+
+  // Character scene render (alpha blended over the CSS background)
+  // During win animation: full 60fps. When idle: throttle to ~15fps to save GPU.
+  if (charAnimating) {
+    if (charMixer) charMixer.update(dt);
+    charSpot.intensity = 2.5 + Math.sin(t * 1.4) * 0.5;
+    charRenderer.render(charScene, charCamera);
+  } else {
+    // Idle: render at ~15fps for subtle spotlight breathing
+    charFrameSkip = (charFrameSkip + 1) % 4;
+    if (charFrameSkip === 0) {
+      charSpot.intensity = 2.5 + Math.sin(t * 1.4) * 0.5;
+      charRenderer.render(charScene, charCamera);
+    }
+  }
+});
+
+console.log('💃 月光舞台 v3.0 已加載 – WebGL2 模式');
+addLog(`啟動: native=${!!window._flutterNative} href=${location.href.slice(0,60)} UA=${navigator.userAgent.slice(0,80)}`, 'info');
+</script>
+
+</body>
+</html>

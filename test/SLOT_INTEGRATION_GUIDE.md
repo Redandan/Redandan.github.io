@@ -1,6 +1,6 @@
 # 🎰 月光舞台拉霸遊戲 — Flutter 整合指南
 
-> 本文件說明如何將 `web/games/slot_game.html`（含 Three.js WebGPU 3D 模型）整合到現有的 Flutter 專案中。
+> 本文件說明如何將 `web/games/slot_game_moon_dance.html`（含 Three.js WebGPU 3D 模型）整合到現有的 Flutter 專案中。
 
 ---
 
@@ -10,10 +10,10 @@
 Flutter App
 │
 ├── flutter_inappwebview          ← 已在 pubspec.yaml
-│       └── InAppWebView          ← 渲染 slot_game.html
+│       └── InAppWebView          ← 渲染 slot_game_moon_dance.html
 │
 ├── web/games/
-│       ├── slot_game.html        ← 主遊戲 HTML（已複製）
+│       ├── slot_game_moon_dance.html        ← 主遊戲 HTML（已複製）
 │       └── moon_dance.glb        ← 3D 模型（已複製）
 │
 ├── lib/features/slot_game/
@@ -37,7 +37,7 @@ Flutter App
 
 ## 二、已完成的工作
 
-- [x] `web/games/slot_game.html` — 遊戲 HTML（從 `web/test/emotion_arena.html` 複製）  
+- [x] `web/games/slot_game_moon_dance.html` — 遊戲 HTML（從 `web/test/emotion_arena.html` 複製）  
 - [x] `web/games/moon_dance.glb` — 3D 舞台角色模型  
 - [x] `lib/features/slot_game/presentation/pages/slot_game_page.dart` — Flutter 頁面  
 
@@ -77,7 +77,7 @@ dart run build_runner build --delete-conflicting-outputs
 flutter:
   assets:
     # ... 現有 assets ...
-    - web/games/slot_game.html
+    - web/games/slot_game_moon_dance.html
     - web/games/moon_dance.glb
 ```
 
@@ -153,7 +153,7 @@ _webViewController?.evaluateJavascript(
 );
 ```
 
-### 在 `slot_game.html` 中暴露 API
+### 在 `slot_game_moon_dance.html` 中暴露 API
 在遊戲的 `<script>` 末尾加入：
 ```javascript
 // Flutter 可呼叫的 API
@@ -203,7 +203,7 @@ lib/
 
 web/
 └── games/
-    ├── slot_game.html                    ← 遊戲主檔案（Three.js + WebGPU）
+    ├── slot_game_moon_dance.html                    ← 遊戲主檔案（Three.js + WebGPU）
     └── moon_dance.glb                    ← 3D 角色模型（~30MB）
 ```
 
@@ -222,7 +222,7 @@ web/
 
 部署 Flutter Web 版本後，直接訪問：
 ```
-https://your-domain.com/games/slot_game.html
+https://your-domain.com/games/slot_game_moon_dance.html
 ```
 
 或在 Flutter 應用中：
