@@ -73,7 +73,7 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 }
 .pt-col{flex:1; display:flex; flex-direction:column; gap:1px}
 .pt-row{
-  display:flex; align-items:center; height:24px;
+  display:flex; align-items:center; height:30px;
   border-bottom:1px solid rgba(100,110,220,.18); gap:4px;
 }
 .pt-row:last-child{border-bottom:none}
@@ -94,6 +94,10 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 }
 @keyframes wildPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.5)}}
 .wi-pig{font-size:24px; line-height:1}
+/* Inline SVG icon helper – sizes via parent font-size (1em) */
+.sym-icon{display:inline-block;width:1em;height:1em;vertical-align:-0.1em;fill:currentColor;overflow:visible}
+/* Paytable canvas symbol images – populated from symTextures after JS loads */
+.pt-sym-img{display:inline-block;vertical-align:middle;border-radius:3px;margin:0 1px}
 .wi-mult{color:#c0ccff; font-size:13px; font-weight:bold; text-shadow:0 0 5px #c0ccff}
 #wild-label{color:#c0ccff; font-size:12px; font-weight:bold; letter-spacing:2px; text-shadow:0 0 5px rgba(192,204,255,.6)}
 
@@ -129,13 +133,20 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
    ============================================================ */
 #reel-section {
   flex:0 0 auto;
-  height:260px;
+  height:340px;
   margin:2px 3px;
   position:relative;
   background:#040215;
-  border:3px solid #5560c8;
   border-radius:6px;
   overflow:hidden;
+}
+/* Decorative border frame inset to match the visible overlay window (85px top+bottom
+   are covered by the opaque overlays on #reel-chrome::before/after, so we position
+   the visual border exactly over the visible 170px region instead of the full 340px). */
+#reel-section::after{
+  content:''; position:absolute; inset:85px 0; z-index:11; pointer-events:none;
+  border:3px solid #5560c8;
+  border-radius:6px;
   box-shadow:0 0 30px rgba(80,100,255,.55),0 0 60px rgba(60,80,255,.2),inset 0 0 40px rgba(0,0,0,.6);
 }
 /* Scan-line light sweep over reels */
@@ -153,14 +164,15 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 #reel-canvas-wrap canvas{display:block; width:100%!important; height:100%!important}
 /* Chrome overlay */
 #reel-chrome{position:absolute; inset:0; z-index:2; pointer-events:none}
-/* Top/bottom shadow vignette */
+/* Top/bottom opaque overlay – same color as section background so outer rows
+   appear shorter; gradient provides soft fade into the visible middle row area */
 #reel-chrome::before{
-  content:''; position:absolute; top:0; left:0; right:0; height:36px;
-  background:linear-gradient(180deg,rgba(0,0,0,.6),transparent);
+  content:''; position:absolute; top:0; left:0; right:0; height:85px; z-index:10;
+  background:linear-gradient(180deg,#040215 0%,#040215 88%,rgba(4,2,21,0) 100%);
 }
 #reel-chrome::after{
-  content:''; position:absolute; bottom:0; left:0; right:0; height:36px;
-  background:linear-gradient(0deg,rgba(0,0,0,.6),transparent);
+  content:''; position:absolute; bottom:0; left:0; right:0; height:85px; z-index:10;
+  background:linear-gradient(0deg,#040215 0%,#040215 88%,rgba(4,2,21,0) 100%);
 }
 /* Gold separator bars */
 .reel-sep{
@@ -196,7 +208,7 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 #winner-win{
   position:absolute; z-index:3; pointer-events:none;
   left:7px; right:7px; top:50%;
-  height:87px; transform:translateY(-50%);
+  height:113px; transform:translateY(-50%);
   border:3px solid rgba(180,200,255,.75);
   border-radius:4px;
   background:linear-gradient(180deg,rgba(100,120,255,.04),rgba(140,160,255,.10),rgba(100,120,255,.04));
@@ -228,6 +240,7 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
   animation:sCoinRise linear infinite;
   will-change:transform, opacity;
 }
+.s-coin svg{ fill:rgba(192,200,255,0.85) }
 @keyframes sCoinRise{
   0%{transform:translateY(0) rotate(0deg);opacity:0}
   8%{opacity:.8}
@@ -458,10 +471,9 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 }
 #char-canvas-wrap canvas{display:block; width:100%!important; height:100%!important}
 #pig-emoji{
-  font-size:68px;
+  width:68px; height:68px;
   filter:drop-shadow(0 6px 16px rgba(180,80,0,.7));
   animation:pigBob 2.2s ease-in-out infinite;
-  line-height:1;
   will-change:transform;
 }
 #pig-shadow{
@@ -473,10 +485,11 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 }
 @keyframes pigBob{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-7px) scale(1.03)}}
 @keyframes pigShadow{0%,100%{transform:scaleX(1); opacity:.6}50%{transform:scaleX(.8); opacity:.4}}
-/* Red envelope in pig's hand (decorative) */
+/* Red diamond in pig's hand (decorative) */
 #pig-char::before{
-  content:'🧧'; position:absolute; bottom:22px; right:-12px;
-  font-size:22px; animation:envBob 2.2s .4s ease-in-out infinite;
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' width='22' height='22'%3E%3Cpath fill='%23c04040' d='M 50 5 L 59 41 L 95 50 L 59 59 L 50 95 L 41 59 L 5 50 L 41 41 Z'/%3E%3C/svg%3E");
+  position:absolute; bottom:22px; right:-12px;
+  animation:envBob 2.2s .4s ease-in-out infinite;
   will-change:transform;
 }
 @keyframes envBob{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(4deg) translateY(-3px)}}
@@ -757,6 +770,48 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 </head>
 <body>
 
+<!-- ========== SVG SYMBOL DEFINITIONS (reused via <use href="#…">) ========== -->
+<svg id="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" style="display:none;position:absolute">
+  <defs>
+    <!-- Game symbol 0: Moon / WILD – crescent (two-arc outline) -->
+    <symbol id="sym-moon" viewBox="0 0 100 100">
+      <path d="M 50 8 A 42 42 0 0 0 50 92 A 45 45 0 0 1 50 8 Z"/>
+    </symbol>
+    <!-- Game symbol 1: Dancer – head + flared dress + two arms -->
+    <symbol id="sym-dancer" viewBox="0 0 100 100">
+      <path d="M 50 3 A 9 9 0 0 1 50 21 A 9 9 0 0 1 50 3 Z M 40 22 L 12 80 L 50 68 L 88 80 L 60 22 Z M 40 28 C 26 18 12 22 8 36 C 14 30 26 26 40 32 Z M 60 28 C 74 18 88 22 92 36 C 86 30 74 26 60 32 Z"/>
+    </symbol>
+    <!-- Game symbol 2: Star – classic 5-pointed star -->
+    <symbol id="sym-star" viewBox="0 0 100 100">
+      <path d="M 50 5 L 60.6 35.4 L 92.8 36.1 L 67.1 55.6 L 76.5 86.4 L 50 68 L 23.5 86.4 L 32.9 55.6 L 7.2 36.1 L 39.4 35.4 Z"/>
+    </symbol>
+    <!-- Game symbol 3: Note – eighth note (oval head + stem + flag) -->
+    <symbol id="sym-note" viewBox="0 0 100 100">
+      <path d="M 26 72 A 14 10 0 1 0 54 72 A 14 10 0 1 0 26 72 Z M 52 22 L 56 22 L 56 72 L 52 72 Z M 56 22 L 84 14 L 84 34 L 56 42 Z"/>
+    </symbol>
+    <!-- Game symbol 4: Diamond – 4-pointed star -->
+    <symbol id="sym-diamond" viewBox="0 0 100 100">
+      <path d="M 50 5 L 59 41 L 95 50 L 59 59 L 50 95 L 41 59 L 5 50 L 41 41 Z"/>
+    </symbol>
+    <!-- Game symbol 5: Sparkle – 8-pointed star -->
+    <symbol id="sym-sparkle" viewBox="0 0 100 100">
+      <path d="M 50 6 L 57 34 L 81 19 L 66 44 L 94 50 L 66 57 L 81 81 L 57 66 L 50 94 L 44 66 L 19 81 L 34 57 L 6 50 L 34 44 L 19 19 L 44 34 Z"/>
+    </symbol>
+    <!-- UI: right-pointing chevron (log toggle) -->
+    <symbol id="icon-chevron" viewBox="0 0 100 100">
+      <path d="M 30 15 L 72 50 L 30 85 L 20 74 L 52 50 L 20 26 Z"/>
+    </symbol>
+    <!-- UI: plus / copy -->
+    <symbol id="icon-plus" viewBox="0 0 100 100">
+      <path d="M 43 5 L 57 5 L 57 43 L 95 43 L 95 57 L 57 57 L 57 95 L 43 95 L 43 57 L 5 57 L 5 43 L 43 43 Z"/>
+    </symbol>
+    <!-- UI: X / close / clear -->
+    <symbol id="icon-close" viewBox="0 0 100 100">
+      <path d="M 16 5 L 50 39 L 84 5 L 95 16 L 61 50 L 95 84 L 84 95 L 50 61 L 16 95 L 5 84 L 39 50 L 5 16 Z"/>
+    </symbol>
+  </defs>
+</svg>
+
 <!-- ========== GAME VIEWPORT ========== -->
 <div id="gv">
 
@@ -764,35 +819,35 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
   <div id="paytable">
     <div class="pt-col">
       <div class="pt-row">
-        <span class="pt-syms">🌙🌙🌙</span><span class="pt-val">500</span>
+        <span class="pt-syms"><canvas class="pt-sym-img" data-sym-idx="0" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="0" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="0" width="26" height="26"></canvas></span><span class="pt-val">500</span>
       </div>
       <div class="pt-row">
-        <span class="pt-syms">🌙🌙&thinsp;</span><span class="pt-val">10</span>
+        <span class="pt-syms"><canvas class="pt-sym-img" data-sym-idx="0" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="0" width="26" height="26"></canvas></span><span class="pt-val">10</span>
       </div>
       <div class="pt-row">
-        <span class="pt-syms">💃💃💃</span><span class="pt-val">20</span>
+        <span class="pt-syms"><canvas class="pt-sym-img" data-sym-idx="1" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="1" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="1" width="26" height="26"></canvas></span><span class="pt-val">20</span>
       </div>
       <div class="pt-row">
-        <span class="pt-syms">⭐⭐⭐</span><span class="pt-val">15</span>
+        <span class="pt-syms"><canvas class="pt-sym-img" data-sym-idx="2" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="2" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="2" width="26" height="26"></canvas></span><span class="pt-val">15</span>
       </div>
     </div>
     <div class="pt-div"></div>
     <div id="pt-wild">
       <div id="wild-badge">
-        <span class="wi-pig">🌙</span>
+        <span class="wi-pig"><canvas class="pt-sym-img" data-sym-idx="0" width="42" height="42"></canvas></span>
       </div>
       <span id="wild-label">百搭</span>
     </div>
     <div class="pt-div"></div>
     <div class="pt-col">
       <div class="pt-row">
-        <span class="pt-syms">🎵🎵🎵</span><span class="pt-val">10</span>
+        <span class="pt-syms"><canvas class="pt-sym-img" data-sym-idx="3" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="3" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="3" width="26" height="26"></canvas></span><span class="pt-val">10</span>
       </div>
       <div class="pt-row">
-        <span class="pt-syms">💫💫💫</span><span class="pt-val">8</span>
+        <span class="pt-syms"><canvas class="pt-sym-img" data-sym-idx="4" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="4" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="4" width="26" height="26"></canvas></span><span class="pt-val">8</span>
       </div>
       <div class="pt-row">
-        <span class="pt-syms">🌟🌟&thinsp;</span><span class="pt-val">3</span>
+        <span class="pt-syms"><canvas class="pt-sym-img" data-sym-idx="5" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="5" width="26" height="26"></canvas></span><span class="pt-val">3</span>
       </div>
     </div>
   </div>
@@ -838,19 +893,19 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
         </div>
       </div>
       <div id="moon-gate"><div id="gate-door"></div></div>
-      <!-- Character: emoji fallback while 3D model loads -->
+      <!-- Character: SVG fallback while 3D model loads -->
       <div id="pig-char">
-        <div id="pig-emoji">🌙</div>
+        <div id="pig-emoji"><svg viewBox="0 0 100 100" width="68" height="68" style="fill:#c0a0ff"><use href="#sym-moon"/></svg></div>
         <div id="pig-shadow"></div>
       </div>
       <!-- 3D character model (moon_dance.glb) -->
       <div id="char-canvas-wrap"></div>
       <!-- Idle coin sparkles -->
-      <span class="s-coin" style="left:18%;bottom:28%;animation-duration:3.2s;animation-delay:0s;font-size:15px">💫</span>
-      <span class="s-coin" style="left:72%;bottom:20%;animation-duration:4.1s;animation-delay:1.3s;font-size:13px">⭐</span>
-      <span class="s-coin" style="left:38%;bottom:14%;animation-duration:3.7s;animation-delay:0.6s;font-size:12px">✨</span>
-      <span class="s-coin" style="left:55%;bottom:32%;animation-duration:4.8s;animation-delay:2.0s;font-size:14px">💫</span>
-      <span class="s-coin" style="left:80%;bottom:40%;animation-duration:3.5s;animation-delay:0.9s;font-size:11px">🌙</span>
+      <span class="s-coin" style="left:18%;bottom:28%;animation-duration:3.2s;animation-delay:0s"><svg class="sym-icon" width="15" height="15"><use href="#sym-diamond"/></svg></span>
+      <span class="s-coin" style="left:72%;bottom:20%;animation-duration:4.1s;animation-delay:1.3s"><svg class="sym-icon" width="13" height="13"><use href="#sym-star"/></svg></span>
+      <span class="s-coin" style="left:38%;bottom:14%;animation-duration:3.7s;animation-delay:0.6s"><svg class="sym-icon" width="12" height="12"><use href="#sym-sparkle"/></svg></span>
+      <span class="s-coin" style="left:55%;bottom:32%;animation-duration:4.8s;animation-delay:2.0s"><svg class="sym-icon" width="14" height="14"><use href="#sym-diamond"/></svg></span>
+      <span class="s-coin" style="left:80%;bottom:40%;animation-duration:3.5s;animation-delay:0.9s"><svg class="sym-icon" width="11" height="11"><use href="#sym-moon"/></svg></span>
     </div>
     <!-- Right pillar -->
     <div class="pillar right">
@@ -903,12 +958,12 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
     </div>
     <div id="ctrl-row2">
       <div class="bal-item">
-        <span class="bal-icon">💎</span>
+        <span class="bal-icon"><svg class="sym-icon"><use href="#sym-diamond"/></svg></span>
         <span class="bal-lbl">余額</span>
         <span class="bal-val" id="balance-val">¥0.00</span>
       </div>
       <div class="bal-item">
-        <span class="bal-icon">🏆</span>
+        <span class="bal-icon"><svg class="sym-icon"><use href="#sym-star"/></svg></span>
         <span class="bal-lbl">贏獎</span>
         <span class="bal-val" id="win-val">¥0.00</span>
       </div>
@@ -919,13 +974,13 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 
 <!-- Log panel (hidden from screen; accumulates logs for copy-log feature) -->
 <div id="log-panel">
-  <div id="log-toggle">📊 日誌 (點擊收起)</div>
+  <div id="log-toggle"><svg class="sym-icon" style="width:0.8em;height:0.8em"><use href="#icon-chevron"/></svg> 日誌 (點擊收起)</div>
 </div>
 
 <!-- Function menu popup (opened by ≡ btn-menu) -->
 <div id="menu-popup">
-  <button class="menu-item" id="menu-copy-log">📋 複製日誌</button>
-  <button class="menu-item" id="menu-clear-log">🗑 清除日誌</button>
+  <button class="menu-item" id="menu-copy-log"><svg class="sym-icon" style="width:0.85em;height:0.85em"><use href="#icon-plus"/></svg> 複製日誌</button>
+  <button class="menu-item" id="menu-clear-log"><svg class="sym-icon" style="width:0.85em;height:0.85em"><use href="#icon-close"/></svg> 清除日誌</button>
 </div>
 
 <!-- Loading screen overlay -->
@@ -981,7 +1036,7 @@ const logPanel = document.getElementById('log-panel');
 const logToggle = document.getElementById('log-toggle');
 let logCount = 0;
 const MAX_LOGS = 200; // keep more entries so the log survives multiple sessions
-const LOG_ICONS = { error: '❌', warn: '⚠️', info: 'ℹ️' };
+const LOG_ICONS = { error: '✗', warn: '!', info: '·' };
 const LOG_STORAGE_KEY = 'slot_game_log';
 
 logToggle.addEventListener('click', () => logPanel.classList.toggle('collapsed'));
@@ -1024,12 +1079,14 @@ function _saveStoredLogs() {
 // #gv is a fixed 430×900 design canvas. Scale it as one unit to fit the screen.
 const gvEl = document.getElementById('gv');
 let _fitRaf = 0;
+// Track the CSS transform scale so renderers can compensate with a higher pixel ratio.
+let gvScale = Math.min(window.innerWidth / 430, window.innerHeight / 900);
 function fitGame() {
   cancelAnimationFrame(_fitRaf);
   _fitRaf = requestAnimationFrame(() => {
-    const scale = Math.min(window.innerWidth / 430, window.innerHeight / 900);
-    const offsetX = (window.innerWidth - 430 * scale) / 2;
-    gvEl.style.transform = `translate(${offsetX}px,0) scale(${scale})`;
+    gvScale = Math.min(window.innerWidth / 430, window.innerHeight / 900);
+    const offsetX = (window.innerWidth - 430 * gvScale) / 2;
+    gvEl.style.transform = `translate(${offsetX}px,0) scale(${gvScale})`;
   });
 }
 fitGame();
@@ -1040,7 +1097,7 @@ function formatLogArgs(args) {
 }
 
 function addLog(msg, type = 'info') {
-  const text = `${LOG_ICONS[type] ?? 'ℹ️'} [${new Date().toLocaleTimeString()}] ${msg}`;
+  const text = `${LOG_ICONS[type] ?? '·'} [${new Date().toLocaleTimeString()}] ${msg}`;
   const d = document.createElement('div');
   d.className = `log-${type}`;
   d.textContent = text;
@@ -1065,9 +1122,13 @@ window.addEventListener('unhandledrejection', e => addLog(`Unhandled: ${e.reason
 // ===== Mobile performance detection =====
 // Lower rendering quality on mobile to avoid GPU/CPU overload (laggy scrolling)
 const IS_MOBILE = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 768;
-// DPR cap: 1 on mobile (reduces render area up to 4× vs cap-2), 1.5 on desktop
-// (1.5 covers all high-DPI displays adequately while avoiding the 4× area of DPR=2 with cap=2)
-const DPR_CAP = IS_MOBILE ? 1 : 1.5;
+// DPR cap: multiply device DPR by the CSS viewport scale so the canvas buffer resolution
+// always matches the physical screen resolution of the reel area.  Cap at 2.5 to limit
+// GPU memory on very-high-DPI devices while still rendering crisply.
+const DPR_CAP = 2.5;
+// Compute effective pixel ratio: devicePixelRatio × gvScale ensures the canvas buffer
+// has enough pixels to cover the physical display area after the CSS scale() transform.
+function calcDPR() { return Math.min(window.devicePixelRatio * gvScale, DPR_CAP); }
 
 // ===== WebGL2 renderer (WebGPU removed for broad iOS/Android compatibility) =====
 // Using THREE.WebGLRenderer ensures the game works on iOS 10.1+ WKWebView and
@@ -1092,7 +1153,7 @@ camera.lookAt(0, 0, 0);
 
 const renderer = new THREE.WebGLRenderer({ antialias: !IS_MOBILE, alpha: false });
 renderer.setSize(W, H);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, DPR_CAP));
+renderer.setPixelRatio(calcDPR());
 // ACES filmic tone mapping is expensive on mobile — use linear for better throughput
 renderer.toneMapping = IS_MOBILE ? THREE.LinearToneMapping : THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.35;
@@ -1132,7 +1193,7 @@ charCamera.lookAt(0, 0.9, 0);
 
 const charRenderer = new THREE.WebGLRenderer({ antialias: !IS_MOBILE, alpha: true });
 charRenderer.setSize(charW, charH);
-charRenderer.setPixelRatio(Math.min(window.devicePixelRatio, DPR_CAP));
+charRenderer.setPixelRatio(calcDPR());
 charRenderer.setClearColor(0x000000, 0); // fully transparent background
 charWrap.appendChild(charRenderer.domElement);
 
@@ -1218,7 +1279,7 @@ function shouldSkipGlb() {
 
 function loadCharModel() {
   if (shouldSkipGlb()) {
-    console.warn('⚠️ 慢速網絡 — 跳過 3D 模型載入');
+    console.warn('慢速網絡 — 跳過 3D 模型載入');
     hideLoader();
     return;
   }
@@ -1288,7 +1349,7 @@ function loadCharModel() {
     }
     // Hide emoji placeholder — 3D model loaded
     document.getElementById('pig-char').classList.add('hidden');
-    console.log('✅ Character model loaded (moon_dance.glb)');
+    console.log('Character model loaded (moon_dance.glb)');
     hideLoader();
   },
   (xhr) => {
@@ -1323,22 +1384,65 @@ if (IS_MOBILE) {
 }
 
 // ===== Symbol texture factory =====
+// SVG path data for each symbol (viewBox 0 0 100 100, drawn via Path2D onto canvas)
 const SYMBOLS = [
-  { emoji:'🌙', label:'月亮', bg:'#0a0428', glow:'#aa88ff' },
-  { emoji:'💃', label:'舞者', bg:'#0c0830', glow:'#c0ccff' },
-  { emoji:'⭐', label:'星星', bg:'#000e30', glow:'#88aaff' },
-  { emoji:'🎵', label:'音符', bg:'#080425', glow:'#aabbff' },
-  { emoji:'💫', label:'流星', bg:'#001030', glow:'#88ddff' },
-  { emoji:'🌟', label:'閃星', bg:'#080518', glow:'#c0ccff' },
+  { path:'M 50 8 A 42 42 0 0 0 50 92 A 45 45 0 0 1 50 8 Z', label:'月亮', bg:'#0a0428', glow:'#aa88ff' },
+  { path:'M 50 3 A 9 9 0 0 1 50 21 A 9 9 0 0 1 50 3 Z M 40 22 L 12 80 L 50 68 L 88 80 L 60 22 Z M 40 28 C 26 18 12 22 8 36 C 14 30 26 26 40 32 Z M 60 28 C 74 18 88 22 92 36 C 86 30 74 26 60 32 Z', label:'舞者', bg:'#0c0830', glow:'#c0ccff' },
+  { path:'M 50 5 L 60.6 35.4 L 92.8 36.1 L 67.1 55.6 L 76.5 86.4 L 50 68 L 23.5 86.4 L 32.9 55.6 L 7.2 36.1 L 39.4 35.4 Z', label:'星星', bg:'#000e30', glow:'#88aaff' },
+  { path:'M 26 72 A 14 10 0 1 0 54 72 A 14 10 0 1 0 26 72 Z M 52 22 L 56 22 L 56 72 L 52 72 Z M 56 22 L 84 14 L 84 34 L 56 42 Z', label:'音符', bg:'#080425', glow:'#aabbff' },
+  { path:'M 50 5 L 59 41 L 95 50 L 59 59 L 50 95 L 41 59 L 5 50 L 41 41 Z', label:'流星', bg:'#001030', glow:'#88ddff' },
+  { path:'M 50 6 L 57 34 L 81 19 L 66 44 L 94 50 L 66 57 L 81 81 L 57 66 L 50 94 L 44 66 L 19 81 L 34 57 L 6 50 L 34 44 L 19 19 L 44 34 Z', label:'閃星', bg:'#080518', glow:'#c0ccff' },
+];
+
+// ===== Pre-load symbols sprite sheet (symbols.png) =====
+// The sprite sheet is a 1×9 vertical strip (9 symbols stacked top-to-bottom, 307×2700 px total).
+// UV coordinates in spriteMap are resolution-independent.
+// If the image fails to load the SVG-path fallback is used transparently.
+const _symbolsSpriteImg = await new Promise(resolve => {
+  const img = new Image();
+  img.onload  = () => resolve(img);
+  img.onerror = () => { console.warn('symbols.png failed to load (src: ./symbols.png); using SVG fallback'); resolve(null); };
+  img.src = './symbols.png';
+});
+
+// Named sprite map – UV coordinates (0–1) for each cell in the 1×9 vertical strip.
+// Sheet: 9 symbols stacked top-to-bottom, each 307×300 px (total 307×2700 px).
+// Resolution-independent: u0/v0 = top-left corner, u1/v1 = bottom-right corner.
+const spriteMap = [
+  { name: 'apple',      u0: 0.0,     v0: 0.0,     u1: 1.0, v1: 0.11111 }, // row 0  0–300 px
+  { name: 'cherry',     u0: 0.0,     v0: 0.11111, u1: 1.0, v1: 0.22222 }, // row 1  300–600 px
+  { name: 'seven',      u0: 0.0,     v0: 0.22222, u1: 1.0, v1: 0.33333 }, // row 2  600–900 px
+  { name: 'lemon',      u0: 0.0,     v0: 0.33333, u1: 1.0, v1: 0.44444 }, // row 3  900–1200 px
+  { name: 'bar',        u0: 0.0,     v0: 0.44444, u1: 1.0, v1: 0.55556 }, // row 4  1200–1500 px
+  { name: 'grapes',     u0: 0.0,     v0: 0.55556, u1: 1.0, v1: 0.66667 }, // row 5  1500–1800 px
+  { name: 'heart',      u0: 0.0,     v0: 0.66667, u1: 1.0, v1: 0.77778 }, // row 6  1800–2100 px
+  { name: 'bell',       u0: 0.0,     v0: 0.77778, u1: 1.0, v1: 0.88889 }, // row 7  2100–2400 px
+  { name: 'watermelon', u0: 0.0,     v0: 0.88889, u1: 1.0, v1: 1.0     }, // row 8  2400–2700 px
 ];
 
 // Use 256×256 on mobile (4× less GPU memory bandwidth vs 512×512)
-function makeSymbolTex(sym) {
+// idx is the 0-based symbol index within the SYMBOLS array (passed automatically by Array.map).
+function makeSymbolTex(sym, idx) {
   const cv = document.createElement('canvas');
   const TEX = IS_MOBILE ? 256 : 512;
   const f   = TEX / 512;           // scale factor: 0.5 on mobile, 1 on desktop
   cv.width = cv.height = TEX;
   const ctx = cv.getContext('2d');
+
+  // ── Sprite-sheet path: compute pixel rect from UV offsets × natural image size ──
+  if (_symbolsSpriteImg && idx >= 0 && idx < spriteMap.length) {
+    const { u0, v0, u1, v1 } = spriteMap[idx];
+    const iw = _symbolsSpriteImg.naturalWidth;
+    const ih = _symbolsSpriteImg.naturalHeight;
+    ctx.drawImage(
+      _symbolsSpriteImg,
+      u0 * iw, v0 * ih, (u1 - u0) * iw, (v1 - v0) * ih,  // source rect (resolution-independent)
+      0,       0,       TEX,             TEX               // destination: full output canvas
+    );
+    return new THREE.CanvasTexture(cv);
+  }
+
+  // ── Fallback: procedural SVG-path rendering (used when sprite sheet is unavailable) ──
 
   // Helper: clip/stroke a rounded rectangle path
   function roundRect(x, y, w, h, r) {
@@ -1379,27 +1483,35 @@ function makeSymbolTex(sym) {
   ctx.lineWidth = 2*f;
   ctx.stroke();
 
-  // Emoji – centered in the full card (no label area)
-  ctx.font = `${280*f}px serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
+  // SVG path – draw centered in the full card via Path2D (scales perfectly at any canvas resolution)
+  const symScale = TEX * 0.68 / 100;          // symbol fills ~68 % of card
+  const tx = TEX / 2 - 50 * symScale;          // translate so (0,0)…(100,100) is centered
+  const ty = TEX / 2 - 50 * symScale;
+  ctx.save();
+  ctx.translate(tx, ty);
+  ctx.scale(symScale, symScale);
   ctx.shadowColor = sym.glow;
-  ctx.shadowBlur = 36*f;
+  ctx.shadowBlur = Math.round(36 * f / symScale); // maintain ~36·f px visual blur after scale
   ctx.fillStyle = '#fff';
-  ctx.fillText(sym.emoji, 256*f, 256*f);
-  ctx.shadowBlur = 0;
+  ctx.fill(new Path2D(sym.path));
+  ctx.restore();
 
   return new THREE.CanvasTexture(cv);
 }
 
 const symTextures = SYMBOLS.map(makeSymbolTex);
 
+// Populate paytable canvas images from the already-rendered symbol texture canvases
+document.querySelectorAll('.pt-sym-img').forEach(cv => {
+  const idx = parseInt(cv.dataset.symIdx, 10);
+  cv.getContext('2d').drawImage(symTextures[idx].image, 0, 0, cv.width, cv.height);
+});
+
 // ===== Reel construction (vertical strip – 3 symbols visible: top / winner / bottom) =====
 // Derive geometry from the camera so reels always fill the visible frustum exactly.
 // VISIBLE_H = 2 × tan(FOV/2) × z   →   3 equal rows fill the full height
 // VISIBLE_W = VISIBLE_H × aspect   →   3 equal columns fill the full width
-const REEL_GAP = 0.06; // world-unit gap between adjacent reels (also used for CARD_GAP)
-const CARD_GAP = REEL_GAP;
+const REEL_GAP = 0.06; // world-unit gap between adjacent reels
 
 function computeReelGeometry(w, h) {
   const fovRad   = camera.fov * Math.PI / 180;
@@ -1413,12 +1525,12 @@ function computeReelGeometry(w, h) {
 
 let { CARD_W, CARD_H, REEL_X } = computeReelGeometry(W, H);
 // Custom weighted reel strips — symbol index × stop count per reel.
-// Weights: 🌙=1  💃=3  ⭐=4  🎵=6  💫=6  🌟=6  (N=26 stops each)
+// Weights: ☽=1  舞=3  ★=4  ♪=6  ✦=6  ✧=6  (N=26 stops each)
 // Theoretical RTP ≈ 96.6%   Hit rate ≈ 18.6%
 const REEL_STRIPS = [
-  [0, 1,1,1, 2,2,2,2, 3,3,3,3,3,3, 4,4,4,4,4,4, 5,5,5,5,5,5], // R0: 🌙 leads
-  [5,5,5,5,5,5, 0, 1,1,1, 2,2,2,2, 3,3,3,3,3,3, 4,4,4,4,4,4], // R1: 🌟 leads
-  [3,3,3,3,3,3, 4,4,4,4,4,4, 5,5,5,5,5,5, 0, 1,1,1, 2,2,2,2], // R2: 🎵 leads
+  [0, 1,1,1, 2,2,2,2, 3,3,3,3,3,3, 4,4,4,4,4,4, 5,5,5,5,5,5], // R0: ☽ leads
+  [5,5,5,5,5,5, 0, 1,1,1, 2,2,2,2, 3,3,3,3,3,3, 4,4,4,4,4,4], // R1: ✧ leads
+  [3,3,3,3,3,3, 4,4,4,4,4,4, 5,5,5,5,5,5, 0, 1,1,1, 2,2,2,2], // R2: ♪ leads
 ];
 const N_STRIP   = REEL_STRIPS[0].length; // 26 stops per reel
 const N_SYMBOLS = SYMBOLS.length;        // 6 distinct symbols
@@ -1438,7 +1550,7 @@ REEL_X.forEach((rx, ri) => {
       metalness: 0.06, roughness: 0.88,
     });
     const card = new THREE.Mesh(
-      new THREE.PlaneGeometry(CARD_W, CARD_H - CARD_GAP),
+      new THREE.PlaneGeometry(CARD_W, CARD_H),
       mat
     );
     // Center the strip: card at index Math.floor(N_STRIP/2) sits at y=0 (winner row)
@@ -1562,28 +1674,28 @@ spinBtn.addEventListener('pointerdown', () => {
 spinBtn.addEventListener('click', () => { if (!autoSpin) doSpin(); });
 
 // ── Paytable evaluation ──────────────────────────────────────────────────────
-// Symbols: 0=🌙(月亮/WILD), 1=💃(舞者), 2=⭐(星星), 3=🎵(音符), 4=💫(流星), 5=🌟(閃星)
+// Symbols: 0=☽(月亮/WILD), 1=舞(舞者), 2=★(星星), 3=♪(音符), 4=✦(流星), 5=✧(閃星)
 // Paytable (multiplier applied to current bet):
-//   🌙🌙🌙 = 500×    🌙🌙 + any = 10×
-//   💃💃💃 = 20×     ⭐⭐⭐ = 15×    🎵🎵🎵 = 10×    💫💫💫 = 8×    🌟🌟 + any = 3×
-//   🌙 WILD: substitutes for any symbol at base rate (no bonus multiplier)
-//   🌟🌟 + any = 3×   no match = 0 (LOSS)
+//   ☽☽☽ = 500×    ☽☽ + any = 10×
+//   舞舞舞 = 20×     ★★★ = 15×    ♪♪♪ = 10×    ✦✦✦ = 8×    ✧✧ + any = 3×
+//   ☽ WILD: substitutes for any symbol at base rate (no bonus multiplier)
+//   ✧✧ + any = 3×   no match = 0 (LOSS)
 function evaluatePayline(s0, s1, s2) {
-  const WILD = 0; // 🌙 — also acts as wild
-  const STAR = 5; // 🌟 — consolation 2-of-kind
+  const WILD = 0; // ☽ — also acts as wild
+  const STAR = 5; // ✧ — consolation 2-of-kind
   const syms      = [s0, s1, s2];
   const moonCount = syms.filter(s => s === WILD).length;
   const others    = syms.filter(s => s !== WILD);
 
-  if (moonCount === 3) return 500;                                          // 🌙🌙🌙
-  if (moonCount === 2) return 10;                                           // 🌙🌙 + any
-  if (moonCount === 1 && others.length === 2 && others[0] === others[1]) { // 🌙 wild completes 3-of-kind
+  if (moonCount === 3) return 500;                                          // ☽☽☽
+  if (moonCount === 2) return 10;                                           // ☽☽ + any
+  if (moonCount === 1 && others.length === 2 && others[0] === others[1]) { // ☽ wild completes 3-of-kind
     return [500, 20, 15, 10, 8, 3][others[0]] ?? 0;                        //   → base payout (no bonus)
   }
   if (s0 === s1 && s1 === s2) {                                             // 3-of-kind (no wilds)
     return [500, 20, 15, 10, 8, 3][s0] ?? 0;
   }
-  if (syms.filter(s => s === STAR).length >= 2) return 3;   // 🌟🌟 + any = consolation
+  if (syms.filter(s => s === STAR).length >= 2) return 3;   // ✧✧ + any = consolation
   return 0;                                                  // no match = LOSS
 }
 
@@ -1606,7 +1718,7 @@ function doSpin() {
   // forcedSyms is resolved before the reels stop, so the snap logic can steer each reel to the
   // correct symbol — the resolve block then reads the actual landed symbols with no override needed.
   demoSpinCount++;
-  const forcedSyms = (demoSpinCount % 3 === 0) ? [5, 5, 5] : null; // 🌟🌟🌟 = 3× consolation
+  const forcedSyms = (demoSpinCount % 3 === 0) ? [5, 5, 5] : null; // ✧✧✧ = 3× consolation
 
   // Launch all reels with gradual acceleration (start at 10% speed, ramp up over ~20 frames)
   reelGroups.forEach(g => { g.userData.spinning = true; g.userData.speed = MAX_SPIN_SPEED * 0.1; });
@@ -1663,8 +1775,8 @@ function doSpin() {
         const d = Math.abs(card.position.y);
         if (d < minDist) { minDist = d; closest = card; }
       });
-      // Use the last valid symbol index (🌟, index 5) as safe fallback if userData is missing.
-      // This avoids accidentally awarding the highest-value WILD (index 0 = 🌙) on a bug.
+      // Use the last valid symbol index (✧, index 5) as safe fallback if userData is missing.
+      // This avoids accidentally awarding the highest-value WILD (index 0 = ☽) on a bug.
       return closest.userData.symIdx != null ? closest.userData.symIdx : N_SYMBOLS - 1;
     });
 
@@ -1751,13 +1863,14 @@ document.getElementById('btn-back').addEventListener('click', () => {
 
 // ===== Big Win display =====
 function spawnCoinRain() {
-  const coins = ['💫', '⭐', '✨', '🌙', '🎊'];
+  const coinSyms = ['sym-diamond', 'sym-star', 'sym-sparkle', 'sym-moon', 'sym-diamond'];
   for (let i = 0; i < 22; i++) {
-    const c = document.createElement('span');
-    c.textContent = coins[Math.floor(Math.random() * coins.length)];
+    const c    = document.createElement('span');
+    const size = Math.round(16 + Math.random() * 18);
+    const id   = coinSyms[Math.floor(Math.random() * coinSyms.length)];
+    c.innerHTML = `<svg viewBox="0 0 100 100" width="${size}" height="${size}" fill="rgba(200,190,255,0.85)" aria-hidden="true"><use href="#${id}"/></svg>`;
     c.style.cssText =
-      `position:fixed;pointer-events:none;z-index:495;` +
-      `font-size:${16 + Math.random() * 18}px;` +
+      `position:fixed;pointer-events:none;z-index:495;display:inline-block;` +
       `left:${Math.random() * 100}%;top:-32px;` +
       `animation:coinFall ${1.3 + Math.random() * 1.8}s ${Math.random() * 0.9}s ease-in forwards`;
     document.body.appendChild(c);
@@ -1795,6 +1908,8 @@ window.addEventListener('resize', () => {
   camera.aspect = nW / nH;
   camera.updateProjectionMatrix();
   renderer.setSize(nW, nH);
+  // Recompute pixel ratio: viewport scale may have changed on resize.
+  renderer.setPixelRatio(calcDPR());
   // Recompute reel geometry so cards still fill the (re-sized) frustum exactly
   const geo = computeReelGeometry(nW, nH);
   // Guard: only rebuild card geometries when dimensions actually changed
@@ -1805,7 +1920,7 @@ window.addEventListener('resize', () => {
     strip.position.x = REEL_X[ri];
     strip.children.forEach((card, i) => {
       card.geometry.dispose();
-      card.geometry = new THREE.PlaneGeometry(CARD_W, CARD_H - CARD_GAP);
+      card.geometry = new THREE.PlaneGeometry(CARD_W, CARD_H);
       card.position.y = (i - Math.floor(N_STRIP / 2)) * CARD_H;
     });
   });
@@ -1815,6 +1930,7 @@ window.addEventListener('resize', () => {
   charCamera.aspect = cW / cH;
   charCamera.updateProjectionMatrix();
   charRenderer.setSize(cW, cH);
+  charRenderer.setPixelRatio(calcDPR());
 });
 
 // ===== Animation loop =====
@@ -1888,7 +2004,7 @@ renderer.setAnimationLoop(() => {
   }
 });
 
-console.log('💃 月光舞台 v3.0 已加載 – WebGL2 模式');
+console.log('月光舞台 v3.0 已加載 – WebGL2 模式');
 addLog(`啟動: native=${!!window._flutterNative} href=${location.href.slice(0,60)} UA=${navigator.userAgent.slice(0,80)}`, 'info');
 </script>
 
