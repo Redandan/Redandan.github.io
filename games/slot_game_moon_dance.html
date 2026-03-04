@@ -176,35 +176,9 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 }
 #payline::before{left:6px} #payline::after{right:6px}
 @keyframes paylinePulse{0%{opacity:.35}100%{opacity:1}}
-/* Moon deco at reel bottom corners */
-.reel-bamboo{
-  position:absolute; bottom:0; width:22px; height:30px;
-  background:linear-gradient(90deg,#0a0840,#1a1880 50%,#0a0840);
-  border-radius:4px 4px 0 0; border:1.5px solid #2a3498; border-bottom:none;
-}
-.rb-l{left:7px} .rb-r{right:7px}
-.rb-m1{left:calc(33.33% + 4px)} .rb-m2{left:calc(66.66% + 4px)}
 /* Motion blur during fast spin – replaced with subtle opacity for mobile GPU efficiency */
 #reel-canvas-wrap.reel-spinning{opacity:.92; transition:opacity .15s}
 #reel-canvas-wrap{transition:opacity .25s}
-/* Winner window – opacity pulse instead of border-color+box-shadow (GPU composited) */
-#winner-win{
-  position:absolute; z-index:3; pointer-events:none;
-  left:7px; right:7px; top:50%;
-  height:113px; transform:translateY(-50%);
-  border:3px solid rgba(180,200,255,.75);
-  border-radius:4px;
-  background:linear-gradient(180deg,rgba(100,120,255,.04),rgba(140,160,255,.10),rgba(100,120,255,.04));
-  box-shadow:0 0 14px rgba(160,180,255,.25),inset 0 0 6px rgba(120,140,255,.08);
-  animation:winWndPulse 1.8s ease-in-out infinite;
-  will-change:opacity;
-}
-#winner-win::before{content:'▶'; position:absolute; left:-13px; top:50%; transform:translateY(-50%); font-size:10px; color:rgba(180,200,255,.7)}
-#winner-win::after{ content:'◀'; position:absolute; right:-13px; top:50%; transform:translateY(-50%); font-size:10px; color:rgba(180,200,255,.7)}
-@keyframes winWndPulse{
-  0%,100%{opacity:.65}
-  50%{opacity:1}
-}
 /* Reel section win flash */
 #reel-section.reel-win{animation:reelWinFlash .32s ease-in-out 5}
 @keyframes reelWinFlash{
@@ -845,11 +819,6 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
       <div class="reel-sep s1"></div>
       <div class="reel-sep s2"></div>
       <div id="payline"></div>
-      <div class="reel-bamboo rb-l"></div>
-      <div class="reel-bamboo rb-m1"></div>
-      <div class="reel-bamboo rb-m2"></div>
-      <div class="reel-bamboo rb-r"></div>
-      <div id="winner-win"></div>
     </div>
   </div>
 
