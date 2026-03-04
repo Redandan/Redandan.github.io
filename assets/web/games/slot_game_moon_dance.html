@@ -1064,17 +1064,6 @@ const gvEl = document.getElementById('gv');
 let _fitRaf = 0;
 // Track the CSS transform scale so renderers can compensate with a higher pixel ratio.
 let gvScale = Math.min(window.innerWidth / 430, window.innerHeight / 900);
-
-// === DIAGNOSTIC: Log game initialization ===
-console.log('[GAME_INIT] Moon Dance game script loaded');
-console.log('[GAME_INIT] Environment:', {
-  isNative: !!window._flutterNative,
-  isIframe: window.parent !== window,
-  hasBridge: !!window.flutter_inappwebview,
-  origin: window.location.origin,
-  href: window.location.href
-});
-
 function fitGame() {
   cancelAnimationFrame(_fitRaf);
   _fitRaf = requestAnimationFrame(() => {

@@ -29,47 +29,29 @@
 
     /** Navigate back to the Flutter Shell. */
     goBack() {
-      const isNative = !!window._flutterNative;
-      const isIframe = window.parent !== window;
-      const hasBridge = !!window.flutter_inappwebview;
-      
-      console.log('[FlutterBridge] goBack() called:', {
-        isNative,
-        isIframe,
-        hasBridge,
-        timestamp: new Date().toISOString()
-      });
-      
       if (window._flutterNative) {
         if (window.flutter_inappwebview) {
           // iOS WKWebView: callHandler sends a message without triggering
           // page navigation — safe on iOS 17+ where location.href can
           // cause WKWebView to reload the current page.
-          console.log('[FlutterBridge] Calling callHandler(goBack)');
           window.flutter_inappwebview.callHandler('goBack');
         } else {
           // Android where the JS bridge object may be absent:
           // navigate to the custom scheme, intercepted by
           // shouldOverrideUrlLoading in slot_game_page.dart.
-          console.log('[FlutterBridge] Navigating to flutter://goback');
           window.location.href = 'flutter://goback';
         }
       } else if (window.parent !== window) {
         // Desktop Flutter Web: game runs in an InAppWebView iframe.
         // postMessage is handled by listenForGoBack() in Dart.
-        console.log('[FlutterBridge] Sending postMessage to parent');
         try {
           window.parent.postMessage(
             { action: 'slotGameGoBack' },
             window.location.origin
           );
-          console.log('[FlutterBridge] postMessage sent successfully');
-        } catch (err) {
-          console.error('[FlutterBridge] postMessage failed:', err);
-        }
+        } catch (_) {}
       } else {
         // Mobile browser (direct full-page navigation, not in iframe).
-        console.log('[FlutterBridge] Calling history.back()');
         window.history.back();
       }
     },
