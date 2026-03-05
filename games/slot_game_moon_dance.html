@@ -995,8 +995,16 @@ if (window.Telegram?.WebApp) {
     tg.ready();
     // Hide Telegram header for immersive fullscreen experience
     tg.headerColor = 'transparent';
-    // Expand to fill available viewport
-    tg.expand();
+    // Request true fullscreen when supported; keep expand() as compatibility fallback.
+    const requestFullscreen = () => {
+      if (typeof tg.requestFullscreen === 'function') {
+        tg.requestFullscreen();
+      }
+      tg.expand();
+    };
+    requestFullscreen();
+    // Some clients apply fullscreen more reliably after first frame.
+    setTimeout(requestFullscreen, 120);
     // Prevent vertical swipe gestures from closing the Mini App during gameplay
     tg.disableVerticalSwipes();
     
@@ -1014,7 +1022,7 @@ if (window.Telegram?.WebApp) {
     // Listen for viewport changes (user dragging sheet, keyboard popup, etc.)
     tg.onEvent('viewportChanged', updateTelegramViewportHeight);
     
-    console.log('Telegram Mini App initialized: header hidden, vertical swipes disabled, viewport monitoring active');
+    console.log('Telegram Mini App initialized: fullscreen requested, header hidden, vertical swipes disabled, viewport monitoring active');
   } catch (e) {
     console.warn('Telegram WebApp API error:', e);
   }
