@@ -975,7 +975,9 @@ const glStatus     = document.getElementById('gl-status');
 let   _loaderHidden = false;
 
 function setLoadProgress(pct, msg) {
-  glBar.style.width = pct + '%';
+  // Clamp progress bar to 0-100% to prevent visual overflow
+  const clampedPct = Math.max(0, Math.min(pct, 100));
+  glBar.style.width = clampedPct + '%';
   if (msg) glStatus.textContent = msg;
 }
 
@@ -1012,7 +1014,8 @@ function getTgState(tg) {
 }
 
 // ===== Telegram Mini App initialization =====
-if (window.Telegram?.WebApp) {
+const isTelegramEnv = !!(window.Telegram?.WebApp);
+if (isTelegramEnv) {
   try {
     const tg = window.Telegram.WebApp;
     tgBootLog(`WebApp detected: version=${tg.version || 'n/a'}, platform=${tg.platform || 'n/a'}`);
@@ -1071,8 +1074,9 @@ if (window.Telegram?.WebApp) {
     tgBootLog(`WebApp init error: ${e?.message || e}`, 'error');
   }
 } else {
-  tgBootLog('Telegram WebApp not detected; running in standard browser context', 'warn');
+  tgBootLog('Telegram WebApp not detected; running in standard browser context (non-TG environment)', 'warn');
 }
+window.isTelegramMiniApp = isTelegramEnv;
 
 // ===== Log system =====
 const logPanel = document.getElementById('log-panel');
@@ -1405,13 +1409,18 @@ function loadCharModel() {
   },
   (xhr) => {
     if (xhr.lengthComputable) {
-      const pct = Math.round(xhr.loaded / xhr.total * 100);
+      // Clamp progress to [0, 100] to avoid spurious over-100% reports from browser prefetch
+      const rawPct = xhr.loaded / xhr.total * 100;
+      const pct = Math.min(Math.round(rawPct), 100);
       // Map model loading 0-100% to overall progress 30-90%
-      if (!IS_MOBILE) setLoadProgress(30 + Math.round(pct * 0.6), `載入模型 ${pct}%`);
+      const overallPct = Math.min(30 + Math.round(pct * 0.6), 90); // cap at 90% until complete
+      if (!IS_MOBILE) setLoadProgress(overallPct, `載入模型 ${pct}%`);
       // Only log at start / midpoint / completion — XHR fires 80+ progress events
       // per load and each one appends a DOM node to the hidden log panel.
-      // pct===0 never fires (XHR loaded>0 on first event), so use <10 for the start.
-      if (pct < 10 || pct === 50 || pct >= 100) console.log(`Model loading: ${pct}%`);
+      // Use milestones (0-9%, 40-50%, 90-100%) to reduce log spam
+      if (pct < 10 || (pct >= 40 && pct <= 50) || pct === 100) {
+        console.log(`Model loading: ${pct}%`);
+      }
     }
   },
   (err) => {
