@@ -901,7 +901,7 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
       </div>
       <button class="ctrl-btn" id="btn-bet" aria-label="投注">
         <div class="cb-disc">$</div>
-        <span class="cb-label" id="bet-label">投注 ¥2.50</span>
+        <span class="cb-label" id="bet-label">投注 USDT 2.50</span>
       </button>
       <button class="ctrl-btn" id="btn-menu" aria-label="菜單">
         <div class="cb-disc">≡</div>
@@ -912,12 +912,12 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
       <div class="bal-item">
         <span class="bal-icon"><svg class="sym-icon"><use href="#sym-diamond"/></svg></span>
         <span class="bal-lbl">余額</span>
-        <span class="bal-val" id="balance-val">¥0.00</span>
+        <span class="bal-val" id="balance-val">USDT 0.00</span>
       </div>
       <div class="bal-item">
         <span class="bal-icon"><svg class="sym-icon"><use href="#sym-star"/></svg></span>
         <span class="bal-lbl">贏獎</span>
-        <span class="bal-val" id="win-val">¥0.00</span>
+        <span class="bal-val" id="win-val">USDT 0.00</span>
       </div>
     </div>
   </div>
@@ -956,7 +956,7 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 <!-- Big win overlay -->
 <div id="big-win" class="hidden">
   <div id="bw-title">BIG WIN!</div>
-  <div id="bw-amount">+¥0</div>
+  <div id="bw-amount">+USDT 0</div>
 </div>
 
 <script type="module">
@@ -1087,7 +1087,6 @@ function calcDPR() { return Math.min(window.devicePixelRatio * gvScale, DPR_CAP)
 // older Android WebView without requiring importmaps or top-level await.
 // Top-level await (needed for dynamic WebGPU import) is only available in
 // iOS 15+ modules, so removing it makes the module load on iOS 12–14 as well.
-const USE_WEBGPU = false;
 
 // ===== Three.js scene setup (reel section only) =====
 const reelSection = document.getElementById('reel-section');
@@ -1338,24 +1337,14 @@ if (IS_MOBILE) {
 }
 
 // ===== Symbol texture factory =====
-// SVG path data for each symbol (viewBox 0 0 100 100, drawn via Path2D onto canvas)
-const SYMBOLS = [
-  { path:'M 50 8 A 42 42 0 0 0 50 92 A 45 45 0 0 1 50 8 Z', label:'月亮', bg:'#0a0428', glow:'#aa88ff' },
-  { path:'M 50 3 A 9 9 0 0 1 50 21 A 9 9 0 0 1 50 3 Z M 40 22 L 12 80 L 50 68 L 88 80 L 60 22 Z M 40 28 C 26 18 12 22 8 36 C 14 30 26 26 40 32 Z M 60 28 C 74 18 88 22 92 36 C 86 30 74 26 60 32 Z', label:'舞者', bg:'#0c0830', glow:'#c0ccff' },
-  { path:'M 50 5 L 60.6 35.4 L 92.8 36.1 L 67.1 55.6 L 76.5 86.4 L 50 68 L 23.5 86.4 L 32.9 55.6 L 7.2 36.1 L 39.4 35.4 Z', label:'星星', bg:'#000e30', glow:'#88aaff' },
-  { path:'M 26 72 A 14 10 0 1 0 54 72 A 14 10 0 1 0 26 72 Z M 52 22 L 56 22 L 56 72 L 52 72 Z M 56 22 L 84 14 L 84 34 L 56 42 Z', label:'音符', bg:'#080425', glow:'#aabbff' },
-  { path:'M 50 5 L 59 41 L 95 50 L 59 59 L 50 95 L 41 59 L 5 50 L 41 41 Z', label:'流星', bg:'#001030', glow:'#88ddff' },
-  { path:'M 50 6 L 57 34 L 81 19 L 66 44 L 94 50 L 66 57 L 81 81 L 57 66 L 50 94 L 44 66 L 19 81 L 34 57 L 6 50 L 34 44 L 19 19 L 44 34 Z', label:'閃星', bg:'#080518', glow:'#c0ccff' },
-];
 
 // ===== Pre-load symbols sprite sheet (symbols.png) =====
 // The sprite sheet is a 1×9 vertical strip (9 symbols stacked top-to-bottom, 307×2700 px total).
 // UV coordinates in spriteMap are resolution-independent.
-// If the image fails to load the SVG-path fallback is used transparently.
-const _symbolsSpriteImg = await new Promise(resolve => {
+const _symbolsSpriteImg = await new Promise((resolve, reject) => {
   const img = new Image();
   img.onload  = () => resolve(img);
-  img.onerror = () => { console.warn('symbols.png failed to load (src: ./symbols.png); using SVG fallback'); resolve(null); };
+  img.onerror = () => reject(new Error('symbols.png failed to load (src: ./symbols.png)'));
   img.src = './symbols.png';
 });
 
@@ -1375,85 +1364,33 @@ const spriteMap = [
 ];
 
 // Use 256×256 on mobile (4× less GPU memory bandwidth vs 512×512)
-// idx is the 0-based symbol index within the SYMBOLS array (passed automatically by Array.map).
-function makeSymbolTex(sym, idx) {
+function makeSymbolTex(idx) {
   const cv = document.createElement('canvas');
   const TEX = IS_MOBILE ? 256 : 512;
-  const f   = TEX / 512;           // scale factor: 0.5 on mobile, 1 on desktop
   cv.width = cv.height = TEX;
   const ctx = cv.getContext('2d');
 
   // ── Sprite-sheet path: compute pixel rect from UV offsets × natural image size ──
-  if (_symbolsSpriteImg && idx >= 0 && idx < spriteMap.length) {
-    const { u0, v0, u1, v1 } = spriteMap[idx];
-    const iw = _symbolsSpriteImg.naturalWidth;
-    const ih = _symbolsSpriteImg.naturalHeight;
-    ctx.drawImage(
-      _symbolsSpriteImg,
-      u0 * iw, v0 * ih, (u1 - u0) * iw, (v1 - v0) * ih,  // source rect (resolution-independent)
-      0,       0,       TEX,             TEX               // destination: full output canvas
-    );
-    return new THREE.CanvasTexture(cv);
-  }
-
-  // ── Fallback: procedural SVG-path rendering (used when sprite sheet is unavailable) ──
-
-  // Helper: clip/stroke a rounded rectangle path
-  function roundRect(x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);      ctx.arcTo(x + w, y,     x + w, y + r,     r);
-    ctx.lineTo(x + w, y + h - r);  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
-    ctx.lineTo(x + r, y + h);      ctx.arcTo(x,     y + h, x,         y + h - r, r);
-    ctx.lineTo(x, y + r);          ctx.arcTo(x,     y,     x + r,     y,         r);
-    ctx.closePath();
-  }
-
-  // Card background gradient
-  const bgGrd = ctx.createLinearGradient(0, 0, 0, TEX);
-  bgGrd.addColorStop(0, '#000');
-  bgGrd.addColorStop(0.45, sym.bg);
-  bgGrd.addColorStop(1, '#000');
-  roundRect(4*f, 4*f, 504*f, 504*f, 32*f);
-  ctx.fillStyle = bgGrd;
-  ctx.fill();
-
-  // Inner radial glow (brighter for better symbol pop)
-  const glowGrd = ctx.createRadialGradient(256*f, 210*f, 20*f, 256*f, 210*f, 210*f);
-  glowGrd.addColorStop(0, sym.glow + '99');
-  glowGrd.addColorStop(1, 'rgba(0,0,0,0)');
-  roundRect(4*f, 4*f, 504*f, 504*f, 32*f);
-  ctx.fillStyle = glowGrd;
-  ctx.fill();
-
-  // Gold border
-  roundRect(4*f, 4*f, 504*f, 504*f, 32*f);
-  ctx.strokeStyle = sym.glow;
-  ctx.lineWidth = 5*f;
-  ctx.stroke();
-  // Inner thin border
-  roundRect(14*f, 14*f, 484*f, 484*f, 26*f);
-  ctx.strokeStyle = sym.glow + '55';
-  ctx.lineWidth = 2*f;
-  ctx.stroke();
-
-  // SVG path – draw centered in the full card via Path2D (scales perfectly at any canvas resolution)
-  const symScale = TEX * 0.68 / 100;          // symbol fills ~68 % of card
-  const tx = TEX / 2 - 50 * symScale;          // translate so (0,0)…(100,100) is centered
-  const ty = TEX / 2 - 50 * symScale;
-  ctx.save();
-  ctx.translate(tx, ty);
-  ctx.scale(symScale, symScale);
-  ctx.shadowColor = sym.glow;
-  ctx.shadowBlur = Math.round(36 * f / symScale); // maintain ~36·f px visual blur after scale
-  ctx.fillStyle = '#fff';
-  ctx.fill(new Path2D(sym.path));
-  ctx.restore();
-
+  const { u0, v0, u1, v1 } = spriteMap[idx] ?? spriteMap[spriteMap.length - 1];
+  const iw = _symbolsSpriteImg.naturalWidth;
+  const ih = _symbolsSpriteImg.naturalHeight;
+  ctx.drawImage(
+    _symbolsSpriteImg,
+    u0 * iw, v0 * ih, (u1 - u0) * iw, (v1 - v0) * ih,  // source rect (resolution-independent)
+    0,       0,       TEX,             TEX               // destination: full output canvas
+  );
   return new THREE.CanvasTexture(cv);
 }
 
-const symTextures = SYMBOLS.map(makeSymbolTex);
+const ACTIVE_SYMBOL_COUNT = 6;
+const ACTIVE_SYMBOL_NAMES = Array.from(
+  { length: ACTIVE_SYMBOL_COUNT },
+  (_, idx) => spriteMap[idx]?.name ?? `sym${idx}`,
+);
+const symTextures = Array.from(
+  { length: ACTIVE_SYMBOL_COUNT },
+  (_, idx) => makeSymbolTex(idx),
+);
 
 // Populate paytable canvas images from the already-rendered symbol texture canvases
 document.querySelectorAll('.pt-sym-img').forEach(cv => {
@@ -1487,7 +1424,7 @@ const REEL_STRIPS = [
   [3,3,3,3,3,3, 4,4,4,4,4,4, 5,5,5,5,5,5, 0, 1,1,1, 2,2,2,2], // R2: ♪ leads
 ];
 const N_STRIP   = REEL_STRIPS[0].length; // 26 stops per reel
-const N_SYMBOLS = SYMBOLS.length;        // 6 distinct symbols
+const N_SYMBOLS = ACTIVE_SYMBOL_COUNT;   // 6 distinct symbols
 // Recycling clip boundary: one card beyond the top/bottom of the visible area
 let STRIP_CLIP = (Math.floor(N_STRIP / 2) + 1) * CARD_H;
 
@@ -1521,10 +1458,11 @@ REEL_X.forEach((rx, ri) => {
 
 // ===== Game state =====
 let isSpinning  = false;
-const INITIAL_BALANCE  = 10000;
-let balance     = INITIAL_BALANCE;
+const INITIAL_BALANCE  = 10000; // Default fallback balance in units (100 USDT)
+let balance     = INITIAL_BALANCE; // Start with default, will be overridden by Flutter
+
 const BET_LEVELS   = [25, 50, 100, 250, 500];
-let betIdx         = 3;                          // start at ¥2.50 (250 units)
+let betIdx         = 3;                          // start at USDT 2.50 (250 units)
 const currentBet   = () => BET_LEVELS[betIdx];
 const MAX_SPIN_SPEED   = 0.32;
 const MIN_SPIN_SPEED   = 0.002; // minimum speed threshold before reel comes to rest
@@ -1538,14 +1476,42 @@ const balanceEl = document.getElementById('balance-val');
 const winEl     = document.getElementById('win-val');
 const betLabel  = document.getElementById('bet-label');
 const spinBtn   = document.getElementById('spin-btn');
-balanceEl.textContent = '¥' + balance.toLocaleString();
-betLabel.textContent  = '投注 ¥' + (currentBet() / 100).toFixed(2);
+balanceEl.textContent = 'USDT ' + (balance / 100).toFixed(2);
+betLabel.textContent  = '投注 USDT ' + (currentBet() / 100).toFixed(2);
+
+// Initialize balance from Flutter's injection or use default
+// This function is called by Flutter after injecting GAME_CONFIG
+function initializeBalance() {
+  if (window.GAME_CONFIG?.userBalance !== undefined) {
+    const flutterBalance = window.GAME_CONFIG.userBalance;
+    const newBalance = Math.round(flutterBalance * 100);
+    console.log('[BALANCE_INIT] From Flutter config:', flutterBalance, '→', newBalance, 'units →', (newBalance / 100).toFixed(2), 'USDT');
+    balance = newBalance;
+    balanceEl.textContent = 'USDT ' + (balance / 100).toFixed(2);
+    addLog(`Loaded balance from app: USDT ${(balance / 100).toFixed(2)}`, 'info');
+  } else {
+    console.log('[BALANCE_INIT] Using default:', INITIAL_BALANCE, 'units (100 USDT)');
+  }
+}
+
+// Callback for Flutter to update balance dynamically
+// Flutter passes USDT amount (e.g., 100.5), we convert to units (×100)
+window.onBalanceUpdate = function(flutterBalance) {
+  console.log('[BALANCE_UPDATE] Received from Flutter:', flutterBalance, 'type:', typeof flutterBalance);
+  if (flutterBalance !== null && flutterBalance !== undefined) {
+    const newBalance = Math.round(flutterBalance * 100);
+    console.log('[BALANCE_UPDATE] Converting:', flutterBalance, '→', newBalance, 'units →', (newBalance / 100).toFixed(2), 'USDT');
+    balance = newBalance;
+    balanceEl.textContent = 'USDT ' + (balance / 100).toFixed(2);
+    addLog(`Balance updated from app: USDT ${(balance / 100).toFixed(2)}`, 'info');
+  }
+};
 
 // ===== Bet cycling =====
 document.getElementById('btn-bet').addEventListener('click', () => {
   if (isSpinning) return;
   betIdx = (betIdx + 1) % BET_LEVELS.length;
-  betLabel.textContent = '投注 ¥' + (currentBet() / 100).toFixed(2);
+  betLabel.textContent = '投注 USDT ' + (currentBet() / 100).toFixed(2);
   betLabel.style.animation = 'none';
   void betLabel.offsetWidth; // force reflow to restart the CSS animation from the beginning
   betLabel.style.animation = 'betFlash .4s ease';
@@ -1628,28 +1594,32 @@ spinBtn.addEventListener('pointerdown', () => {
 spinBtn.addEventListener('click', () => { if (!autoSpin) doSpin(); });
 
 // ── Paytable evaluation ──────────────────────────────────────────────────────
-// Symbols: 0=☽(月亮/WILD), 1=舞(舞者), 2=★(星星), 3=♪(音符), 4=✦(流星), 5=✧(閃星)
+// IMPORTANT: Runtime visuals come from symbols.png + spriteMap (not SVG labels)
+// Symbol index mapping currently in use:
+//   0=apple, 1=cherry, 2=seven, 3=lemon, 4=bar, 5=grapes
 // Paytable (multiplier applied to current bet):
-//   ☽☽☽ = 500×    ☽☽ + any = 10×
-//   舞舞舞 = 20×     ★★★ = 15×    ♪♪♪ = 10×    ✦✦✦ = 8×    ✧✧ + any = 3×
-//   ☽ WILD: substitutes for any symbol at base rate (no bonus multiplier)
-//   ✧✧ + any = 3×   no match = 0 (LOSS)
+//   [0][0][0] = 500×    [0][0]+any = 10×
+//   [1][1][1] = 20×     [2][2][2] = 15×
+//   [3][3][3] = 10×     [4][4][4] = 8×
+//   [5][5]+any = 3×
+//   index 0 acts as WILD at base rate (no bonus multiplier)
+//   no match = 0 (LOSS)
 function evaluatePayline(s0, s1, s2) {
-  const WILD = 0; // ☽ — also acts as wild
-  const STAR = 5; // ✧ — consolation 2-of-kind
+  const WILD = 0; // index 0 sprite (apple) also acts as wild
+  const STAR = 5; // index 5 sprite (grapes) = consolation 2-of-kind
   const syms      = [s0, s1, s2];
   const moonCount = syms.filter(s => s === WILD).length;
   const others    = syms.filter(s => s !== WILD);
 
-  if (moonCount === 3) return 500;                                          // ☽☽☽
-  if (moonCount === 2) return 10;                                           // ☽☽ + any
-  if (moonCount === 1 && others.length === 2 && others[0] === others[1]) { // ☽ wild completes 3-of-kind
+  if (moonCount === 3) return 500;                                          // [0][0][0]
+  if (moonCount === 2) return 10;                                           // [0][0] + any
+  if (moonCount === 1 && others.length === 2 && others[0] === others[1]) { // [0] wild completes 3-of-kind
     return [500, 20, 15, 10, 8, 3][others[0]] ?? 0;                        //   → base payout (no bonus)
   }
   if (s0 === s1 && s1 === s2) {                                             // 3-of-kind (no wilds)
     return [500, 20, 15, 10, 8, 3][s0] ?? 0;
   }
-  if (syms.filter(s => s === STAR).length >= 2) return 3;   // ✧✧ + any = consolation
+  if (syms.filter(s => s === STAR).length >= 2) return 3;   // [5][5] + any = consolation
   return 0;                                                  // no match = LOSS
 }
 
@@ -1658,15 +1628,15 @@ function doSpin() {
   if (balance < currentBet()) {
     // Re-top-up when out of funds
     balance = INITIAL_BALANCE;
-    balanceEl.textContent = '¥' + balance.toLocaleString();
-    addLog(`餘額不足，已自動補充至 ¥${INITIAL_BALANCE.toLocaleString()}`, 'warn');
+    balanceEl.textContent = 'USDT ' + (balance / 100).toFixed(2);
+    addLog(`餘額不足，已自動補充至 USDT ${(INITIAL_BALANCE / 100).toFixed(2)}`, 'warn');
   }
   isSpinning = true;
   spinBtn.disabled = true;
-  winEl.textContent = '¥0.00';
+  winEl.textContent = 'USDT 0.00';
 
   balance -= currentBet();
-  balanceEl.textContent = '¥' + balance.toLocaleString();
+  balanceEl.textContent = 'USDT ' + (balance / 100).toFixed(2);
 
   // Demo mode: pre-determine a guaranteed win every 3rd spin so reels visually match the paytable.
   // forcedSyms is resolved before the reels stop, so the snap logic can steer each reel to the
@@ -1738,13 +1708,13 @@ function doSpin() {
     // Demo guaranteed win is achieved by steering the reel snap (forcedSyms above), so no
     // post-hoc override is needed here — the landed symbols already satisfy the paytable.
     const multiplier = naturalMultiplier;
-    addLog(`花色: ${landedSymbols.map(i => SYMBOLS[i]?.emoji ?? '?').join(' ')} → ×${multiplier}`, multiplier >= 10 ? 'info' : 'warn');
+    addLog(`花色: ${landedSymbols.map(i => ACTIVE_SYMBOL_NAMES[i] ?? `sym${i}`).join(' ')} → ×${multiplier}`, multiplier >= 10 ? 'info' : 'warn');
 
     if (multiplier > 0) {
       const prize = currentBet() * multiplier;
       balance += prize;
-      balanceEl.textContent = '¥' + balance.toLocaleString();
-      winEl.textContent     = '+¥' + prize.toLocaleString();
+      balanceEl.textContent = 'USDT ' + (balance / 100).toFixed(2);
+      winEl.textContent     = '+USDT ' + (prize / 100).toFixed(2);
 
       // Flash reel section border — remove first to restart animation if already playing
       const rs = document.getElementById('reel-section');
@@ -1840,7 +1810,7 @@ function showBigWin(amount, title = 'BIG WIN!') {
   const bwT = document.getElementById('bw-title');
   const bwA = document.getElementById('bw-amount');
   bwT.textContent = title;
-  bwA.textContent = '+¥' + amount.toLocaleString();
+  bwA.textContent = '+USDT ' + amount.toLocaleString();
   bw.classList.remove('hidden');
   bwT.style.animation = bwA.style.animation = 'none';
   void bw.offsetHeight; // 強制 reflow 以重置 CSS animation 狀態，使動畫可以重新播放 (reading offsetHeight triggers synchronous layout)
