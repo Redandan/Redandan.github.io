@@ -988,32 +988,70 @@ function hideLoader() {
 
 setLoadProgress(5, '初始化引擎...');
 
+// ===== Telegram boot diagnostics (captured before log system is ready) =====
+const tgInitLogBuffer = [];
+function tgBootLog(message, type = 'info') {
+  const text = `[TG_INIT] ${message}`;
+  if (type === 'error') console.error(text);
+  else if (type === 'warn') console.warn(text);
+  else console.log(text);
+
+  if (typeof window.__tgAddLog === 'function') {
+    window.__tgAddLog(text, type);
+  } else {
+    tgInitLogBuffer.push({ text, type });
+  }
+}
+
+function getTgState(tg) {
+  const vh = tg?.viewportHeight ?? 'n/a';
+  const svh = tg?.viewportStableHeight ?? 'n/a';
+  const expanded = tg?.isExpanded ?? 'n/a';
+  const fullscreen = tg?.isFullscreen ?? 'n/a';
+  return `vh=${vh}, stableVh=${svh}, expanded=${expanded}, fullscreen=${fullscreen}`;
+}
+
 // ===== Telegram Mini App initialization =====
 if (window.Telegram?.WebApp) {
   try {
     const tg = window.Telegram.WebApp;
+    tgBootLog(`WebApp detected: version=${tg.version || 'n/a'}, platform=${tg.platform || 'n/a'}`);
     tg.ready();
+    tgBootLog('ready() called');
     // Hide Telegram header for immersive fullscreen experience
     tg.headerColor = 'transparent';
+    tgBootLog('headerColor set to transparent');
     // Request true fullscreen when supported; keep expand() as compatibility fallback.
-    const requestFullscreen = () => {
-      if (typeof tg.requestFullscreen === 'function') {
-        tg.requestFullscreen();
+    const supportsRequestFullscreen = typeof tg.requestFullscreen === 'function';
+    tgBootLog(`requestFullscreen support=${supportsRequestFullscreen}`);
+    const requestFullscreen = (reason) => {
+      tgBootLog(`fullscreen request (${reason}) begin: ${getTgState(tg)}`);
+      if (supportsRequestFullscreen) {
+        try {
+          tg.requestFullscreen();
+          tgBootLog('requestFullscreen() called');
+        } catch (err) {
+          tgBootLog(`requestFullscreen() failed: ${err?.message || err}`, 'warn');
+        }
       }
       tg.expand();
+      tgBootLog(`expand() called: ${getTgState(tg)}`);
     };
-    requestFullscreen();
+    requestFullscreen('initial');
     // Some clients apply fullscreen more reliably after first frame.
-    setTimeout(requestFullscreen, 120);
+    setTimeout(() => requestFullscreen('delayed-120ms'), 120);
     // Prevent vertical swipe gestures from closing the Mini App during gameplay
     tg.disableVerticalSwipes();
+    tgBootLog('disableVerticalSwipes() called');
     
     // ===== Telegram viewport adaptation =====
     // Update CSS variable whenever viewport height changes (user drag, keyboard, etc.)
-    function updateTelegramViewportHeight() {
+    function updateTelegramViewportHeight(eventData) {
       const vh = tg.viewportHeight || window.innerHeight;
       document.documentElement.style.setProperty('--tg-viewport-height', vh + 'px');
-      console.log('[TG_VIEWPORT] Height updated:', vh + 'px');
+      const stable = tg.viewportStableHeight ?? 'n/a';
+      const isStateStable = eventData?.isStateStable ?? 'n/a';
+      tgBootLog(`viewport updated: vh=${vh}px, stableVh=${stable}px, isStateStable=${isStateStable}`);
     }
     
     // Initial update
@@ -1021,11 +1059,19 @@ if (window.Telegram?.WebApp) {
     
     // Listen for viewport changes (user dragging sheet, keyboard popup, etc.)
     tg.onEvent('viewportChanged', updateTelegramViewportHeight);
+    tg.onEvent('fullscreenChanged', () => {
+      tgBootLog(`fullscreenChanged event: ${getTgState(tg)}`);
+    });
+    tg.onEvent('fullscreenFailed', (err) => {
+      tgBootLog(`fullscreenFailed event: ${err?.message || JSON.stringify(err) || 'unknown error'}`, 'warn');
+    });
     
-    console.log('Telegram Mini App initialized: fullscreen requested, header hidden, vertical swipes disabled, viewport monitoring active');
+    tgBootLog(`init complete: ${getTgState(tg)}`);
   } catch (e) {
-    console.warn('Telegram WebApp API error:', e);
+    tgBootLog(`WebApp init error: ${e?.message || e}`, 'error');
   }
+} else {
+  tgBootLog('Telegram WebApp not detected; running in standard browser context', 'warn');
 }
 
 // ===== Log system =====
@@ -1107,6 +1153,13 @@ function addLog(msg, type = 'info') {
   _saveStoredLogs();
   // scrollTop forces a layout reflow; skip it when the panel is hidden (display:none).
   if (logPanel.offsetParent !== null) logPanel.scrollTop = logPanel.scrollHeight;
+}
+
+// Bridge Telegram boot logs into the in-app log panel once addLog is available.
+window.__tgAddLog = addLog;
+if (tgInitLogBuffer.length) {
+  for (const entry of tgInitLogBuffer) addLog(entry.text, entry.type);
+  tgInitLogBuffer.length = 0;
 }
 
 const _log = console.log, _warn = console.warn, _err = console.error;
