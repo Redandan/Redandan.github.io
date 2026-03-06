@@ -994,11 +994,16 @@ setLoadProgress(5, '初始化引擎...');
 
 // ===== Telegram boot diagnostics (captured before log system is ready) =====
 const tgInitLogBuffer = [];
+const nativeConsole = {
+  log: console.log.bind(console),
+  warn: console.warn.bind(console),
+  error: console.error.bind(console),
+};
 function tgBootLog(message, type = 'info') {
   const text = `[TG_INIT] ${message}`;
-  if (type === 'error') console.error(text);
-  else if (type === 'warn') console.warn(text);
-  else console.log(text);
+  if (type === 'error') nativeConsole.error(text);
+  else if (type === 'warn') nativeConsole.warn(text);
+  else nativeConsole.log(text);
 
   if (typeof window.__tgAddLog === 'function') {
     window.__tgAddLog(text, type);
