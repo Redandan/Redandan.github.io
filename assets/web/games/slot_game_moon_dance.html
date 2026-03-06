@@ -1022,28 +1022,54 @@ window.isTelegramMiniApp = isTgWebAppStart;
 if (isTgWebAppStart) {
   tgBootLog('Telegram Mini App mode detected (tgWebAppStart=1 or tgWeb)', 'info');
   
+  // ===== TG Injection Diagnostic =====
+  tgBootLog(`window.Telegram exists: ${!!window.Telegram}`, 'info');
+  
   const tg = window.Telegram?.WebApp;
   if (!tg) {
-    tgBootLog('Telegram WebApp API not available - waiting for injection...', 'warn');
+    tgBootLog('❌ Telegram.WebApp API not injected yet', 'warn');
+    tgBootLog(`window.Telegram: ${typeof window.Telegram} | window.Telegram?.WebApp: ${typeof tg}`, 'warn');
   } else {
     try {
-      tgBootLog(`WebApp API ready: version=${tg.version || 'n/a'}, platform=${tg.platform || 'n/a'}`);
-      tg.ready();
-      tgBootLog('ready() called');
+      // API availability check
+      tgBootLog(`✓ Telegram.WebApp API detected`, 'info');
+      tgBootLog(`version=${tg.version || 'n/a'}, platform=${tg.platform || 'n/a'}, colorScheme=${tg.colorScheme || 'n/a'}`, 'info');
       
-      // Extract and log user information
-      const initData = tg.initDataUnsafe || {};
-      const user = initData.user || {};
-      const userInfo = `id=${user.id || 'n/a'} username=${user.username || 'n/a'} first_name=${user.first_name || 'n/a'} last_name=${user.last_name || 'n/a'} is_premium=${user.is_premium || false}`;
-      tgBootLog(`TG User: ${userInfo}`, 'info');
+      // initData diagnostic - this only exists when opened from Bot WebApp button
+      const rawInitData = tg.initData;
+      const initDataObj = tg.initDataUnsafe || {};
+      tgBootLog(`initData present: ${!!rawInitData} (length=${rawInitData?.length || 0})`, 'info');
+      
+      // User information extraction
+      const user = initDataObj.user || {};
+      const chatInstance = initDataObj.chat_instance || 'n/a';
+      const authDate = initDataObj.auth_date || 'n/a';
+      const queryId = initDataObj.query_id || 'n/a';
+      
+      tgBootLog(`TG_USER: id=${user.id || 'n/a'} | name=${user.first_name || ''} ${user.last_name || ''} | username=${user.username || 'n/a'} | lang=${user.language_code || 'n/a'} | premium=${user.is_premium || false}`, 'info');
+      tgBootLog(`TG_SESSION: chatInstance=${chatInstance} | authDate=${authDate} | queryId=${queryId?.slice(0, 20)}...`, 'info');
+      
+      // Launch mode detection
+      const launchMode = initDataObj.start_param ? `inline/menu(${initDataObj.start_param})` : (rawInitData ? 'button' : 'unknown');
+      tgBootLog(`TG_LAUNCH_MODE: ${launchMode}`, 'info');
+      
+      // WebApp capabilities check
+      const hasReady = typeof tg.ready === 'function';
+      const hasExpand = typeof tg.expand === 'function';
+      const hasRequestFullscreen = typeof tg.requestFullscreen === 'function';
+      const hasInitData = !!tg.initDataUnsafe;
+      tgBootLog(`TG_CAPABILITIES: ready=${hasReady} expand=${hasExpand} requestFullscreen=${hasRequestFullscreen} initData=${hasInitData}`, 'info');
+      
+      tg.ready();
+      tgBootLog('ready() called ✓', 'info');
       
       // Hide Telegram header for immersive fullscreen experience
       tg.headerColor = 'transparent';
-      tgBootLog('headerColor set to transparent');
+      tgBootLog('headerColor set to transparent', 'info');
       
       // Request true fullscreen when supported; keep expand() as compatibility fallback
       const supportsRequestFullscreen = typeof tg.requestFullscreen === 'function';
-      tgBootLog(`requestFullscreen support=${supportsRequestFullscreen}`);
+      tgBootLog(`requestFullscreen support=${supportsRequestFullscreen}`, 'info');
       
       const logLaunchSummary = (phase) => {
         const fullscreen = !!tg.isFullscreen;
