@@ -1091,8 +1091,13 @@ if (hasTgUrlParam) {
       tgBootLog('✓ ready() called', 'info');
       
       // Hide Telegram header for immersive fullscreen experience
-      tg.headerColor = 'transparent';
-      tgBootLog('✓ headerColor=transparent', 'info');
+      // Use official API with bg_color (adapts to theme) or hex color
+      try {
+        tg.setHeaderColor('bg_color');
+        tgBootLog('✓ setHeaderColor(bg_color)', 'info');
+      } catch (e) {
+        tgBootLog(`setHeaderColor warning: ${e?.message || e}`, 'warn');
+      }
       
       // Request true fullscreen when supported; keep expand() as compatibility fallback
       const supportsRequestFullscreen = typeof tg.requestFullscreen === 'function';
