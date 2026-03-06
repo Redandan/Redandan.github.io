@@ -1031,6 +1031,12 @@ if (isTgWebAppStart) {
       tg.ready();
       tgBootLog('ready() called');
       
+      // Extract and log user information
+      const initData = tg.initDataUnsafe || {};
+      const user = initData.user || {};
+      const userInfo = `id=${user.id || 'n/a'} username=${user.username || 'n/a'} first_name=${user.first_name || 'n/a'} last_name=${user.last_name || 'n/a'} is_premium=${user.is_premium || false}`;
+      tgBootLog(`TG User: ${userInfo}`, 'info');
+      
       // Hide Telegram header for immersive fullscreen experience
       tg.headerColor = 'transparent';
       tgBootLog('headerColor set to transparent');
