@@ -1017,6 +1017,13 @@ function getTgState(tg) {
 window.isTelegramMiniApp = false;
 let tgInitDone = false;
 
+// Check if launched from Telegram Mini App via URL parameter
+const urlParams = new URLSearchParams(window.location.search);
+const isTgWebAppStart = urlParams.get('tgWebAppStart') === '1';
+if (isTgWebAppStart) {
+  tgBootLog('tgWebAppStart=1 detected in URL - Telegram Mini App launch confirmed', 'info');
+}
+
 function initTelegramWebApp(source) {
   const tg = window.Telegram?.WebApp;
   if (!tg) return false;
@@ -1101,7 +1108,11 @@ tgInitRetryDelaysMs.forEach((delay, index) => {
     const detected = initTelegramWebApp(`retry-${index}@${delay}ms`);
     const isLastAttempt = index === tgInitRetryDelaysMs.length - 1;
     if (!detected && isLastAttempt) {
-      tgBootLog('Telegram WebApp not detected after retries; running in standard browser context (or TG injection unavailable)', 'info');
+      if (isTgWebAppStart) {
+        tgBootLog('⚠️ tgWebAppStart=1 present but Telegram WebApp API not found - possible TG client issue', 'warn');
+      } else {
+        tgBootLog('Telegram WebApp not detected after retries; running in standard browser context (or TG injection unavailable)', 'info');
+      }
     }
   }, delay);
 });
