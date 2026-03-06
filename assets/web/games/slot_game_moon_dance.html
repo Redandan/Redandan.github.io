@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
 <meta http-equiv="Cache-Control" content="no-cache" />
 <title>月光舞台 - 夜舞老虎機</title>
+<!-- Telegram WebApp SDK - must load before game scripts -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- Shared Flutter ↔ WebView bridge (loaded before the game module script) -->
 <script src="_runtime/flutter_bridge.js"></script>
 <style>
@@ -1016,29 +1018,50 @@ function getTgState(tg) {
 // ===== Telegram Mini App initialization =====
 // Accept either tgWebAppStart=1 or just tgWeb parameter
 const urlParams = new URLSearchParams(window.location.search);
-const isTgWebAppStart = urlParams.get('tgWebAppStart') === '1' || urlParams.has('tgWeb');
-window.isTelegramMiniApp = isTgWebAppStart;
+const hasTgUrlParam = urlParams.get('tgWebAppStart') === '1' || urlParams.has('tgWeb');
 
-if (isTgWebAppStart) {
-  tgBootLog('Telegram Mini App mode detected (tgWebAppStart=1 or tgWeb)', 'info');
+if (hasTgUrlParam) {
+  tgBootLog('URL indicates Telegram Mini App (tgWebAppStart=1 or tgWeb)', 'info');
   
-  // ===== TG Injection Diagnostic =====
-  tgBootLog(`window.Telegram exists: ${!!window.Telegram}`, 'info');
+  // Wait for Telegram SDK to load with retry mechanism
+  let tgInitAttempts = 0;
+  const maxAttempts = 10;
+  const checkInterval = 100; // ms
   
-  const tg = window.Telegram?.WebApp;
-  if (!tg) {
-    tgBootLog('❌ Telegram.WebApp API not injected yet', 'warn');
-    tgBootLog(`window.Telegram: ${typeof window.Telegram} | window.Telegram?.WebApp: ${typeof tg}`, 'warn');
-  } else {
+  function initTelegramWebApp() {
+    tgInitAttempts++;
+    const tg = window.Telegram?.WebApp;
+    
+    if (!tg) {
+      if (tgInitAttempts === 1) {
+        tgBootLog(`Attempt ${tgInitAttempts}: window.Telegram=${typeof window.Telegram}, WebApp=${typeof tg}`, 'info');
+      } else if (tgInitAttempts % 3 === 0) {
+        tgBootLog(`Attempt ${tgInitAttempts}/${maxAttempts}: Still waiting for Telegram SDK...`, 'warn');
+      }
+      
+      if (tgInitAttempts < maxAttempts) {
+        setTimeout(initTelegramWebApp, checkInterval);
+        return;
+      } else {
+        tgBootLog(`❌ Telegram SDK not found after ${maxAttempts} attempts (${maxAttempts * checkInterval}ms)`, 'error');
+        tgBootLog('⚠️ Make sure this URL is opened inside Telegram app', 'warn');
+        window.isTelegramMiniApp = false;
+        return;
+      }
+    }
+    
+    // ===== Telegram WebApp API detected =====
+    window.isTelegramMiniApp = true;
+    tgBootLog(`✓ Telegram SDK loaded (attempt ${tgInitAttempts})`, 'info');
+    
     try {
       // API availability check
-      tgBootLog(`✓ Telegram.WebApp API detected`, 'info');
       tgBootLog(`version=${tg.version || 'n/a'}, platform=${tg.platform || 'n/a'}, colorScheme=${tg.colorScheme || 'n/a'}`, 'info');
       
       // initData diagnostic - this only exists when opened from Bot WebApp button
       const rawInitData = tg.initData;
       const initDataObj = tg.initDataUnsafe || {};
-      tgBootLog(`initData present: ${!!rawInitData} (length=${rawInitData?.length || 0})`, 'info');
+      tgBootLog(`initData: ${!!rawInitData ? 'present' : 'empty'} (${rawInitData?.length || 0} bytes)`, 'info');
       
       // User information extraction
       const user = initDataObj.user || {};
@@ -1046,11 +1069,15 @@ if (isTgWebAppStart) {
       const authDate = initDataObj.auth_date || 'n/a';
       const queryId = initDataObj.query_id || 'n/a';
       
-      tgBootLog(`TG_USER: id=${user.id || 'n/a'} | name=${user.first_name || ''} ${user.last_name || ''} | username=${user.username || 'n/a'} | lang=${user.language_code || 'n/a'} | premium=${user.is_premium || false}`, 'info');
-      tgBootLog(`TG_SESSION: chatInstance=${chatInstance} | authDate=${authDate} | queryId=${queryId?.slice(0, 20)}...`, 'info');
+      if (user.id) {
+        tgBootLog(`TG_USER: id=${user.id} | ${user.first_name || ''} ${user.last_name || ''} | @${user.username || 'n/a'} | lang=${user.language_code || 'n/a'} | premium=${user.is_premium || false}`, 'info');
+        tgBootLog(`TG_SESSION: chatInstance=${chatInstance} | authDate=${authDate} | queryId=${queryId?.slice(0, 20)}...`, 'info');
+      } else {
+        tgBootLog('TG_USER: No user data (may be opened from direct link)', 'warn');
+      }
       
       // Launch mode detection
-      const launchMode = initDataObj.start_param ? `inline/menu(${initDataObj.start_param})` : (rawInitData ? 'button' : 'unknown');
+      const launchMode = initDataObj.start_param ? `inline/menu(${initDataObj.start_param})` : (rawInitData ? 'button/webapp' : 'direct_link');
       tgBootLog(`TG_LAUNCH_MODE: ${launchMode}`, 'info');
       
       // WebApp capabilities check
@@ -1058,18 +1085,17 @@ if (isTgWebAppStart) {
       const hasExpand = typeof tg.expand === 'function';
       const hasRequestFullscreen = typeof tg.requestFullscreen === 'function';
       const hasInitData = !!tg.initDataUnsafe;
-      tgBootLog(`TG_CAPABILITIES: ready=${hasReady} expand=${hasExpand} requestFullscreen=${hasRequestFullscreen} initData=${hasInitData}`, 'info');
+      tgBootLog(`TG_CAPABILITIES: ready=${hasReady} | expand=${hasExpand} | fullscreen=${hasRequestFullscreen} | initData=${hasInitData}`, 'info');
       
       tg.ready();
-      tgBootLog('ready() called ✓', 'info');
+      tgBootLog('✓ ready() called', 'info');
       
       // Hide Telegram header for immersive fullscreen experience
       tg.headerColor = 'transparent';
-      tgBootLog('headerColor set to transparent', 'info');
+      tgBootLog('✓ headerColor=transparent', 'info');
       
       // Request true fullscreen when supported; keep expand() as compatibility fallback
       const supportsRequestFullscreen = typeof tg.requestFullscreen === 'function';
-      tgBootLog(`requestFullscreen support=${supportsRequestFullscreen}`, 'info');
       
       const logLaunchSummary = (phase) => {
         const fullscreen = !!tg.isFullscreen;
@@ -1080,17 +1106,17 @@ if (isTgWebAppStart) {
       };
       
       const requestFullscreen = (reason) => {
-        tgBootLog(`fullscreen request (${reason}) begin: ${getTgState(tg)}`);
+        tgBootLog(`fullscreen request (${reason}): ${getTgState(tg)}`);
         if (supportsRequestFullscreen) {
           try {
             tg.requestFullscreen();
-            tgBootLog('requestFullscreen() called');
+            tgBootLog('✓ requestFullscreen() called');
           } catch (err) {
             tgBootLog(`requestFullscreen() failed: ${err?.message || err}`, 'warn');
           }
         }
         tg.expand();
-        tgBootLog(`expand() called: ${getTgState(tg)}`);
+        tgBootLog(`✓ expand() called: ${getTgState(tg)}`);
       };
       
       requestFullscreen('initial');
@@ -1101,7 +1127,7 @@ if (isTgWebAppStart) {
       
       // Prevent vertical swipe gestures from closing the Mini App during gameplay
       tg.disableVerticalSwipes();
-      tgBootLog('disableVerticalSwipes() called');
+      tgBootLog('✓ disableVerticalSwipes() called');
 
       // ===== Telegram viewport adaptation =====
       // Update CSS variable whenever viewport height changes (user drag, keyboard, etc.)
@@ -1110,7 +1136,7 @@ if (isTgWebAppStart) {
         document.documentElement.style.setProperty('--tg-viewport-height', vh + 'px');
         const stable = tg.viewportStableHeight ?? 'n/a';
         const isStateStable = eventData?.isStateStable ?? 'n/a';
-        tgBootLog(`viewport updated: vh=${vh}px, stableVh=${stable}px, isStateStable=${isStateStable}`);
+        tgBootLog(`viewport: vh=${vh}px, stableVh=${stable}px, isStateStable=${isStateStable}`);
       }
 
       // Initial update
@@ -1119,26 +1145,33 @@ if (isTgWebAppStart) {
       // Listen for viewport changes (user dragging sheet, keyboard popup, etc.)
       tg.onEvent('viewportChanged', updateTelegramViewportHeight);
       tg.onEvent('fullscreenChanged', () => {
-        tgBootLog(`fullscreenChanged event: ${getTgState(tg)}`);
+        tgBootLog(`fullscreenChanged: ${getTgState(tg)}`);
         logLaunchSummary('fullscreenChanged');
       });
       tg.onEvent('fullscreenFailed', (err) => {
-        tgBootLog(`fullscreenFailed event: ${err?.message || JSON.stringify(err) || 'unknown error'}`, 'warn');
+        tgBootLog(`fullscreenFailed: ${err?.message || JSON.stringify(err) || 'unknown'}`, 'warn');
       });
 
-      tgBootLog(`init complete: ${getTgState(tg)}`);
+      tgBootLog(`✓ Telegram init complete: ${getTgState(tg)}`);
+      
+      // Hide back button in TG environment
+      const btnBack = document.getElementById('btn-back');
+      if (btnBack) {
+        btnBack.style.display = 'none';
+        tgBootLog('✓ Back button hidden');
+      }
     } catch (e) {
       tgBootLog(`WebApp init error: ${e?.message || e}`, 'error');
+      window.isTelegramMiniApp = false;
     }
   }
+  
+  // Start initialization
+  initTelegramWebApp();
+  
 } else {
-  tgBootLog('Standard browser mode: tgWebAppStart parameter not set', 'info');
-}
-
-// Hide back button in Telegram Mini App mode
-if (isTgWebAppStart) {
-  const btnBack = document.getElementById('btn-back');
-  if (btnBack) btnBack.style.display = 'none';
+  tgBootLog('Standard browser mode: no TG URL parameter', 'info');
+  window.isTelegramMiniApp = false;
 }
 
 // ===== Log system =====
