@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
 <meta http-equiv="Cache-Control" content="no-cache" />
 <title>月光舞台 - 夜舞老虎機</title>
 <!-- Shared Flutter ↔ WebView bridge (loaded before the game module script) -->
@@ -1027,6 +1027,13 @@ if (isTelegramEnv) {
     // Request true fullscreen when supported; keep expand() as compatibility fallback.
     const supportsRequestFullscreen = typeof tg.requestFullscreen === 'function';
     tgBootLog(`requestFullscreen support=${supportsRequestFullscreen}`);
+    const logLaunchSummary = (phase) => {
+      const fullscreen = !!tg.isFullscreen;
+      const expanded = !!tg.isExpanded;
+      const mode = fullscreen ? 'FULLSCREEN_OK' : (expanded ? 'EXPAND_ONLY' : 'SHEET_PARTIAL');
+      const level = mode === 'SHEET_PARTIAL' ? 'warn' : 'info';
+      tgBootLog(`LAUNCH_MODE=${mode} (${phase}) | ${getTgState(tg)}`, level);
+    };
     const requestFullscreen = (reason) => {
       tgBootLog(`fullscreen request (${reason}) begin: ${getTgState(tg)}`);
       if (supportsRequestFullscreen) {
@@ -1043,6 +1050,8 @@ if (isTelegramEnv) {
     requestFullscreen('initial');
     // Some clients apply fullscreen more reliably after first frame.
     setTimeout(() => requestFullscreen('delayed-120ms'), 120);
+    // Emit a concise one-line launch result after Telegram applies UI state.
+    setTimeout(() => logLaunchSummary('post-init-450ms'), 450);
     // Prevent vertical swipe gestures from closing the Mini App during gameplay
     tg.disableVerticalSwipes();
     tgBootLog('disableVerticalSwipes() called');
@@ -1064,6 +1073,7 @@ if (isTelegramEnv) {
     tg.onEvent('viewportChanged', updateTelegramViewportHeight);
     tg.onEvent('fullscreenChanged', () => {
       tgBootLog(`fullscreenChanged event: ${getTgState(tg)}`);
+      logLaunchSummary('fullscreenChanged');
     });
     tg.onEvent('fullscreenFailed', (err) => {
       tgBootLog(`fullscreenFailed event: ${err?.message || JSON.stringify(err) || 'unknown error'}`, 'warn');
