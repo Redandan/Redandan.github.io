@@ -1103,6 +1103,12 @@ if (isTgWebAppStart) {
   tgBootLog('Standard browser mode: tgWebAppStart parameter not set', 'info');
 }
 
+// Hide back button in Telegram Mini App mode
+if (isTgWebAppStart) {
+  const btnBack = document.getElementById('btn-back');
+  if (btnBack) btnBack.style.display = 'none';
+}
+
 // ===== Log system =====
 const logPanel = document.getElementById('log-panel');
 const logToggle = document.getElementById('log-toggle');
