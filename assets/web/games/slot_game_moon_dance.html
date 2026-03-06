@@ -1263,11 +1263,47 @@ function fitGame() {
 fitGame();
 window.addEventListener('resize', fitGame);
 
+const DEBUG_LOGS = (() => {
+  const byQuery = /(?:^|[?&])debugLogs=1(?:&|$)/.test(window.location.search);
+  let byStorage = false;
+  try { byStorage = localStorage.getItem('slot_debug_logs') === '1'; } catch (_) {}
+  const byHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  return byQuery || byStorage || byHost;
+})();
+const LOG_LEVEL_RANK = { error: 0, warn: 1, info: 2 };
+const ACTIVE_LOG_LEVEL = DEBUG_LOGS ? 'info' : 'error';
+
+function shouldCaptureLog(type = 'info') {
+  const current = LOG_LEVEL_RANK[type] ?? LOG_LEVEL_RANK.info;
+  return current <= LOG_LEVEL_RANK[ACTIVE_LOG_LEVEL];
+}
+
+function restartCssAnimation(el, animationValue = '') {
+  if (!el) return;
+  el.style.animation = 'none';
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      el.style.animation = animationValue;
+    });
+  });
+}
+
+function restartClassAnimation(el, className) {
+  if (!el) return;
+  el.classList.remove(className);
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      el.classList.add(className);
+    });
+  });
+}
+
 function formatLogArgs(args) {
   return args.map(x => typeof x === 'object' ? JSON.stringify(x) : String(x)).join(' ');
 }
 
 function addLog(msg, type = 'info') {
+  if (!shouldCaptureLog(type)) return;
   const text = `${LOG_ICONS[type] ?? '·'} [${new Date().toLocaleTimeString()}] ${msg}`;
   const d = document.createElement('div');
   d.className = `log-${type}`;
@@ -1676,6 +1712,19 @@ const N_SYMBOLS = ACTIVE_SYMBOL_COUNT;   // 6 distinct symbols
 // Recycling clip boundary: one card beyond the top/bottom of the visible area
 let STRIP_CLIP = (Math.floor(N_STRIP / 2) + 1) * CARD_H;
 
+// === Material pooling: one material per symbol (shared across all cards) ===
+// Reduces draw calls from 78 (3 reels × 26 cards) to 6
+const symbolMaterials = Array.from(
+  { length: ACTIVE_SYMBOL_COUNT },
+  (_, idx) => new THREE.MeshStandardMaterial({
+    map: symTextures[idx],
+    metalness: 0.06, roughness: 0.88,
+  }),
+);
+
+// === Geometry pool: reuse a single PlaneGeometry build, update dimensions on resize ===
+let sharedCardGeometry = new THREE.PlaneGeometry(CARD_W, CARD_H);
+
 const reelGroups = [];
 
 REEL_X.forEach((rx, ri) => {
@@ -1684,12 +1733,9 @@ REEL_X.forEach((rx, ri) => {
 
   for (let i = 0; i < N_STRIP; i++) {
     const symIdx = REEL_STRIPS[ri][i];
-    const mat = new THREE.MeshStandardMaterial({
-      map: symTextures[symIdx],
-      metalness: 0.06, roughness: 0.88,
-    });
+    const mat = symbolMaterials[symIdx]; // Use shared material pool
     const card = new THREE.Mesh(
-      new THREE.PlaneGeometry(CARD_W, CARD_H),
+      sharedCardGeometry, // Use shared geometry pool
       mat
     );
     // Center the strip: card at index Math.floor(N_STRIP/2) sits at y=0 (winner row)
@@ -1760,9 +1806,7 @@ document.getElementById('btn-bet').addEventListener('click', () => {
   if (isSpinning) return;
   betIdx = (betIdx + 1) % BET_LEVELS.length;
   betLabel.textContent = '投注 USDT ' + (currentBet() / 100).toFixed(2);
-  betLabel.style.animation = 'none';
-  void betLabel.offsetWidth; // force reflow to restart the CSS animation from the beginning
-  betLabel.style.animation = 'betFlash .4s ease';
+  restartCssAnimation(betLabel, 'betFlash .4s ease');
 });
 
 // ===== Function menu (≡ button) =====
@@ -1964,11 +2008,9 @@ function doSpin() {
       balanceEl.textContent = 'USDT ' + (balance / 100).toFixed(2);
       winEl.textContent     = '+USDT ' + (prize / 100).toFixed(2);
 
-      // Flash reel section border — remove first to restart animation if already playing
+      // Flash reel section border — restart class animation without forcing reflow
       const rs = document.getElementById('reel-section');
-      rs.classList.remove('reel-win');
-      void rs.offsetHeight; // force reflow so the removal takes effect before re-adding
-      rs.classList.add('reel-win');
+      restartClassAnimation(rs, 'reel-win');
       rs.addEventListener('animationend', () => rs.classList.remove('reel-win'), { once: true });
 
       // Play character dance animation on win
@@ -2060,9 +2102,8 @@ function showBigWin(amount, title = 'BIG WIN!') {
   bwT.textContent = title;
   bwA.textContent = '+USDT ' + amount.toLocaleString();
   bw.classList.remove('hidden');
-  bwT.style.animation = bwA.style.animation = 'none';
-  void bw.offsetHeight; // 強制 reflow 以重置 CSS animation 狀態，使動畫可以重新播放 (reading offsetHeight triggers synchronous layout)
-  bwT.style.animation = bwA.style.animation = '';
+  restartCssAnimation(bwT, '');
+  restartCssAnimation(bwA, '');
   spawnCoinRain();
   // Big wins stay longer; regular wins use a shorter display time
   const stayMs = title === 'BIG WIN!' ? 2300 : 1200;
@@ -2073,8 +2114,11 @@ function showBigWin(amount, title = 'BIG WIN!') {
   }, stayMs);
 }
 
-// ===== Resize handler =====
-window.addEventListener('resize', () => {
+// ===== Resize handler with throttle =====
+let resizeTimer = null;
+const RESIZE_THROTTLE_MS = 150; // Debounce rapid resizes during pinch/drag
+
+function handleResize() {
   const nW = reelSection.clientWidth;
   const nH = 340; // canvas render height is fixed; section is 198px with overflow:hidden
   camera.aspect = nW / nH;
@@ -2088,11 +2132,18 @@ window.addEventListener('resize', () => {
   if (Math.abs(geo.CARD_W - CARD_W) < 1e-4) return;
   CARD_W = geo.CARD_W; CARD_H = geo.CARD_H; REEL_X = geo.REEL_X;
   STRIP_CLIP = (Math.floor(N_STRIP / 2) + 1) * CARD_H;
+  
+  // Rebuild shared geometry once instead of per-card
+  sharedCardGeometry.dispose();
+  sharedCardGeometry = new THREE.PlaneGeometry(CARD_W, CARD_H);
+  
   reelGroups.forEach((strip, ri) => {
     strip.position.x = REEL_X[ri];
     strip.children.forEach((card, i) => {
-      card.geometry.dispose();
-      card.geometry = new THREE.PlaneGeometry(CARD_W, CARD_H);
+      // Reuse material from the pool based on the card's symbol index
+      const symIdx = card.userData.symIdx;
+      card.geometry = sharedCardGeometry; // All cards now share the updated geometry
+      card.material = symbolMaterials[symIdx];
       card.position.y = (i - Math.floor(N_STRIP / 2)) * CARD_H;
     });
   });
@@ -2103,11 +2154,18 @@ window.addEventListener('resize', () => {
   charCamera.updateProjectionMatrix();
   charRenderer.setSize(cW, cH);
   charRenderer.setPixelRatio(calcDPR());
+}
+
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(handleResize, RESIZE_THROTTLE_MS);
 });
 
 // ===== Animation loop =====
 let lastTime = performance.now();
-renderer.setAnimationLoop(() => {
+let renderLoopActive = false;
+
+const renderFrame = () => {
   const now = performance.now();
   const dt  = Math.min((now - lastTime) / 1000, 0.033);
   lastTime  = now;
@@ -2174,7 +2232,24 @@ renderer.setAnimationLoop(() => {
       charRenderer.render(charScene, charCamera);
     }
   }
+};
+
+function setRenderLoopActive(active) {
+  if (active === renderLoopActive) return;
+  renderLoopActive = active;
+  if (active) {
+    lastTime = performance.now();
+    renderer.setAnimationLoop(renderFrame);
+  } else {
+    renderer.setAnimationLoop(null);
+  }
+}
+
+document.addEventListener('visibilitychange', () => {
+  setRenderLoopActive(document.visibilityState === 'visible');
 });
+window.addEventListener('pagehide', () => setRenderLoopActive(false));
+setRenderLoopActive(document.visibilityState === 'visible');
 
 console.log('月光舞台 v3.0 已加載 – WebGL2 模式');
 addLog(`啟動: native=${!!window._flutterNative} href=${location.href.slice(0,60)} UA=${navigator.userAgent.slice(0,80)}`, 'info');
