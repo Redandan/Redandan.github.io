@@ -1106,16 +1106,28 @@ if (hasTgUrlParam) {
       
       // Request true fullscreen when supported; keep expand() as compatibility fallback
       const supportsRequestFullscreen = typeof tg.requestFullscreen === 'function';
+      let lastLaunchSummaryKey = '';
+      let lastFullscreenEventKey = '';
+      let lastViewportEventKey = '';
       
       const logLaunchSummary = (phase) => {
         const fullscreen = !!tg.isFullscreen;
         const expanded = !!tg.isExpanded;
         const mode = fullscreen ? 'FULLSCREEN_OK' : (expanded ? 'EXPAND_ONLY' : 'SHEET_PARTIAL');
+        const key = `${phase}|${mode}|${tg.viewportHeight}|${tg.viewportStableHeight}|${expanded}|${fullscreen}`;
+        if (key === lastLaunchSummaryKey) return;
+        lastLaunchSummaryKey = key;
         const level = mode === 'SHEET_PARTIAL' ? 'warn' : 'info';
         tgBootLog(`LAUNCH_MODE=${mode} (${phase}) | ${getTgState(tg)}`, level);
       };
       
       const requestFullscreen = (reason) => {
+        const alreadyFullscreen = !!tg.isFullscreen;
+        const alreadyExpanded = !!tg.isExpanded;
+        if (alreadyFullscreen && alreadyExpanded) {
+          tgBootLog(`fullscreen request (${reason}) skipped: already fullscreen+expanded | ${getTgState(tg)}`);
+          return;
+        }
         tgBootLog(`fullscreen request (${reason}): ${getTgState(tg)}`);
         if (supportsRequestFullscreen) {
           try {
@@ -1146,6 +1158,9 @@ if (hasTgUrlParam) {
         document.documentElement.style.setProperty('--tg-viewport-height', vh + 'px');
         const stable = tg.viewportStableHeight ?? 'n/a';
         const isStateStable = eventData?.isStateStable ?? 'n/a';
+        const key = `${vh}|${stable}|${isStateStable}`;
+        if (key === lastViewportEventKey) return;
+        lastViewportEventKey = key;
         tgBootLog(`viewport: vh=${vh}px, stableVh=${stable}px, isStateStable=${isStateStable}`);
       }
 
@@ -1155,6 +1170,9 @@ if (hasTgUrlParam) {
       // Listen for viewport changes (user dragging sheet, keyboard popup, etc.)
       tg.onEvent('viewportChanged', updateTelegramViewportHeight);
       tg.onEvent('fullscreenChanged', () => {
+        const key = `${tg.isFullscreen}|${tg.isExpanded}|${tg.viewportHeight}|${tg.viewportStableHeight}`;
+        if (key === lastFullscreenEventKey) return;
+        lastFullscreenEventKey = key;
         tgBootLog(`fullscreenChanged: ${getTgState(tg)}`);
         logLaunchSummary('fullscreenChanged');
       });
