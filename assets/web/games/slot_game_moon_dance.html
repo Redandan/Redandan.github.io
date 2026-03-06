@@ -1014,13 +1014,13 @@ function getTgState(tg) {
 }
 
 // ===== Telegram Mini App initialization =====
-// Use tgWebAppStart=1 URL parameter as the definitive indicator
+// Accept either tgWebAppStart=1 or just tgWeb parameter
 const urlParams = new URLSearchParams(window.location.search);
-const isTgWebAppStart = urlParams.get('tgWebAppStart') === '1';
+const isTgWebAppStart = urlParams.get('tgWebAppStart') === '1' || urlParams.has('tgWeb');
 window.isTelegramMiniApp = isTgWebAppStart;
 
 if (isTgWebAppStart) {
-  tgBootLog('Telegram Mini App mode: tgWebAppStart=1 detected', 'info');
+  tgBootLog('Telegram Mini App mode detected (tgWebAppStart=1 or tgWeb)', 'info');
   
   const tg = window.Telegram?.WebApp;
   if (!tg) {
