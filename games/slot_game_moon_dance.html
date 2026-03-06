@@ -1014,108 +1014,94 @@ function getTgState(tg) {
 }
 
 // ===== Telegram Mini App initialization =====
-window.isTelegramMiniApp = false;
-let tgInitDone = false;
-
-// Check if launched from Telegram Mini App via URL parameter
+// Use tgWebAppStart=1 URL parameter as the definitive indicator
 const urlParams = new URLSearchParams(window.location.search);
 const isTgWebAppStart = urlParams.get('tgWebAppStart') === '1';
+window.isTelegramMiniApp = isTgWebAppStart;
+
 if (isTgWebAppStart) {
-  tgBootLog('tgWebAppStart=1 detected in URL - Telegram Mini App launch confirmed', 'info');
-}
-
-function initTelegramWebApp(source) {
+  tgBootLog('Telegram Mini App mode: tgWebAppStart=1 detected', 'info');
+  
   const tg = window.Telegram?.WebApp;
-  if (!tg) return false;
-  if (tgInitDone) return true;
-
-  tgInitDone = true;
-  window.isTelegramMiniApp = true;
-
-  try {
-    tgBootLog(`WebApp detected (${source}): version=${tg.version || 'n/a'}, platform=${tg.platform || 'n/a'}`);
-    tg.ready();
-    tgBootLog('ready() called');
-    // Hide Telegram header for immersive fullscreen experience
-    tg.headerColor = 'transparent';
-    tgBootLog('headerColor set to transparent');
-    // Request true fullscreen when supported; keep expand() as compatibility fallback.
-    const supportsRequestFullscreen = typeof tg.requestFullscreen === 'function';
-    tgBootLog(`requestFullscreen support=${supportsRequestFullscreen}`);
-    const logLaunchSummary = (phase) => {
-      const fullscreen = !!tg.isFullscreen;
-      const expanded = !!tg.isExpanded;
-      const mode = fullscreen ? 'FULLSCREEN_OK' : (expanded ? 'EXPAND_ONLY' : 'SHEET_PARTIAL');
-      const level = mode === 'SHEET_PARTIAL' ? 'warn' : 'info';
-      tgBootLog(`LAUNCH_MODE=${mode} (${phase}) | ${getTgState(tg)}`, level);
-    };
-    const requestFullscreen = (reason) => {
-      tgBootLog(`fullscreen request (${reason}) begin: ${getTgState(tg)}`);
-      if (supportsRequestFullscreen) {
-        try {
-          tg.requestFullscreen();
-          tgBootLog('requestFullscreen() called');
-        } catch (err) {
-          tgBootLog(`requestFullscreen() failed: ${err?.message || err}`, 'warn');
+  if (!tg) {
+    tgBootLog('Telegram WebApp API not available - waiting for injection...', 'warn');
+  } else {
+    try {
+      tgBootLog(`WebApp API ready: version=${tg.version || 'n/a'}, platform=${tg.platform || 'n/a'}`);
+      tg.ready();
+      tgBootLog('ready() called');
+      
+      // Hide Telegram header for immersive fullscreen experience
+      tg.headerColor = 'transparent';
+      tgBootLog('headerColor set to transparent');
+      
+      // Request true fullscreen when supported; keep expand() as compatibility fallback
+      const supportsRequestFullscreen = typeof tg.requestFullscreen === 'function';
+      tgBootLog(`requestFullscreen support=${supportsRequestFullscreen}`);
+      
+      const logLaunchSummary = (phase) => {
+        const fullscreen = !!tg.isFullscreen;
+        const expanded = !!tg.isExpanded;
+        const mode = fullscreen ? 'FULLSCREEN_OK' : (expanded ? 'EXPAND_ONLY' : 'SHEET_PARTIAL');
+        const level = mode === 'SHEET_PARTIAL' ? 'warn' : 'info';
+        tgBootLog(`LAUNCH_MODE=${mode} (${phase}) | ${getTgState(tg)}`, level);
+      };
+      
+      const requestFullscreen = (reason) => {
+        tgBootLog(`fullscreen request (${reason}) begin: ${getTgState(tg)}`);
+        if (supportsRequestFullscreen) {
+          try {
+            tg.requestFullscreen();
+            tgBootLog('requestFullscreen() called');
+          } catch (err) {
+            tgBootLog(`requestFullscreen() failed: ${err?.message || err}`, 'warn');
+          }
         }
+        tg.expand();
+        tgBootLog(`expand() called: ${getTgState(tg)}`);
+      };
+      
+      requestFullscreen('initial');
+      // Some clients apply fullscreen more reliably after first frame
+      setTimeout(() => requestFullscreen('delayed-120ms'), 120);
+      // Emit launch result after Telegram applies UI state
+      setTimeout(() => logLaunchSummary('post-init-450ms'), 450);
+      
+      // Prevent vertical swipe gestures from closing the Mini App during gameplay
+      tg.disableVerticalSwipes();
+      tgBootLog('disableVerticalSwipes() called');
+
+      // ===== Telegram viewport adaptation =====
+      // Update CSS variable whenever viewport height changes (user drag, keyboard, etc.)
+      function updateTelegramViewportHeight(eventData) {
+        const vh = tg.viewportHeight || window.innerHeight;
+        document.documentElement.style.setProperty('--tg-viewport-height', vh + 'px');
+        const stable = tg.viewportStableHeight ?? 'n/a';
+        const isStateStable = eventData?.isStateStable ?? 'n/a';
+        tgBootLog(`viewport updated: vh=${vh}px, stableVh=${stable}px, isStateStable=${isStateStable}`);
       }
-      tg.expand();
-      tgBootLog(`expand() called: ${getTgState(tg)}`);
-    };
-    requestFullscreen('initial');
-    // Some clients apply fullscreen more reliably after first frame.
-    setTimeout(() => requestFullscreen('delayed-120ms'), 120);
-    // Emit a concise one-line launch result after Telegram applies UI state.
-    setTimeout(() => logLaunchSummary('post-init-450ms'), 450);
-    // Prevent vertical swipe gestures from closing the Mini App during gameplay
-    tg.disableVerticalSwipes();
-    tgBootLog('disableVerticalSwipes() called');
 
-    // ===== Telegram viewport adaptation =====
-    // Update CSS variable whenever viewport height changes (user drag, keyboard, etc.)
-    function updateTelegramViewportHeight(eventData) {
-      const vh = tg.viewportHeight || window.innerHeight;
-      document.documentElement.style.setProperty('--tg-viewport-height', vh + 'px');
-      const stable = tg.viewportStableHeight ?? 'n/a';
-      const isStateStable = eventData?.isStateStable ?? 'n/a';
-      tgBootLog(`viewport updated: vh=${vh}px, stableVh=${stable}px, isStateStable=${isStateStable}`);
+      // Initial update
+      updateTelegramViewportHeight();
+
+      // Listen for viewport changes (user dragging sheet, keyboard popup, etc.)
+      tg.onEvent('viewportChanged', updateTelegramViewportHeight);
+      tg.onEvent('fullscreenChanged', () => {
+        tgBootLog(`fullscreenChanged event: ${getTgState(tg)}`);
+        logLaunchSummary('fullscreenChanged');
+      });
+      tg.onEvent('fullscreenFailed', (err) => {
+        tgBootLog(`fullscreenFailed event: ${err?.message || JSON.stringify(err) || 'unknown error'}`, 'warn');
+      });
+
+      tgBootLog(`init complete: ${getTgState(tg)}`);
+    } catch (e) {
+      tgBootLog(`WebApp init error: ${e?.message || e}`, 'error');
     }
-
-    // Initial update
-    updateTelegramViewportHeight();
-
-    // Listen for viewport changes (user dragging sheet, keyboard popup, etc.)
-    tg.onEvent('viewportChanged', updateTelegramViewportHeight);
-    tg.onEvent('fullscreenChanged', () => {
-      tgBootLog(`fullscreenChanged event: ${getTgState(tg)}`);
-      logLaunchSummary('fullscreenChanged');
-    });
-    tg.onEvent('fullscreenFailed', (err) => {
-      tgBootLog(`fullscreenFailed event: ${err?.message || JSON.stringify(err) || 'unknown error'}`, 'warn');
-    });
-
-    tgBootLog(`init complete: ${getTgState(tg)}`);
-  } catch (e) {
-    tgBootLog(`WebApp init error: ${e?.message || e}`, 'error');
   }
-
-  return true;
+} else {
+  tgBootLog('Standard browser mode: tgWebAppStart parameter not set', 'info');
 }
-
-const tgInitRetryDelaysMs = [0, 120, 350, 800, 1500];
-tgInitRetryDelaysMs.forEach((delay, index) => {
-  setTimeout(() => {
-    const detected = initTelegramWebApp(`retry-${index}@${delay}ms`);
-    const isLastAttempt = index === tgInitRetryDelaysMs.length - 1;
-    if (!detected && isLastAttempt) {
-      if (isTgWebAppStart) {
-        tgBootLog('⚠️ tgWebAppStart=1 present but Telegram WebApp API not found - possible TG client issue', 'warn');
-      } else {
-        tgBootLog('Telegram WebApp not detected after retries; running in standard browser context (or TG injection unavailable)', 'info');
-      }
-    }
-  }, delay);
-});
 
 // ===== Log system =====
 const logPanel = document.getElementById('log-panel');
