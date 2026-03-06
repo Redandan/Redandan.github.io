@@ -1014,11 +1014,19 @@ function getTgState(tg) {
 }
 
 // ===== Telegram Mini App initialization =====
-const isTelegramEnv = !!(window.Telegram?.WebApp);
-if (isTelegramEnv) {
+window.isTelegramMiniApp = false;
+let tgInitDone = false;
+
+function initTelegramWebApp(source) {
+  const tg = window.Telegram?.WebApp;
+  if (!tg) return false;
+  if (tgInitDone) return true;
+
+  tgInitDone = true;
+  window.isTelegramMiniApp = true;
+
   try {
-    const tg = window.Telegram.WebApp;
-    tgBootLog(`WebApp detected: version=${tg.version || 'n/a'}, platform=${tg.platform || 'n/a'}`);
+    tgBootLog(`WebApp detected (${source}): version=${tg.version || 'n/a'}, platform=${tg.platform || 'n/a'}`);
     tg.ready();
     tgBootLog('ready() called');
     // Hide Telegram header for immersive fullscreen experience
@@ -1055,7 +1063,7 @@ if (isTelegramEnv) {
     // Prevent vertical swipe gestures from closing the Mini App during gameplay
     tg.disableVerticalSwipes();
     tgBootLog('disableVerticalSwipes() called');
-    
+
     // ===== Telegram viewport adaptation =====
     // Update CSS variable whenever viewport height changes (user drag, keyboard, etc.)
     function updateTelegramViewportHeight(eventData) {
@@ -1065,10 +1073,10 @@ if (isTelegramEnv) {
       const isStateStable = eventData?.isStateStable ?? 'n/a';
       tgBootLog(`viewport updated: vh=${vh}px, stableVh=${stable}px, isStateStable=${isStateStable}`);
     }
-    
+
     // Initial update
     updateTelegramViewportHeight();
-    
+
     // Listen for viewport changes (user dragging sheet, keyboard popup, etc.)
     tg.onEvent('viewportChanged', updateTelegramViewportHeight);
     tg.onEvent('fullscreenChanged', () => {
@@ -1078,15 +1086,25 @@ if (isTelegramEnv) {
     tg.onEvent('fullscreenFailed', (err) => {
       tgBootLog(`fullscreenFailed event: ${err?.message || JSON.stringify(err) || 'unknown error'}`, 'warn');
     });
-    
+
     tgBootLog(`init complete: ${getTgState(tg)}`);
   } catch (e) {
     tgBootLog(`WebApp init error: ${e?.message || e}`, 'error');
   }
-} else {
-  tgBootLog('Telegram WebApp not detected; running in standard browser context (non-TG environment)', 'info');
+
+  return true;
 }
-window.isTelegramMiniApp = isTelegramEnv;
+
+const tgInitRetryDelaysMs = [0, 120, 350, 800, 1500];
+tgInitRetryDelaysMs.forEach((delay, index) => {
+  setTimeout(() => {
+    const detected = initTelegramWebApp(`retry-${index}@${delay}ms`);
+    const isLastAttempt = index === tgInitRetryDelaysMs.length - 1;
+    if (!detected && isLastAttempt) {
+      tgBootLog('Telegram WebApp not detected after retries; running in standard browser context (or TG injection unavailable)', 'info');
+    }
+  }, delay);
+});
 
 // ===== Log system =====
 const logPanel = document.getElementById('log-panel');
@@ -1436,7 +1454,7 @@ function loadCharModel() {
         console.log(`Model loading: ${pct}%`);
         progressState.startLogged = true;
       }
-      if (!progressState.midLogged && pct >= 50) {
+      if (!progressState.midLogged && pct >= 50 && pct < 100) {
         console.log(`Model loading: ${pct}%`);
         progressState.midLogged = true;
       }
