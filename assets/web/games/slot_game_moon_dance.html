@@ -2027,8 +2027,12 @@ function evaluatePayline(s0, s1, s2) {
 
 function doSpin() {
   if (isSpinning) return;
-  if (balance < currentBet()) {
-    // Re-top-up when out of funds
+  
+  // Check if user is in demo mode (balance is 0)
+  const isDemoMode = balance <= 0;
+  
+  if (!isDemoMode && balance < currentBet()) {
+    // Re-top-up when out of funds (only in non-demo mode)
     balance = INITIAL_BALANCE;
     updateBalanceDisplay();
     addLog(`餘額不足，已自動補充至 USDT ${(INITIAL_BALANCE / 100).toFixed(2)}`, 'warn');
@@ -2037,8 +2041,11 @@ function doSpin() {
   spinBtn.disabled = true;
   winEl.textContent = 'USDT 0.00';
 
-  balance -= currentBet();
-  updateBalanceDisplay();
+  // Deduct bet only if not in demo mode
+  if (!isDemoMode) {
+    balance -= currentBet();
+    updateBalanceDisplay();
+  }
 
   // Demo mode: pre-determine a guaranteed win every 3rd spin so reels visually match the paytable.
   // forcedSyms is resolved before the reels stop, so the snap logic can steer each reel to the
@@ -2114,8 +2121,11 @@ function doSpin() {
 
     if (multiplier > 0) {
       const prize = currentBet() * multiplier;
-      balance += prize;
-      updateBalanceDisplay();
+      // Only add prize to balance if not in demo mode
+      if (!isDemoMode) {
+        balance += prize;
+        updateBalanceDisplay();
+      }
       winEl.textContent     = '+USDT ' + (prize / 100).toFixed(2);
 
       // Flash reel section border — remove first to restart animation if already playing
