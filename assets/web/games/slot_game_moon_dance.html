@@ -1844,7 +1844,7 @@ function refreshJackpotBanner() {
   const messages = ['月光舞台大獎高達500倍！'];
   if (isUserLoggedIn() && balance <= 0) {
     const username = getDisplayUsername();
-    messages.push(`尊敬的 用戶 ${username} 當前為試玩模式`);
+    messages.push(`尊敬的 ${username} 當前為試玩模式`);
     messages.push('充值後可以解鎖真實模式');
   }
   jackpotMarqueeTextEl.textContent = messages.join('　✦　');
