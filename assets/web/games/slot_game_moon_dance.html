@@ -1020,6 +1020,17 @@ function getTgState(tg) {
   return `vh=${vh}, stableVh=${svh}, expanded=${expanded}, fullscreen=${fullscreen}`;
 }
 
+// ===== Telegram / logging tunables =====
+const TG_INIT_MAX_ATTEMPTS = 10;
+const TG_INIT_CHECK_INTERVAL_MS = 100;
+const TG_INIT_RETRY_LOG_EVERY = 3;
+const TG_DELAYED_FULLSCREEN_REQUEST_MS = 120;
+const TG_LAUNCH_SUMMARY_DELAY_MS = 450;
+const DEFAULT_LOG_LEVEL = 'error';
+const DEBUG_LOG_LEVEL = 'info';
+const LOG_DEDUP_WINDOW_MS = 300;
+const LOG_DEDUP_CACHE_LIMIT = 200;
+
 // ===== Telegram Mini App initialization =====
 // Accept either tgWebAppStart=1 or just tgWeb parameter
 const urlParams = new URLSearchParams(window.location.search);
@@ -1030,8 +1041,6 @@ if (hasTgUrlParam) {
   
   // Wait for Telegram SDK to load with retry mechanism
   let tgInitAttempts = 0;
-  const maxAttempts = 10;
-  const checkInterval = 100; // ms
   
   function initTelegramWebApp() {
     tgInitAttempts++;
@@ -1040,15 +1049,15 @@ if (hasTgUrlParam) {
     if (!tg) {
       if (tgInitAttempts === 1) {
         tgBootLog(`Attempt ${tgInitAttempts}: window.Telegram=${typeof window.Telegram}, WebApp=${typeof tg}`, 'info');
-      } else if (tgInitAttempts % 3 === 0) {
-        tgBootLog(`Attempt ${tgInitAttempts}/${maxAttempts}: Still waiting for Telegram SDK...`, 'warn');
+      } else if (tgInitAttempts % TG_INIT_RETRY_LOG_EVERY === 0) {
+        tgBootLog(`Attempt ${tgInitAttempts}/${TG_INIT_MAX_ATTEMPTS}: Still waiting for Telegram SDK...`, 'warn');
       }
       
-      if (tgInitAttempts < maxAttempts) {
-        setTimeout(initTelegramWebApp, checkInterval);
+      if (tgInitAttempts < TG_INIT_MAX_ATTEMPTS) {
+        setTimeout(initTelegramWebApp, TG_INIT_CHECK_INTERVAL_MS);
         return;
       } else {
-        tgBootLog(`❌ Telegram SDK not found after ${maxAttempts} attempts (${maxAttempts * checkInterval}ms)`, 'error');
+        tgBootLog(`❌ Telegram SDK not found after ${TG_INIT_MAX_ATTEMPTS} attempts (${TG_INIT_MAX_ATTEMPTS * TG_INIT_CHECK_INTERVAL_MS}ms)`, 'error');
         tgBootLog('⚠️ Make sure this URL is opened inside Telegram app', 'warn');
         window.isTelegramMiniApp = false;
         return;
@@ -1143,9 +1152,9 @@ if (hasTgUrlParam) {
       
       requestFullscreen('initial');
       // Some clients apply fullscreen more reliably after first frame
-      setTimeout(() => requestFullscreen('delayed-120ms'), 120);
+      setTimeout(() => requestFullscreen('delayed-120ms'), TG_DELAYED_FULLSCREEN_REQUEST_MS);
       // Emit launch result after Telegram applies UI state
-      setTimeout(() => logLaunchSummary('post-init-450ms'), 450);
+      setTimeout(() => logLaunchSummary('post-init-450ms'), TG_LAUNCH_SUMMARY_DELAY_MS);
       
       // Prevent vertical swipe gestures from closing the Mini App during gameplay
       tg.disableVerticalSwipes();
@@ -1271,11 +1280,26 @@ const DEBUG_LOGS = (() => {
   return byQuery || byStorage || byHost;
 })();
 const LOG_LEVEL_RANK = { error: 0, warn: 1, info: 2 };
-const ACTIVE_LOG_LEVEL = DEBUG_LOGS ? 'info' : 'error';
+const ACTIVE_LOG_LEVEL = DEBUG_LOGS ? DEBUG_LOG_LEVEL : DEFAULT_LOG_LEVEL;
+const recentLogCache = new Map();
 
 function shouldCaptureLog(type = 'info') {
   const current = LOG_LEVEL_RANK[type] ?? LOG_LEVEL_RANK.info;
   return current <= LOG_LEVEL_RANK[ACTIVE_LOG_LEVEL];
+}
+
+function isDuplicateLog(msg, type = 'info') {
+  if (LOG_DEDUP_WINDOW_MS <= 0) return false;
+  const now = performance.now();
+  const key = `${type}|${msg}`;
+  const lastTs = recentLogCache.get(key);
+  if (lastTs !== undefined && now - lastTs < LOG_DEDUP_WINDOW_MS) return true;
+  recentLogCache.set(key, now);
+  if (recentLogCache.size > LOG_DEDUP_CACHE_LIMIT) {
+    const oldestKey = recentLogCache.keys().next().value;
+    if (oldestKey !== undefined) recentLogCache.delete(oldestKey);
+  }
+  return false;
 }
 
 function restartCssAnimation(el, animationValue = '') {
@@ -1304,6 +1328,7 @@ function formatLogArgs(args) {
 
 function addLog(msg, type = 'info') {
   if (!shouldCaptureLog(type)) return;
+  if (isDuplicateLog(msg, type)) return;
   const text = `${LOG_ICONS[type] ?? '·'} [${new Date().toLocaleTimeString()}] ${msg}`;
   const d = document.createElement('div');
   d.className = `log-${type}`;
