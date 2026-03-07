@@ -1088,6 +1088,15 @@ async function exchangeTelegramInitDataForJwt(initData) {
       window.GAME_CONFIG.userBalance = jwtUserBalance;
       window.__pendingTelegramBalance = jwtUserBalance;
       tgBootLog(`JWT exchange balance detected: ${jwtUserBalance} USDT`, 'info');
+
+      // JWT may resolve after the one-time pending-balance bootstrap check has
+      // already run. Apply immediately when handlers are ready so balance UI and
+      // trial-mode marquee state are refreshed in this same session.
+      if (typeof window.onBalanceUpdate === 'function') {
+        window.onBalanceUpdate(jwtUserBalance);
+      } else if (typeof initializeBalance === 'function') {
+        initializeBalance();
+      }
     }
 
     if (!token) {
