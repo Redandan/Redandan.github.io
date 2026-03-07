@@ -1354,18 +1354,66 @@ function _saveStoredLogs() {
 // #gv is a fixed 430×900 design canvas. Scale it as one unit to fit the screen.
 const gvEl = document.getElementById('gv');
 let _fitRaf = 0;
+const vv = window.visualViewport;
+const _ua = navigator.userAgent || '';
+const _isIOS = /iPad|iPhone|iPod/.test(_ua);
+let _isStandalone = false;
+try {
+  _isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                  window.navigator.standalone === true ||
+                  window.matchMedia('(display-mode: fullscreen)').matches;
+} catch (_) {
+  _isStandalone = false;
+}
+
+function getViewportMetrics() {
+  let viewportWidth = window.innerWidth;
+  let viewportHeight = window.innerHeight;
+  let safeTop = 0;
+  let safeLeft = 0;
+
+  if (vv) {
+    viewportWidth = vv.width || viewportWidth;
+    viewportHeight = vv.height || viewportHeight;
+
+    // iPhone PWA: compensate WebKit visualViewport offset drift so visual and hit-test align.
+    if (_isIOS && _isStandalone) {
+      safeTop = -(vv.offsetTop || 0);
+      safeLeft = -(vv.offsetLeft || 0);
+    }
+  }
+
+  return { viewportWidth, viewportHeight, safeTop, safeLeft };
+}
+
 // Track the CSS transform scale so renderers can compensate with a higher pixel ratio.
 let gvScale = Math.min(window.innerWidth / 430, window.innerHeight / 900);
 function fitGame() {
   cancelAnimationFrame(_fitRaf);
   _fitRaf = requestAnimationFrame(() => {
-    gvScale = Math.min(window.innerWidth / 430, window.innerHeight / 900);
-    const offsetX = (window.innerWidth - 430 * gvScale) / 2;
-    gvEl.style.transform = `translate(${offsetX}px,0) scale(${gvScale})`;
+    const metrics = getViewportMetrics();
+    gvScale = Math.min(metrics.viewportWidth / 430, metrics.viewportHeight / 900);
+    const offsetX = (metrics.viewportWidth - 430 * gvScale) / 2;
+    const translateX = offsetX + metrics.safeLeft;
+    const translateY = metrics.safeTop;
+    gvEl.style.transform = `translate(${translateX}px,${translateY}px) scale(${gvScale})`;
   });
 }
 fitGame();
 window.addEventListener('resize', fitGame);
+if (vv) {
+  vv.addEventListener('resize', fitGame, { passive: true });
+  vv.addEventListener('scroll', fitGame, { passive: true });
+}
+window.addEventListener('pageshow', () => {
+  fitGame();
+  setTimeout(fitGame, 60);
+}, { passive: true });
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    fitGame();
+  }
+});
 
 function formatLogArgs(args) {
   return args.map(x => typeof x === 'object' ? JSON.stringify(x) : String(x)).join(' ');
