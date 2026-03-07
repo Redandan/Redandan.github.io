@@ -1020,18 +1020,6 @@ function getTgState(tg) {
   return `vh=${vh}, stableVh=${svh}, expanded=${expanded}, fullscreen=${fullscreen}`;
 }
 
-// ===== Telegram / logging tunables =====
-const TG_INIT_MAX_ATTEMPTS = 10;
-const TG_INIT_CHECK_INTERVAL_MS = 100;
-const TG_INIT_RETRY_LOG_EVERY = 3;
-const TG_DELAYED_FULLSCREEN_REQUEST_MS = 120;
-const TG_LAUNCH_SUMMARY_DELAY_MS = 450;
-const DEFAULT_LOG_LEVEL = 'warn';
-const DEBUG_LOG_LEVEL = 'info';
-const LOG_DEDUP_WINDOW_MS = 300;
-const LOG_DEDUP_CACHE_LIMIT = 200;
-const ALWAYS_CAPTURE_INFO_PREFIXES = ['[TG_INIT]', '[Telegram.WebView]'];
-
 // ===== Telegram Mini App initialization =====
 // Accept either tgWebAppStart=1 or just tgWeb parameter
 const urlParams = new URLSearchParams(window.location.search);
@@ -1042,6 +1030,8 @@ if (hasTgUrlParam) {
   
   // Wait for Telegram SDK to load with retry mechanism
   let tgInitAttempts = 0;
+  const maxAttempts = 10;
+  const checkInterval = 100; // ms
   
   function initTelegramWebApp() {
     tgInitAttempts++;
@@ -1050,15 +1040,15 @@ if (hasTgUrlParam) {
     if (!tg) {
       if (tgInitAttempts === 1) {
         tgBootLog(`Attempt ${tgInitAttempts}: window.Telegram=${typeof window.Telegram}, WebApp=${typeof tg}`, 'info');
-      } else if (tgInitAttempts % TG_INIT_RETRY_LOG_EVERY === 0) {
-        tgBootLog(`Attempt ${tgInitAttempts}/${TG_INIT_MAX_ATTEMPTS}: Still waiting for Telegram SDK...`, 'warn');
+      } else if (tgInitAttempts % 3 === 0) {
+        tgBootLog(`Attempt ${tgInitAttempts}/${maxAttempts}: Still waiting for Telegram SDK...`, 'warn');
       }
       
-      if (tgInitAttempts < TG_INIT_MAX_ATTEMPTS) {
-        setTimeout(initTelegramWebApp, TG_INIT_CHECK_INTERVAL_MS);
+      if (tgInitAttempts < maxAttempts) {
+        setTimeout(initTelegramWebApp, checkInterval);
         return;
       } else {
-        tgBootLog(`❌ Telegram SDK not found after ${TG_INIT_MAX_ATTEMPTS} attempts (${TG_INIT_MAX_ATTEMPTS * TG_INIT_CHECK_INTERVAL_MS}ms)`, 'error');
+        tgBootLog(`❌ Telegram SDK not found after ${maxAttempts} attempts (${maxAttempts * checkInterval}ms)`, 'error');
         tgBootLog('⚠️ Make sure this URL is opened inside Telegram app', 'warn');
         window.isTelegramMiniApp = false;
         return;
@@ -1116,28 +1106,16 @@ if (hasTgUrlParam) {
       
       // Request true fullscreen when supported; keep expand() as compatibility fallback
       const supportsRequestFullscreen = typeof tg.requestFullscreen === 'function';
-      let lastLaunchSummaryKey = '';
-      let lastFullscreenEventKey = '';
-      let lastViewportEventKey = '';
       
       const logLaunchSummary = (phase) => {
         const fullscreen = !!tg.isFullscreen;
         const expanded = !!tg.isExpanded;
         const mode = fullscreen ? 'FULLSCREEN_OK' : (expanded ? 'EXPAND_ONLY' : 'SHEET_PARTIAL');
-        const key = `${phase}|${mode}|${tg.viewportHeight}|${tg.viewportStableHeight}|${expanded}|${fullscreen}`;
-        if (key === lastLaunchSummaryKey) return;
-        lastLaunchSummaryKey = key;
         const level = mode === 'SHEET_PARTIAL' ? 'warn' : 'info';
         tgBootLog(`LAUNCH_MODE=${mode} (${phase}) | ${getTgState(tg)}`, level);
       };
       
       const requestFullscreen = (reason) => {
-        const alreadyFullscreen = !!tg.isFullscreen;
-        const alreadyExpanded = !!tg.isExpanded;
-        if (alreadyFullscreen && alreadyExpanded) {
-          tgBootLog(`fullscreen request (${reason}) skipped: already fullscreen+expanded | ${getTgState(tg)}`);
-          return;
-        }
         tgBootLog(`fullscreen request (${reason}): ${getTgState(tg)}`);
         if (supportsRequestFullscreen) {
           try {
@@ -1153,9 +1131,9 @@ if (hasTgUrlParam) {
       
       requestFullscreen('initial');
       // Some clients apply fullscreen more reliably after first frame
-      setTimeout(() => requestFullscreen('delayed-120ms'), TG_DELAYED_FULLSCREEN_REQUEST_MS);
+      setTimeout(() => requestFullscreen('delayed-120ms'), 120);
       // Emit launch result after Telegram applies UI state
-      setTimeout(() => logLaunchSummary('post-init-450ms'), TG_LAUNCH_SUMMARY_DELAY_MS);
+      setTimeout(() => logLaunchSummary('post-init-450ms'), 450);
       
       // Prevent vertical swipe gestures from closing the Mini App during gameplay
       tg.disableVerticalSwipes();
@@ -1168,9 +1146,6 @@ if (hasTgUrlParam) {
         document.documentElement.style.setProperty('--tg-viewport-height', vh + 'px');
         const stable = tg.viewportStableHeight ?? 'n/a';
         const isStateStable = eventData?.isStateStable ?? 'n/a';
-        const key = `${vh}|${stable}|${isStateStable}`;
-        if (key === lastViewportEventKey) return;
-        lastViewportEventKey = key;
         tgBootLog(`viewport: vh=${vh}px, stableVh=${stable}px, isStateStable=${isStateStable}`);
       }
 
@@ -1180,9 +1155,6 @@ if (hasTgUrlParam) {
       // Listen for viewport changes (user dragging sheet, keyboard popup, etc.)
       tg.onEvent('viewportChanged', updateTelegramViewportHeight);
       tg.onEvent('fullscreenChanged', () => {
-        const key = `${tg.isFullscreen}|${tg.isExpanded}|${tg.viewportHeight}|${tg.viewportStableHeight}`;
-        if (key === lastFullscreenEventKey) return;
-        lastFullscreenEventKey = key;
         tgBootLog(`fullscreenChanged: ${getTgState(tg)}`);
         logLaunchSummary('fullscreenChanged');
       });
@@ -1273,68 +1245,11 @@ function fitGame() {
 fitGame();
 window.addEventListener('resize', fitGame);
 
-const DEBUG_LOGS = (() => {
-  const byQuery = /(?:^|[?&])debugLogs=1(?:&|$)/.test(window.location.search);
-  let byStorage = false;
-  try { byStorage = localStorage.getItem('slot_debug_logs') === '1'; } catch (_) {}
-  const byHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  return byQuery || byStorage || byHost;
-})();
-const LOG_LEVEL_RANK = { error: 0, warn: 1, info: 2 };
-const ACTIVE_LOG_LEVEL = DEBUG_LOGS ? DEBUG_LOG_LEVEL : DEFAULT_LOG_LEVEL;
-const recentLogCache = new Map();
-
-function shouldCaptureLog(type = 'info', msg = '') {
-  if (type === 'info') {
-    for (const prefix of ALWAYS_CAPTURE_INFO_PREFIXES) {
-      if (msg.startsWith(prefix)) return true;
-    }
-  }
-  const current = LOG_LEVEL_RANK[type] ?? LOG_LEVEL_RANK.info;
-  return current <= LOG_LEVEL_RANK[ACTIVE_LOG_LEVEL];
-}
-
-function isDuplicateLog(msg, type = 'info') {
-  if (LOG_DEDUP_WINDOW_MS <= 0) return false;
-  const now = performance.now();
-  const key = `${type}|${msg}`;
-  const lastTs = recentLogCache.get(key);
-  if (lastTs !== undefined && now - lastTs < LOG_DEDUP_WINDOW_MS) return true;
-  recentLogCache.set(key, now);
-  if (recentLogCache.size > LOG_DEDUP_CACHE_LIMIT) {
-    const oldestKey = recentLogCache.keys().next().value;
-    if (oldestKey !== undefined) recentLogCache.delete(oldestKey);
-  }
-  return false;
-}
-
-function restartCssAnimation(el, animationValue = '') {
-  if (!el) return;
-  el.style.animation = 'none';
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      el.style.animation = animationValue;
-    });
-  });
-}
-
-function restartClassAnimation(el, className) {
-  if (!el) return;
-  el.classList.remove(className);
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      el.classList.add(className);
-    });
-  });
-}
-
 function formatLogArgs(args) {
   return args.map(x => typeof x === 'object' ? JSON.stringify(x) : String(x)).join(' ');
 }
 
 function addLog(msg, type = 'info') {
-  if (!shouldCaptureLog(type, msg)) return;
-  if (isDuplicateLog(msg, type)) return;
   const text = `${LOG_ICONS[type] ?? '·'} [${new Date().toLocaleTimeString()}] ${msg}`;
   const d = document.createElement('div');
   d.className = `log-${type}`;
@@ -1743,19 +1658,6 @@ const N_SYMBOLS = ACTIVE_SYMBOL_COUNT;   // 6 distinct symbols
 // Recycling clip boundary: one card beyond the top/bottom of the visible area
 let STRIP_CLIP = (Math.floor(N_STRIP / 2) + 1) * CARD_H;
 
-// === Material pooling: one material per symbol (shared across all cards) ===
-// Reduces draw calls from 78 (3 reels × 26 cards) to 6
-const symbolMaterials = Array.from(
-  { length: ACTIVE_SYMBOL_COUNT },
-  (_, idx) => new THREE.MeshStandardMaterial({
-    map: symTextures[idx],
-    metalness: 0.06, roughness: 0.88,
-  }),
-);
-
-// === Geometry pool: reuse a single PlaneGeometry build, update dimensions on resize ===
-let sharedCardGeometry = new THREE.PlaneGeometry(CARD_W, CARD_H);
-
 const reelGroups = [];
 
 REEL_X.forEach((rx, ri) => {
@@ -1764,9 +1666,12 @@ REEL_X.forEach((rx, ri) => {
 
   for (let i = 0; i < N_STRIP; i++) {
     const symIdx = REEL_STRIPS[ri][i];
-    const mat = symbolMaterials[symIdx]; // Use shared material pool
+    const mat = new THREE.MeshStandardMaterial({
+      map: symTextures[symIdx],
+      metalness: 0.06, roughness: 0.88,
+    });
     const card = new THREE.Mesh(
-      sharedCardGeometry, // Use shared geometry pool
+      new THREE.PlaneGeometry(CARD_W, CARD_H),
       mat
     );
     // Center the strip: card at index Math.floor(N_STRIP/2) sits at y=0 (winner row)
@@ -1837,7 +1742,9 @@ document.getElementById('btn-bet').addEventListener('click', () => {
   if (isSpinning) return;
   betIdx = (betIdx + 1) % BET_LEVELS.length;
   betLabel.textContent = '投注 USDT ' + (currentBet() / 100).toFixed(2);
-  restartCssAnimation(betLabel, 'betFlash .4s ease');
+  betLabel.style.animation = 'none';
+  void betLabel.offsetWidth; // force reflow to restart the CSS animation from the beginning
+  betLabel.style.animation = 'betFlash .4s ease';
 });
 
 // ===== Function menu (≡ button) =====
@@ -2039,9 +1946,11 @@ function doSpin() {
       balanceEl.textContent = 'USDT ' + (balance / 100).toFixed(2);
       winEl.textContent     = '+USDT ' + (prize / 100).toFixed(2);
 
-      // Flash reel section border — restart class animation without forcing reflow
+      // Flash reel section border — remove first to restart animation if already playing
       const rs = document.getElementById('reel-section');
-      restartClassAnimation(rs, 'reel-win');
+      rs.classList.remove('reel-win');
+      void rs.offsetHeight; // force reflow so the removal takes effect before re-adding
+      rs.classList.add('reel-win');
       rs.addEventListener('animationend', () => rs.classList.remove('reel-win'), { once: true });
 
       // Play character dance animation on win
@@ -2133,8 +2042,9 @@ function showBigWin(amount, title = 'BIG WIN!') {
   bwT.textContent = title;
   bwA.textContent = '+USDT ' + amount.toLocaleString();
   bw.classList.remove('hidden');
-  restartCssAnimation(bwT, '');
-  restartCssAnimation(bwA, '');
+  bwT.style.animation = bwA.style.animation = 'none';
+  void bw.offsetHeight; // 強制 reflow 以重置 CSS animation 狀態，使動畫可以重新播放 (reading offsetHeight triggers synchronous layout)
+  bwT.style.animation = bwA.style.animation = '';
   spawnCoinRain();
   // Big wins stay longer; regular wins use a shorter display time
   const stayMs = title === 'BIG WIN!' ? 2300 : 1200;
@@ -2145,11 +2055,8 @@ function showBigWin(amount, title = 'BIG WIN!') {
   }, stayMs);
 }
 
-// ===== Resize handler with throttle =====
-let resizeTimer = null;
-const RESIZE_THROTTLE_MS = 150; // Debounce rapid resizes during pinch/drag
-
-function handleResize() {
+// ===== Resize handler =====
+window.addEventListener('resize', () => {
   const nW = reelSection.clientWidth;
   const nH = 340; // canvas render height is fixed; section is 198px with overflow:hidden
   camera.aspect = nW / nH;
@@ -2163,18 +2070,11 @@ function handleResize() {
   if (Math.abs(geo.CARD_W - CARD_W) < 1e-4) return;
   CARD_W = geo.CARD_W; CARD_H = geo.CARD_H; REEL_X = geo.REEL_X;
   STRIP_CLIP = (Math.floor(N_STRIP / 2) + 1) * CARD_H;
-  
-  // Rebuild shared geometry once instead of per-card
-  sharedCardGeometry.dispose();
-  sharedCardGeometry = new THREE.PlaneGeometry(CARD_W, CARD_H);
-  
   reelGroups.forEach((strip, ri) => {
     strip.position.x = REEL_X[ri];
     strip.children.forEach((card, i) => {
-      // Reuse material from the pool based on the card's symbol index
-      const symIdx = card.userData.symIdx;
-      card.geometry = sharedCardGeometry; // All cards now share the updated geometry
-      card.material = symbolMaterials[symIdx];
+      card.geometry.dispose();
+      card.geometry = new THREE.PlaneGeometry(CARD_W, CARD_H);
       card.position.y = (i - Math.floor(N_STRIP / 2)) * CARD_H;
     });
   });
@@ -2185,18 +2085,11 @@ function handleResize() {
   charCamera.updateProjectionMatrix();
   charRenderer.setSize(cW, cH);
   charRenderer.setPixelRatio(calcDPR());
-}
-
-window.addEventListener('resize', () => {
-  clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(handleResize, RESIZE_THROTTLE_MS);
 });
 
 // ===== Animation loop =====
 let lastTime = performance.now();
-let renderLoopActive = false;
-
-const renderFrame = () => {
+renderer.setAnimationLoop(() => {
   const now = performance.now();
   const dt  = Math.min((now - lastTime) / 1000, 0.033);
   lastTime  = now;
@@ -2263,24 +2156,7 @@ const renderFrame = () => {
       charRenderer.render(charScene, charCamera);
     }
   }
-};
-
-function setRenderLoopActive(active) {
-  if (active === renderLoopActive) return;
-  renderLoopActive = active;
-  if (active) {
-    lastTime = performance.now();
-    renderer.setAnimationLoop(renderFrame);
-  } else {
-    renderer.setAnimationLoop(null);
-  }
-}
-
-document.addEventListener('visibilitychange', () => {
-  setRenderLoopActive(document.visibilityState === 'visible');
 });
-window.addEventListener('pagehide', () => setRenderLoopActive(false));
-setRenderLoopActive(document.visibilityState === 'visible');
 
 console.log('月光舞台 v3.0 已加載 – WebGL2 模式');
 addLog(`啟動: native=${!!window._flutterNative} href=${location.href.slice(0,60)} UA=${navigator.userAgent.slice(0,80)}`, 'info');
