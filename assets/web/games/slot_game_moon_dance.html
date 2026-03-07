@@ -2340,6 +2340,59 @@ renderer.setAnimationLoop(() => {
   }
 });
 
+// ===== VIEWPORT DEBUG LOGGING (iPhone PWA diagnostics) =====
+function logViewportState(source) {
+  try {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    const vv = window.visualViewport;
+    const gvTransform = gvEl ? window.getComputedStyle(gvEl).transform : 'N/A';
+    const flutterRoot = document.getElementById('flutter-root');
+    const flutterRootTransform = flutterRoot ? window.getComputedStyle(flutterRoot).transform : 'N/A';
+    
+    let msg = `[${source}] viewport: `;
+    msg += `w=${window.innerWidth} h=${window.innerHeight} `;
+    msg += `dpr=${window.devicePixelRatio} iOS=${isIOS} standalone=${isStandalone} `;
+    if (vv) {
+      msg += `vv-width=${vv.width} vv-height=${vv.height} vv-offsetTop=${vv.offsetTop} vv-offsetLeft=${vv.offsetLeft} `;
+    }
+    msg += `gv-transform=${gvTransform.replace(/\s+/g, ' ')} `;
+    msg += `flutter-root-transform=${flutterRootTransform.replace(/\s+/g, ' ')}`;
+    
+    addLog(msg, 'info');
+  } catch (e) {
+    addLog(`[${source}] viewport debug error: ${e.message}`, 'error');
+  }
+}
+
+// Log on page entry
+logViewportState('PAGE-INIT');
+
+// Monitor visualViewport changes
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => logViewportState('VV-RESIZE'));
+  window.visualViewport.addEventListener('scroll', () => logViewportState('VV-SCROLL'));
+}
+
+// Monitor global resize/scroll/orientationchange
+window.addEventListener('resize', () => logViewportState('WINDOW-RESIZE'), { once: false });
+window.addEventListener('scroll', () => logViewportState('WINDOW-SCROLL'), { once: false });
+window.addEventListener('orientationchange', () => logViewportState('ORIENTATION-CHANGE'));
+
+// Log touch events to diagnose tap offset
+if (gvEl) {
+  gvEl.addEventListener('touchstart', (e) => {
+    if (e.touches.length > 0) {
+      const t = e.touches[0];
+      const vv = window.visualViewport;
+      const msg = `TOUCH: clientX=${t.clientX} clientY=${t.clientY} ` +
+                  `screenX=${t.screenX} screenY=${t.screenY} ` +
+                  (vv ? `vv-offsetTop=${vv.offsetTop} vv-offsetLeft=${vv.offsetLeft}` : 'no-vv');
+      addLog(msg, 'info');
+    }
+  });
+}
+
 console.log('月光舞台 v3.0 已加載 – WebGL2 模式');
 addLog(`啟動: native=${!!window._flutterNative} href=${location.href.slice(0,60)} UA=${navigator.userAgent.slice(0,80)}`, 'info');
 </script>
