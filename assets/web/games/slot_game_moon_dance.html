@@ -1063,8 +1063,16 @@ async function exchangeTelegramInitDataForJwt(initData) {
     
     const token = payload?.token;
     const refreshToken = payload?.refreshToken;
+    const jwtUserBalance = Number(payload?.userInfo?.balance);
 
     tgBootLog(`JWT exchange parsed - token: ${token ? `${token.substring(0, 20)}...` : 'MISSING'} | refreshToken: ${refreshToken ? `${refreshToken.substring(0, 20)}...` : 'N/A'} | userId: ${payload?.userId ?? 'N/A'} | username: ${payload?.username ?? 'N/A'}`, 'info');
+
+    if (Number.isFinite(jwtUserBalance)) {
+      window.GAME_CONFIG = window.GAME_CONFIG || {};
+      window.GAME_CONFIG.userBalance = jwtUserBalance;
+      window.__pendingTelegramBalance = jwtUserBalance;
+      tgBootLog(`JWT exchange balance detected: ${jwtUserBalance} USDT`, 'info');
+    }
 
     if (!token) {
       throw new Error('backend response missing token');
@@ -1815,6 +1823,20 @@ window.onBalanceUpdate = function(flutterBalance) {
     addLog(`Balance updated from app: USDT ${(balance / 100).toFixed(2)}`, 'info');
   }
 };
+
+// Apply pending balance from Telegram JWT exchange (if it arrived before
+// initializeBalance/onBalanceUpdate became available in execution order).
+if (window.__pendingTelegramBalance !== undefined) {
+  const pendingBalance = Number(window.__pendingTelegramBalance);
+  if (Number.isFinite(pendingBalance)) {
+    initializeBalance();
+    window.onBalanceUpdate(pendingBalance);
+  }
+  delete window.__pendingTelegramBalance;
+} else {
+  // Also initialize once for non-Flutter contexts when GAME_CONFIG was preloaded.
+  initializeBalance();
+}
 
 // ===== Bet cycling =====
 document.getElementById('btn-bet').addEventListener('click', () => {
