@@ -1026,10 +1026,11 @@ const TG_INIT_CHECK_INTERVAL_MS = 100;
 const TG_INIT_RETRY_LOG_EVERY = 3;
 const TG_DELAYED_FULLSCREEN_REQUEST_MS = 120;
 const TG_LAUNCH_SUMMARY_DELAY_MS = 450;
-const DEFAULT_LOG_LEVEL = 'error';
+const DEFAULT_LOG_LEVEL = 'warn';
 const DEBUG_LOG_LEVEL = 'info';
 const LOG_DEDUP_WINDOW_MS = 300;
 const LOG_DEDUP_CACHE_LIMIT = 200;
+const ALWAYS_CAPTURE_INFO_PREFIXES = ['[TG_INIT]', '[Telegram.WebView]'];
 
 // ===== Telegram Mini App initialization =====
 // Accept either tgWebAppStart=1 or just tgWeb parameter
@@ -1283,7 +1284,12 @@ const LOG_LEVEL_RANK = { error: 0, warn: 1, info: 2 };
 const ACTIVE_LOG_LEVEL = DEBUG_LOGS ? DEBUG_LOG_LEVEL : DEFAULT_LOG_LEVEL;
 const recentLogCache = new Map();
 
-function shouldCaptureLog(type = 'info') {
+function shouldCaptureLog(type = 'info', msg = '') {
+  if (type === 'info') {
+    for (const prefix of ALWAYS_CAPTURE_INFO_PREFIXES) {
+      if (msg.startsWith(prefix)) return true;
+    }
+  }
   const current = LOG_LEVEL_RANK[type] ?? LOG_LEVEL_RANK.info;
   return current <= LOG_LEVEL_RANK[ACTIVE_LOG_LEVEL];
 }
@@ -1327,7 +1333,7 @@ function formatLogArgs(args) {
 }
 
 function addLog(msg, type = 'info') {
-  if (!shouldCaptureLog(type)) return;
+  if (!shouldCaptureLog(type, msg)) return;
   if (isDuplicateLog(msg, type)) return;
   const text = `${LOG_ICONS[type] ?? '·'} [${new Date().toLocaleTimeString()}] ${msg}`;
   const d = document.createElement('div');
