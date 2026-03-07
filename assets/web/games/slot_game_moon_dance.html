@@ -1187,6 +1187,12 @@ if (hasTgUrlParam) {
       const queryId = initDataObj.query_id || 'n/a';
       
       if (user.id) {
+        const tgFirstName = (user.first_name || '').trim();
+        if (tgFirstName) {
+          localStorage.setItem('first_name', tgFirstName);
+          window.__agoraAuth = window.__agoraAuth || {};
+          window.__agoraAuth.firstName = tgFirstName;
+        }
         tgBootLog(`TG_USER: id=${user.id} | ${user.first_name || ''} ${user.last_name || ''} | @${user.username || 'n/a'} | lang=${user.language_code || 'n/a'} | premium=${user.is_premium || false}`, 'info');
         tgBootLog(`TG_SESSION: chatInstance=${chatInstance} | authDate=${authDate} | queryId=${queryId?.slice(0, 20)}...`, 'info');
       } else {
@@ -1832,22 +1838,21 @@ function isUserLoggedIn() {
 
 function getDisplayUsername() {
   return (
-    localStorage.getItem('username') ||
-    window.__agoraAuth?.username ||
-    window.GAME_CONFIG?.username ||
+    localStorage.getItem('first_name') ||
+    window.__agoraAuth?.firstName ||
+    window.GAME_CONFIG?.firstName ||
     '貴賓'
   );
 }
 
 function refreshJackpotBanner() {
   if (!jackpotMarqueeTextEl) return;
-  const messages = ['月光舞台大獎高達500倍！'];
   if (isUserLoggedIn() && balance <= 0) {
     const username = getDisplayUsername();
-    messages.push(`尊敬的 ${username} 當前為試玩模式`);
-    messages.push('充值後可以解鎖真實模式');
+    jackpotMarqueeTextEl.textContent = `尊敬的 ${username} 當前為試玩模式　✦　充值後可以解鎖真實模式`;
+    return;
   }
-  jackpotMarqueeTextEl.textContent = messages.join('　✦　');
+  jackpotMarqueeTextEl.textContent = '月光舞台大獎高達500倍！';
 }
 
 function updateBalanceDisplay() {
