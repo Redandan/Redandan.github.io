@@ -1025,7 +1025,11 @@ function getTgState(tg) {
 const urlParams = new URLSearchParams(window.location.search);
 const hasTgUrlParam = urlParams.get('tgWebAppStart') === '1' || urlParams.has('tgWeb');
 
-const TELEGRAM_WEBAPP_EXCHANGE_ENDPOINT = '/auth/telegram-webapp/exchange-jwt';
+const AGORA_API_BASE_URL = (
+  window.__AGORA_API_BASE_URL ||
+  'https://agoramarketapi.purrtechllc.com/api'
+).replace(/\/$/, '');
+const TELEGRAM_WEBAPP_EXCHANGE_ENDPOINT = `${AGORA_API_BASE_URL}/auth/telegram-webapp/exchange-jwt`;
 
 async function exchangeTelegramInitDataForJwt(initData) {
   if (!initData) {
@@ -1035,9 +1039,11 @@ async function exchangeTelegramInitDataForJwt(initData) {
 
   try {
     tgBootLog('JWT exchange: requesting backend token...', 'info');
+    tgBootLog(`JWT exchange endpoint: ${TELEGRAM_WEBAPP_EXCHANGE_ENDPOINT}`, 'info');
 
     const response = await fetch(TELEGRAM_WEBAPP_EXCHANGE_ENDPOINT, {
       method: 'POST',
+      mode: 'cors',
       headers: {
         'Content-Type': 'application/json',
       },
