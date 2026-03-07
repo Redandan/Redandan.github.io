@@ -1025,6 +1025,66 @@ function getTgState(tg) {
 const urlParams = new URLSearchParams(window.location.search);
 const hasTgUrlParam = urlParams.get('tgWebAppStart') === '1' || urlParams.has('tgWeb');
 
+const TELEGRAM_WEBAPP_EXCHANGE_ENDPOINT = '/auth/telegram-webapp/exchange-jwt';
+
+async function exchangeTelegramInitDataForJwt(initData) {
+  if (!initData) {
+    tgBootLog('JWT exchange skipped: empty initData', 'warn');
+    return null;
+  }
+
+  try {
+    tgBootLog('JWT exchange: requesting backend token...', 'info');
+
+    const response = await fetch(TELEGRAM_WEBAPP_EXCHANGE_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ initData }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`HTTP ${response.status}: ${errText || 'unknown error'}`);
+    }
+
+    const result = await response.json();
+    const payload = result?.data ?? result;
+    const token = payload?.token;
+    const refreshToken = payload?.refreshToken;
+
+    if (!token) {
+      throw new Error('backend response missing token');
+    }
+
+    localStorage.setItem('access_token', token);
+    if (refreshToken) {
+      localStorage.setItem('refresh_token', refreshToken);
+    }
+    if (payload?.userId != null) {
+      localStorage.setItem('user_id', String(payload.userId));
+    }
+    if (payload?.username) {
+      localStorage.setItem('username', payload.username);
+    }
+    localStorage.setItem('telegram_webapp_jwt_issued_at', new Date().toISOString());
+
+    window.__agoraAuth = {
+      token,
+      refreshToken: refreshToken || null,
+      userId: payload?.userId ?? null,
+      username: payload?.username ?? null,
+    };
+
+    tgBootLog('JWT exchange success: token stored', 'info');
+    return payload;
+  } catch (err) {
+    tgBootLog(`JWT exchange failed: ${err?.message || err}`, 'error');
+    return null;
+  }
+}
+
 if (hasTgUrlParam) {
   tgBootLog('URL indicates Telegram Mini App (tgWebAppStart=1 or tgWeb)', 'info');
   
@@ -1033,7 +1093,7 @@ if (hasTgUrlParam) {
   const maxAttempts = 10;
   const checkInterval = 100; // ms
   
-  function initTelegramWebApp() {
+  async function initTelegramWebApp() {
     tgInitAttempts++;
     const tg = window.Telegram?.WebApp;
     
@@ -1067,6 +1127,13 @@ if (hasTgUrlParam) {
       const rawInitData = tg.initData;
       const initDataObj = tg.initDataUnsafe || {};
       tgBootLog(`initData: ${!!rawInitData ? 'present' : 'empty'} (${rawInitData?.length || 0} bytes)`, 'info');
+
+      // Exchange initData for JWT on backend
+      if (rawInitData) {
+        await exchangeTelegramInitDataForJwt(rawInitData);
+      } else {
+        tgBootLog('JWT exchange skipped: no initData from Telegram', 'warn');
+      }
       
       // User information extraction
       const user = initDataObj.user || {};
