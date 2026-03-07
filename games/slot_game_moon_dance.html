@@ -1056,9 +1056,15 @@ async function exchangeTelegramInitDataForJwt(initData) {
     }
 
     const result = await response.json();
+    tgBootLog(`JWT exchange raw response: ${JSON.stringify(result)}`, 'info');
+    
     const payload = result?.data ?? result;
+    tgBootLog(`JWT exchange payload: ${JSON.stringify(payload)}`, 'info');
+    
     const token = payload?.token;
     const refreshToken = payload?.refreshToken;
+
+    tgBootLog(`JWT exchange parsed - token: ${token ? `${token.substring(0, 20)}...` : 'MISSING'} | refreshToken: ${refreshToken ? `${refreshToken.substring(0, 20)}...` : 'N/A'} | userId: ${payload?.userId ?? 'N/A'} | username: ${payload?.username ?? 'N/A'}`, 'info');
 
     if (!token) {
       throw new Error('backend response missing token');
