@@ -1080,36 +1080,43 @@ setTimeout(() => {
 }, 0);
 
 // ===== Flutter mobile-browser self-host fallback =====
-// When the game is opened as a full page (not in a parent iframe) with
-// ?flutter=1 — e.g. Flutter Web on mobile browsers — the Flutter Dart
-// InAppWebView shim cannot inject HOST_INIT.  Read auth data stored in
-// localStorage by SlotGamePage._buildWebView (mobile-browser branch) and
-// dispatch HOST_INIT so doSpin() can use the JWT to call the API directly.
+// When the game is opened with ?flutter=1 — either as a full page (mobile
+// browser / PWA) or inside a Flutter Web desktop iframe — read auth data from
+// localStorage and dispatch HOST_INIT so doSpin() can use the JWT directly.
+//
+// For the iframe (desktop) case the Dart shim's evaluateJavascript also
+// dispatches HOST_INIT; this IIFE acts as a belt-and-suspenders fallback in
+// case evaluateJavascript delivery is delayed or runs in the wrong context.
+// The second HOST_INIT simply overwrites __agoraAuth (idempotent).
 (function () {
   var p = new URLSearchParams(window.location.search);
   if (p.get('flutter') !== '1') return;  // only active in flutter mode
-  if (window.parent !== window) return;  // iframe present: Dart shim injects HOST_INIT
 
   var _jwt     = localStorage.getItem('_flutter_game_jwt')     || '';
   var _balance = parseFloat(localStorage.getItem('_flutter_game_balance') || '0');
   var _origin  = window.location.origin;
 
   if (!_jwt) {
-    console.warn('[FLUTTER_HOST] No JWT in localStorage; spins will fail.');
+    // localStorage may still be populated later (Dart writes it in _injectFlutterHostShim).
+    // Log a warning rather than hard-failing; doSpin will also try localStorage directly.
+    console.warn('[FLUTTER_HOST] No JWT in localStorage yet; will retry on spin.');
   }
 
-  // Dispatch HOST_INIT so the game receives the JWT and balance.
-  // doSpin() will then call the API directly using window.__agoraAuth.token —
-  // no window.parent interception required.
+  // Dispatch HOST_INIT so the game's message listener receives JWT + balance.
+  // 100 ms delay gives the Dart side time to write JWT to localStorage before
+  // we read it (avoids an empty-JWT HOST_INIT overwriting a good one).
   setTimeout(function () {
+    var jwt     = localStorage.getItem('_flutter_game_jwt')     || '';
+    var balance = parseFloat(localStorage.getItem('_flutter_game_balance') || '0');
+    if (!jwt) return;  // nothing useful to dispatch; Dart shim will arrive later
     window.postMessage({
       type: 'HOST_INIT',
-      jwt: _jwt,
-      balance: _balance,
-      demoMode: (_balance < 0.25),
+      jwt: jwt,
+      balance: balance,
+      demoMode: (balance < 0.25),
       username: '',
     }, _origin);
-  }, 50);
+  }, 100);
 })();
 
 // ===== Log system =====
@@ -1767,7 +1774,12 @@ async function doSpin() {
   spinBtn.disabled = true;
   winEl.textContent = 'USDT 0.00';
 
-  const _spinJwt  = window.__agoraAuth?.token || '';
+  const _spinJwt  = window.__agoraAuth?.token
+                  // Belt-and-suspenders: read directly from localStorage in case
+                  // HOST_INIT was dispatched with an empty JWT (e.g. profile fetch
+                  // failed on the Dart side) or wasn't received at all.
+                  || localStorage.getItem('_flutter_game_jwt')
+                  || '';
   const _spinMode = isDemoMode ? 'DEMO' : 'REAL';
   // Allow the API base URL to be overridden for dev/staging environments.
   const _apiBase  = window.__AGORA_API_BASE_URL || 'https://agoramarketapi.purrtechllc.com/api';
