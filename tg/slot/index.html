@@ -187,6 +187,16 @@ async function exchangeJwt(initData) {
 }
 
 // ─── Spin API ─────────────────────────────────────────────────────────────────
+function generateClientSeed() {
+  if (typeof crypto !== 'undefined') {
+    if (crypto.randomUUID) return crypto.randomUUID();
+    const arr = new Uint8Array(16);
+    crypto.getRandomValues(arr);
+    return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
+  }
+  return Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+}
+
 async function callSpinApi(betIndex, mode) {
   try {
     const resp = await fetch(`${AGORA_API_BASE_URL}/slot/spin`, {
@@ -196,7 +206,7 @@ async function callSpinApi(betIndex, mode) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${_jwt}`,
       },
-      body: JSON.stringify({ gameId: 'moon_dance', betIndex, mode }),
+      body: JSON.stringify({ gameId: 'moon_dance', betIndex, mode, clientSeed: generateClientSeed() }),
     });
     if (!resp.ok) {
       const errText = await resp.text().catch(() => '');

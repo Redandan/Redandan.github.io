@@ -1811,6 +1811,17 @@ spinBtn.addEventListener('pointerdown', () => {
 // ===== Spin button – normal tap =====
 spinBtn.addEventListener('click', () => { if (!autoSpin) doSpin(); });
 
+// ── Client seed generation (provably-fair) ────────────────────────────────────
+function generateClientSeed() {
+  if (typeof crypto !== 'undefined') {
+    if (crypto.randomUUID) return crypto.randomUUID();
+    const arr = new Uint8Array(16);
+    crypto.getRandomValues(arr);
+    return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
+  }
+  return Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+}
+
 // ── Paytable evaluation ──────────────────────────────────────────────────────
 // IMPORTANT: Runtime visuals come from symbols.png + spriteMap (not SVG labels)
 // Symbol index mapping currently in use:
@@ -1851,7 +1862,7 @@ async function doSpin() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${_spinJwt}`,
         },
-        body: JSON.stringify({ gameId: 'moon_dance', betIndex: betIdx, mode: _spinMode }),
+        body: JSON.stringify({ gameId: 'moon_dance', betIndex: betIdx, mode: _spinMode, clientSeed: generateClientSeed() }),
       });
       if (!resp.ok) {
         const errText = await resp.text().catch(() => '');
