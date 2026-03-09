@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
 <meta http-equiv="Cache-Control" content="no-cache" />
 <title>月光舞台 - 夜舞老虎機</title>
-<!-- Telegram WebApp SDK - must load before game scripts -->
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- Shared Flutter ↔ WebView bridge (loaded before the game module script) -->
 <script src="_runtime/flutter_bridge.js"></script>
 <style>
@@ -1008,19 +1006,15 @@ function hideLoader() {
 
 setLoadProgress(5, '初始化引擎...');
 
-// ===== Telegram boot diagnostics (captured before log system is ready) =====
+// ===== Boot diagnostics (thin wrapper for early log capture) =====
+// tgBootLog kept for compatibility with any log references; logs go to console
+// and are flushed into the in-app panel once addLog is ready (see window.__tgAddLog).
 const tgInitLogBuffer = [];
-const nativeConsole = {
-  log: console.log.bind(console),
-  warn: console.warn.bind(console),
-  error: console.error.bind(console),
-};
 function tgBootLog(message, type = 'info') {
-  const text = `[TG_INIT] ${message}`;
-  if (type === 'error') nativeConsole.error(text);
-  else if (type === 'warn') nativeConsole.warn(text);
-  else nativeConsole.log(text);
-
+  const text = `[BOOT] ${message}`;
+  if (type === 'error') console.error(text);
+  else if (type === 'warn') console.warn(text);
+  else console.log(text);
   if (typeof window.__tgAddLog === 'function') {
     window.__tgAddLog(text, type);
   } else {
@@ -1028,282 +1022,66 @@ function tgBootLog(message, type = 'info') {
   }
 }
 
-function getTgState(tg) {
-  const vh = tg?.viewportHeight ?? 'n/a';
-  const svh = tg?.viewportStableHeight ?? 'n/a';
-  const expanded = tg?.isExpanded ?? 'n/a';
-  const fullscreen = tg?.isFullscreen ?? 'n/a';
-  return `vh=${vh}, stableVh=${svh}, expanded=${expanded}, fullscreen=${fullscreen}`;
-}
+// ===== Host Bridge (Telegram Mini App host ↔ game iframe protocol) =====
+// When opened via web/tg/slot/index.html the query param ?hosted=1 is set.
+// The host page handles Telegram initData exchange and balance checks; this
+// game page only renders visuals and communicates back via postMessage.
+//
+// Message protocol (all messages carry a `type` string field):
+//   Host → Game:  HOST_INIT  { jwt, balance (USDT), demoMode, username }
+//                 SPIN_RESULT { symbols[3], multiplier, prize (units), newBalance (units), mode }
+//                 SPIN_ERROR  { message }
+//   Game → Host:  GAME_READY {}
+//                 SPIN_REQUEST { betIndex, mode: 'REAL'|'DEMO' }
+//                 GO_BACK {}
 
-// ===== Telegram Mini App initialization =====
-// Accept either tgWebAppStart=1 or just tgWeb parameter
-const urlParams = new URLSearchParams(window.location.search);
-const hasTgUrlParam = urlParams.get('tgWebAppStart') === '1' || urlParams.has('tgWeb');
+// Origin must match so postMessage is only accepted from the same GitHub-Pages
+// origin.  Works for both https://redandan.github.io and localhost dev.
+window.__gameOrigin = window.location.origin;
+window.__hostedMode = new URLSearchParams(window.location.search).has('hosted');
 
-const AGORA_API_BASE_URL = (
-  window.__AGORA_API_BASE_URL ||
-  'https://agoramarketapi.purrtechllc.com/api'
-).replace(/\/$/, '');
-const TELEGRAM_WEBAPP_EXCHANGE_ENDPOINT = `${AGORA_API_BASE_URL}/auth/telegram-webapp/exchange-jwt`;
+if (window.__hostedMode) {
+  tgBootLog('Hosted mode: waiting for HOST_INIT from parent…');
 
-async function exchangeTelegramInitDataForJwt(initData) {
-  if (!initData) {
-    tgBootLog('JWT exchange skipped: empty initData', 'warn');
-    return null;
-  }
+  window.addEventListener('message', (e) => {
+    // Strict origin check
+    if (e.origin !== window.__gameOrigin) return;
+    if (e.source !== window.parent) return;
 
-  try {
-    tgBootLog('JWT exchange: requesting backend token...', 'info');
-    tgBootLog(`JWT exchange endpoint: ${TELEGRAM_WEBAPP_EXCHANGE_ENDPOINT}`, 'info');
+    const { type } = e.data || {};
 
-    const response = await fetch(TELEGRAM_WEBAPP_EXCHANGE_ENDPOINT, {
-      method: 'POST',
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ initData }),
-    });
+    if (type === 'HOST_INIT') {
+      const { jwt, balance: hostBalance, demoMode, username } = e.data;
+      window.__agoraAuth = { token: jwt };
+      window.__hostDemoMode = !!demoMode;
 
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${errText || 'unknown error'}`);
-    }
-
-    const result = await response.json();
-    tgBootLog(`JWT exchange raw response: ${JSON.stringify(result)}`, 'info');
-    
-    const payload = result?.data ?? result;
-    tgBootLog(`JWT exchange payload: ${JSON.stringify(payload)}`, 'info');
-    
-    const token = payload?.token;
-    const refreshToken = payload?.refreshToken;
-    const jwtUserBalance = Number(payload?.userInfo?.balance);
-
-    tgBootLog(`JWT exchange parsed - token: ${token ? `${token.substring(0, 20)}...` : 'MISSING'} | refreshToken: ${refreshToken ? `${refreshToken.substring(0, 20)}...` : 'N/A'} | userId: ${payload?.userId ?? 'N/A'} | username: ${payload?.username ?? 'N/A'}`, 'info');
-
-    if (Number.isFinite(jwtUserBalance)) {
-      window.GAME_CONFIG = window.GAME_CONFIG || {};
-      window.GAME_CONFIG.userBalance = jwtUserBalance;
-      window.__pendingTelegramBalance = jwtUserBalance;
-      tgBootLog(`JWT exchange balance detected: ${jwtUserBalance} USDT`, 'info');
-
-      // JWT may resolve after the one-time pending-balance bootstrap check has
-      // already run. Apply immediately when handlers are ready so balance UI and
-      // trial-mode marquee state are refreshed in this same session.
+      // Seed balance; onBalanceUpdate expects USDT float.
       if (typeof window.onBalanceUpdate === 'function') {
-        window.onBalanceUpdate(jwtUserBalance);
-      } else if (typeof initializeBalance === 'function') {
-        initializeBalance();
-      }
-    }
-
-    if (!token) {
-      throw new Error('backend response missing token');
-    }
-
-    localStorage.setItem('access_token', token);
-    if (refreshToken) {
-      localStorage.setItem('refresh_token', refreshToken);
-    }
-    if (payload?.userId != null) {
-      localStorage.setItem('user_id', String(payload.userId));
-    }
-    if (payload?.username) {
-      localStorage.setItem('username', payload.username);
-    }
-    localStorage.setItem('telegram_webapp_jwt_issued_at', new Date().toISOString());
-
-    window.__agoraAuth = {
-      token,
-      refreshToken: refreshToken || null,
-      userId: payload?.userId ?? null,
-      username: payload?.username ?? null,
-    };
-
-    tgBootLog('JWT exchange success: token stored', 'info');
-    return payload;
-  } catch (err) {
-    tgBootLog(`JWT exchange failed: ${err?.message || err}`, 'error');
-    return null;
-  }
-}
-
-if (hasTgUrlParam) {
-  tgBootLog('URL indicates Telegram Mini App (tgWebAppStart=1 or tgWeb)', 'info');
-  
-  // Wait for Telegram SDK to load with retry mechanism
-  let tgInitAttempts = 0;
-  const maxAttempts = 10;
-  const checkInterval = 100; // ms
-  
-  async function initTelegramWebApp() {
-    tgInitAttempts++;
-    const tg = window.Telegram?.WebApp;
-    
-    if (!tg) {
-      if (tgInitAttempts === 1) {
-        tgBootLog(`Attempt ${tgInitAttempts}: window.Telegram=${typeof window.Telegram}, WebApp=${typeof tg}`, 'info');
-      } else if (tgInitAttempts % 3 === 0) {
-        tgBootLog(`Attempt ${tgInitAttempts}/${maxAttempts}: Still waiting for Telegram SDK...`, 'warn');
-      }
-      
-      if (tgInitAttempts < maxAttempts) {
-        setTimeout(initTelegramWebApp, checkInterval);
-        return;
+        window.onBalanceUpdate(Number(hostBalance) || 0);
       } else {
-        tgBootLog(`❌ Telegram SDK not found after ${maxAttempts} attempts (${maxAttempts * checkInterval}ms)`, 'error');
-        tgBootLog('⚠️ Make sure this URL is opened inside Telegram app', 'warn');
-        window.isTelegramMiniApp = false;
-        return;
+        window.GAME_CONFIG = window.GAME_CONFIG || {};
+        window.GAME_CONFIG.userBalance = Number(hostBalance) || 0;
+        window.__pendingHostBalance = Number(hostBalance) || 0;
       }
+
+      if (username) {
+        localStorage.setItem('first_name', username);
+        window.__agoraAuth.firstName = username;
+      }
+
+      tgBootLog(`HOST_INIT received: balance=${hostBalance} USDT, demo=${demoMode}`);
+      return;
     }
-    
-    // ===== Telegram WebApp API detected =====
-    window.isTelegramMiniApp = true;
-    tgBootLog(`✓ Telegram SDK loaded (attempt ${tgInitAttempts})`, 'info');
-    
-    try {
-      // API availability check
-      tgBootLog(`version=${tg.version || 'n/a'}, platform=${tg.platform || 'n/a'}, colorScheme=${tg.colorScheme || 'n/a'}`, 'info');
-      
-      // initData diagnostic - this only exists when opened from Bot WebApp button
-      const rawInitData = tg.initData;
-      const initDataObj = tg.initDataUnsafe || {};
-      const user = initDataObj.user || {};
-      const tgFirstName = (user.first_name || '').trim();
+    // SPIN_RESULT / SPIN_ERROR are handled inside doSpin's Promise resolver.
+  });
 
-      // Cache first_name immediately so trial-mode marquee can use it even when
-      // JWT balance update arrives earlier than the TG_USER logging block.
-      if (tgFirstName) {
-        localStorage.setItem('first_name', tgFirstName);
-        window.__agoraAuth = window.__agoraAuth || {};
-        window.__agoraAuth.firstName = tgFirstName;
-      }
-
-      tgBootLog(`initData: ${!!rawInitData ? 'present' : 'empty'} (${rawInitData?.length || 0} bytes)`, 'info');
-
-      // Exchange initData for JWT on backend
-      if (rawInitData) {
-        await exchangeTelegramInitDataForJwt(rawInitData);
-      } else {
-        tgBootLog('JWT exchange skipped: no initData from Telegram', 'warn');
-      }
-      
-      // User information extraction
-      const chatInstance = initDataObj.chat_instance || 'n/a';
-      const authDate = initDataObj.auth_date || 'n/a';
-      const queryId = initDataObj.query_id || 'n/a';
-      
-      if (user.id) {
-        tgBootLog(`TG_USER: id=${user.id} | ${user.first_name || ''} | lang=${user.language_code || 'n/a'} | premium=${user.is_premium || false}`, 'info');
-        tgBootLog(`TG_SESSION: chatInstance=${chatInstance} | authDate=${authDate} | queryId=${queryId?.slice(0, 20)}...`, 'info');
-      } else {
-        tgBootLog('TG_USER: No user data (may be opened from direct link)', 'warn');
-      }
-      
-      // Launch mode detection
-      const launchMode = initDataObj.start_param ? `inline/menu(${initDataObj.start_param})` : (rawInitData ? 'button/webapp' : 'direct_link');
-      tgBootLog(`TG_LAUNCH_MODE: ${launchMode}`, 'info');
-      
-      // WebApp capabilities check
-      const hasReady = typeof tg.ready === 'function';
-      const hasExpand = typeof tg.expand === 'function';
-      const hasRequestFullscreen = typeof tg.requestFullscreen === 'function';
-      const hasInitData = !!tg.initDataUnsafe;
-      tgBootLog(`TG_CAPABILITIES: ready=${hasReady} | expand=${hasExpand} | fullscreen=${hasRequestFullscreen} | initData=${hasInitData}`, 'info');
-      
-      tg.ready();
-      tgBootLog('✓ ready() called', 'info');
-      
-      // Hide Telegram header for immersive fullscreen experience
-      // Use official API with bg_color (adapts to theme) or hex color
-      try {
-        tg.setHeaderColor('bg_color');
-        tgBootLog('✓ setHeaderColor(bg_color)', 'info');
-      } catch (e) {
-        tgBootLog(`setHeaderColor warning: ${e?.message || e}`, 'warn');
-      }
-      
-      // Request true fullscreen when supported; keep expand() as compatibility fallback
-      const supportsRequestFullscreen = typeof tg.requestFullscreen === 'function';
-      
-      const logLaunchSummary = (phase) => {
-        const fullscreen = !!tg.isFullscreen;
-        const expanded = !!tg.isExpanded;
-        const mode = fullscreen ? 'FULLSCREEN_OK' : (expanded ? 'EXPAND_ONLY' : 'SHEET_PARTIAL');
-        const level = mode === 'SHEET_PARTIAL' ? 'warn' : 'info';
-        tgBootLog(`LAUNCH_MODE=${mode} (${phase}) | ${getTgState(tg)}`, level);
-      };
-      
-      const requestFullscreen = (reason) => {
-        tgBootLog(`fullscreen request (${reason}): ${getTgState(tg)}`);
-        if (supportsRequestFullscreen) {
-          try {
-            tg.requestFullscreen();
-            tgBootLog('✓ requestFullscreen() called');
-          } catch (err) {
-            tgBootLog(`requestFullscreen() failed: ${err?.message || err}`, 'warn');
-          }
-        }
-        tg.expand();
-        tgBootLog(`✓ expand() called: ${getTgState(tg)}`);
-      };
-      
-      requestFullscreen('initial');
-      // Some clients apply fullscreen more reliably after first frame
-      setTimeout(() => requestFullscreen('delayed-120ms'), 120);
-      // Emit launch result after Telegram applies UI state
-      setTimeout(() => logLaunchSummary('post-init-450ms'), 450);
-      
-      // Prevent vertical swipe gestures from closing the Mini App during gameplay
-      tg.disableVerticalSwipes();
-      tgBootLog('✓ disableVerticalSwipes() called');
-
-      // ===== Telegram viewport adaptation =====
-      // Update CSS variable whenever viewport height changes (user drag, keyboard, etc.)
-      function updateTelegramViewportHeight(eventData) {
-        const vh = tg.viewportHeight || window.innerHeight;
-        document.documentElement.style.setProperty('--tg-viewport-height', vh + 'px');
-        const stable = tg.viewportStableHeight ?? 'n/a';
-        const isStateStable = eventData?.isStateStable ?? 'n/a';
-        tgBootLog(`viewport: vh=${vh}px, stableVh=${stable}px, isStateStable=${isStateStable}`);
-      }
-
-      // Initial update
-      updateTelegramViewportHeight();
-
-      // Listen for viewport changes (user dragging sheet, keyboard popup, etc.)
-      tg.onEvent('viewportChanged', updateTelegramViewportHeight);
-      tg.onEvent('fullscreenChanged', () => {
-        tgBootLog(`fullscreenChanged: ${getTgState(tg)}`);
-        logLaunchSummary('fullscreenChanged');
-      });
-      tg.onEvent('fullscreenFailed', (err) => {
-        tgBootLog(`fullscreenFailed: ${err?.message || JSON.stringify(err) || 'unknown'}`, 'warn');
-      });
-
-      tgBootLog(`✓ Telegram init complete: ${getTgState(tg)}`);
-      
-      // Hide back button in TG environment
-      const btnBack = document.getElementById('btn-back');
-      if (btnBack) {
-        btnBack.style.display = 'none';
-        tgBootLog('✓ Back button hidden');
-      }
-    } catch (e) {
-      tgBootLog(`WebApp init error: ${e?.message || e}`, 'error');
-      window.isTelegramMiniApp = false;
-    }
-  }
-  
-  // Start initialization
-  initTelegramWebApp();
-  
-} else {
-  tgBootLog('Standard browser mode: no TG URL parameter', 'info');
-  window.isTelegramMiniApp = false;
+  // Notify parent that the game is ready to receive HOST_INIT.
+  // Deferred slightly so the message listener above is guaranteed to be
+  // registered before any synchronous response the parent might send.
+  setTimeout(() => {
+    window.parent.postMessage({ type: 'GAME_READY' }, window.__gameOrigin);
+    tgBootLog('GAME_READY sent to host');
+  }, 0);
 }
 
 // ===== Log system =====
@@ -1822,6 +1600,9 @@ const AUTO_SPIN_PRESS_DELAY = 500;  // ms long-press to activate auto-spin
 const AUTO_SPIN_INTERVAL    = 600;  // ms pause between normal auto-spin rounds
 const BIG_WIN_DISPLAY_MS    = 3200; // 2300ms fade-start + 900ms fade-out = total big-win overlay duration
 const WIN_DISPLAY_MS        = 2100; // 1200ms fade-start + 900ms fade-out = regular win overlay duration
+// Hosted-mode: max wait for SPIN_RESULT from parent before falling back to client-side spin.
+// 8 s gives the backend ample time on slow connections while not blocking the UI indefinitely.
+const SPIN_REQUEST_TIMEOUT_MS = 8000;
 
 
 const balanceEl = document.getElementById('balance-val');
@@ -1851,7 +1632,8 @@ function getDisplayUsername() {
 
 function refreshJackpotBanner() {
   if (!jackpotMarqueeTextEl) return;
-  if (isUserLoggedIn() && balance <= 0) {
+  // Show demo/trial mode banner when balance is 0 or host flagged insufficient funds.
+  if (balance <= 0 || !!window.__hostDemoMode) {
     const username = getDisplayUsername();
     jackpotMarqueeTextEl.textContent = `尊敬的 ${username} 當前為試玩模式　✦　充值後可以解鎖真實模式`;
     return;
@@ -1895,17 +1677,18 @@ window.onBalanceUpdate = function(flutterBalance) {
   }
 };
 
-// Apply pending balance from Telegram JWT exchange (if it arrived before
-// initializeBalance/onBalanceUpdate became available in execution order).
-if (window.__pendingTelegramBalance !== undefined) {
-  const pendingBalance = Number(window.__pendingTelegramBalance);
+// Apply pending balance from host bridge or Flutter GAME_CONFIG injection.
+// __pendingHostBalance is set by the HOST_INIT handler above when onBalanceUpdate
+// isn't available yet at that point in the script execution order.
+if (window.__pendingHostBalance !== undefined) {
+  const pendingBalance = Number(window.__pendingHostBalance);
   if (Number.isFinite(pendingBalance)) {
-    initializeBalance();
+    initializeBalance(); // ensure UI is bootstrapped before applying the update
     window.onBalanceUpdate(pendingBalance);
   }
-  delete window.__pendingTelegramBalance;
+  delete window.__pendingHostBalance;
 } else {
-  // Also initialize once for non-Flutter contexts when GAME_CONFIG was preloaded.
+  // Standalone or Flutter contexts: initialise from GAME_CONFIG if preloaded.
   initializeBalance();
 }
 
@@ -2025,14 +1808,14 @@ function evaluatePayline(s0, s1, s2) {
   return 0;                                                  // no match = LOSS
 }
 
-function doSpin() {
+async function doSpin() {
   if (isSpinning) return;
   
-  // Check if user is in demo mode (balance is 0)
-  const isDemoMode = balance <= 0;
+  // Demo mode: balance is 0 OR host explicitly flagged demo mode (insufficient funds)
+  const isDemoMode = balance <= 0 || !!window.__hostDemoMode;
   
-  if (!isDemoMode && balance < currentBet()) {
-    // Re-top-up when out of funds (only in non-demo mode)
+  if (!isDemoMode && !window.__hostedMode && balance < currentBet()) {
+    // Re-top-up when out of funds (only in non-demo, non-hosted mode)
     balance = INITIAL_BALANCE;
     updateBalanceDisplay();
     addLog(`餘額不足，已自動補充至 USDT ${(INITIAL_BALANCE / 100).toFixed(2)}`, 'warn');
@@ -2041,17 +1824,65 @@ function doSpin() {
   spinBtn.disabled = true;
   winEl.textContent = 'USDT 0.00';
 
-  // Deduct bet only if not in demo mode
-  if (!isDemoMode) {
+  // ── Hosted mode: request spin outcome from parent host ──────────────────────
+  // All balance management is delegated to the host page which calls the backend.
+  // We await the result before starting animation so forcedSyms matches the
+  // backend-determined outcome.  An 8-second timeout falls back to client-side.
+  let _hostSpinResult = null;
+  if (window.__hostedMode) {
+    _hostSpinResult = await new Promise((resolve) => {
+      let settled = false;
+      function onMsg(e) {
+        if (e.origin !== window.__gameOrigin || e.source !== window.parent) return;
+        const d = e.data || {};
+        if (d.type !== 'SPIN_RESULT' && d.type !== 'SPIN_ERROR') return;
+        if (settled) return;
+        settled = true;
+        window.removeEventListener('message', onMsg);
+        clearTimeout(tOut);
+        resolve(d.type === 'SPIN_RESULT' ? d : null);
+      }
+      window.addEventListener('message', onMsg);
+      const tOut = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        window.removeEventListener('message', onMsg);
+        addLog('SPIN_REQUEST timed out – falling back to local spin', 'warn');
+        resolve(null);
+      }, SPIN_REQUEST_TIMEOUT_MS);
+      window.parent.postMessage({
+        type: 'SPIN_REQUEST',
+        betIndex: betIdx,
+        mode: isDemoMode ? 'DEMO' : 'REAL',
+      }, window.__gameOrigin);
+    });
+  }
+
+  // Deduct bet only in standalone non-demo mode
+  // (in hosted mode the host manages balance via SPIN_RESULT.newBalance)
+  if (!isDemoMode && !window.__hostedMode) {
     balance -= currentBet();
     updateBalanceDisplay();
   }
 
-  // Demo mode: pre-determine a guaranteed win every 3rd spin so reels visually match the paytable.
-  // forcedSyms is resolved before the reels stop, so the snap logic can steer each reel to the
-  // correct symbol — the resolve block then reads the actual landed symbols with no override needed.
-  demoSpinCount++;
-  const forcedSyms = (demoSpinCount % 3 === 0) ? [5, 5, 5] : null; // ✧✧✧ = 3× consolation
+  // Determine forced symbols:
+  //   1. Host result (backend-determined) takes priority
+  //   2. Client-side demo fallback (guaranteed win every 3rd spin)
+  let forcedSyms = null;
+  if (_hostSpinResult?.symbols?.length === 3) {
+    forcedSyms = _hostSpinResult.symbols;
+    // Apply host-managed balance (units)
+    if (typeof _hostSpinResult.newBalance === 'number') {
+      balance = _hostSpinResult.newBalance;
+      updateBalanceDisplay();
+    }
+  } else {
+    // Demo mode: pre-determine a guaranteed win every 3rd spin so reels visually match the paytable.
+    // forcedSyms is resolved before the reels stop, so the snap logic can steer each reel to the
+    // correct symbol — the resolve block then reads the actual landed symbols with no override needed.
+    demoSpinCount++;
+    forcedSyms = (demoSpinCount % 3 === 0) ? [5, 5, 5] : null; // ✧✧✧ = 3× consolation
+  }
 
   // Launch all reels with gradual acceleration (start at 10% speed, ramp up over ~20 frames)
   reelGroups.forEach(g => { g.userData.spinning = true; g.userData.speed = MAX_SPIN_SPEED * 0.1; });
@@ -2120,9 +1951,12 @@ function doSpin() {
     addLog(`花色: ${landedSymbols.map(i => ACTIVE_SYMBOL_NAMES[i] ?? `sym${i}`).join(' ')} → ×${multiplier}`, multiplier >= 10 ? 'info' : 'warn');
 
     if (multiplier > 0) {
-      const prize = currentBet() * multiplier;
-      // Only add prize to balance if not in demo mode
-      if (!isDemoMode) {
+      // Use prize from host result when available (units); otherwise compute locally.
+      const prize = (_hostSpinResult?.prize != null)
+        ? Number(_hostSpinResult.prize)
+        : currentBet() * multiplier;
+      // Add prize to local balance only in standalone non-demo mode.
+      if (!isDemoMode && !window.__hostedMode) {
         balance += prize;
         updateBalanceDisplay();
       }
@@ -2169,6 +2003,12 @@ window.cancelAutoSpin = function() {
 
 document.getElementById('btn-back').addEventListener('click', () => {
   if (!window.cancelAutoSpin()) {
+    // In hosted mode: delegate back-navigation to the parent host (which closes
+    // the Telegram Mini App).  In other environments use the Flutter bridge.
+    if (window.__hostedMode) {
+      window.parent.postMessage({ type: 'GO_BACK' }, window.__gameOrigin);
+      return;
+    }
     // Navigate back to Flutter.
     // On native Android/iOS InAppWebView: window._flutterNative is injected
     // at document-start by Dart (initialUserScripts), guaranteed before any
@@ -2339,59 +2179,6 @@ renderer.setAnimationLoop(() => {
     }
   }
 });
-
-// ===== VIEWPORT DEBUG LOGGING (iPhone PWA diagnostics) =====
-function logViewportState(source) {
-  try {
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-    const vv = window.visualViewport;
-    const gvTransform = gvEl ? window.getComputedStyle(gvEl).transform : 'N/A';
-    const flutterRoot = document.getElementById('flutter-root');
-    const flutterRootTransform = flutterRoot ? window.getComputedStyle(flutterRoot).transform : 'N/A';
-    
-    let msg = `[${source}] viewport: `;
-    msg += `w=${window.innerWidth} h=${window.innerHeight} `;
-    msg += `dpr=${window.devicePixelRatio} iOS=${isIOS} standalone=${isStandalone} `;
-    if (vv) {
-      msg += `vv-width=${vv.width} vv-height=${vv.height} vv-offsetTop=${vv.offsetTop} vv-offsetLeft=${vv.offsetLeft} `;
-    }
-    msg += `gv-transform=${gvTransform.replace(/\s+/g, ' ')} `;
-    msg += `flutter-root-transform=${flutterRootTransform.replace(/\s+/g, ' ')}`;
-    
-    addLog(msg, 'info');
-  } catch (e) {
-    addLog(`[${source}] viewport debug error: ${e.message}`, 'error');
-  }
-}
-
-// Log on page entry
-logViewportState('PAGE-INIT');
-
-// Monitor visualViewport changes
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', () => logViewportState('VV-RESIZE'));
-  window.visualViewport.addEventListener('scroll', () => logViewportState('VV-SCROLL'));
-}
-
-// Monitor global resize/scroll/orientationchange
-window.addEventListener('resize', () => logViewportState('WINDOW-RESIZE'), { once: false });
-window.addEventListener('scroll', () => logViewportState('WINDOW-SCROLL'), { once: false });
-window.addEventListener('orientationchange', () => logViewportState('ORIENTATION-CHANGE'));
-
-// Log touch events to diagnose tap offset
-if (gvEl) {
-  gvEl.addEventListener('touchstart', (e) => {
-    if (e.touches.length > 0) {
-      const t = e.touches[0];
-      const vv = window.visualViewport;
-      const msg = `TOUCH: clientX=${t.clientX} clientY=${t.clientY} ` +
-                  `screenX=${t.screenX} screenY=${t.screenY} ` +
-                  (vv ? `vv-offsetTop=${vv.offsetTop} vv-offsetLeft=${vv.offsetLeft}` : 'no-vv');
-      addLog(msg, 'info');
-    }
-  });
-}
 
 console.log('月光舞台 v3.0 已加載 – WebGL2 模式');
 addLog(`啟動: native=${!!window._flutterNative} href=${location.href.slice(0,60)} UA=${navigator.userAgent.slice(0,80)}`, 'info');

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+<title>AgoraMarket – 錯誤</title>
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body {
+  width:100%; min-height:100%; background:#010010;
+  font-family:Arial,sans-serif; color:#c0ccff;
+  display:flex; align-items:center; justify-content:center;
+}
+#card {
+  max-width:380px; width:92%; padding:32px 24px; text-align:center;
+  background:rgba(255,255,255,.05); border:1px solid rgba(192,204,255,.15);
+  border-radius:16px;
+}
+.icon { font-size:48px; margin-bottom:16px; }
+h1 { font-size:20px; margin-bottom:12px; color:#e0e8ff; }
+p  { font-size:14px; line-height:1.6; opacity:.75; margin-bottom:8px; }
+.steps { text-align:left; margin:16px 0; padding-left:0; list-style:none; }
+.steps li { font-size:13px; opacity:.75; margin-bottom:6px; padding-left:20px; position:relative; }
+.steps li::before { content:'→'; position:absolute; left:0; opacity:.5; }
+.btn {
+  display:inline-block; margin-top:20px; padding:10px 28px;
+  background:linear-gradient(135deg,#6644ff,#4422cc); color:#fff;
+  border-radius:24px; font-size:14px; text-decoration:none;
+  border:none; cursor:pointer;
+}
+.err-code { font-size:11px; opacity:.35; margin-top:16px; font-family:monospace; }
+</style>
+</head>
+<body>
+<div id="card">
+  <div class="icon">⚠️</div>
+  <h1 id="title">無法開啟遊戲</h1>
+  <p id="message">發生未知錯誤。</p>
+  <ul class="steps" id="steps"></ul>
+  <a class="btn" id="btn-retry" href="#">重試</a>
+  <div class="err-code" id="err-code"></div>
+</div>
+
+<script>
+'use strict';
+
+const REASONS = {
+  no_telegram: {
+    title: 'Telegram SDK 未載入',
+    message: '無法載入 Telegram WebApp SDK，請確認您使用的是 Telegram 應用程式。',
+    steps: [
+      '請關閉此頁面。',
+      '從 Telegram Bot 的選單按鈕重新開啟遊戲。',
+      '確保 Telegram App 已更新至最新版本。',
+    ],
+  },
+  no_initdata: {
+    title: '驗證資訊缺失',
+    message: '未能取得 Telegram 驗證資訊 (initData)。',
+    steps: [
+      '請不要直接用瀏覽器開啟此連結。',
+      '請透過 Telegram Bot 按鈕開啟遊戲。',
+      '若持續出現此問題，請聯繫客服。',
+    ],
+  },
+  exchange_failed: {
+    title: '身份驗證失敗',
+    message: '後端 JWT 驗證失敗，無法確認您的身份。',
+    steps: [
+      '請檢查您的網路連線是否正常。',
+      '請稍候片刻後重新嘗試。',
+      '若問題持續，請聯繫客服支援。',
+    ],
+  },
+  unknown_game: {
+    title: '遊戲不存在',
+    message: '找不到指定的遊戲。',
+    steps: [
+      '請透過 Telegram Bot 按鈕重新開啟遊戲。',
+      '請聯繫客服確認可用的遊戲清單。',
+    ],
+  },
+  boot_error: {
+    title: '啟動失敗',
+    message: '遊戲啟動時發生內部錯誤。',
+    steps: [
+      '請重新整理頁面或關閉後再從 Telegram 重新開啟。',
+      '若問題持續，請聯繫客服並提供錯誤代碼。',
+    ],
+  },
+};
+
+const params  = new URLSearchParams(window.location.search);
+const reason  = params.get('reason') || 'unknown';
+const detail  = params.get('detail') || '';
+const info    = REASONS[reason] || {
+  title: '未知錯誤',
+  message: '發生未知錯誤，請稍後再試。',
+  steps: ['關閉頁面並重新從 Telegram 開啟。', '若問題持續，請聯繫客服。'],
+};
+
+document.getElementById('title').textContent   = info.title;
+document.getElementById('message').textContent = info.message;
+
+const stepsList = document.getElementById('steps');
+info.steps.forEach(s => {
+  const li = document.createElement('li');
+  li.textContent = s;
+  stepsList.appendChild(li);
+});
+
+if (detail || reason !== 'unknown') {
+  document.getElementById('err-code').textContent = `錯誤代碼: ${reason}${detail ? ' – ' + detail.slice(0, 120) : ''}`;
+}
+
+// Retry button: go back to the slot host URL (strip this error page path)
+document.getElementById('btn-retry').addEventListener('click', (e) => {
+  e.preventDefault();
+  // Navigate to /tg/slot/ relative to this error page (which lives at /tg/error.html)
+  window.location.href = new URL('slot/', window.location.href).href;
+});
+</script>
+</body>
+</html>
