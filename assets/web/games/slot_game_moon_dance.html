@@ -1862,7 +1862,11 @@ async function doSpin() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${_spinJwt}`,
         },
-        body: JSON.stringify({ gameId: 'moon_dance', betIndex: betIdx, betAmount: currentBet(), mode: _spinMode, clientSeed: generateClientSeed(), nonce: Date.now().toString() }),
+        body: JSON.stringify({
+          gameId: 'moon_dance', betIndex: betIdx, betAmount: currentBet(),
+          mode: _spinMode, clientSeed: generateClientSeed(), nonce: Date.now().toString(),
+          ...(_spinMode !== 'DEMO' ? { clientRoundId: generateClientSeed() } : {}),
+        }),
       });
       if (!resp.ok) {
         const errText = await resp.text().catch(() => '');

@@ -206,7 +206,11 @@ async function callSpinApi(betIndex, betAmount, mode) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${_jwt}`,
       },
-      body: JSON.stringify({ gameId: 'moon_dance', betIndex, betAmount, mode, clientSeed: generateClientSeed(), nonce: Date.now().toString() }),
+      body: JSON.stringify({
+        gameId: 'moon_dance', betIndex, betAmount, mode,
+        clientSeed: generateClientSeed(), nonce: Date.now().toString(),
+        ...(mode !== 'DEMO' ? { clientRoundId: generateClientSeed() } : {}),
+      }),
     });
     if (!resp.ok) {
       const errText = await resp.text().catch(() => '');
