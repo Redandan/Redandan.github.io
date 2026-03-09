@@ -1034,7 +1034,7 @@ setLoadProgress(5, '初始化引擎...');
 //
 // Message protocol (all messages carry a `type` string field):
 //   Host → Game:  HOST_INIT  { jwt, balance (USDT), demoMode, username }
-//                 SPIN_RESULT { symbols[3], multiplier, prize (units), newBalance (units), mode }
+//                 SPIN_RESULT { symbols[3], multiplier, winAmount/prize (USDT), newBalance (USDT), mode }
 //                 SPIN_ERROR  { message }
 //   Game → Host:  GAME_READY {}
 //                 SPIN_REQUEST { betIndex, betAmount, mode: 'REAL'|'DEMO' }
@@ -1558,7 +1558,7 @@ function makeSymbolTex(idx) {
   return new THREE.CanvasTexture(cv);
 }
 
-const ACTIVE_SYMBOL_COUNT = 6;
+const ACTIVE_SYMBOL_COUNT = 8; // indices 0-7: apple cherry seven lemon bar grapes heart bell
 const ACTIVE_SYMBOL_NAMES = Array.from(
   { length: ACTIVE_SYMBOL_COUNT },
   (_, idx) => spriteMap[idx]?.name ?? `sym${idx}`,
@@ -1616,15 +1616,15 @@ function computeReelGeometry(w, h) {
 
 let { CARD_W, CARD_H, REEL_X } = computeReelGeometry(W, H);
 // Custom weighted reel strips — symbol index × stop count per reel.
-// Weights: ☽=1  舞=3  ★=4  ♪=6  ✦=6  ✧=6  (N=26 stops each)
-// Theoretical RTP ≈ 96.6%   Hit rate ≈ 18.6%
+// Weights: apple=1  bell=1  heart=1  cherry=3  seven=4  lemon/bar/grapes=6  (N=28 stops each)
+// Symbols 6 (heart) and 7 (bell) added so backend can snap to them.
 const REEL_STRIPS = [
-  [0, 1,1,1, 2,2,2,2, 3,3,3,3,3,3, 4,4,4,4,4,4, 5,5,5,5,5,5], // R0: ☽ leads
-  [5,5,5,5,5,5, 0, 1,1,1, 2,2,2,2, 3,3,3,3,3,3, 4,4,4,4,4,4], // R1: ✧ leads
-  [3,3,3,3,3,3, 4,4,4,4,4,4, 5,5,5,5,5,5, 0, 1,1,1, 2,2,2,2], // R2: ♪ leads
+  [0, 6, 7, 1,1,1, 2,2,2,2, 3,3,3,3,3,3, 4,4,4,4,4,4, 5,5,5,5,5,5], // R0: apple leads
+  [5,5,5,5,5,5, 0, 6, 7, 1,1,1, 2,2,2,2, 3,3,3,3,3,3, 4,4,4,4,4,4], // R1: grapes leads
+  [3,3,3,3,3,3, 4,4,4,4,4,4, 5,5,5,5,5,5, 0, 6, 7, 1,1,1, 2,2,2,2], // R2: lemon leads
 ];
-const N_STRIP   = REEL_STRIPS[0].length; // 26 stops per reel
-const N_SYMBOLS = ACTIVE_SYMBOL_COUNT;   // 6 distinct symbols
+const N_STRIP   = REEL_STRIPS[0].length; // stops per reel (auto-derived from REEL_STRIPS)
+const N_SYMBOLS = ACTIVE_SYMBOL_COUNT;   // 8 distinct symbols (0–7)
 // Recycling clip boundary: one card beyond the top/bottom of the visible area
 let STRIP_CLIP = (Math.floor(N_STRIP / 2) + 1) * CARD_H;
 
@@ -1901,8 +1901,9 @@ async function doSpin() {
         _hostSpinResult = {
           symbols: p.symbols,
           multiplier: p.multiplier,
-          prize: p.prize,
-          // Backend returns balance in units (100 units = 1 USDT).
+          // Backend returns decimal USDT amount (e.g. 12.50), not cents/units.
+          prize: Number(p.winAmount ?? p.prize ?? 0),
+          // Backend returns balance as USDT float (e.g. 1974.80).
           newBalance: p.balance,
           mode: p.mode || _spinMode,
         };
@@ -1968,8 +1969,8 @@ async function doSpin() {
   // Apply symbols and host-managed balance from backend result.
   const forcedSyms = _hostSpinResult.symbols;
   if (typeof _hostSpinResult.newBalance === 'number') {
-    balance = _hostSpinResult.newBalance;
-    updateBalanceDisplay();
+    // applyBalance() converts USDT float → internal ×100 units and updates the display.
+    applyBalance(_hostSpinResult.newBalance);
   }
 
   // Launch all reels with gradual acceleration (start at 10% speed, ramp up over ~20 frames)
@@ -2027,7 +2028,7 @@ async function doSpin() {
       const prize = Number(_hostSpinResult.prize ?? 0);
       if (!prize) addLog(`後端 multiplier=${multiplier} 但 prize 未返回`, 'warn');
       // Balance is managed by the host via SPIN_RESULT.newBalance; no local update needed.
-      winEl.textContent     = '+USDT ' + (prize / 100).toFixed(2);
+      winEl.textContent     = '+USDT ' + prize.toFixed(2);
 
       // Flash reel section border — remove first to restart animation if already playing
       const rs = document.getElementById('reel-section');
@@ -2105,7 +2106,7 @@ function showBigWin(amount, title = 'BIG WIN!') {
   const bwT = document.getElementById('bw-title');
   const bwA = document.getElementById('bw-amount');
   bwT.textContent = title;
-  bwA.textContent = '+USDT ' + (amount / 100).toFixed(2);
+  bwA.textContent = '+USDT ' + Number(amount).toFixed(2);
   bw.classList.remove('hidden');
   bwT.style.animation = bwA.style.animation = 'none';
   void bw.offsetHeight; // 強制 reflow 以重置 CSS animation 狀態，使動畫可以重新播放 (reading offsetHeight triggers synchronous layout)

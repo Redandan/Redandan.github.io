@@ -219,9 +219,9 @@ async function callSpinApi(betIndex, betAmount, mode) {
     }
     const json = await resp.json();
     const payload = json?.data ?? json;
-    // Update host balance from response
+    // Update host balance from response (backend returns USDT float, not centesimal units).
     if (typeof payload?.balance === 'number') {
-      _balance = payload.balance / 100; // units → USDT
+      _balance = payload.balance;
     }
     return payload;
   } catch (err) {
@@ -276,18 +276,17 @@ window.addEventListener('message', async (e) => {
     const { betIndex, betAmount, mode } = e.data;
     const spinResult = await callSpinApi(betIndex, betAmount, mode);
     if (spinResult) {
-      // spinResult.balance is in units (per backend contract); _balance is USDT.
-      // Use backend value when present, otherwise fall back to current host balance
-      // converted to units (Math.round avoids floating-point drift).
-      const newBalanceUnits = typeof spinResult.balance === 'number'
+      // Backend returns balance as a USDT float (e.g. 1974.80).
+      // Fall back to current host balance when the field is absent.
+      const newBalance = typeof spinResult.balance === 'number'
         ? spinResult.balance
-        : Math.round(_balance * 100);
+        : _balance;
       sendToGame({
         type: 'SPIN_RESULT',
         symbols: spinResult.symbols,
         multiplier: spinResult.multiplier ?? 0,
         prize: spinResult.prize ?? 0,
-        newBalance: newBalanceUnits,
+        newBalance,
         mode: spinResult.mode ?? mode,
       });
     } else {
