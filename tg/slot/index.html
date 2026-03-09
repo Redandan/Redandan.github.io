@@ -196,7 +196,7 @@ async function callSpinApi(betIndex, mode) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${_jwt}`,
       },
-      body: JSON.stringify({ betIndex, mode }),
+      body: JSON.stringify({ gameId: 'moon_dance', betIndex, mode }),
     });
     if (!resp.ok) {
       const errText = await resp.text().catch(() => '');

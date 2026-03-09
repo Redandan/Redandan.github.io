@@ -1851,7 +1851,7 @@ async function doSpin() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${_spinJwt}`,
         },
-        body: JSON.stringify({ betIndex: betIdx, mode: _spinMode }),
+        body: JSON.stringify({ gameId: 'moon_dance', betIndex: betIdx, mode: _spinMode }),
       });
       if (!resp.ok) {
         const errText = await resp.text().catch(() => '');
