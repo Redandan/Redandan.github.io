@@ -277,8 +277,8 @@ window.addEventListener('message', async (e) => {
         mode: spinResult.mode ?? mode,
       });
     } else {
-      // Backend unavailable – tell game to fall back to client-side spin
-      sendToGame({ type: 'SPIN_ERROR', message: 'Backend spin unavailable; using local fallback.' });
+      // Backend API call failed — notify game so it can show an error to the user.
+      sendToGame({ type: 'SPIN_ERROR', message: 'Backend spin unavailable. Please try again.' });
     }
     return;
   }
