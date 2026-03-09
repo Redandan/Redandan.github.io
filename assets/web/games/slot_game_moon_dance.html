@@ -978,11 +978,18 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
   <div id="bw-amount">+USDT 0</div>
 </div>
 
-<!-- Guard: redirect direct access to the Telegram Mini App entry point -->
+<!-- Guard: redirect direct browser access to the Telegram Mini App entry point.
+     Exceptions:
+       ?hosted=1  — loaded by the TG Mini App host page (web/tg/slot/index.html)
+       ?flutter=1 — loaded by the Flutter app's SlotGamePage WebView
+       _flutterNative — injected at document-start by Flutter native InAppWebView -->
 <script>
-if (new URLSearchParams(window.location.search).get('hosted') !== '1') {
-  window.location.replace('/tg/slot/');
-}
+(function () {
+  var p = new URLSearchParams(window.location.search);
+  if (p.get('hosted') !== '1' && p.get('flutter') !== '1' && !window._flutterNative) {
+    window.location.replace('/tg/slot/');
+  }
+})();
 </script>
 
 <script type="module">
@@ -1028,9 +1035,12 @@ setLoadProgress(5, '初始化引擎...');
 window.__gameOrigin = window.location.origin;
 
 window.addEventListener('message', (e) => {
-  // Strict origin + source check
+  // Strict origin check.
+  // Source check: accept the parent frame (TG host or Flutter Web parent),
+  // the game's own window (native Flutter self-dispatch and injected shims),
+  // or null (programmatic MessageEvent dispatches from evaluateJavascript).
   if (e.origin !== window.__gameOrigin) return;
-  if (e.source !== window.parent) return;
+  if (e.source !== window.parent && e.source !== window && e.source !== null) return;
 
   const { type } = e.data || {};
 
@@ -1061,6 +1071,101 @@ setTimeout(() => {
   window.parent.postMessage({ type: 'GAME_READY' }, window.__gameOrigin);
   console.log('[HOST] GAME_READY sent');
 }, 0);
+
+// ===== Flutter mobile-browser self-host fallback =====
+// When the game is opened as a full page (not in a parent iframe) with
+// ?flutter=1 — e.g. Flutter Web on mobile browsers — the Flutter Dart
+// InAppWebView shim cannot inject HOST_INIT.  Read auth data stored in
+// localStorage by SlotGamePage._buildWebView (mobile-browser branch) and
+// synthesise HOST_INIT + spin handler locally.
+(function () {
+  var p = new URLSearchParams(window.location.search);
+  if (p.get('flutter') !== '1') return;  // only active in flutter mode
+  if (window.parent !== window) return;  // parent frame present: shim handles it
+
+  var _jwt     = localStorage.getItem('_flutter_game_jwt')     || '';
+  var _balance = parseFloat(localStorage.getItem('_flutter_game_balance') || '0');
+  // Allow the API base URL to be overridden via window.__AGORA_API_BASE_URL
+  // (same pattern used by web/tg/slot/index.html) for dev/staging environments.
+  var _apiBase = window.__AGORA_API_BASE_URL || 'https://agoramarketapi.purrtechllc.com/api';
+  var _origin  = window.location.origin;
+
+  if (!_jwt) {
+    console.warn('[FLUTTER_HOST] No JWT in localStorage; spins will fail.');
+  }
+
+  // Override window.parent so the game's postMessage calls stay within this frame.
+  try {
+    Object.defineProperty(window, 'parent', {
+      get: function () { return _selfParent; },
+      configurable: true,
+    });
+  } catch (e) {
+    console.warn('[FLUTTER_HOST] mobile self-host: cannot override window.parent:', e);
+    return;
+  }
+
+  var _selfParent = {
+    postMessage: function (data, targetOrigin) {
+      var type = (data && data.type) || '';
+      if (type === 'GAME_READY') {
+        setTimeout(function () {
+          window.postMessage({
+            type: 'HOST_INIT', jwt: _jwt,
+            balance: _balance, demoMode: (_balance < 0.25), username: '',
+          }, _origin);
+        }, 0);
+        return;
+      }
+      if (type === 'SPIN_REQUEST') {
+        _handleSpin(data.betIndex, data.mode || 'REAL');
+        return;
+      }
+      if (type === 'GO_BACK') {
+        history.back();
+        return;
+      }
+    },
+    get origin() { return _origin; },
+  };
+
+  function _handleSpin(betIndex, mode) {
+    if (!_jwt) {
+      window.postMessage({ type: 'SPIN_ERROR', message: '未登入，無法旋轉' }, _origin);
+      return;
+    }
+    fetch(_apiBase + '/slot/spin', {
+      method: 'POST', mode: 'cors',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _jwt },
+      body: JSON.stringify({ betIndex: betIndex, mode: mode }),
+    })
+    .then(function (resp) {
+      if (!resp.ok) {
+        window.postMessage({ type: 'SPIN_ERROR', message: 'HTTP ' + resp.status }, _origin);
+        return Promise.resolve();
+      }
+      return resp.json().then(function (json) {
+        var payload = (json && json.data != null) ? json.data : json;
+        window.postMessage({
+          type: 'SPIN_RESULT',
+          symbols: payload.symbols, multiplier: payload.multiplier,
+          prize: payload.prize, newBalance: payload.balance, mode: payload.mode || mode,
+        }, _origin);
+      });
+    })
+    .catch(function (err) {
+      window.postMessage({ type: 'SPIN_ERROR', message: String(err) }, _origin);
+    });
+  }
+
+  // Send HOST_INIT immediately in case GAME_READY already fired.
+  setTimeout(function () {
+    window.postMessage({
+      type: 'HOST_INIT', jwt: _jwt,
+      balance: _balance, demoMode: (_balance < 0.25), username: '',
+    }, _origin);
+  }, 50);
+})();
 
 // ===== Log system =====
 const logPanel = document.getElementById('log-panel');
@@ -1721,7 +1826,8 @@ async function doSpin() {
   const _hostSpinResult = await new Promise((resolve) => {
     let settled = false;
     function onMsg(e) {
-      if (e.origin !== window.__gameOrigin || e.source !== window.parent) return;
+      if (e.origin !== window.__gameOrigin) return;
+      if (e.source !== window.parent && e.source !== window && e.source !== null) return;
       const d = e.data || {};
       if (d.type !== 'SPIN_RESULT' && d.type !== 'SPIN_ERROR') return;
       if (settled) return;
