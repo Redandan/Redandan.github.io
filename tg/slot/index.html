@@ -197,7 +197,7 @@ function generateClientSeed() {
   return Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
 }
 
-async function callSpinApi(betIndex, mode) {
+async function callSpinApi(betIndex, betAmount, mode) {
   try {
     const resp = await fetch(`${AGORA_API_BASE_URL}/slot/spin`, {
       method: 'POST',
@@ -206,7 +206,7 @@ async function callSpinApi(betIndex, mode) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${_jwt}`,
       },
-      body: JSON.stringify({ gameId: 'moon_dance', betIndex, mode, clientSeed: generateClientSeed() }),
+      body: JSON.stringify({ gameId: 'moon_dance', betIndex, betAmount, mode, clientSeed: generateClientSeed() }),
     });
     if (!resp.ok) {
       const errText = await resp.text().catch(() => '');
@@ -269,8 +269,8 @@ window.addEventListener('message', async (e) => {
   }
 
   if (type === 'SPIN_REQUEST') {
-    const { betIndex, mode } = e.data;
-    const spinResult = await callSpinApi(betIndex, mode);
+    const { betIndex, betAmount, mode } = e.data;
+    const spinResult = await callSpinApi(betIndex, betAmount, mode);
     if (spinResult) {
       // spinResult.balance is in units (per backend contract); _balance is USDT.
       // Use backend value when present, otherwise fall back to current host balance

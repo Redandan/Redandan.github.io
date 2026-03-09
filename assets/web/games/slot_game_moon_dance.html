@@ -1037,7 +1037,7 @@ setLoadProgress(5, '初始化引擎...');
 //                 SPIN_RESULT { symbols[3], multiplier, prize (units), newBalance (units), mode }
 //                 SPIN_ERROR  { message }
 //   Game → Host:  GAME_READY {}
-//                 SPIN_REQUEST { betIndex, mode: 'REAL'|'DEMO' }
+//                 SPIN_REQUEST { betIndex, betAmount, mode: 'REAL'|'DEMO' }
 //                 GO_BACK {}
 
 // Strict origin for postMessage — must match both directions.
@@ -1862,7 +1862,7 @@ async function doSpin() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${_spinJwt}`,
         },
-        body: JSON.stringify({ gameId: 'moon_dance', betIndex: betIdx, mode: _spinMode, clientSeed: generateClientSeed() }),
+        body: JSON.stringify({ gameId: 'moon_dance', betIndex: betIdx, betAmount: currentBet(), mode: _spinMode, clientSeed: generateClientSeed() }),
       });
       if (!resp.ok) {
         const errText = await resp.text().catch(() => '');
@@ -1921,6 +1921,7 @@ async function doSpin() {
       window.parent.postMessage({
         type: 'SPIN_REQUEST',
         betIndex: betIdx,
+        betAmount: currentBet(),
         mode: _spinMode,
       }, window.__gameOrigin);
     });
