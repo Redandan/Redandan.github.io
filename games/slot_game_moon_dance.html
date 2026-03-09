@@ -1563,6 +1563,30 @@ const ACTIVE_SYMBOL_NAMES = Array.from(
   { length: ACTIVE_SYMBOL_COUNT },
   (_, idx) => spriteMap[idx]?.name ?? `sym${idx}`,
 );
+
+// Reverse map: lowercase name → symbol index, built from the full spriteMap so that
+// symbols outside the 6 active reel-strip entries (e.g. heart, bell, watermelon) are
+// also resolvable when the backend returns them.
+// Aliases cover the case-insensitive backend names and singular/plural variants.
+const _symNameToIdx = (() => {
+  const nameToIndexMap = {};
+  spriteMap.forEach((s, i) => { nameToIndexMap[s.name.toLowerCase()] = i; });
+  // Backend sends "GRAPE" (singular) but spriteMap entry is "grapes" (plural)
+  if (nameToIndexMap['grapes'] !== undefined) nameToIndexMap['grape'] = nameToIndexMap['grapes'];
+  // Add any other known backend→sprite aliases here as needed
+  return nameToIndexMap;
+})();
+
+/** Convert a backend symbol value (string name or numeric index) to a numeric sprite index.
+ *  Returns -1 if the name is not recognised or the input is null/undefined/empty.
+ *  Accepts any casing (e.g. "LEMON", "lemon", "Lemon" all resolve to the same index). */
+function _resolveSymIdx(nameOrIdx) {
+  if (nameOrIdx == null) return -1;
+  if (typeof nameOrIdx === 'number') return nameOrIdx;
+  const key = String(nameOrIdx).trim().toLowerCase();
+  return key.length > 0 ? (_symNameToIdx[key] ?? -1) : -1;
+}
+
 const symTextures = Array.from(
   { length: ACTIVE_SYMBOL_COUNT },
   (_, idx) => makeSymbolTex(idx),
@@ -1962,14 +1986,16 @@ async function doSpin() {
       // Steer to the backend-determined symbol so the visual result matches the API outcome.
       let closest = null;
       if (forcedSyms !== null) {
-        const target = forcedSyms[i];
-        let minDist = Infinity;
-        strip.children.forEach(card => {
-          if (card.userData.symIdx === target) {
-            const d = Math.abs(card.position.y);
-            if (d < minDist) { minDist = d; closest = card; }
-          }
-        });
+        const targetIdx = _resolveSymIdx(forcedSyms[i]); // resolve string name → numeric index
+        if (targetIdx >= 0) {
+          let minDist = Infinity;
+          strip.children.forEach(card => {
+            if (card.userData.symIdx === targetIdx) {
+              const d = Math.abs(card.position.y);
+              if (d < minDist) { minDist = d; closest = card; }
+            }
+          });
+        }
       }
       // Safety: if the target symbol isn't present on this reel, snap to the geometrically-closest card.
       if (closest === null) {
@@ -1995,7 +2021,7 @@ async function doSpin() {
     spinBtn.disabled = false;
 
     const multiplier = _hostSpinResult.multiplier ?? 0;
-    addLog(`花色: ${forcedSyms.map(i => ACTIVE_SYMBOL_NAMES[i] ?? `sym${i}`).join(' ')} → ×${multiplier}`, multiplier >= 10 ? 'info' : 'warn');
+    addLog(`花色: ${forcedSyms.map(s => typeof s === 'string' ? s : (ACTIVE_SYMBOL_NAMES[s] ?? `sym${s}`)).join(' ')} → ×${multiplier}`, multiplier >= 10 ? 'info' : 'warn');
 
     if (multiplier > 0) {
       const prize = Number(_hostSpinResult.prize ?? 0);
