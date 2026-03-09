@@ -1034,6 +1034,13 @@ setLoadProgress(5, '初始化引擎...');
 // Strict origin for postMessage — must match both directions.
 window.__gameOrigin = window.location.origin;
 
+// Cache query-param flags once at module load so repeated reads are O(1).
+const _searchParams = new URLSearchParams(window.location.search);
+// true when opened by the Telegram Mini App host page (?hosted=1)
+const _isHostedMode  = _searchParams.get('hosted')  === '1';
+// true when opened by the Flutter app (?flutter=1 or window._flutterNative)
+const _isFlutterMode = _searchParams.get('flutter') === '1' || !!window._flutterNative;
+
 window.addEventListener('message', (e) => {
   // Strict origin check.
   // Source check: accept the parent frame (TG host or Flutter Web parent),
@@ -1077,92 +1084,30 @@ setTimeout(() => {
 // ?flutter=1 — e.g. Flutter Web on mobile browsers — the Flutter Dart
 // InAppWebView shim cannot inject HOST_INIT.  Read auth data stored in
 // localStorage by SlotGamePage._buildWebView (mobile-browser branch) and
-// synthesise HOST_INIT + spin handler locally.
+// dispatch HOST_INIT so doSpin() can use the JWT to call the API directly.
 (function () {
   var p = new URLSearchParams(window.location.search);
   if (p.get('flutter') !== '1') return;  // only active in flutter mode
-  if (window.parent !== window) return;  // parent frame present: shim handles it
+  if (window.parent !== window) return;  // iframe present: Dart shim injects HOST_INIT
 
   var _jwt     = localStorage.getItem('_flutter_game_jwt')     || '';
   var _balance = parseFloat(localStorage.getItem('_flutter_game_balance') || '0');
-  // Allow the API base URL to be overridden via window.__AGORA_API_BASE_URL
-  // (same pattern used by web/tg/slot/index.html) for dev/staging environments.
-  var _apiBase = window.__AGORA_API_BASE_URL || 'https://agoramarketapi.purrtechllc.com/api';
   var _origin  = window.location.origin;
 
   if (!_jwt) {
     console.warn('[FLUTTER_HOST] No JWT in localStorage; spins will fail.');
   }
 
-  // Override window.parent so the game's postMessage calls stay within this frame.
-  try {
-    Object.defineProperty(window, 'parent', {
-      get: function () { return _selfParent; },
-      configurable: true,
-    });
-  } catch (e) {
-    console.warn('[FLUTTER_HOST] mobile self-host: cannot override window.parent:', e);
-    return;
-  }
-
-  var _selfParent = {
-    postMessage: function (data, targetOrigin) {
-      var type = (data && data.type) || '';
-      if (type === 'GAME_READY') {
-        setTimeout(function () {
-          window.postMessage({
-            type: 'HOST_INIT', jwt: _jwt,
-            balance: _balance, demoMode: (_balance < 0.25), username: '',
-          }, _origin);
-        }, 0);
-        return;
-      }
-      if (type === 'SPIN_REQUEST') {
-        _handleSpin(data.betIndex, data.mode || 'REAL');
-        return;
-      }
-      if (type === 'GO_BACK') {
-        history.back();
-        return;
-      }
-    },
-    get origin() { return _origin; },
-  };
-
-  function _handleSpin(betIndex, mode) {
-    if (!_jwt) {
-      window.postMessage({ type: 'SPIN_ERROR', message: '未登入，無法旋轉' }, _origin);
-      return;
-    }
-    fetch(_apiBase + '/slot/spin', {
-      method: 'POST', mode: 'cors',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _jwt },
-      body: JSON.stringify({ betIndex: betIndex, mode: mode }),
-    })
-    .then(function (resp) {
-      if (!resp.ok) {
-        window.postMessage({ type: 'SPIN_ERROR', message: 'HTTP ' + resp.status }, _origin);
-        return Promise.resolve();
-      }
-      return resp.json().then(function (json) {
-        var payload = (json && json.data != null) ? json.data : json;
-        window.postMessage({
-          type: 'SPIN_RESULT',
-          symbols: payload.symbols, multiplier: payload.multiplier,
-          prize: payload.prize, newBalance: payload.balance, mode: payload.mode || mode,
-        }, _origin);
-      });
-    })
-    .catch(function (err) {
-      window.postMessage({ type: 'SPIN_ERROR', message: String(err) }, _origin);
-    });
-  }
-
-  // Send HOST_INIT immediately in case GAME_READY already fired.
+  // Dispatch HOST_INIT so the game receives the JWT and balance.
+  // doSpin() will then call the API directly using window.__agoraAuth.token —
+  // no window.parent interception required.
   setTimeout(function () {
     window.postMessage({
-      type: 'HOST_INIT', jwt: _jwt,
-      balance: _balance, demoMode: (_balance < 0.25), username: '',
+      type: 'HOST_INIT',
+      jwt: _jwt,
+      balance: _balance,
+      demoMode: (_balance < 0.25),
+      username: '',
     }, _origin);
   }, 50);
 })();
@@ -1244,6 +1189,8 @@ function addLog(msg, type = 'info') {
   _logEntries.push({ type, text });
   if (_logEntries.length > MAX_LOGS) _logEntries.shift();
   _saveStoredLogs();
+  // Auto-expand the log panel when an error occurs so the user sees it.
+  if (type === 'error') logPanel.classList.remove('collapsed');
   // scrollTop forces a layout reflow; skip it when the panel is hidden (display:none).
   if (logPanel.offsetParent !== null) logPanel.scrollTop = logPanel.scrollHeight;
 }
@@ -1820,36 +1767,89 @@ async function doSpin() {
   spinBtn.disabled = true;
   winEl.textContent = 'USDT 0.00';
 
-  // Request spin outcome from the host page (which calls the backend).
-  // We await the result before starting reel animation so forcedSyms matches
-  // the backend-determined outcome.  Cancels the spin on error or timeout.
-  const _hostSpinResult = await new Promise((resolve) => {
-    let settled = false;
-    function onMsg(e) {
-      if (e.origin !== window.__gameOrigin) return;
-      if (e.source !== window.parent && e.source !== window && e.source !== null) return;
-      const d = e.data || {};
-      if (d.type !== 'SPIN_RESULT' && d.type !== 'SPIN_ERROR') return;
-      if (settled) return;
-      settled = true;
-      window.removeEventListener('message', onMsg);
-      clearTimeout(tOut);
-      resolve(d.type === 'SPIN_RESULT' ? d : null);
+  const _spinJwt  = window.__agoraAuth?.token || '';
+  const _spinMode = isDemoMode ? 'DEMO' : 'REAL';
+  // Allow the API base URL to be overridden for dev/staging environments.
+  const _apiBase  = window.__AGORA_API_BASE_URL || 'https://agoramarketapi.purrtechllc.com/api';
+
+  let _hostSpinResult = null;
+
+  if (_spinJwt) {
+    // ── Flutter / standalone entry: call the API directly using the JWT ──────
+    // This bypasses the window.parent postMessage round-trip, which is only
+    // available in the Telegram Mini App host-page setup.
+    addLog(`SPIN → ${_spinMode} bet=${betIdx}`, 'info');
+    try {
+      const resp = await fetch(`${_apiBase}/slot/spin`, {
+        method: 'POST',
+        mode: 'cors',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${_spinJwt}`,
+        },
+        body: JSON.stringify({ betIndex: betIdx, mode: _spinMode }),
+      });
+      if (!resp.ok) {
+        const errText = await resp.text().catch(() => '');
+        addLog(`SPIN HTTP ${resp.status}: ${errText.slice(0, 200)}`, 'error');
+      } else {
+        const json = await resp.json();
+        const p = (json && json.data != null) ? json.data : json;
+        _hostSpinResult = {
+          symbols: p.symbols,
+          multiplier: p.multiplier,
+          prize: p.prize,
+          // Backend returns balance in units (100 units = 1 USDT).
+          newBalance: p.balance,
+          mode: p.mode || _spinMode,
+        };
+        addLog(`SPIN OK: ${JSON.stringify(p.symbols)} ×${p.multiplier}`, 'info');
+      }
+    } catch (err) {
+      addLog(`SPIN fetch error: ${err}`, 'error');
     }
-    window.addEventListener('message', onMsg);
-    const tOut = setTimeout(() => {
-      if (settled) return;
-      settled = true;
-      window.removeEventListener('message', onMsg);
-      addLog('SPIN_REQUEST timed out – spin cancelled', 'warn');
-      resolve(null);
-    }, SPIN_REQUEST_TIMEOUT_MS);
-    window.parent.postMessage({
-      type: 'SPIN_REQUEST',
-      betIndex: betIdx,
-      mode: isDemoMode ? 'DEMO' : 'REAL',
-    }, window.__gameOrigin);
-  });
+
+  } else {
+    // ── Telegram Mini App entry: no in-game JWT — request spin from the host page ──
+    // The TG host page (web/tg/slot/index.html, ?hosted=1) holds the JWT and
+    // calls the backend on our behalf, replying via SPIN_RESULT / SPIN_ERROR.
+    if (!_isHostedMode) {
+      // Not TG Mini App and no JWT: the user must open the game via the Flutter
+      // app or Telegram Bot — they cannot spin without authentication.
+      addLog('未登入 — 請透過 AgoraMarket 或 Telegram Bot 開啟遊戲', 'error');
+      winEl.textContent = '請先登入';
+      isSpinning = false;
+      spinBtn.disabled = false;
+      return;
+    }
+    _hostSpinResult = await new Promise((resolve) => {
+      let settled = false;
+      function onMsg(e) {
+        if (e.origin !== window.__gameOrigin) return;
+        if (e.source !== window.parent && e.source !== window && e.source !== null) return;
+        const d = e.data || {};
+        if (d.type !== 'SPIN_RESULT' && d.type !== 'SPIN_ERROR') return;
+        if (settled) return;
+        settled = true;
+        window.removeEventListener('message', onMsg);
+        clearTimeout(tOut);
+        resolve(d.type === 'SPIN_RESULT' ? d : null);
+      }
+      window.addEventListener('message', onMsg);
+      const tOut = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        window.removeEventListener('message', onMsg);
+        addLog('SPIN_REQUEST timed out – spin cancelled', 'warn');
+        resolve(null);
+      }, SPIN_REQUEST_TIMEOUT_MS);
+      window.parent.postMessage({
+        type: 'SPIN_REQUEST',
+        betIndex: betIdx,
+        mode: _spinMode,
+      }, window.__gameOrigin);
+    });
+  }
 
   // Backend must return a valid SPIN_RESULT; no client-side fallback.
   if (!_hostSpinResult?.symbols?.length) {
@@ -1963,8 +1963,14 @@ function cancelAutoSpin() {
 
 document.getElementById('btn-back').addEventListener('click', () => {
   if (!cancelAutoSpin()) {
-    // Delegate back-navigation to the host (closes the Telegram Mini App).
-    window.parent.postMessage({ type: 'GO_BACK' }, window.__gameOrigin);
+    if (window._flutterBridge) {
+      // Flutter entry (native WebView, Flutter Web iframe, or standalone mobile browser):
+      // use the platform-aware bridge for back-navigation.
+      window._flutterBridge.goBack();
+    } else {
+      // Telegram Mini App entry: ask the TG host page to close the iframe.
+      window.parent.postMessage({ type: 'GO_BACK' }, window.__gameOrigin);
+    }
   }
 });
 
