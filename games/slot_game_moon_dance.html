@@ -996,6 +996,15 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 import * as THREE from 'https://esm.sh/three@0.160.0';
 import { GLTFLoader } from 'https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
 
+// ── Early game-state declarations ────────────────────────────────────────────
+// Declared here (before any event listeners or IIFEs) so that `applyBalance()`
+// — which is a hoisted function declaration — never hits a TDZ error even if
+// HOST_INIT fires before the Three.js setup block at the bottom of the module
+// has been reached during execution.
+let balance    = 0; // USDT × 100 units; updated by applyBalance() on HOST_INIT / SPIN_RESULT
+let isSpinning = false;
+// ─────────────────────────────────────────────────────────────────────────────
+
 // ===== Loading screen =====
 const gameLoader   = document.getElementById('game-loader');
 const glBar        = document.getElementById('gl-bar');
@@ -1056,14 +1065,21 @@ window.addEventListener('message', (e) => {
     window.__agoraAuth = { token: jwt };
     window.__hostDemoMode = !!demoMode;
 
-    // Apply balance (USDT float → units ×100).
-    // HOST_INIT always arrives after the page is fully initialised, so
-    // applyBalance is guaranteed to be defined at this point.
+    // Apply balance from HOST_INIT immediately (may be 0 if the Dart side
+    // failed to fetch the profile; fetchAndApplyBalance will correct it).
     applyBalance(Number(hostBalance) || 0);
 
     if (username) {
       localStorage.setItem('first_name', username);
       window.__agoraAuth.firstName = username;
+    }
+
+    // Fetch fresh balance directly from /auth/me so we always display the
+    // real server-side balance regardless of what HOST_INIT carried.
+    if (jwt) {
+      // Errors are already logged inside fetchAndApplyBalance(); we swallow the
+      // rejection here to avoid an unhandled-promise-rejection warning.
+      fetchAndApplyBalance(jwt).catch(() => {});
     }
 
     console.log('[HOST] HOST_INIT: balance=' + hostBalance + ' USDT, demo=' + demoMode);
@@ -1617,8 +1633,7 @@ REEL_X.forEach((rx, ri) => {
 });
 
 // ===== Game state =====
-let isSpinning  = false;
-let balance     = 0; // Updated by HOST_INIT / SPIN_RESULT.newBalance from the host page
+// (balance and isSpinning are declared near the top of the module to avoid TDZ)
 
 const BET_LEVELS   = [25, 50, 100, 250, 500];
 let betIdx         = 3;                          // start at USDT 2.50 (250 units)
@@ -1663,6 +1678,43 @@ function refreshJackpotBanner() {
 function updateBalanceDisplay() {
   balanceEl.textContent = 'USDT ' + (balance / 100).toFixed(2);
   refreshJackpotBanner();
+}
+
+// Fetch the user's current balance from the /auth/me endpoint and apply it.
+// Called after HOST_INIT sets window.__agoraAuth.token so we always display
+// the real server-side balance (HOST_INIT balance may be zero/stale if the
+// Dart profile fetch failed).
+//
+// /auth/me response shapes supported:
+//   { userInfo: { balance: 1.23 } }          ← standard server response
+//   { data: { balance: 1.23 } }              ← legacy wrapper
+//   { balance: 1.23 }                        ← flat (Telegram exchange-jwt compat)
+async function fetchAndApplyBalance(jwt) {
+  const apiBase = window.__AGORA_API_BASE_URL || 'https://agoramarketapi.purrtechllc.com/api';
+  try {
+    const resp = await fetch(`${apiBase}/auth/me`, {
+      headers: { 'Authorization': `Bearer ${jwt}` },
+    });
+    if (!resp.ok) {
+      addLog(`餘額更新失敗: HTTP ${resp.status}`, 'warn');
+      return;
+    }
+    const json = await resp.json();
+    // Support multiple API response shapes:
+    //   { userInfo: { balance } }   ← standard server response
+    //   { data: { balance } }       ← legacy wrapper
+    //   { balance }                 ← flat
+    const dataOrRoot    = (json && json.data    != null) ? json.data    : json;
+    const userInfoOrData = (dataOrRoot && dataOrRoot.userInfo != null) ? dataOrRoot.userInfo : dataOrRoot;
+    const usdt = Number(userInfoOrData?.balance) || 0;
+    applyBalance(usdt);
+    // Update demo mode based on the freshly fetched balance.
+    window.__hostDemoMode = usdt < 0.25;
+    refreshJackpotBanner();
+    addLog(`餘額已從伺服器更新: USDT ${usdt.toFixed(2)}`, 'info');
+  } catch (e) {
+    addLog(`餘額更新失敗: ${e}`, 'warn');
+  }
 }
 
 // Apply balance received from the host (USDT float → units ×100).
