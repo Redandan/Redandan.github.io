@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
 <meta http-equiv="Cache-Control" content="no-cache" />
 <title>月光舞台 - 夜舞老虎機</title>
-<!-- Shared Flutter ↔ WebView bridge (loaded before the game module script) -->
-<script src="_runtime/flutter_bridge.js"></script>
 <style>
 /* ===== Telegram Mini App CSS Variables ===== */
 :root {
@@ -1006,24 +1004,8 @@ function hideLoader() {
 
 setLoadProgress(5, '初始化引擎...');
 
-// ===== Boot diagnostics (thin wrapper for early log capture) =====
-// tgBootLog kept for compatibility with any log references; logs go to console
-// and are flushed into the in-app panel once addLog is ready (see window.__tgAddLog).
-const tgInitLogBuffer = [];
-function tgBootLog(message, type = 'info') {
-  const text = `[BOOT] ${message}`;
-  if (type === 'error') console.error(text);
-  else if (type === 'warn') console.warn(text);
-  else console.log(text);
-  if (typeof window.__tgAddLog === 'function') {
-    window.__tgAddLog(text, type);
-  } else {
-    tgInitLogBuffer.push({ text, type });
-  }
-}
-
 // ===== Host Bridge (Telegram Mini App host ↔ game iframe protocol) =====
-// When opened via web/tg/slot/index.html the query param ?hosted=1 is set.
+// Opened exclusively via web/tg/slot/index.html with query param ?hosted=1.
 // The host page handles Telegram initData exchange and balance checks; this
 // game page only renders visuals and communicates back via postMessage.
 //
@@ -1035,54 +1017,43 @@ function tgBootLog(message, type = 'info') {
 //                 SPIN_REQUEST { betIndex, mode: 'REAL'|'DEMO' }
 //                 GO_BACK {}
 
-// Origin must match so postMessage is only accepted from the same GitHub-Pages
-// origin.  Works for both https://redandan.github.io and localhost dev.
+// Strict origin for postMessage — must match both directions.
 window.__gameOrigin = window.location.origin;
-window.__hostedMode = new URLSearchParams(window.location.search).has('hosted');
 
-if (window.__hostedMode) {
-  tgBootLog('Hosted mode: waiting for HOST_INIT from parent…');
+window.addEventListener('message', (e) => {
+  // Strict origin + source check
+  if (e.origin !== window.__gameOrigin) return;
+  if (e.source !== window.parent) return;
 
-  window.addEventListener('message', (e) => {
-    // Strict origin check
-    if (e.origin !== window.__gameOrigin) return;
-    if (e.source !== window.parent) return;
+  const { type } = e.data || {};
 
-    const { type } = e.data || {};
+  if (type === 'HOST_INIT') {
+    const { jwt, balance: hostBalance, demoMode, username } = e.data;
+    window.__agoraAuth = { token: jwt };
+    window.__hostDemoMode = !!demoMode;
 
-    if (type === 'HOST_INIT') {
-      const { jwt, balance: hostBalance, demoMode, username } = e.data;
-      window.__agoraAuth = { token: jwt };
-      window.__hostDemoMode = !!demoMode;
+    // Apply balance (USDT float → units ×100).
+    // HOST_INIT always arrives after the page is fully initialised, so
+    // applyBalance is guaranteed to be defined at this point.
+    applyBalance(Number(hostBalance) || 0);
 
-      // Seed balance; onBalanceUpdate expects USDT float.
-      if (typeof window.onBalanceUpdate === 'function') {
-        window.onBalanceUpdate(Number(hostBalance) || 0);
-      } else {
-        window.GAME_CONFIG = window.GAME_CONFIG || {};
-        window.GAME_CONFIG.userBalance = Number(hostBalance) || 0;
-        window.__pendingHostBalance = Number(hostBalance) || 0;
-      }
-
-      if (username) {
-        localStorage.setItem('first_name', username);
-        window.__agoraAuth.firstName = username;
-      }
-
-      tgBootLog(`HOST_INIT received: balance=${hostBalance} USDT, demo=${demoMode}`);
-      return;
+    if (username) {
+      localStorage.setItem('first_name', username);
+      window.__agoraAuth.firstName = username;
     }
-    // SPIN_RESULT / SPIN_ERROR are handled inside doSpin's Promise resolver.
-  });
 
-  // Notify parent that the game is ready to receive HOST_INIT.
-  // Deferred slightly so the message listener above is guaranteed to be
-  // registered before any synchronous response the parent might send.
-  setTimeout(() => {
-    window.parent.postMessage({ type: 'GAME_READY' }, window.__gameOrigin);
-    tgBootLog('GAME_READY sent to host');
-  }, 0);
-}
+    console.log('[HOST] HOST_INIT: balance=' + hostBalance + ' USDT, demo=' + demoMode);
+    return;
+  }
+  // SPIN_RESULT / SPIN_ERROR are handled inside doSpin's Promise resolver.
+});
+
+// Notify the parent host that the game is ready to receive HOST_INIT.
+// setTimeout(0) ensures the listener above is registered first.
+setTimeout(() => {
+  window.parent.postMessage({ type: 'GAME_READY' }, window.__gameOrigin);
+  console.log('[HOST] GAME_READY sent');
+}, 0);
 
 // ===== Log system =====
 const logPanel = document.getElementById('log-panel');
@@ -1163,13 +1134,6 @@ function addLog(msg, type = 'info') {
   _saveStoredLogs();
   // scrollTop forces a layout reflow; skip it when the panel is hidden (display:none).
   if (logPanel.offsetParent !== null) logPanel.scrollTop = logPanel.scrollHeight;
-}
-
-// Bridge Telegram boot logs into the in-app log panel once addLog is available.
-window.__tgAddLog = addLog;
-if (tgInitLogBuffer.length) {
-  for (const entry of tgInitLogBuffer) addLog(entry.text, entry.type);
-  tgInitLogBuffer.length = 0;
 }
 
 const _log = console.log, _warn = console.warn, _err = console.error;
@@ -1612,28 +1576,18 @@ const spinBtn   = document.getElementById('spin-btn');
 betLabel.textContent  = '投注 USDT ' + (currentBet() / 100).toFixed(2);
 const jackpotMarqueeTextEl = document.getElementById('jackpot-marquee-text');
 
-function isUserLoggedIn() {
-  return !!(
-    window.__agoraAuth?.token ||
-    localStorage.getItem('access_token') ||
-    localStorage.getItem('user_id') ||
-    localStorage.getItem('username')
-  );
-}
-
 function getDisplayUsername() {
   return (
     localStorage.getItem('first_name') ||
     window.__agoraAuth?.firstName ||
-    window.GAME_CONFIG?.firstName ||
     '貴賓'
   );
 }
 
 function refreshJackpotBanner() {
   if (!jackpotMarqueeTextEl) return;
-  // Show demo/trial mode banner when balance is 0 or host flagged insufficient funds.
-  if (balance <= 0 || !!window.__hostDemoMode) {
+  // Show demo/trial mode banner when host flagged insufficient funds.
+  if (window.__hostDemoMode) {
     const username = getDisplayUsername();
     jackpotMarqueeTextEl.textContent = `尊敬的 ${username} 當前為試玩模式　✦　充值後可以解鎖真實模式`;
     return;
@@ -1646,51 +1600,14 @@ function updateBalanceDisplay() {
   refreshJackpotBanner();
 }
 
+// Apply balance received from the host (USDT float → units ×100).
+function applyBalance(usdt) {
+  balance = Math.round(usdt * 100);
+  updateBalanceDisplay();
+  addLog(`餘額已更新: USDT ${(balance / 100).toFixed(2)}`, 'info');
+}
+
 updateBalanceDisplay();
-
-// Initialize balance from Flutter's injection or use default
-// This function is called by Flutter after injecting GAME_CONFIG
-function initializeBalance() {
-  if (window.GAME_CONFIG?.userBalance !== undefined) {
-    const flutterBalance = window.GAME_CONFIG.userBalance;
-    const newBalance = Math.round(flutterBalance * 100);
-    console.log('[BALANCE_INIT] From Flutter config:', flutterBalance, '→', newBalance, 'units →', (newBalance / 100).toFixed(2), 'USDT');
-    balance = newBalance;
-    updateBalanceDisplay();
-    addLog(`Loaded balance from app: USDT ${(balance / 100).toFixed(2)}`, 'info');
-  } else {
-    console.log('[BALANCE_INIT] Using default:', INITIAL_BALANCE, 'units (100 USDT)');
-    updateBalanceDisplay();
-  }
-}
-
-// Callback for Flutter to update balance dynamically
-// Flutter passes USDT amount (e.g., 100.5), we convert to units (×100)
-window.onBalanceUpdate = function(flutterBalance) {
-  console.log('[BALANCE_UPDATE] Received from Flutter:', flutterBalance, 'type:', typeof flutterBalance);
-  if (flutterBalance !== null && flutterBalance !== undefined) {
-    const newBalance = Math.round(flutterBalance * 100);
-    console.log('[BALANCE_UPDATE] Converting:', flutterBalance, '→', newBalance, 'units →', (newBalance / 100).toFixed(2), 'USDT');
-    balance = newBalance;
-    updateBalanceDisplay();
-    addLog(`Balance updated from app: USDT ${(balance / 100).toFixed(2)}`, 'info');
-  }
-};
-
-// Apply pending balance from host bridge or Flutter GAME_CONFIG injection.
-// __pendingHostBalance is set by the HOST_INIT handler above when onBalanceUpdate
-// isn't available yet at that point in the script execution order.
-if (window.__pendingHostBalance !== undefined) {
-  const pendingBalance = Number(window.__pendingHostBalance);
-  if (Number.isFinite(pendingBalance)) {
-    initializeBalance(); // ensure UI is bootstrapped before applying the update
-    window.onBalanceUpdate(pendingBalance);
-  }
-  delete window.__pendingHostBalance;
-} else {
-  // Standalone or Flutter contexts: initialise from GAME_CONFIG if preloaded.
-  initializeBalance();
-}
 
 // ===== Bet cycling =====
 document.getElementById('btn-bet').addEventListener('click', () => {
@@ -1811,59 +1728,42 @@ function evaluatePayline(s0, s1, s2) {
 async function doSpin() {
   if (isSpinning) return;
   
-  // Demo mode: balance is 0 OR host explicitly flagged demo mode (insufficient funds)
-  const isDemoMode = balance <= 0 || !!window.__hostDemoMode;
-  
-  if (!isDemoMode && !window.__hostedMode && balance < currentBet()) {
-    // Re-top-up when out of funds (only in non-demo, non-hosted mode)
-    balance = INITIAL_BALANCE;
-    updateBalanceDisplay();
-    addLog(`餘額不足，已自動補充至 USDT ${(INITIAL_BALANCE / 100).toFixed(2)}`, 'warn');
-  }
+  // Demo mode when host explicitly flagged insufficient funds.
+  const isDemoMode = window.__hostDemoMode;
+
   isSpinning = true;
   spinBtn.disabled = true;
   winEl.textContent = 'USDT 0.00';
 
-  // ── Hosted mode: request spin outcome from parent host ──────────────────────
-  // All balance management is delegated to the host page which calls the backend.
-  // We await the result before starting animation so forcedSyms matches the
-  // backend-determined outcome.  An 8-second timeout falls back to client-side.
-  let _hostSpinResult = null;
-  if (window.__hostedMode) {
-    _hostSpinResult = await new Promise((resolve) => {
-      let settled = false;
-      function onMsg(e) {
-        if (e.origin !== window.__gameOrigin || e.source !== window.parent) return;
-        const d = e.data || {};
-        if (d.type !== 'SPIN_RESULT' && d.type !== 'SPIN_ERROR') return;
-        if (settled) return;
-        settled = true;
-        window.removeEventListener('message', onMsg);
-        clearTimeout(tOut);
-        resolve(d.type === 'SPIN_RESULT' ? d : null);
-      }
-      window.addEventListener('message', onMsg);
-      const tOut = setTimeout(() => {
-        if (settled) return;
-        settled = true;
-        window.removeEventListener('message', onMsg);
-        addLog('SPIN_REQUEST timed out – falling back to local spin', 'warn');
-        resolve(null);
-      }, SPIN_REQUEST_TIMEOUT_MS);
-      window.parent.postMessage({
-        type: 'SPIN_REQUEST',
-        betIndex: betIdx,
-        mode: isDemoMode ? 'DEMO' : 'REAL',
-      }, window.__gameOrigin);
-    });
-  }
-
-  // Deduct bet only in standalone non-demo mode
-  // (in hosted mode the host manages balance via SPIN_RESULT.newBalance)
-  if (!isDemoMode && !window.__hostedMode) {
-    balance -= currentBet();
-    updateBalanceDisplay();
-  }
+  // Request spin outcome from the host page (which calls the backend).
+  // We await the result before starting reel animation so forcedSyms matches
+  // the backend-determined outcome.  Falls back to client-side after timeout.
+  const _hostSpinResult = await new Promise((resolve) => {
+    let settled = false;
+    function onMsg(e) {
+      if (e.origin !== window.__gameOrigin || e.source !== window.parent) return;
+      const d = e.data || {};
+      if (d.type !== 'SPIN_RESULT' && d.type !== 'SPIN_ERROR') return;
+      if (settled) return;
+      settled = true;
+      window.removeEventListener('message', onMsg);
+      clearTimeout(tOut);
+      resolve(d.type === 'SPIN_RESULT' ? d : null);
+    }
+    window.addEventListener('message', onMsg);
+    const tOut = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      window.removeEventListener('message', onMsg);
+      addLog('SPIN_REQUEST timed out – falling back to local spin', 'warn');
+      resolve(null);
+    }, SPIN_REQUEST_TIMEOUT_MS);
+    window.parent.postMessage({
+      type: 'SPIN_REQUEST',
+      betIndex: betIdx,
+      mode: isDemoMode ? 'DEMO' : 'REAL',
+    }, window.__gameOrigin);
+  });
 
   // Determine forced symbols:
   //   1. Host result (backend-determined) takes priority
@@ -1955,11 +1855,7 @@ async function doSpin() {
       const prize = (_hostSpinResult?.prize != null)
         ? Number(_hostSpinResult.prize)
         : currentBet() * multiplier;
-      // Add prize to local balance only in standalone non-demo mode.
-      if (!isDemoMode && !window.__hostedMode) {
-        balance += prize;
-        updateBalanceDisplay();
-      }
+      // Balance is managed by the host via SPIN_RESULT.newBalance; no local update needed.
       winEl.textContent     = '+USDT ' + (prize / 100).toFixed(2);
 
       // Flash reel section border — remove first to restart animation if already playing
@@ -1990,50 +1886,20 @@ async function doSpin() {
 /** Cancels auto-spin if it is currently active.
  *  Returns true if auto-spin was running (and has now been cancelled),
  *  false if nothing needed to be done.
- *  Exposed on window so the Flutter layer can call it via evaluateJavascript.
  */
-window.cancelAutoSpin = function() {
+function cancelAutoSpin() {
   if (!autoSpin) return false;
   autoSpin = false;
   spinBtn.style.outline = '';
   clearTimeout(autoTimer);
   addLog('自動旋轉已取消', 'info');
   return true;
-};
+}
 
 document.getElementById('btn-back').addEventListener('click', () => {
-  if (!window.cancelAutoSpin()) {
-    // In hosted mode: delegate back-navigation to the parent host (which closes
-    // the Telegram Mini App).  In other environments use the Flutter bridge.
-    if (window.__hostedMode) {
-      window.parent.postMessage({ type: 'GO_BACK' }, window.__gameOrigin);
-      return;
-    }
-    // Navigate back to Flutter.
-    // On native Android/iOS InAppWebView: window._flutterNative is injected
-    // at document-start by Dart (initialUserScripts), guaranteed before any
-    // user interaction.
-    //   - If window.flutter_inappwebview is available (always on iOS WKWebView,
-    //     sometimes on Android): use callHandler('goBack').  This sends a
-    //     message without triggering page navigation — safe on iOS 17 WKWebView.
-    //   - Otherwise (Android where the bridge may be absent): navigate to
-    //     flutter://goback, intercepted via shouldOverrideUrlLoading in Dart.
-    // On Flutter Web desktop (rendered as an iframe): postMessage to the
-    // parent Flutter window — handled by listenForGoBack in Dart.
-    // On mobile browser (direct navigation, not in iframe): use history.back().
-    let path;
-    if (window._flutterNative) {
-      path = window.flutter_inappwebview ? 'callHandler' : 'flutter://goback';
-    } else {
-      path = window.parent !== window ? 'postMessage' : 'history.back()';
-    }
-    addLog(`返回 [${path}] native=${!!window._flutterNative} bridge=${!!window.flutter_inappwebview} iframe=${window.parent !== window}`, 'info');
-    // Flush the debounced localStorage write immediately so the log entry is
-    // persisted before any navigation that may unload the page (history.back,
-    // location.href assignment).
-    clearTimeout(_saveTimer);
-    try { localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(_logEntries)); } catch (_) {}
-    window._flutterBridge.goBack();
+  if (!cancelAutoSpin()) {
+    // Delegate back-navigation to the host (closes the Telegram Mini App).
+    window.parent.postMessage({ type: 'GO_BACK' }, window.__gameOrigin);
   }
 });
 
@@ -2181,7 +2047,7 @@ renderer.setAnimationLoop(() => {
 });
 
 console.log('月光舞台 v3.0 已加載 – WebGL2 模式');
-addLog(`啟動: native=${!!window._flutterNative} href=${location.href.slice(0,60)} UA=${navigator.userAgent.slice(0,80)}`, 'info');
+addLog('月光舞台 v3.0 已加載', 'info');
 </script>
 
 </body>
