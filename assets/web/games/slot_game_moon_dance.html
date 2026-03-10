@@ -1049,6 +1049,7 @@ setLoadProgress(5, '初始化引擎...');
 //
 // Message protocol (all messages carry a `type` string field):
 //   Host → Game:  HOST_INIT  { jwt, balance (USDT), demoMode, username }
+//                 HOST_LOG { level, message, ts }
 //                 SPIN_RESULT { symbols[3], multiplier, winAmount (USDT), newBalance (USDT), mode }
 //                 SPIN_ERROR  { message }
 //   Game → Host:  GAME_READY {}
@@ -1072,6 +1073,14 @@ window.addEventListener('message', (e) => {
   if (e.source !== window.parent && e.source !== window && e.source !== null) return;
 
   const { type } = e.data || {};
+
+  if (type === 'HOST_LOG') {
+    const level = String((e.data && e.data.level) || 'info').toLowerCase();
+    const logType = level === 'error' ? 'error' : (level === 'warn' ? 'warn' : 'info');
+    const message = String((e.data && e.data.message) || '[HOST_LOG]');
+    addLog(message, logType);
+    return;
+  }
 
   if (type === 'HOST_INIT') {
     const { jwt, balance: hostBalance, demoMode, username } = e.data;
@@ -1200,16 +1209,52 @@ const gvEl = document.getElementById('gv');
 let _fitRaf = 0;
 // Track the CSS transform scale so renderers can compensate with a higher pixel ratio.
 let gvScale = Math.min(window.innerWidth / 430, window.innerHeight / 900);
+const _vvFixIsIOS = /iPad|iPhone|iPod/i.test(navigator.userAgent || '');
+let _lastViewportFixDetected = false;
+let _lastViewportFixLogAt = 0;
+
+function _getViewportSafeOffsets() {
+  const vv = window.visualViewport;
+  if (!_vvFixIsIOS || !vv) return { safeTop: 0, safeLeft: 0, detected: false };
+
+  const offsetTop = Number(vv.offsetTop || 0);
+  const offsetLeft = Number(vv.offsetLeft || 0);
+  const detected = Math.abs(offsetTop) > 10 || Math.abs(offsetLeft) > 10;
+
+  return {
+    safeTop: -offsetTop,
+    safeLeft: -offsetLeft,
+    detected,
+  };
+}
+
 function fitGame() {
   cancelAnimationFrame(_fitRaf);
   _fitRaf = requestAnimationFrame(() => {
     gvScale = Math.min(window.innerWidth / 430, window.innerHeight / 900);
     const offsetX = (window.innerWidth - 430 * gvScale) / 2;
-    gvEl.style.transform = `translate(${offsetX}px,0) scale(${gvScale})`;
+    const vvOffsets = _getViewportSafeOffsets();
+    gvEl.style.transform = `translate(${offsetX + vvOffsets.safeLeft}px,${vvOffsets.safeTop}px) scale(${gvScale})`;
+
+    // Keep logs concise: only log when status changes, or periodically while abnormal.
+    const now = Date.now();
+    if (vvOffsets.detected !== _lastViewportFixDetected ||
+        (vvOffsets.detected && now - _lastViewportFixLogAt > 2000)) {
+      _lastViewportFixDetected = vvOffsets.detected;
+      _lastViewportFixLogAt = now;
+      addLog(
+        `[VV_FIX][GAME] detected=${vvOffsets.detected} safeTop=${vvOffsets.safeTop.toFixed(1)} safeLeft=${vvOffsets.safeLeft.toFixed(1)} scale=${gvScale.toFixed(3)}`,
+        vvOffsets.detected ? 'warn' : 'info'
+      );
+    }
   });
 }
 fitGame();
 window.addEventListener('resize', fitGame);
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', fitGame, { passive: true });
+  window.visualViewport.addEventListener('scroll', fitGame, { passive: true });
+}
 
 function formatLogArgs(args) {
   return args.map(x => typeof x === 'object' ? JSON.stringify(x) : String(x)).join(' ');

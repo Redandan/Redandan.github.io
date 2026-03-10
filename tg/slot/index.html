@@ -76,6 +76,43 @@
       var _vvRafPending = false;
       var _lastOffsetDetected = false;
       var _lastExtraSyncAt = 0;
+      var _pendingHostLogs = [];
+
+      function hostLog(message, level) {
+        var lv = level || 'info';
+        var text = '[TG_HOST][VV] ' + String(message || '');
+
+        if (lv === 'error') {
+          console.error(text);
+        } else if (lv === 'warn') {
+          console.warn(text);
+        } else {
+          console.log(text);
+        }
+
+        var payload = {
+          type: 'HOST_LOG',
+          level: lv,
+          message: text,
+          ts: Date.now(),
+        };
+
+        if (state.hostReady && frameEl && frameEl.contentWindow) {
+          postToGame(payload);
+        } else {
+          _pendingHostLogs.push(payload);
+          if (_pendingHostLogs.length > 80) _pendingHostLogs.shift();
+        }
+      }
+
+      function flushHostLogsToGame() {
+        if (!state.hostReady || !frameEl || !frameEl.contentWindow) return;
+        if (_pendingHostLogs.length === 0) return;
+        for (var i = 0; i < _pendingHostLogs.length; i++) {
+          postToGame(_pendingHostLogs[i]);
+        }
+        _pendingHostLogs = [];
+      }
 
       function initViewportOffsetSync() {
         var ua = navigator.userAgent || '';
@@ -94,7 +131,12 @@
           };
         }
 
-        if (!isIOS || !vv || !rootEl) return;
+        if (!isIOS || !vv || !rootEl) {
+          hostLog('Sync skipped: isIOS=' + isIOS + ', visualViewport=' + !!vv + ', hasRoot=' + !!rootEl, 'warn');
+          return;
+        }
+
+        hostLog('Sync initialized');
 
         function publishOffsetStatus() {
           var offsetTop = Number(vv.offsetTop || 0);
@@ -112,6 +154,7 @@
 
           if (detected !== _lastOffsetDetected) {
             _lastOffsetDetected = detected;
+            hostLog('Offset state changed: detected=' + detected + ', top=' + offsetTop + ', left=' + offsetLeft, detected ? 'warn' : 'info');
             try {
               window.dispatchEvent(new CustomEvent('agora:viewport-offset-status', {
                 detail: window.__AGORA_VIEWPORT_OFFSET_STATUS,
@@ -148,6 +191,7 @@
             var now = Date.now();
             if (now - _lastExtraSyncAt > 800) {
               _lastExtraSyncAt = now;
+              hostLog('Offset abnormal, scheduling extra sync frames');
               setTimeout(queueSync, 40);
               setTimeout(queueSync, 180);
             }
@@ -339,6 +383,8 @@
             demoMode: state.demoMode,
             username: state.username,
           });
+          flushHostLogsToGame();
+          hostLog('GAME_READY received, host log bridge active');
           return;
         }
 
