@@ -76,6 +76,7 @@
       var _vvRafPending = false;
       var _lastOffsetDetected = false;
       var _lastExtraSyncAt = 0;
+      var _lastHostMetricsLogAt = 0;
       var _pendingHostLogs = [];
 
       function hostLog(message, level) {
@@ -140,53 +141,110 @@
 
         hostLog('Sync initialized: isIOS=' + isIOS + ', maxTouchPoints=' + maxTouchPoints);
 
-        function publishOffsetStatus() {
-          var offsetTop = Number(vv.offsetTop || 0);
-          var offsetLeft = Number(vv.offsetLeft || 0);
-          var detected = Math.abs(offsetTop) > OFFSET_THRESHOLD_PX || Math.abs(offsetLeft) > OFFSET_THRESHOLD_PX;
+        function safeNum(v) {
+          var n = Number(v);
+          return Number.isFinite(n) ? n : 0;
+        }
+
+        function getHostViewportMetrics() {
+          var offsetTop = safeNum(vv.offsetTop);
+          var offsetLeft = safeNum(vv.offsetLeft);
+          var docRect = document.documentElement.getBoundingClientRect();
+          var bodyRect = document.body.getBoundingClientRect();
+          var docTop = safeNum(docRect.top);
+          var docLeft = safeNum(docRect.left);
+          var bodyTop = safeNum(bodyRect.top);
+          var bodyLeft = safeNum(bodyRect.left);
+          var safeTop = -offsetTop - docTop;
+          var safeLeft = -offsetLeft - docLeft;
+          var detected =
+            Math.abs(offsetTop) > OFFSET_THRESHOLD_PX ||
+            Math.abs(offsetLeft) > OFFSET_THRESHOLD_PX ||
+            Math.abs(docTop) > 2 ||
+            Math.abs(docLeft) > 2 ||
+            Math.abs(bodyTop) > 2 ||
+            Math.abs(bodyLeft) > 2;
+
+          return {
+            offsetTop: offsetTop,
+            offsetLeft: offsetLeft,
+            docTop: docTop,
+            docLeft: docLeft,
+            bodyTop: bodyTop,
+            bodyLeft: bodyLeft,
+            safeTop: safeTop,
+            safeLeft: safeLeft,
+            detected: detected,
+          };
+        }
+
+        function publishOffsetStatus(metrics) {
+          var detected = !!metrics.detected;
 
           window.__AGORA_VIEWPORT_OFFSET_STATUS = {
             detected: detected,
-            offsetTop: offsetTop,
-            offsetLeft: offsetLeft,
+            offsetTop: metrics.offsetTop,
+            offsetLeft: metrics.offsetLeft,
+            docTop: metrics.docTop,
+            docLeft: metrics.docLeft,
+            bodyTop: metrics.bodyTop,
+            bodyLeft: metrics.bodyLeft,
+            safeTop: metrics.safeTop,
+            safeLeft: metrics.safeLeft,
             threshold: OFFSET_THRESHOLD_PX,
             updatedAt: new Date().toISOString(),
             host: 'tg-slot',
           };
 
+          var now = Date.now();
           if (detected !== _lastOffsetDetected) {
             _lastOffsetDetected = detected;
-            hostLog('Offset state changed: detected=' + detected + ', top=' + offsetTop + ', left=' + offsetLeft, detected ? 'warn' : 'info');
+            _lastHostMetricsLogAt = now;
+            hostLog(
+              'Offset state changed: detected=' + detected +
+              ', vv=(' + metrics.offsetTop + ',' + metrics.offsetLeft + ')' +
+              ', doc=(' + metrics.docTop + ',' + metrics.docLeft + ')' +
+              ', body=(' + metrics.bodyTop + ',' + metrics.bodyLeft + ')' +
+              ', safe=(' + metrics.safeTop + ',' + metrics.safeLeft + ')',
+              detected ? 'warn' : 'info'
+            );
             try {
               window.dispatchEvent(new CustomEvent('agora:viewport-offset-status', {
                 detail: window.__AGORA_VIEWPORT_OFFSET_STATUS,
               }));
             } catch (_) {}
+          } else if (detected && now - _lastHostMetricsLogAt > 2000) {
+            _lastHostMetricsLogAt = now;
+            hostLog(
+              'Offset persists: vv=(' + metrics.offsetTop + ',' + metrics.offsetLeft + ')' +
+              ', doc=(' + metrics.docTop + ',' + metrics.docLeft + ')' +
+              ', body=(' + metrics.bodyTop + ',' + metrics.bodyLeft + ')' +
+              ', safe=(' + metrics.safeTop + ',' + metrics.safeLeft + ')',
+              'warn'
+            );
           }
 
           return detected;
         }
 
-        function applyToRoot() {
-          var safeTop = -(Number(vv.offsetTop) || 0);
-          var safeLeft = -(Number(vv.offsetLeft) || 0);
-
+        function applyToRoot(metrics) {
           rootEl.style.width = vv.width + 'px';
           rootEl.style.height = vv.height + 'px';
           rootEl.style.transformOrigin = '0 0';
           rootEl.style.willChange = 'transform';
-          rootEl.style.transform = 'translate3d(' + safeLeft + 'px,' + safeTop + 'px,0)';
+          rootEl.style.transform = 'translate3d(' + metrics.safeLeft + 'px,' + metrics.safeTop + 'px,0)';
         }
 
         function syncNow() {
           _vvRafPending = false;
 
-          var offsetDetected = publishOffsetStatus();
+          var metrics = getHostViewportMetrics();
+          var offsetDetected = publishOffsetStatus(metrics);
           try {
             document.documentElement.scrollTop = 0;
             document.body.scrollTop = 0;
           } catch (_) {}
-          applyToRoot();
+          applyToRoot(metrics);
 
           // If offset is abnormal, schedule extra sync frames for faster convergence.
           if (offsetDetected) {
