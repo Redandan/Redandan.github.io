@@ -1212,6 +1212,7 @@ let gvScale = Math.min(window.innerWidth / 430, window.innerHeight / 900);
 const _vvFixIsIOS = /iPad|iPhone|iPod/i.test(navigator.userAgent || '');
 let _lastViewportFixDetected = false;
 let _lastViewportFixLogAt = 0;
+let _vvStubbornSyncTimer = 0;
 
 function _getViewportSafeOffsets() {
   const vv = window.visualViewport;
@@ -1231,9 +1232,22 @@ function _getViewportSafeOffsets() {
 function fitGame() {
   cancelAnimationFrame(_fitRaf);
   _fitRaf = requestAnimationFrame(() => {
-    gvScale = Math.min(window.innerWidth / 430, window.innerHeight / 900);
-    const offsetX = (window.innerWidth - 430 * gvScale) / 2;
+    const vv = window.visualViewport;
+    const viewportW = (_vvFixIsIOS && vv && vv.width) ? Number(vv.width) : window.innerWidth;
+    const viewportH = (_vvFixIsIOS && vv && vv.height) ? Number(vv.height) : window.innerHeight;
+
+    gvScale = Math.min(viewportW / 430, viewportH / 900);
+    const offsetX = (viewportW - 430 * gvScale) / 2;
     const vvOffsets = _getViewportSafeOffsets();
+
+    if (vvOffsets.detected) {
+      try {
+        // iOS PWA may keep document scroll coupled with visualViewport offset.
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      } catch (_) {}
+    }
+
     gvEl.style.transform = `translate(${offsetX + vvOffsets.safeLeft}px,${vvOffsets.safeTop}px) scale(${gvScale})`;
 
     // Keep logs concise: only log when status changes, or periodically while abnormal.
@@ -1254,6 +1268,19 @@ window.addEventListener('resize', fitGame);
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', fitGame, { passive: true });
   window.visualViewport.addEventListener('scroll', fitGame, { passive: true });
+}
+
+if (_vvFixIsIOS) {
+  // Stubborn iOS offset can appear a bit later; keep a light periodic resync.
+  _vvStubbornSyncTimer = window.setInterval(() => {
+    fitGame();
+  }, 900);
+  window.addEventListener('pagehide', () => {
+    if (_vvStubbornSyncTimer) {
+      clearInterval(_vvStubbornSyncTimer);
+      _vvStubbornSyncTimer = 0;
+    }
+  }, { once: true });
 }
 
 function formatLogArgs(args) {
