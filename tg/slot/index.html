@@ -116,7 +116,9 @@
 
       function initViewportOffsetSync() {
         var ua = navigator.userAgent || '';
-        var isIOS = /iPad|iPhone|iPod/.test(ua);
+        var maxTouchPoints = Number(navigator.maxTouchPoints || 0);
+        var isIOS = /iPad|iPhone|iPod/.test(ua) ||
+          (/Macintosh/.test(ua) && maxTouchPoints > 1);
         var vv = window.visualViewport;
 
         // Keep this object available even when sync is skipped.
@@ -131,12 +133,12 @@
           };
         }
 
-        if (!isIOS || !vv || !rootEl) {
+        if (!vv || !rootEl) {
           hostLog('Sync skipped: isIOS=' + isIOS + ', visualViewport=' + !!vv + ', hasRoot=' + !!rootEl, 'warn');
           return;
         }
 
-        hostLog('Sync initialized');
+        hostLog('Sync initialized: isIOS=' + isIOS + ', maxTouchPoints=' + maxTouchPoints);
 
         function publishOffsetStatus() {
           var offsetTop = Number(vv.offsetTop || 0);

@@ -1209,32 +1209,72 @@ const gvEl = document.getElementById('gv');
 let _fitRaf = 0;
 // Track the CSS transform scale so renderers can compensate with a higher pixel ratio.
 let gvScale = Math.min(window.innerWidth / 430, window.innerHeight / 900);
-const _vvFixIsIOS = /iPad|iPhone|iPod/i.test(navigator.userAgent || '');
-let _lastViewportFixDetected = false;
+const _vv = window.visualViewport;
+const _vvFixEnabled = !!_vv;
+const _vvFixNeedPersistentSync = _vvFixEnabled && (('ontouchstart' in window) || Number(navigator.maxTouchPoints || 0) > 0);
+let _lastViewportFixDetected = null;
 let _lastViewportFixLogAt = 0;
 let _vvStubbornSyncTimer = 0;
 
-function _getViewportSafeOffsets() {
-  const vv = window.visualViewport;
-  if (!_vvFixIsIOS || !vv) return { safeTop: 0, safeLeft: 0, detected: false };
+function _safeNum(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
 
-  const offsetTop = Number(vv.offsetTop || 0);
-  const offsetLeft = Number(vv.offsetLeft || 0);
-  const detected = Math.abs(offsetTop) > 10 || Math.abs(offsetLeft) > 10;
+function _getViewportSafeOffsets() {
+  if (!_vvFixEnabled || !_vv) {
+    return {
+      safeTop: 0,
+      safeLeft: 0,
+      detected: false,
+      vvTop: 0,
+      vvLeft: 0,
+      docTop: 0,
+      docLeft: 0,
+      bodyTop: 0,
+      bodyLeft: 0,
+    };
+  }
+
+  const offsetTop = _safeNum(_vv.offsetTop);
+  const offsetLeft = _safeNum(_vv.offsetLeft);
+  const docRect = document.documentElement.getBoundingClientRect();
+  const bodyRect = document.body.getBoundingClientRect();
+  const docTop = _safeNum(docRect.top);
+  const docLeft = _safeNum(docRect.left);
+  const bodyTop = _safeNum(bodyRect.top);
+  const bodyLeft = _safeNum(bodyRect.left);
+
+  // Compensate BOTH visualViewport offset and document drift.
+  const safeTop = -offsetTop - docTop;
+  const safeLeft = -offsetLeft - docLeft;
+
+  const detected =
+      Math.abs(offsetTop) > 10 ||
+      Math.abs(offsetLeft) > 10 ||
+      Math.abs(docTop) > 2 ||
+      Math.abs(docLeft) > 2 ||
+      Math.abs(bodyTop) > 2 ||
+      Math.abs(bodyLeft) > 2;
 
   return {
-    safeTop: -offsetTop,
-    safeLeft: -offsetLeft,
+    safeTop,
+    safeLeft,
     detected,
+    vvTop: offsetTop,
+    vvLeft: offsetLeft,
+    docTop,
+    docLeft,
+    bodyTop,
+    bodyLeft,
   };
 }
 
 function fitGame() {
   cancelAnimationFrame(_fitRaf);
   _fitRaf = requestAnimationFrame(() => {
-    const vv = window.visualViewport;
-    const viewportW = (_vvFixIsIOS && vv && vv.width) ? Number(vv.width) : window.innerWidth;
-    const viewportH = (_vvFixIsIOS && vv && vv.height) ? Number(vv.height) : window.innerHeight;
+    const viewportW = (_vvFixEnabled && _vv && _vv.width) ? Number(_vv.width) : window.innerWidth;
+    const viewportH = (_vvFixEnabled && _vv && _vv.height) ? Number(_vv.height) : window.innerHeight;
 
     gvScale = Math.min(viewportW / 430, viewportH / 900);
     const offsetX = (viewportW - 430 * gvScale) / 2;
@@ -1257,7 +1297,7 @@ function fitGame() {
       _lastViewportFixDetected = vvOffsets.detected;
       _lastViewportFixLogAt = now;
       addLog(
-        `[VV_FIX][GAME] detected=${vvOffsets.detected} safeTop=${vvOffsets.safeTop.toFixed(1)} safeLeft=${vvOffsets.safeLeft.toFixed(1)} scale=${gvScale.toFixed(3)}`,
+        `[VV_FIX][GAME] detected=${vvOffsets.detected} safeTop=${vvOffsets.safeTop.toFixed(1)} safeLeft=${vvOffsets.safeLeft.toFixed(1)} vv=(${vvOffsets.vvTop.toFixed(1)},${vvOffsets.vvLeft.toFixed(1)}) doc=(${vvOffsets.docTop.toFixed(1)},${vvOffsets.docLeft.toFixed(1)}) body=(${vvOffsets.bodyTop.toFixed(1)},${vvOffsets.bodyLeft.toFixed(1)}) scale=${gvScale.toFixed(3)}`,
         vvOffsets.detected ? 'warn' : 'info'
       );
     }
@@ -1270,7 +1310,7 @@ if (window.visualViewport) {
   window.visualViewport.addEventListener('scroll', fitGame, { passive: true });
 }
 
-if (_vvFixIsIOS) {
+if (_vvFixNeedPersistentSync) {
   // Stubborn iOS offset can appear a bit later; keep a light periodic resync.
   _vvStubbornSyncTimer = window.setInterval(() => {
     fitGame();
