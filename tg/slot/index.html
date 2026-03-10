@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark" />
+  <title>AgoraMarket TG 入口頁</title>
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: #050218;
+      color: #dfe3ff;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+    #root {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at 50% 25%, #1a1054 0%, #09042a 45%, #040116 100%);
+    }
+    #status {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      font-size: 13px;
+      line-height: 1.4;
+      color: #c8ceff;
+      text-shadow: 0 0 6px rgba(160, 175, 255, 0.45);
+      z-index: 2;
+      pointer-events: none;
+    }
+    #gameFrame {
+      border: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      background: #000;
+    }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div id="status">初始化 TG 入口頁...</div>
+    <iframe id="gameFrame" title="AgoraMarket TG 入口頁 - Moon Dance" allow="autoplay; clipboard-write"></iframe>
+  </div>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      var statusEl = document.getElementById('status');
+      var frameEl = document.getElementById('gameFrame');
+
+      var ORIGIN = window.location.origin;
+      var API_BASE = window.__AGORA_API_BASE_URL || 'https://agoramarketapi.purrtechllc.com/api';
+      var MIN_REAL_BET_USDT = 0.25;
+
+      var state = {
+        gameId: 'moon_dance',
+        jwt: '',
+        balanceUsdt: 0,
+        demoMode: true,
+        username: '',
+        hostReady: false,
+      };
+
+      function setStatus(text) {
+        if (statusEl) statusEl.textContent = text;
+      }
+
+      function redirectError(reason) {
+        var safeReason = encodeURIComponent(reason || 'boot_error');
+        window.location.replace('/tg/error.html?reason=' + safeReason);
+      }
+
+      function parseGameId() {
+        var q = new URLSearchParams(window.location.search);
+        var game = (q.get('game') || 'moon_dance').trim();
+        if (game !== 'moon_dance') return null;
+        return game;
+      }
+
+      function ensureDefaultGameParam(gameId) {
+        var q = new URLSearchParams(window.location.search);
+        if (q.get('game')) return;
+        q.set('game', gameId);
+        var newUrl = window.location.pathname + '?' + q.toString() + window.location.hash;
+        history.replaceState(null, '', newUrl);
+      }
+
+      function normalizeExchangePayload(raw) {
+        var body = raw && raw.data != null ? raw.data : raw;
+        var jwt = String(
+          (body && (body.jwt || body.token || body.accessToken)) ||
+          (raw && (raw.jwt || raw.token || raw.accessToken)) ||
+          ''
+        ).trim();
+
+        var userInfo = (body && body.userInfo) || body || {};
+        var balance = Number(
+          userInfo.balance != null ? userInfo.balance :
+          (body && body.balance != null ? body.balance : 0)
+        );
+        if (Number.isNaN(balance)) balance = 0;
+
+        var username = String(
+          (userInfo.firstName || userInfo.username || userInfo.name || '')
+        ).trim();
+
+        return {
+          jwt: jwt,
+          balanceUsdt: balance,
+          username: username,
+        };
+      }
+
+      async function exchangeJwt(initData) {
+        var resp = await fetch(API_BASE + '/auth/telegram-webapp/exchange-jwt', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ initData: initData }),
+        });
+
+        if (!resp.ok) {
+          var text = '';
+          try { text = await resp.text(); } catch (_) {}
+          throw new Error('exchange failed: HTTP ' + resp.status + (text ? ' ' + text : ''));
+        }
+
+        var json = await resp.json();
+        return normalizeExchangePayload(json);
+      }
+
+      function makeHex(bytes) {
+        var arr = new Uint8Array(bytes);
+        crypto.getRandomValues(arr);
+        var out = '';
+        for (var i = 0; i < arr.length; i++) {
+          out += arr[i].toString(16).padStart(2, '0');
+        }
+        return out;
+      }
+
+      async function spinWithBackend(req) {
+        var mode = String(req && req.mode ? req.mode : (state.demoMode ? 'DEMO' : 'REAL')).toUpperCase();
+        var betIndex = Number(req && req.betIndex);
+        var betAmount = Number(req && req.betAmount);
+
+        var payload = {
+          gameId: state.gameId,
+          betIndex: Number.isFinite(betIndex) ? betIndex : 0,
+          betAmount: Number.isFinite(betAmount) ? betAmount : 250,
+          mode: mode,
+          clientSeed: (req && req.clientSeed) || makeHex(16),
+          nonce: (req && req.nonce) || String(Date.now()),
+        };
+        if (mode !== 'DEMO') {
+          payload.clientRoundId = (req && req.clientRoundId) || makeHex(16);
+        }
+
+        var resp = await fetch(API_BASE + '/slot/spin', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + state.jwt,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!resp.ok) {
+          var text = '';
+          try { text = await resp.text(); } catch (_) {}
+          throw new Error('spin failed: HTTP ' + resp.status + (text ? ' ' + text : ''));
+        }
+
+        var json = await resp.json();
+        var data = json && json.data != null ? json.data : json;
+
+        // Current REST API shape uses units (100 units = 1 USDT) for prize/balance.
+        var prizeUnits = Number(data && data.prize != null ? data.prize : 0);
+        var balanceUnits = Number(
+          data && data.balance != null
+            ? data.balance
+            : (data && data.newBalance != null ? data.newBalance : NaN)
+        );
+
+        var prizeUsdt = Number.isFinite(prizeUnits) ? (prizeUnits / 100) : 0;
+        var balanceUsdt = Number.isFinite(balanceUnits) ? (balanceUnits / 100) : state.balanceUsdt;
+
+        state.balanceUsdt = balanceUsdt;
+        state.demoMode = state.balanceUsdt < MIN_REAL_BET_USDT;
+
+        return {
+          type: 'SPIN_RESULT',
+          symbols: Array.isArray(data && data.symbols) ? data.symbols : [],
+          symbolIds: Array.isArray(data && data.symbolIds) ? data.symbolIds : null,
+          multiplier: Number(data && data.multiplier != null ? data.multiplier : 0),
+          winAmount: prizeUsdt,
+          newBalance: balanceUsdt,
+          mode: String(data && data.mode ? data.mode : mode),
+        };
+      }
+
+      function postToGame(message) {
+        if (!frameEl || !frameEl.contentWindow) return;
+        frameEl.contentWindow.postMessage(message, ORIGIN);
+      }
+
+      function handleGameMessage(event) {
+        if (event.origin !== ORIGIN) return;
+        if (!frameEl || event.source !== frameEl.contentWindow) return;
+
+        var data = event.data || {};
+        var type = data.type;
+
+        if (type === 'GAME_READY') {
+          state.hostReady = true;
+          setStatus('TG 入口已連線，準備啟動遊戲...');
+          postToGame({
+            type: 'HOST_INIT',
+            jwt: state.jwt,
+            balance: state.balanceUsdt,
+            demoMode: state.demoMode,
+            username: state.username,
+          });
+          return;
+        }
+
+        if (type === 'SPIN_REQUEST') {
+          spinWithBackend(data)
+            .then(function (result) {
+              postToGame(result);
+            })
+            .catch(function (err) {
+              postToGame({ type: 'SPIN_ERROR', message: String(err && err.message ? err.message : err) });
+            });
+          return;
+        }
+
+        if (type === 'GO_BACK') {
+          try {
+            if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.close === 'function') {
+              window.Telegram.WebApp.close();
+              return;
+            }
+          } catch (_) {}
+          history.back();
+        }
+      }
+
+      async function boot() {
+        try {
+          state.gameId = parseGameId();
+          if (!state.gameId) {
+            redirectError('unknown_game');
+            return;
+          }
+          ensureDefaultGameParam(state.gameId);
+
+          var tg = window.Telegram && window.Telegram.WebApp;
+          if (!tg) {
+            redirectError('no_telegram');
+            return;
+          }
+
+          tg.ready();
+          tg.expand();
+
+          var initData = String(tg.initData || '').trim();
+          if (!initData) {
+            redirectError('no_initdata');
+            return;
+          }
+
+          setStatus('TG 身分驗證中...');
+          var auth = await exchangeJwt(initData);
+          if (!auth.jwt) {
+            redirectError('exchange_failed');
+            return;
+          }
+
+          state.jwt = auth.jwt;
+          state.balanceUsdt = Number(auth.balanceUsdt || 0);
+          state.username = auth.username || '';
+          state.demoMode = state.balanceUsdt < MIN_REAL_BET_USDT;
+
+          var gameSrc = '/games/slot_game_moon_dance.html?hosted=1';
+          frameEl.src = gameSrc;
+          frameEl.style.display = 'block';
+          setStatus('TG 入口載入遊戲中...');
+
+          window.addEventListener('message', handleGameMessage);
+        } catch (err) {
+          console.error('[TG_HOST] boot error:', err);
+          redirectError('boot_error');
+        }
+      }
+
+      boot();
+    })();
+  </script>
+</body>
+</html>
