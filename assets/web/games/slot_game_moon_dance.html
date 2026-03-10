@@ -71,10 +71,25 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
   border-radius:8px;
   padding:3px 14px;
   display:flex;
-  align-items:center;
+  align-items:stretch;
   gap:4px;
+  max-height:136px; /* 4 rows per column visible at once (total 8 visible) */
+  overflow:hidden;
 }
-.pt-col{flex:1; display:flex; flex-direction:column; gap:1px}
+.pt-col{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  gap:1px;
+  min-height:0;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  touch-action:pan-y;
+  scrollbar-width:none;
+  -ms-overflow-style:none;
+}
+.pt-col::-webkit-scrollbar{display:none}
 .pt-row{
   display:flex; align-items:center; height:30px;
   border-bottom:1px solid rgba(100,110,220,.18); gap:4px;
@@ -1034,7 +1049,7 @@ setLoadProgress(5, '初始化引擎...');
 //
 // Message protocol (all messages carry a `type` string field):
 //   Host → Game:  HOST_INIT  { jwt, balance (USDT), demoMode, username }
-//                 SPIN_RESULT { symbols[3], multiplier, winAmount/prize (USDT), newBalance (USDT), mode }
+//                 SPIN_RESULT { symbols[3], multiplier, winAmount (USDT), newBalance (USDT), mode }
 //                 SPIN_ERROR  { message }
 //   Game → Host:  GAME_READY {}
 //                 SPIN_REQUEST { betIndex, betAmount, mode: 'REAL'|'DEMO' }
@@ -1045,8 +1060,6 @@ window.__gameOrigin = window.location.origin;
 
 // Cache query-param flags once at module load so repeated reads are O(1).
 const _searchParams = new URLSearchParams(window.location.search);
-// true when opened by the Telegram Mini App host page (?hosted=1)
-const _isHostedMode  = _searchParams.get('hosted')  === '1';
 // true when opened by the Flutter app (?flutter=1 or window._flutterNative)
 const _isFlutterMode = _searchParams.get('flutter') === '1' || !!window._flutterNative;
 
@@ -1080,6 +1093,8 @@ window.addEventListener('message', (e) => {
       // Errors are already logged inside fetchAndApplyBalance(); we swallow the
       // rejection here to avoid an unhandled-promise-rejection warning.
       fetchAndApplyBalance(jwt).catch(() => {});
+      // Load paytable from backend after authentication
+      loadAndApplyPaytable().catch(() => {});
     }
 
     console.log('[HOST] HOST_INIT: balance=' + hostBalance + ' USDT, demo=' + demoMode);
@@ -1558,7 +1573,9 @@ function makeSymbolTex(idx) {
   return new THREE.CanvasTexture(cv);
 }
 
-const ACTIVE_SYMBOL_COUNT = 8; // indices 0-7: apple cherry seven lemon bar grapes heart bell
+// Keep reel symbols aligned with backend symbolIds (0..spriteMap.length-1).
+// Backend may return id 8 (watermelon), so all spriteMap entries must be active.
+const ACTIVE_SYMBOL_COUNT = spriteMap.length;
 const ACTIVE_SYMBOL_NAMES = Array.from(
   { length: ACTIVE_SYMBOL_COUNT },
   (_, idx) => spriteMap[idx]?.name ?? `sym${idx}`,
@@ -1573,6 +1590,8 @@ const _symNameToIdx = (() => {
   spriteMap.forEach((s, i) => { nameToIndexMap[s.name.toLowerCase()] = i; });
   // Backend sends "GRAPE" (singular) but spriteMap entry is "grapes" (plural)
   if (nameToIndexMap['grapes'] !== undefined) nameToIndexMap['grape'] = nameToIndexMap['grapes'];
+  // Moon Dance treats WILD as symbol id 0 (same visual asset used by apple in sprite map)
+  if (nameToIndexMap['apple'] !== undefined) nameToIndexMap['wild'] = nameToIndexMap['apple'];
   // Add any other known backend→sprite aliases here as needed
   return nameToIndexMap;
 })();
@@ -1598,6 +1617,92 @@ document.querySelectorAll('.pt-sym-img').forEach(cv => {
   cv.getContext('2d').drawImage(symTextures[idx].image, 0, 0, cv.width, cv.height);
 });
 
+function _drawPaytableSymbolCanvas(canvasEl, symIdx) {
+  const idx = Number(symIdx);
+  if (Number.isNaN(idx) || idx < 0 || idx >= symTextures.length) return;
+  const ctx = canvasEl.getContext('2d');
+  if (!ctx) return;
+  ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+  ctx.drawImage(symTextures[idx].image, 0, 0, canvasEl.width, canvasEl.height);
+}
+
+function _buildPaytableRow(symbolId, count, multiplier) {
+  const row = document.createElement('div');
+  row.className = 'pt-row';
+
+  const syms = document.createElement('span');
+  syms.className = 'pt-syms';
+  for (let i = 0; i < count; i++) {
+    const cv = document.createElement('canvas');
+    cv.className = 'pt-sym-img';
+    cv.width = 26;
+    cv.height = 26;
+    cv.dataset.symIdx = String(symbolId);
+    syms.appendChild(cv);
+    _drawPaytableSymbolCanvas(cv, symbolId);
+  }
+
+  const val = document.createElement('span');
+  val.className = 'pt-val';
+  val.textContent = String(multiplier);
+
+  row.appendChild(syms);
+  row.appendChild(val);
+  return row;
+}
+
+let _syncingPaytableScroll = false;
+
+function _ensurePaytableScrollSync(cols) {
+  if (!cols || cols.length < 2) return;
+  const left = cols[0];
+  const right = cols[1];
+  if (!left || !right) return;
+  if (left.dataset.syncScrollBound === '1') return;
+
+  const mirrorScroll = (source, target) => {
+    if (_syncingPaytableScroll) return;
+    _syncingPaytableScroll = true;
+    target.scrollTop = source.scrollTop;
+    _syncingPaytableScroll = false;
+  };
+
+  left.addEventListener('scroll', () => mirrorScroll(left, right), { passive: true });
+  right.addEventListener('scroll', () => mirrorScroll(right, left), { passive: true });
+  left.dataset.syncScrollBound = '1';
+  right.dataset.syncScrollBound = '1';
+}
+
+function _renderPaytableRows(rows) {
+  const cols = document.querySelectorAll('#paytable .pt-col');
+  if (!cols || cols.length < 2) return 0;
+
+  _ensurePaytableScrollSync(cols);
+
+  const leftRows = [];
+  const rightRows = [];
+  // Row-major distribution keeps columns visually balanced:
+  // #1 left, #2 right, #3 left, #4 right, ...
+  rows.forEach((item, idx) => {
+    if (idx % 2 === 0) {
+      leftRows.push(item);
+    } else {
+      rightRows.push(item);
+    }
+  });
+  const perCol = [leftRows, rightRows];
+
+  cols.forEach((col, idx) => {
+    col.innerHTML = '';
+    perCol[idx].forEach((item) => {
+      col.appendChild(_buildPaytableRow(item.symbolId, item.count, item.multiplier));
+    });
+    col.scrollTop = 0;
+  });
+
+  return rows.length;
+}
+
 // ===== Reel construction (vertical strip – 3 symbols visible: top / winner / bottom) =====
 // Derive geometry from the camera so reels always fill the visible frustum exactly.
 // VISIBLE_H = 2 × tan(FOV/2) × z   →   3 equal rows fill the full height
@@ -1616,15 +1721,15 @@ function computeReelGeometry(w, h) {
 
 let { CARD_W, CARD_H, REEL_X } = computeReelGeometry(W, H);
 // Custom weighted reel strips — symbol index × stop count per reel.
-// Weights: apple=1  bell=1  heart=1  cherry=3  seven=4  lemon/bar/grapes=6  (N=28 stops each)
-// Symbols 6 (heart) and 7 (bell) added so backend can snap to them.
+// Keep all backend symbolIds snap-safe by ensuring each reel contains 0..8.
+// Rare symbols: apple(0), heart(6), bell(7), watermelon(8) appear once each.
 const REEL_STRIPS = [
-  [0, 6, 7, 1,1,1, 2,2,2,2, 3,3,3,3,3,3, 4,4,4,4,4,4, 5,5,5,5,5,5], // R0: apple leads
-  [5,5,5,5,5,5, 0, 6, 7, 1,1,1, 2,2,2,2, 3,3,3,3,3,3, 4,4,4,4,4,4], // R1: grapes leads
-  [3,3,3,3,3,3, 4,4,4,4,4,4, 5,5,5,5,5,5, 0, 6, 7, 1,1,1, 2,2,2,2], // R2: lemon leads
+  [0, 6, 7, 8, 1,1,1, 2,2,2,2, 3,3,3,3,3,3, 4,4,4,4,4,4, 5,5,5,5,5,5], // R0: apple leads
+  [5,5,5,5,5,5, 0, 6, 7, 8, 1,1,1, 2,2,2,2, 3,3,3,3,3,3, 4,4,4,4,4,4], // R1: grapes leads
+  [3,3,3,3,3,3, 4,4,4,4,4,4, 5,5,5,5,5,5, 0, 6, 7, 8, 1,1,1, 2,2,2,2], // R2: lemon leads
 ];
 const N_STRIP   = REEL_STRIPS[0].length; // stops per reel (auto-derived from REEL_STRIPS)
-const N_SYMBOLS = ACTIVE_SYMBOL_COUNT;   // 8 distinct symbols (0–7)
+const N_SYMBOLS = ACTIVE_SYMBOL_COUNT;   // 9 distinct symbols (0–8)
 // Recycling clip boundary: one card beyond the top/bottom of the visible area
 let STRIP_CLIP = (Math.floor(N_STRIP / 2) + 1) * CARD_H;
 
@@ -1714,6 +1819,22 @@ function updateBalanceDisplay() {
 //   { data: { balance: 1.23 } }              ← legacy wrapper
 //   { balance: 1.23 }                        ← flat (Telegram exchange-jwt compat)
 async function fetchAndApplyBalance(jwt) {
+  if (_isFlutterMode && hasFlutterCallHandler()) {
+    const bridgeResult = await callFlutterHandler('getCurrentUser');
+    if (!bridgeResult || bridgeResult.success === false) {
+      addLog(`餘額更新失敗: ${bridgeResult?.message || 'bridge unavailable'}`, 'warn');
+      return;
+    }
+    const user = bridgeResult.data || {};
+    const usdt = Number(user.balance) || 0;
+    applyBalance(usdt);
+    // Update demo mode based on the freshly fetched balance.
+    window.__hostDemoMode = usdt < 0.25;
+    refreshJackpotBanner();
+    addLog(`餘額已從 SDK 更新: USDT ${usdt.toFixed(2)}`, 'info');
+    return;
+  }
+
   const apiBase = window.__AGORA_API_BASE_URL || 'https://agoramarketapi.purrtechllc.com/api';
   try {
     const resp = await fetch(`${apiBase}/auth/me`, {
@@ -1746,6 +1867,120 @@ function applyBalance(usdt) {
   balance = Math.round(usdt * 100);
   updateBalanceDisplay();
   addLog(`餘額已更新: USDT ${(balance / 100).toFixed(2)}`, 'info');
+}
+
+// Load paytable multipliers from backend and apply to UI.
+async function loadAndApplyPaytable() {
+  try {
+    let rtpData = null;
+
+    // Try flutter bridge first (native or Flutter Web with bridge)
+    if (_isFlutterMode && hasFlutterCallHandler()) {
+      const bridgeResult = await callFlutterHandler('getRtpTable');
+      if (bridgeResult && bridgeResult.success) {
+        rtpData = bridgeResult.data;
+      }
+    } else {
+      // Fallback: direct API call (no JWT required per SlotService comment)
+      const apiBase = window.__AGORA_API_BASE_URL || 'https://agoramarketapi.purrtechllc.com/api';
+      const resp = await fetch(`${apiBase}/slot/rtp`);
+      if (!resp.ok) {
+        addLog(`賠率表加載失敗: HTTP ${resp.status}`, 'warn');
+        return;
+      }
+      const json = await resp.json();
+      // Handle both wrapped ({ data: {...} }) and unwrapped responses
+      rtpData = json?.data ?? json;
+    }
+
+    if (!rtpData) {
+      addLog('賠率表數據為空', 'warn');
+      return;
+    }
+
+    // Build entry rows from backend and keep original visual style.
+    const rows = [];
+
+    if (Array.isArray(rtpData.entries)) {
+      rtpData.entries.forEach((entry) => {
+        const multiplier = Number(entry?.multiplier ?? entry?.payout);
+        if (Number.isNaN(multiplier)) return;
+
+        // Must map symbol from backend symbol id to frontend spriteMap index.
+        const rawSymbol = entry?.symbolId ?? entry?.symIdx ?? entry?.symbol?.id ?? entry?.symbol;
+        let symbolId = -1;
+        if (typeof rawSymbol === 'number') {
+          symbolId = rawSymbol;
+        } else if (rawSymbol != null) {
+          const s = String(rawSymbol).trim();
+          const parsed = Number(s);
+          symbolId = Number.isNaN(parsed) ? _resolveSymIdx(s) : parsed;
+        }
+        if (symbolId < 0 || symbolId >= spriteMap.length) return;
+
+        let count = Number(entry?.count ?? entry?.matchCount ?? entry?.hitCount);
+        if (Number.isNaN(count)) {
+          const combo = String(entry?.combo ?? '');
+          const m = combo.match(/×\s*(\d+)/);
+          if (m) count = Number(m[1]);
+        }
+        if (Number.isNaN(count) || count < 1) return;
+
+        rows.push({ symbolId, count: Math.min(3, Math.floor(count)), multiplier });
+      });
+    }
+
+    // Fallback for legacy map/array paytable formats.
+    if (rows.length === 0) {
+      const paytable = rtpData.paytable ?? rtpData;
+      if (Array.isArray(paytable)) {
+        paytable.forEach((entry) => {
+          const symbolId = Number(entry?.symbolId ?? entry?.symIdx ?? entry?.symbol);
+          const count = Number(entry?.count ?? entry?.matchCount);
+          const multiplier = Number(entry?.multiplier ?? entry?.payout);
+          if (Number.isNaN(symbolId) || Number.isNaN(count) || Number.isNaN(multiplier)) return;
+          if (symbolId < 0 || symbolId >= spriteMap.length) return;
+          rows.push({ symbolId, count: Math.min(3, Math.floor(count)), multiplier });
+        });
+      } else if (paytable && typeof paytable === 'object') {
+        Object.keys(paytable).forEach((sid) => {
+          const symbolId = Number(sid);
+          if (Number.isNaN(symbolId) || symbolId < 0 || symbolId >= spriteMap.length) return;
+          const counts = paytable[sid] || {};
+          Object.keys(counts).forEach((c) => {
+            const count = Number(c);
+            const multiplier = Number(counts[c]);
+            if (Number.isNaN(count) || Number.isNaN(multiplier)) return;
+            rows.push({ symbolId, count: Math.min(3, Math.floor(count)), multiplier });
+          });
+        });
+      }
+    }
+
+    // Merge duplicate keys (same symbol + count) and keep the highest multiplier.
+    const dedupMap = new Map();
+    rows.forEach((row) => {
+      const key = `${row.symbolId}:${row.count}`;
+      const prev = dedupMap.get(key);
+      if (!prev || row.multiplier > prev.multiplier) {
+        dedupMap.set(key, row);
+      }
+    });
+    rows.length = 0;
+    dedupMap.forEach((row) => rows.push(row));
+
+    rows.sort((a, b) => b.multiplier - a.multiplier);
+    const renderedCount = _renderPaytableRows(rows);
+
+    if (renderedCount > 0) {
+      addLog(`賠率表已更新 (${renderedCount} 項，首屏最多 8 項)`, 'info');
+    } else {
+      addLog('賠率表數據格式無法解析', 'warn');
+      console.warn('[Paytable] Received data:', rtpData);
+    }
+  } catch (e) {
+    addLog(`賠率表加載失敗: ${e}`, 'warn');
+  }
 }
 
 updateBalanceDisplay();
@@ -1846,6 +2081,26 @@ function generateClientSeed() {
   return Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
 }
 
+function hasFlutterCallHandler() {
+  const bridge = window.flutter_inappwebview;
+  return !!(bridge && typeof bridge.callHandler === 'function');
+}
+
+async function callFlutterHandler(handlerName, payload) {
+  if (!_isFlutterMode || !hasFlutterCallHandler()) return null;
+  const bridge = window.flutter_inappwebview;
+
+  try {
+    const raw = payload === undefined
+      ? await bridge.callHandler(handlerName)
+      : await bridge.callHandler(handlerName, payload);
+    return typeof raw === 'string' ? JSON.parse(raw) : raw;
+  } catch (err) {
+    addLog(`Flutter handler ${handlerName} failed: ${err}`, 'warn');
+    return null;
+  }
+}
+
 // ── Paytable evaluation ──────────────────────────────────────────────────────
 // IMPORTANT: Runtime visuals come from symbols.png + spriteMap (not SVG labels)
 // Symbol index mapping currently in use:
@@ -1861,72 +2116,46 @@ async function doSpin() {
   spinBtn.disabled = true;
   winEl.textContent = 'USDT 0.00';
 
-  const _spinJwt  = window.__agoraAuth?.token
-                  // Belt-and-suspenders: read directly from localStorage in case
-                  // HOST_INIT was dispatched with an empty JWT (e.g. profile fetch
-                  // failed on the Dart side) or wasn't received at all.
-                  || localStorage.getItem('_flutter_game_jwt')
-                  || '';
   const _spinMode = isDemoMode ? 'DEMO' : 'REAL';
-  // Allow the API base URL to be overridden for dev/staging environments.
-  const _apiBase  = window.__AGORA_API_BASE_URL || 'https://agoramarketapi.purrtechllc.com/api';
 
   let _hostSpinResult = null;
 
-  if (_spinJwt) {
-    // ── Flutter / standalone entry: call the API directly using the JWT ──────
-    // This bypasses the window.parent postMessage round-trip, which is only
-    // available in the Telegram Mini App host-page setup.
-    addLog(`SPIN → ${_spinMode} bet=${betIdx}`, 'info');
-    try {
-      const resp = await fetch(`${_apiBase}/slot/spin`, {
-        method: 'POST',
-        mode: 'cors',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${_spinJwt}`,
-        },
-        body: JSON.stringify({
-          gameId: 'moon_dance', betIndex: betIdx, betAmount: currentBet(),
-          mode: _spinMode, clientSeed: generateClientSeed(), nonce: Date.now().toString(),
-          ...(_spinMode !== 'DEMO' ? { clientRoundId: generateClientSeed() } : {}),
-        }),
-      });
-      if (!resp.ok) {
-        const errText = await resp.text().catch(() => '');
-        addLog(`SPIN HTTP ${resp.status}: ${errText.slice(0, 200)}`, 'error');
-      } else {
-        const json = await resp.json();
-        const p = (json && json.data != null) ? json.data : json;
-        _hostSpinResult = {
-          symbols: p.symbols,
-          multiplier: p.multiplier,
-          // Backend returns decimal USDT amount (e.g. 12.50), not cents/units.
-          prize: Number(p.winAmount ?? p.prize ?? 0),
-          // Backend returns balance as USDT float (e.g. 1974.80).
-          newBalance: p.balance,
-          mode: p.mode || _spinMode,
-        };
-        addLog(`SPIN OK: ${JSON.stringify(p.symbols)} ×${p.multiplier}`, 'info');
-      }
-    } catch (err) {
-      addLog(`SPIN fetch error: ${err}`, 'error');
-    }
+  if (_isFlutterMode && hasFlutterCallHandler()) {
+    // ── Flutter native entry: use inappwebview JS bridge (SDK-backed in Dart) ──
+    addLog(`SPIN(bridge) → ${_spinMode} bet=${betIdx}`, 'info');
+    const bridgeResult = await callFlutterHandler('spin', {
+      betIndex: betIdx,
+      betAmount: currentBet(),
+      mode: _spinMode,
+      clientSeed: generateClientSeed(),
+      nonce: Date.now().toString(),
+      ...(_spinMode !== 'DEMO' ? { clientRoundId: generateClientSeed() } : {}),
+    });
 
-  } else {
-    // ── Telegram Mini App entry: no in-game JWT — request spin from the host page ──
-    // The TG host page (web/tg/slot/index.html, ?hosted=1) holds the JWT and
-    // calls the backend on our behalf, replying via SPIN_RESULT / SPIN_ERROR.
-    if (!_isHostedMode) {
-      // Not TG Mini App and no JWT: the user must open the game via the Flutter
-      // app or Telegram Bot — they cannot spin without authentication.
-      addLog('未登入 — 請透過 AgoraMarket 或 Telegram Bot 開啟遊戲', 'error');
-      winEl.textContent = '請先登入';
-      isSpinning = false;
-      spinBtn.disabled = false;
-      return;
+    const bridgePayload = bridgeResult && bridgeResult.data != null ? bridgeResult.data : null;
+    if (bridgePayload && Array.isArray(bridgePayload.symbols) && bridgePayload.symbols.length > 0) {
+      _hostSpinResult = {
+        symbols: bridgePayload.symbols,
+        symbolIds: Array.isArray(bridgePayload.symbolIds)
+          ? bridgePayload.symbolIds.map(v => Number(v))
+          : null,
+        multiplier: bridgePayload.multiplier,
+        // Accept both winAmount (backend) and prize (legacy host payload).
+        prize: Number(bridgePayload.winAmount ?? bridgePayload.prize ?? 0),
+        // Backend returns balance as USDT float (e.g. 1974.80).
+        newBalance: Number(bridgePayload.balance ?? bridgePayload.newBalance ?? NaN),
+        mode: bridgePayload.mode || _spinMode,
+      };
+      addLog(`SPIN(bridge) OK: ${JSON.stringify(bridgePayload.symbols)} ×${bridgePayload.multiplier}`, 'info');
+    } else if (bridgeResult && bridgeResult.success === false) {
+      addLog(`SPIN(bridge) failed: ${bridgeResult.message || 'unknown error'}`, 'error');
     }
-    _hostSpinResult = await new Promise((resolve) => {
+  } else {
+    // ── Flutter Web entry (including Telegram): use postMessage ──
+    // On Flutter Web (desktop iframe or mobile direct navigation), the Dart side
+    // listens for SPIN_REQUEST and replies with SPIN_RESULT / SPIN_ERROR.
+    // Telegram Mini App also uses Flutter Web after auto-login in main.dart.
+    const rawSpinResult = await new Promise((resolve) => {
       let settled = false;
       function onMsg(e) {
         if (e.origin !== window.__gameOrigin) return;
@@ -1954,10 +2183,24 @@ async function doSpin() {
         mode: _spinMode,
       }, window.__gameOrigin);
     });
+
+    if (rawSpinResult) {
+      _hostSpinResult = {
+        symbols: Array.isArray(rawSpinResult.symbols) ? rawSpinResult.symbols : null,
+        symbolIds: Array.isArray(rawSpinResult.symbolIds)
+          ? rawSpinResult.symbolIds.map(v => Number(v))
+          : null,
+        multiplier: Number(rawSpinResult.multiplier ?? 0),
+        // Support both formats: { winAmount } from backend and { prize } from legacy host.
+        prize: Number(rawSpinResult.winAmount ?? rawSpinResult.prize ?? 0),
+        newBalance: Number(rawSpinResult.newBalance ?? rawSpinResult.balance ?? NaN),
+        mode: rawSpinResult.mode || _spinMode,
+      };
+    }
   }
 
   // Backend must return a valid SPIN_RESULT; no client-side fallback.
-  if (!_hostSpinResult?.symbols?.length) {
+  if (!(_hostSpinResult?.symbolIds?.length || _hostSpinResult?.symbols?.length)) {
     addLog('旋轉請求失敗：後端無法回應，請稍後再試', 'error');
     winEl.textContent = '請求失敗';
     isSpinning  = false;
@@ -1967,7 +2210,10 @@ async function doSpin() {
   }
 
   // Apply symbols and host-managed balance from backend result.
-  const forcedSyms = _hostSpinResult.symbols;
+  const forcedSyms = Array.isArray(_hostSpinResult.symbols) ? _hostSpinResult.symbols : null;
+  const forcedSymbolIds = Array.isArray(_hostSpinResult.symbolIds)
+    ? _hostSpinResult.symbolIds.map(v => Number(v))
+    : (forcedSyms ? forcedSyms.map(_resolveSymIdx) : null);
   if (typeof _hostSpinResult.newBalance === 'number') {
     // applyBalance() converts USDT float → internal ×100 units and updates the display.
     applyBalance(_hostSpinResult.newBalance);
@@ -1986,8 +2232,8 @@ async function doSpin() {
       // Snap: find the card to land on the payline (y=0).
       // Steer to the backend-determined symbol so the visual result matches the API outcome.
       let closest = null;
-      if (forcedSyms !== null) {
-        const targetIdx = _resolveSymIdx(forcedSyms[i]); // resolve string name → numeric index
+      if (forcedSymbolIds !== null) {
+        const targetIdx = Number(forcedSymbolIds[i]);
         if (targetIdx >= 0) {
           let minDist = Infinity;
           strip.children.forEach(card => {
@@ -2022,11 +2268,17 @@ async function doSpin() {
     spinBtn.disabled = false;
 
     const multiplier = _hostSpinResult.multiplier ?? 0;
-    addLog(`花色: ${forcedSyms.map(s => typeof s === 'string' ? s : (ACTIVE_SYMBOL_NAMES[s] ?? `sym${s}`)).join(' ')} → ×${multiplier}`, multiplier >= 10 ? 'info' : 'warn');
+    const displaySymbols = (forcedSymbolIds || []).map(idx => {
+      const n = Number(idx);
+      return Number.isFinite(n)
+        ? (spriteMap[n]?.name?.toUpperCase() ?? `SYM${n}`)
+        : 'SYM?';
+    });
+    addLog(`花色: ${displaySymbols.join(' ')} → ×${multiplier}`, multiplier >= 10 ? 'info' : 'warn');
 
     if (multiplier > 0) {
       const prize = Number(_hostSpinResult.prize ?? 0);
-      if (!prize) addLog(`後端 multiplier=${multiplier} 但 prize 未返回`, 'warn');
+      if (!prize) addLog(`後端 multiplier=${multiplier} 但 winAmount 未返回`, 'warn');
       // Balance is managed by the host via SPIN_RESULT.newBalance; no local update needed.
       winEl.textContent     = '+USDT ' + prize.toFixed(2);
 
