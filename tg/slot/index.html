@@ -57,6 +57,7 @@
 
       var statusEl = document.getElementById('status');
       var frameEl = document.getElementById('gameFrame');
+      var rootEl = document.getElementById('root');
 
       var ORIGIN = window.location.origin;
       var API_BASE = window.__AGORA_API_BASE_URL || 'https://agoramarketapi.purrtechllc.com/api';
@@ -70,6 +71,112 @@
         username: '',
         hostReady: false,
       };
+
+      var OFFSET_THRESHOLD_PX = 10;
+      var _vvRafPending = false;
+      var _lastOffsetDetected = false;
+      var _lastExtraSyncAt = 0;
+
+      function initViewportOffsetSync() {
+        var ua = navigator.userAgent || '';
+        var isIOS = /iPad|iPhone|iPod/.test(ua);
+        var vv = window.visualViewport;
+
+        // Keep this object available even when sync is skipped.
+        if (!window.__AGORA_VIEWPORT_OFFSET_STATUS) {
+          window.__AGORA_VIEWPORT_OFFSET_STATUS = {
+            detected: false,
+            offsetTop: 0,
+            offsetLeft: 0,
+            threshold: OFFSET_THRESHOLD_PX,
+            updatedAt: new Date().toISOString(),
+            host: 'tg-slot',
+          };
+        }
+
+        if (!isIOS || !vv || !rootEl) return;
+
+        function publishOffsetStatus() {
+          var offsetTop = Number(vv.offsetTop || 0);
+          var offsetLeft = Number(vv.offsetLeft || 0);
+          var detected = Math.abs(offsetTop) > OFFSET_THRESHOLD_PX || Math.abs(offsetLeft) > OFFSET_THRESHOLD_PX;
+
+          window.__AGORA_VIEWPORT_OFFSET_STATUS = {
+            detected: detected,
+            offsetTop: offsetTop,
+            offsetLeft: offsetLeft,
+            threshold: OFFSET_THRESHOLD_PX,
+            updatedAt: new Date().toISOString(),
+            host: 'tg-slot',
+          };
+
+          if (detected !== _lastOffsetDetected) {
+            _lastOffsetDetected = detected;
+            try {
+              window.dispatchEvent(new CustomEvent('agora:viewport-offset-status', {
+                detail: window.__AGORA_VIEWPORT_OFFSET_STATUS,
+              }));
+            } catch (_) {}
+          }
+
+          return detected;
+        }
+
+        function applyToRoot() {
+          var safeTop = -(Number(vv.offsetTop) || 0);
+          var safeLeft = -(Number(vv.offsetLeft) || 0);
+
+          rootEl.style.width = vv.width + 'px';
+          rootEl.style.height = vv.height + 'px';
+          rootEl.style.transformOrigin = '0 0';
+          rootEl.style.willChange = 'transform';
+          rootEl.style.transform = 'translate3d(' + safeLeft + 'px,' + safeTop + 'px,0)';
+        }
+
+        function syncNow() {
+          _vvRafPending = false;
+
+          var offsetDetected = publishOffsetStatus();
+          try {
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+          } catch (_) {}
+          applyToRoot();
+
+          // If offset is abnormal, schedule extra sync frames for faster convergence.
+          if (offsetDetected) {
+            var now = Date.now();
+            if (now - _lastExtraSyncAt > 800) {
+              _lastExtraSyncAt = now;
+              setTimeout(queueSync, 40);
+              setTimeout(queueSync, 180);
+            }
+          }
+        }
+
+        function queueSync() {
+          if (_vvRafPending) return;
+          _vvRafPending = true;
+          (window.requestAnimationFrame || function (cb) { return setTimeout(cb, 16); })(syncNow);
+        }
+
+        function delayedSync() {
+          queueSync();
+          setTimeout(queueSync, 60);
+          setTimeout(queueSync, 600);
+          setTimeout(queueSync, 1500);
+        }
+
+        vv.addEventListener('resize', queueSync, { passive: true });
+        vv.addEventListener('scroll', queueSync, { passive: true });
+        window.addEventListener('orientationchange', delayedSync, { passive: true });
+        window.addEventListener('pageshow', delayedSync, { passive: true });
+        document.addEventListener('visibilitychange', function () {
+          if (!document.hidden) delayedSync();
+        });
+
+        delayedSync();
+      }
 
       function setStatus(text) {
         if (statusEl) statusEl.textContent = text;
@@ -259,6 +366,8 @@
 
       async function boot() {
         try {
+          initViewportOffsetSync();
+
           state.gameId = parseGameId();
           if (!state.gameId) {
             redirectError('unknown_game');

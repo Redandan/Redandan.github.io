@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ?ˆæœ¬?–ç·©å­˜æ?è­?-->
-    <meta name="cache-version" content="1.0.837">
+    <meta name="cache-version" content="1.0.838">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -23,7 +23,7 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.837+838">
+  <meta name="version" content="1.0.838+839">
 
   <!-- Fix 1: Removed vh-based viewport logic - conflicts with visualViewport root model -->
   
@@ -118,7 +118,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.837">
+  <link rel="manifest" href="manifest.json?v=1.0.838">
   
   <!-- PWA ??†î?????Žï…±???? -->
   <meta name="application-name" content="Agora Market">
@@ -126,7 +126,7 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ??????µæœ±??î¤¢å???è¹Žâ?î²???????? -->
-  <link rel="preload" href="flutter_bootstrap.js?v=1.0.837" as="script">
+  <link rel="preload" href="flutter_bootstrap.js?v=1.0.838" as="script">
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -439,7 +439,7 @@
           <img src="icons/new_favicon/apple-touch-icon.png" alt="Agora Market" style="width: 116px; height: 116px; object-fit: contain;" />
         </div>
         <div class="loading-text" id="loading-text">Agora Market</div>
-        <div class="loading-version" id="version-display">v1.0.837</div>
+        <div class="loading-version" id="version-display">v1.0.838</div>
       </div>
     </div>
   </div>
@@ -857,6 +857,20 @@
       logSync('Initializing visualViewport synchronizer');
 
       const vv = window.visualViewport;
+      const OFFSET_THRESHOLD_PX = 10;
+      let lastOffsetDetected = false;
+      let lastExtraSyncAt = 0;
+
+      // Expose latest offset state for runtime inspection from Flutter/debug tools.
+      if (!window.__AGORA_VIEWPORT_OFFSET_STATUS) {
+        window.__AGORA_VIEWPORT_OFFSET_STATUS = {
+          detected: false,
+          offsetTop: 0,
+          offsetLeft: 0,
+          threshold: OFFSET_THRESHOLD_PX,
+          updatedAt: new Date().toISOString()
+        };
+      }
 
       function getRoot() {
         const root = document.getElementById('flutter-root');
@@ -897,6 +911,32 @@
         }
         
         return { safeTop, safeLeft };
+      }
+
+      function publishOffsetStatus() {
+        const offsetTop = Number(vv.offsetTop || 0);
+        const offsetLeft = Number(vv.offsetLeft || 0);
+        const detected = Math.abs(offsetTop) > OFFSET_THRESHOLD_PX || Math.abs(offsetLeft) > OFFSET_THRESHOLD_PX;
+
+        window.__AGORA_VIEWPORT_OFFSET_STATUS = {
+          detected: detected,
+          offsetTop: offsetTop,
+          offsetLeft: offsetLeft,
+          threshold: OFFSET_THRESHOLD_PX,
+          updatedAt: new Date().toISOString()
+        };
+
+        if (detected !== lastOffsetDetected) {
+          lastOffsetDetected = detected;
+          logSync('Offset state changed: detected=' + detected + ', top=' + offsetTop + ', left=' + offsetLeft, detected ? 'warn' : 'info');
+          try {
+            window.dispatchEvent(new CustomEvent('agora:viewport-offset-status', {
+              detail: window.__AGORA_VIEWPORT_OFFSET_STATUS
+            }));
+          } catch (_) {}
+        }
+
+        return detected;
       }
 
       function applyToRoot(root) {
@@ -963,6 +1003,7 @@
           return;
         }
         ensureFlutterElementsInRoot(root);
+        const offsetDetected = publishOffsetStatus();
         // iOS PWA: docScroll matches offsetTop (e.g. 62), so body is already at -62; our transform adds another -62 => double offset. Zero document scroll so only #flutter-root transform applies.
         if (Math.abs(vv.offsetTop) > 5 || Math.abs(vv.offsetLeft) > 5) {
           try {
@@ -971,6 +1012,17 @@
           } catch (_) {}
         }
         applyToRoot(root);
+
+        // When offset is abnormal, request a couple of extra frames to converge faster.
+        if (offsetDetected) {
+          const now = Date.now();
+          if (now - lastExtraSyncAt > 800) {
+            lastExtraSyncAt = now;
+            setTimeout(queueSync, 40);
+            setTimeout(queueSync, 180);
+          }
+        }
+
         syncCount++;
         if (syncCount === 1) {
           logSync('First sync completed');
@@ -1008,7 +1060,7 @@
     })();
   </script>
 
-  <script src="flutter_bootstrap.js?v=1.0.837" async></script>
+  <script src="flutter_bootstrap.js?v=1.0.838" async></script>
 
   <!-- Fix 2: Removed pwa_viewport_fix.js - conflicts with visualViewport root model -->
 
@@ -1082,6 +1134,7 @@
   
 </body>
 </html>
+
 
 
 
