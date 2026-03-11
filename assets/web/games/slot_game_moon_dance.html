@@ -1392,13 +1392,17 @@ function fitGame() {
     const viewportH = (_vvFixEnabled && _vv && _vv.height) ? Number(_vv.height) : window.innerHeight;
     const topInset = _resolveTopInsetForLayout();
     const layoutSafeTop = topInset.resolvedTop;
-    // Subtract the TG safe area inset (iPhone status bar) from usable height
-    // so the canvas fits and is centered within the truly visible region.
-    const usableH = Math.max(viewportH - layoutSafeTop, 100);
+    // Hosted TG mode needs the top inset removed from the usable height because
+    // Telegram expands the viewport into the status-bar area. Standalone PWA
+    // should stay top-anchored below the safe area without vertically centering,
+    // otherwise the preserved top inset also creates a visible blank band below.
+    const usableH = Math.max(viewportH - (_isHostedMode ? layoutSafeTop : 0), 100);
 
     gvScale = Math.min(viewportW / 430, usableH / 900);
     const offsetX = (viewportW - 430 * gvScale) / 2;
-    const offsetY = layoutSafeTop + (usableH - 900 * gvScale) / 2;
+    const offsetY = _isHostedMode
+      ? layoutSafeTop + (usableH - 900 * gvScale) / 2
+      : layoutSafeTop;
     const vvOffsets = _getViewportSafeOffsets();
 
     if (vvOffsets.detected) {
