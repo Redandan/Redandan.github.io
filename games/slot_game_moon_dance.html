@@ -623,14 +623,37 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 
 /* Balance row */
 #ctrl-row2{
-  display:flex; justify-content:space-between; align-items:center;
-  padding:3px 2px 2px;
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
+  gap:8px;
+  padding:3px 6px 2px;
   border-top:1px solid rgba(139,96,16,.35);
 }
 .bal-item{display:flex; align-items:center; gap:5px; font-size:12px}
+.bal-item-left{justify-self:start}
+.bal-item-right{justify-self:end}
 .bal-icon{font-size:14px}
 .bal-lbl{color:#8888cc}
 .bal-val{color:#c0ccff; font-weight:bold; font-size:14px; min-width:54px}
+.bal-center-item{justify-self:center}
+.bal-center-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:112px;
+  padding:4px 10px 3px;
+  border:1px solid rgba(144,152,255,.34);
+  border-radius:999px;
+  background:linear-gradient(180deg,rgba(24,20,72,.96),rgba(10,8,34,.96));
+  color:#c0ccff;
+  font-size:11px;
+  font-weight:bold;
+  letter-spacing:.6px;
+  text-shadow:0 0 6px rgba(192,204,255,.35);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 10px rgba(80,100,255,.14);
+  white-space:nowrap;
+}
 
 /* ============================================================
    7. LOG PANEL
@@ -949,12 +972,15 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
       </button>
     </div>
     <div id="ctrl-row2">
-      <div class="bal-item">
+      <div class="bal-item bal-item-left">
         <span class="bal-icon"><svg class="sym-icon"><use href="#sym-diamond"/></svg></span>
         <span class="bal-lbl">余額</span>
         <span class="bal-val" id="balance-val">USDT 0.00</span>
       </div>
-      <div class="bal-item">
+      <div class="bal-center-item">
+        <span class="bal-center-badge" id="spin-status">單注 USDT 2.50</span>
+      </div>
+      <div class="bal-item bal-item-right">
         <span class="bal-icon"><svg class="sym-icon"><use href="#sym-star"/></svg></span>
         <span class="bal-lbl">贏獎</span>
         <span class="bal-val" id="win-val">USDT 0.00</span>
@@ -2037,8 +2063,15 @@ const balanceEl = document.getElementById('balance-val');
 const winEl     = document.getElementById('win-val');
 const betLabel  = document.getElementById('bet-label');
 const spinBtn   = document.getElementById('spin-btn');
+const spinStatusEl = document.getElementById('spin-status');
 betLabel.textContent  = '投注 USDT ' + (currentBet() / 100).toFixed(2);
 const jackpotMarqueeTextEl = document.getElementById('jackpot-marquee-text');
+
+function refreshSpinStatus() {
+  if (!spinStatusEl) return;
+  const modeLabel = window.__hostDemoMode ? '試玩' : '單注';
+  spinStatusEl.textContent = `${modeLabel} USDT ${(currentBet() / 100).toFixed(2)}`;
+}
 
 function getDisplayUsername() {
   return (
@@ -2061,6 +2094,7 @@ function refreshJackpotBanner() {
 
 function updateBalanceDisplay() {
   balanceEl.textContent = 'USDT ' + (balance / 100).toFixed(2);
+  refreshSpinStatus();
   refreshJackpotBanner();
 }
 
@@ -2245,6 +2279,7 @@ document.getElementById('btn-bet').addEventListener('click', () => {
   if (isSpinning) return;
   betIdx = (betIdx + 1) % BET_LEVELS.length;
   betLabel.textContent = '投注 USDT ' + (currentBet() / 100).toFixed(2);
+  refreshSpinStatus();
   betLabel.style.animation = 'none';
   void betLabel.offsetWidth; // force reflow to restart the CSS animation from the beginning
   betLabel.style.animation = 'betFlash .4s ease';
