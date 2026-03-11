@@ -26,6 +26,8 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
   top:0; left:0;
   width:430px;
   height:900px;
+  padding-top:var(--layout-safe-top, 0px);
+  padding-bottom:var(--layout-safe-bottom, 0px);
   transform-origin:top left;
   display:flex;
   flex-direction:column;
@@ -534,7 +536,7 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
   flex:0 0 auto;
   background:#080520;
   border-top:3px solid #3a3a88;
-  padding:0 10px calc(4px + var(--sab));
+  padding:0 10px 4px;
   position:relative; z-index:20;
 }
 #control-bar::before{
@@ -1400,19 +1402,23 @@ function fitGame() {
     const viewportW = (_vvFixEnabled && _vv && _vv.width) ? Number(_vv.width) : window.innerWidth;
     const viewportH = (_vvFixEnabled && _vv && _vv.height) ? Number(_vv.height) : window.innerHeight;
     const topInset = _resolveTopInsetForLayout();
-    const layoutSafeTop = topInset.resolvedTop;
+    const layoutSafeTop = _isHostedMode ? topInset.resolvedTop : 0;
     const layoutSafeBottom = _isHostedMode ? 0 : _readCssSafeAreaBottom();
+    const contentSafeTop = _isHostedMode ? 0 : topInset.cssTop;
     // Hosted TG mode needs the top inset removed from the usable height because
     // Telegram expands the viewport into the status-bar area. Standalone PWA
     // should stay top-anchored below the safe area without vertically centering,
     // otherwise the preserved top inset also creates a visible blank band below.
-    const usableH = Math.max(viewportH - (_isHostedMode ? layoutSafeTop : 0) + layoutSafeBottom, 100);
+    const usableH = Math.max(viewportH - layoutSafeTop, 100);
+
+    gvEl.style.setProperty('--layout-safe-top', `${contentSafeTop}px`);
+    gvEl.style.setProperty('--layout-safe-bottom', `${layoutSafeBottom}px`);
 
     gvScale = Math.min(viewportW / 430, usableH / 900);
     const offsetX = (viewportW - 430 * gvScale) / 2;
     const offsetY = _isHostedMode
       ? layoutSafeTop + (usableH - 900 * gvScale) / 2
-      : layoutSafeTop;
+      : 0;
     const vvOffsets = _getViewportSafeOffsets();
 
     if (vvOffsets.detected) {
