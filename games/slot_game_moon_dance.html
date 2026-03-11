@@ -1085,10 +1085,11 @@ window.addEventListener('message', (e) => {
   if (type === 'HOST_INIT') {
     const { jwt, balance: hostBalance, demoMode, username, tgSafeAreaTop } = e.data;
     // Store safe area inset so fitGame() can push content below the status bar.
-    if (Number.isFinite(Number(tgSafeAreaTop)) && Number(tgSafeAreaTop) > 0) {
-      _tgSafeAreaTop = Number(tgSafeAreaTop);
-      fitGame(); // re-layout immediately with the correct inset
+    if (Number.isFinite(Number(tgSafeAreaTop))) {
+      _tgSafeAreaTop = Math.max(0, Number(tgSafeAreaTop));
     }
+    fitGame(); // re-layout immediately with the latest inset inputs
+    _logViewportDebug('HOST_INIT');
     window.__agoraAuth = { token: jwt };
     window.__hostDemoMode = !!demoMode;
 
@@ -1228,6 +1229,65 @@ function _safeNum(value) {
   return Number.isFinite(n) ? n : 0;
 }
 
+function _isLikelyIOSDevice() {
+  const ua = navigator.userAgent || '';
+  const maxTouchPoints = _safeNum(navigator.maxTouchPoints);
+  return /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && maxTouchPoints > 1);
+}
+
+function _readTelegramWebAppFromGame() {
+  try {
+    if (window.Telegram && window.Telegram.WebApp) return window.Telegram.WebApp;
+  } catch (_) {}
+  try {
+    if (window.parent && window.parent.Telegram && window.parent.Telegram.WebApp) {
+      return window.parent.Telegram.WebApp;
+    }
+  } catch (_) {}
+  return null;
+}
+
+function _resolveTopInsetForLayout() {
+  const vvTop = (_vvFixEnabled && _vv) ? _safeNum(_vv.offsetTop) : 0;
+  const tg = _readTelegramWebAppFromGame();
+  const tgSafeTop = tg
+    ? _safeNum(tg.safeAreaInsets && tg.safeAreaInsets.top) +
+      _safeNum(tg.contentSafeAreaInsets && tg.contentSafeAreaInsets.top)
+    : 0;
+
+  let resolvedTop = Math.max(_safeNum(_tgSafeAreaTop), tgSafeTop, vvTop);
+  let fallbackUsed = false;
+
+  // Telegram iOS may return 0 for safe area while status bar still overlaps.
+  if (resolvedTop < 1 && _isLikelyIOSDevice()) {
+    resolvedTop = 44;
+    fallbackUsed = true;
+  }
+
+  resolvedTop = Math.max(0, Math.min(80, resolvedTop));
+  return {
+    resolvedTop,
+    vvTop,
+    tgSafeTop,
+    fallbackUsed,
+  };
+}
+
+function _logViewportDebug(reason) {
+  const tg = _readTelegramWebAppFromGame();
+  const debugData = {
+    reason: String(reason || 'unknown'),
+    innerHeight: _safeNum(window.innerHeight),
+    vvHeight: (_vvFixEnabled && _vv) ? _safeNum(_vv.height) : 0,
+    vvOffsetTop: (_vvFixEnabled && _vv) ? _safeNum(_vv.offsetTop) : 0,
+    tgViewport: tg ? _safeNum(tg.viewportHeight) : 0,
+    tgSafe: tg ? _safeNum(tg.safeAreaInsets && tg.safeAreaInsets.top) : 0,
+    tgContentSafe: tg ? _safeNum(tg.contentSafeAreaInsets && tg.contentSafeAreaInsets.top) : 0,
+    hostSafeTop: _safeNum(_tgSafeAreaTop),
+  };
+  console.log('[VV_FIX][GAME][DEBUG]', debugData);
+}
+
 function _getViewportSafeOffsets() {
   if (!_vvFixEnabled || !_vv) {
     return {
@@ -1282,13 +1342,15 @@ function fitGame() {
   _fitRaf = requestAnimationFrame(() => {
     const viewportW = (_vvFixEnabled && _vv && _vv.width) ? Number(_vv.width) : window.innerWidth;
     const viewportH = (_vvFixEnabled && _vv && _vv.height) ? Number(_vv.height) : window.innerHeight;
+    const topInset = _resolveTopInsetForLayout();
+    const layoutSafeTop = topInset.resolvedTop;
     // Subtract the TG safe area inset (iPhone status bar) from usable height
     // so the canvas fits and is centered within the truly visible region.
-    const usableH = Math.max(viewportH - _tgSafeAreaTop, 100);
+    const usableH = Math.max(viewportH - layoutSafeTop, 100);
 
     gvScale = Math.min(viewportW / 430, usableH / 900);
     const offsetX = (viewportW - 430 * gvScale) / 2;
-    const offsetY = _tgSafeAreaTop + (usableH - 900 * gvScale) / 2;
+    const offsetY = layoutSafeTop + (usableH - 900 * gvScale) / 2;
     const vvOffsets = _getViewportSafeOffsets();
 
     if (vvOffsets.detected) {
@@ -1313,7 +1375,7 @@ function fitGame() {
       _lastViewportFixDetected = vvOffsets.detected;
       _lastViewportFixLogAt = now;
       addLog(
-        `[VV_FIX][GAME] detected=${vvOffsets.detected} safeTop=${vvOffsets.safeTop.toFixed(1)} safeLeft=${vvOffsets.safeLeft.toFixed(1)} tgSafeAreaTop=${_tgSafeAreaTop.toFixed(1)} offsetY=${offsetY.toFixed(1)} vv=(${vvOffsets.vvTop.toFixed(1)},${vvOffsets.vvLeft.toFixed(1)}) doc=(${vvOffsets.docTop.toFixed(1)},${vvOffsets.docLeft.toFixed(1)}) body=(${vvOffsets.bodyTop.toFixed(1)},${vvOffsets.bodyLeft.toFixed(1)}) gv=(${gvTop.toFixed(1)},${gvLeft.toFixed(1)},${gvW.toFixed(1)}x${gvH.toFixed(1)}) scale=${gvScale.toFixed(3)}`,
+        `[VV_FIX][GAME] detected=${vvOffsets.detected} safeTop=${vvOffsets.safeTop.toFixed(1)} safeLeft=${vvOffsets.safeLeft.toFixed(1)} tgSafeAreaTop=${_tgSafeAreaTop.toFixed(1)} resolvedTop=${layoutSafeTop.toFixed(1)} tgApiTop=${topInset.tgSafeTop.toFixed(1)} vvTop=${topInset.vvTop.toFixed(1)} fallback44=${topInset.fallbackUsed} offsetY=${offsetY.toFixed(1)} vv=(${vvOffsets.vvTop.toFixed(1)},${vvOffsets.vvLeft.toFixed(1)}) doc=(${vvOffsets.docTop.toFixed(1)},${vvOffsets.docLeft.toFixed(1)}) body=(${vvOffsets.bodyTop.toFixed(1)},${vvOffsets.bodyLeft.toFixed(1)}) gv=(${gvTop.toFixed(1)},${gvLeft.toFixed(1)},${gvW.toFixed(1)}x${gvH.toFixed(1)}) scale=${gvScale.toFixed(3)}`,
         vvOffsets.detected ? 'warn' : 'info'
       );
     }

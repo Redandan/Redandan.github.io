@@ -499,12 +499,29 @@
           // Include Telegram safe area insets so the game can avoid placing
           // content under the iPhone status bar / bottom home indicator.
           var tg2 = window.Telegram && window.Telegram.WebApp;
+          var ua2 = navigator.userAgent || '';
+          var mtp2 = Number(navigator.maxTouchPoints || 0);
+          var isIOS2 = /iPad|iPhone|iPod/.test(ua2) ||
+            (/Macintosh/.test(ua2) && mtp2 > 1);
+          var vv2 = window.visualViewport;
+          var vvOffsetTop2 = 0;
           var safeTop = 0;
           try {
             safeTop += Number((tg2 && tg2.safeAreaInsets && tg2.safeAreaInsets.top) || 0);
             safeTop += Number((tg2 && tg2.contentSafeAreaInsets && tg2.contentSafeAreaInsets.top) || 0);
+            vvOffsetTop2 = Number((vv2 && vv2.offsetTop) || 0);
             if (!Number.isFinite(safeTop)) safeTop = 0;
+            if (!Number.isFinite(vvOffsetTop2)) vvOffsetTop2 = 0;
           } catch (_) {}
+          safeTop = Math.max(safeTop, vvOffsetTop2);
+          // Telegram iOS may report safe area as 0 even when status bar overlaps.
+          if (safeTop < 1 && isIOS2) safeTop = 44;
+          hostLog(
+            'HOST_INIT safeTop resolved=' + safeTop +
+            ' (tg=' + Number((tg2 && tg2.safeAreaInsets && tg2.safeAreaInsets.top) || 0) +
+            ', tgContent=' + Number((tg2 && tg2.contentSafeAreaInsets && tg2.contentSafeAreaInsets.top) || 0) +
+            ', vvTop=' + vvOffsetTop2 + ', isIOS=' + isIOS2 + ')'
+          );
           postToGame({
             type: 'HOST_INIT',
             jwt: state.jwt,
