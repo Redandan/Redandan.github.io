@@ -13,6 +13,7 @@
      it via getComputedStyle.  Requires viewport-fit=cover to return non-zero
      on iPhone (status bar height ~44-59px).  0px is the safe fallback. */
   --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
 }
 
 /* ===== Reset ===== */
@@ -533,7 +534,7 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
   flex:0 0 auto;
   background:#080520;
   border-top:3px solid #3a3a88;
-  padding:0 10px 4px;
+  padding:0 10px calc(4px + var(--sab));
   position:relative; z-index:20;
 }
 #control-bar::before{
@@ -1267,6 +1268,16 @@ function _readCssSafeAreaTop() {
   } catch (_) { return 0; }
 }
 
+function _readCssSafeAreaBottom() {
+  // Reads env(safe-area-inset-bottom) exposed as --sab CSS variable on :root.
+  // Helps keep bottom controls above iOS home-indicator reserved area.
+  try {
+    const raw = getComputedStyle(document.documentElement).getPropertyValue('--sab').trim();
+    const val = parseFloat(raw);
+    return Number.isFinite(val) ? val : 0;
+  } catch (_) { return 0; }
+}
+
 function _resolveTopInsetForLayout() {
   const cssTop  = _readCssSafeAreaTop();  // env(safe-area-inset-top)
   const vvTop   = (_vvFixEnabled && _vv) ? _safeNum(_vv.offsetTop) : 0;
@@ -1275,12 +1286,11 @@ function _resolveTopInsetForLayout() {
 
   if (!_isHostedMode) {
     // ── Standalone PWA / Safari / in-app WebView ──────────────────────────
-    // In standalone mode, the browser viewport used by innerHeight is already
-    // the visible app area. Applying cssTop as an additional layout offset
-    // pushes the whole game down and leaves a permanent blank area at bottom.
-    // Keep cssTop only for logging/diagnostics.
+    // In standalone mode, reserve the top safe area so content is not covered
+    // by the status bar. Bottom safe area is handled by CSS padding on control
+    // bar (var(--sab)).
     return {
-      resolvedTop: 0,
+      resolvedTop: cssTop,
       cssTop,
       vvTop,
       tgSafeTop: 0,
@@ -1391,11 +1401,12 @@ function fitGame() {
     const viewportH = (_vvFixEnabled && _vv && _vv.height) ? Number(_vv.height) : window.innerHeight;
     const topInset = _resolveTopInsetForLayout();
     const layoutSafeTop = topInset.resolvedTop;
+    const layoutSafeBottom = _isHostedMode ? 0 : _readCssSafeAreaBottom();
     // Hosted TG mode needs the top inset removed from the usable height because
     // Telegram expands the viewport into the status-bar area. Standalone PWA
     // should stay top-anchored below the safe area without vertically centering,
     // otherwise the preserved top inset also creates a visible blank band below.
-    const usableH = Math.max(viewportH - (_isHostedMode ? layoutSafeTop : 0), 100);
+    const usableH = Math.max(viewportH - (_isHostedMode ? layoutSafeTop : 0) + layoutSafeBottom, 100);
 
     gvScale = Math.min(viewportW / 430, usableH / 900);
     const offsetX = (viewportW - 430 * gvScale) / 2;
