@@ -1217,6 +1217,10 @@ let _fitRaf = 0;
 let gvScale = Math.min(window.innerWidth / 430, window.innerHeight / 900);
 // Safe area inset from HOST_INIT (iPhone status-bar height reported by Telegram SDK).
 let _tgSafeAreaTop = 0;
+// True only when loaded inside the Telegram host iframe (?hosted=1).
+// In standalone PWA/Safari, innerHeight already excludes the status bar, so the
+// iOS fallback offset must NOT be applied.
+const _isHostedMode = new URLSearchParams(window.location.search).get('hosted') === '1';
 const _vv = window.visualViewport;
 const _vvFixEnabled = !!_vv;
 const _vvFixNeedPersistentSync = _vvFixEnabled && (('ontouchstart' in window) || Number(navigator.maxTouchPoints || 0) > 0);
@@ -1259,7 +1263,10 @@ function _resolveTopInsetForLayout() {
   let fallbackUsed = false;
 
   // Telegram iOS may return 0 for safe area while status bar still overlaps.
-  if (resolvedTop < 1 && _isLikelyIOSDevice()) {
+  // Only apply this fallback in hosted (TG iframe) mode — in standalone PWA/Safari
+  // innerHeight is already the safe-area-adjusted height, so adding 44px would
+  // incorrectly push the canvas down and waste screen space at the top.
+  if (resolvedTop < 1 && _isLikelyIOSDevice() && _isHostedMode) {
     resolvedTop = 44;
     fallbackUsed = true;
   }
@@ -1284,6 +1291,7 @@ function _logViewportDebug(reason) {
     tgSafe: tg ? _safeNum(tg.safeAreaInsets && tg.safeAreaInsets.top) : 0,
     tgContentSafe: tg ? _safeNum(tg.contentSafeAreaInsets && tg.contentSafeAreaInsets.top) : 0,
     hostSafeTop: _safeNum(_tgSafeAreaTop),
+    isHosted: _isHostedMode,
   };
   console.log('[VV_FIX][GAME][DEBUG]', debugData);
 }
