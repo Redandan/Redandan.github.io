@@ -531,9 +531,18 @@
           state.username = auth.username || '';
           state.demoMode = state.balanceUsdt < MIN_REAL_BET_USDT;
 
-          var gameSrc = '/games/slot_game_moon_dance.html?hosted=1';
+          // Add a cache-buster so iframe always picks up the latest game diagnostics/fixes.
+          var gameSrc = '/games/slot_game_moon_dance.html?hosted=1&_ts=' + Date.now();
           frameEl.src = gameSrc;
           frameEl.style.display = 'block';
+          // Trigger host viewport sync after iframe becomes visible; without this,
+          // early metrics may report frame=0x0 while the element is still display:none.
+          setTimeout(function () {
+            try { window.dispatchEvent(new Event('resize')); } catch (_) {}
+          }, 60);
+          setTimeout(function () {
+            try { window.dispatchEvent(new Event('resize')); } catch (_) {}
+          }, 240);
           setStatus('TG 入口載入遊戲中...');
 
           window.addEventListener('message', handleGameMessage);
