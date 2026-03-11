@@ -1275,13 +1275,13 @@ function _resolveTopInsetForLayout() {
 
   if (!_isHostedMode) {
     // ── Standalone PWA / Safari / in-app WebView ──────────────────────────
-    // The OS/browser already positions the viewport BELOW the status bar,
-    // so innerHeight is the truly usable height.  cssTop must NOT be added
-    // as an offsetY — that would double-deduct the status bar and push the
-    // canvas down, creating visible blank space at the bottom.
-    // Only compensate for an actual visualViewport.offsetTop drift (rare).
+    // In standalone iOS PWA the status bar safe area must come from CSS env().
+    // visualViewport.offsetTop is handled separately by _getViewportSafeOffsets()
+    // and must NOT be folded into resolvedTop, otherwise it gets added here and
+    // then subtracted again in the final transform, leaving the game under the
+    // status bar while still appearing vertically misaligned.
     return {
-      resolvedTop: vvTop,
+      resolvedTop: cssTop,
       cssTop,
       vvTop,
       tgSafeTop: 0,
@@ -1299,7 +1299,9 @@ function _resolveTopInsetForLayout() {
       _safeNum(tg.contentSafeAreaInsets && tg.contentSafeAreaInsets.top)
     : 0;
 
-  let resolvedTop = Math.max(cssTop, _safeNum(_tgSafeAreaTop), tgSafeTop, vvTop);
+  // vvTop is a viewport drift signal, not a persistent safe-area inset.
+  // It is already compensated by vvOffsets.safeTop in fitGame().
+  let resolvedTop = Math.max(cssTop, _safeNum(_tgSafeAreaTop), tgSafeTop);
 
   // Last resort: Telegram iOS returns 0 for all APIs — use known minimum.
   if (resolvedTop < 1 && _isLikelyIOSDevice()) {
