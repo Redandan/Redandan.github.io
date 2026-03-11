@@ -76,6 +76,18 @@
     };
   }
 
+  function cloneRect(r) {
+    if (!r) return null;
+    return {
+      top: safeNum(r.top),
+      left: safeNum(r.left),
+      width: safeNum(r.width),
+      height: safeNum(r.height),
+      bottom: safeNum(r.bottom),
+      right: safeNum(r.right),
+    };
+  }
+
   function getTransformScale(el) {
     if (!el) return null;
     var style = getComputedStyle(el);
@@ -134,6 +146,7 @@
     var gvRect = payload && payload.layout ? payload.layout.gvRect : null;
     var canvasOverflow = payload && payload.layout ? payload.layout.canvasOverflow : null;
     var envBottom = payload && payload.safeArea ? safeNum(payload.safeArea.envBottomProbe) : 0;
+    var renderedGaps = payload && payload.layout && payload.layout.rendered ? payload.layout.rendered.gaps : null;
 
     if (viewportGap && viewportGap.bodyBottomGap > 5) {
       issues.push('BODY_BOTTOM_GAP');
@@ -150,6 +163,9 @@
     }
     if (canvasOverflow && canvasOverflow.bottomOverflow > 5) {
       issues.push('CANVAS_BOTTOM_OVERFLOW');
+    }
+    if (renderedGaps && renderedGaps.spin > 30) {
+      issues.push('SPIN_BOTTOM_VISUAL_GAP');
     }
     return issues;
   }
@@ -223,6 +239,12 @@
           devicePixelRatio: safeNum(window.devicePixelRatio),
           orientation: (screen.orientation && screen.orientation.type) || '',
         },
+        screen: {
+          width: safeNum(screen.width),
+          height: safeNum(screen.height),
+          availWidth: safeNum(screen.availWidth),
+          availHeight: safeNum(screen.availHeight),
+        },
         visualViewport: vv ? {
           width: safeNum(vv.width),
           height: safeNum(vv.height),
@@ -281,7 +303,27 @@
           if (typeof window.__vvDebugContext.getMode === 'function') {
             payload.mode = window.__vvDebugContext.getMode();
           }
+          if (typeof window.__vvDebugContext.getRenderedLayout === 'function') {
+            var rendered = window.__vvDebugContext.getRenderedLayout();
+            if (rendered && typeof rendered === 'object') {
+              payload.layout.rendered = {
+                viewportW: safeNum(rendered.viewportW),
+                viewportH: safeNum(rendered.viewportH),
+                scale: safeNum(rendered.scale),
+                gvRect: cloneRect(rendered.gvRect),
+                gaps: rendered.gaps ? {
+                  gv: safeNum(rendered.gaps.gv),
+                  controlBar: safeNum(rendered.gaps.controlBar),
+                  spin: safeNum(rendered.gaps.spin),
+                } : null,
+              };
+            }
+          }
         } catch (_) {}
+      }
+
+      if (payload.layout.rendered && payload.layout.rendered.gvRect) {
+        payload.layout.gvOverflow = computeGvOverflow(payload.layout.rendered.gvRect);
       }
 
       payload.detectedIssues = detectLayoutIssues(payload);

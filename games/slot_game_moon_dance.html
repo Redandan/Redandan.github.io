@@ -1395,6 +1395,7 @@ function _logViewportDebug(reason) {
 window.__vvDebugContext = {
   getGvScale: () => gvScale,
   getHostSafeTop: () => _tgSafeAreaTop,
+  getRenderedLayout: () => window.__vvRenderedLayout || null,
   getMode: () => ({
     hosted: _isHostedMode,
     flutter: _isFlutterMode,
@@ -1468,9 +1469,9 @@ function fitGame() {
 
     gvScale = Math.min(viewportW / 430, usableH / 900);
     const offsetX = (viewportW - 430 * gvScale) / 2;
-    const offsetY = _isHostedMode
-      ? layoutSafeTop + (usableH - 900 * gvScale) / 2
-      : 0;
+    // Always top-anchor the scaled game canvas. Avoid vertical centering,
+    // which can create perceived top/bottom blank bands in iOS PWA.
+    const offsetY = layoutSafeTop;
     const vvOffsets = _getViewportSafeOffsets();
 
     if (vvOffsets.detected) {
@@ -1492,6 +1493,27 @@ function fitGame() {
     const gvBottomGap = _safeNum(viewportH - gvRect.bottom);
     const controlBarBottomGap = controlBarRect ? _safeNum(viewportH - controlBarRect.bottom) : 0;
     const spinBottomGap = spinWrapRect ? _safeNum(viewportH - spinWrapRect.bottom) : 0;
+
+    // Expose the final rendered geometry to the standalone debugger so it can
+    // avoid false overflow positives caused by pre-transform snapshots.
+    window.__vvRenderedLayout = {
+      viewportW: _safeNum(viewportW),
+      viewportH: _safeNum(viewportH),
+      gvRect: {
+        top: gvTop,
+        left: gvLeft,
+        width: gvW,
+        height: gvH,
+        right: _safeNum(gvRect.right),
+        bottom: _safeNum(gvRect.bottom),
+      },
+      gaps: {
+        gv: gvBottomGap,
+        controlBar: controlBarBottomGap,
+        spin: spinBottomGap,
+      },
+      scale: _safeNum(gvScale),
+    };
 
     // Keep logs concise: only log when status changes, or periodically while abnormal.
     const now = Date.now();
