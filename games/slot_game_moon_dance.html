@@ -2170,7 +2170,7 @@ async function doSpin() {
     addLog(`SPIN(bridge) → ${_spinMode} bet=${betIdx}`, 'info');
     const bridgeResult = await callFlutterHandler('spin', {
       betIndex: betIdx,
-      betAmount: currentBet(),
+      betAmount: currentBet() / 100,
       mode: _spinMode,
       clientSeed: generateClientSeed(),
       nonce: Date.now().toString(),
@@ -2224,7 +2224,7 @@ async function doSpin() {
       window.parent.postMessage({
         type: 'SPIN_REQUEST',
         betIndex: betIdx,
-        betAmount: currentBet(),
+        betAmount: currentBet() / 100,
         mode: _spinMode,
       }, window.__gameOrigin);
     });
