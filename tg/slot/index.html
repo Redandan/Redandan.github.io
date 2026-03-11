@@ -343,7 +343,15 @@
       }
 
       function setStatus(text) {
-        if (statusEl) statusEl.textContent = text;
+        if (!statusEl) return;
+        var t = String(text || '').trim();
+        if (!t) {
+          statusEl.textContent = '';
+          statusEl.style.display = 'none';
+          return;
+        }
+        statusEl.textContent = t;
+        statusEl.style.display = 'block';
       }
 
       function redirectError(reason) {
@@ -532,6 +540,10 @@
           });
           flushHostLogsToGame();
           hostLog('GAME_READY received, host log bridge active');
+          // Hide the startup overlay once the game handshake is complete.
+          setTimeout(function () {
+            if (state.hostReady) setStatus('');
+          }, 900);
           return;
         }
 
