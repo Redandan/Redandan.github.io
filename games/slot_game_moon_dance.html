@@ -1475,10 +1475,15 @@ function fitGame() {
 
     gvEl.style.transform = `translate(${offsetX + vvOffsets.safeLeft}px,${offsetY + vvOffsets.safeTop}px) scale(${gvScale})`;
     const gvRect = gvEl.getBoundingClientRect();
+    const controlBarRect = document.getElementById('control-bar')?.getBoundingClientRect?.();
+    const spinWrapRect = document.getElementById('spin-wrap')?.getBoundingClientRect?.();
     const gvTop = _safeNum(gvRect.top);
     const gvLeft = _safeNum(gvRect.left);
     const gvW = _safeNum(gvRect.width);
     const gvH = _safeNum(gvRect.height);
+    const gvBottomGap = _safeNum(viewportH - gvRect.bottom);
+    const controlBarBottomGap = controlBarRect ? _safeNum(viewportH - controlBarRect.bottom) : 0;
+    const spinBottomGap = spinWrapRect ? _safeNum(viewportH - spinWrapRect.bottom) : 0;
 
     // Keep logs concise: only log when status changes, or periodically while abnormal.
     const now = Date.now();
@@ -1487,7 +1492,7 @@ function fitGame() {
       _lastViewportFixDetected = vvOffsets.detected;
       _lastViewportFixLogAt = now;
       addLog(
-        `[VV_FIX][GAME] detected=${vvOffsets.detected} safeTop=${vvOffsets.safeTop.toFixed(1)} safeLeft=${vvOffsets.safeLeft.toFixed(1)} tgSafeAreaTop=${_tgSafeAreaTop.toFixed(1)} resolvedTop=${layoutSafeTop.toFixed(1)} cssTop=${topInset.cssTop.toFixed(1)} tgApiTop=${topInset.tgSafeTop.toFixed(1)} vvTop=${topInset.vvTop.toFixed(1)} fallback44=${topInset.fallbackUsed} offsetY=${offsetY.toFixed(1)} vv=(${vvOffsets.vvTop.toFixed(1)},${vvOffsets.vvLeft.toFixed(1)}) doc=(${vvOffsets.docTop.toFixed(1)},${vvOffsets.docLeft.toFixed(1)}) body=(${vvOffsets.bodyTop.toFixed(1)},${vvOffsets.bodyLeft.toFixed(1)}) gv=(${gvTop.toFixed(1)},${gvLeft.toFixed(1)},${gvW.toFixed(1)}x${gvH.toFixed(1)}) scale=${gvScale.toFixed(3)}`,
+        `[VV_FIX][GAME] detected=${vvOffsets.detected} safeTop=${vvOffsets.safeTop.toFixed(1)} safeLeft=${vvOffsets.safeLeft.toFixed(1)} tgSafeAreaTop=${_tgSafeAreaTop.toFixed(1)} resolvedTop=${layoutSafeTop.toFixed(1)} cssTop=${topInset.cssTop.toFixed(1)} tgApiTop=${topInset.tgSafeTop.toFixed(1)} vvTop=${topInset.vvTop.toFixed(1)} fallback44=${topInset.fallbackUsed} offsetY=${offsetY.toFixed(1)} vv=(${vvOffsets.vvTop.toFixed(1)},${vvOffsets.vvLeft.toFixed(1)}) doc=(${vvOffsets.docTop.toFixed(1)},${vvOffsets.docLeft.toFixed(1)}) body=(${vvOffsets.bodyTop.toFixed(1)},${vvOffsets.bodyLeft.toFixed(1)}) gv=(${gvTop.toFixed(1)},${gvLeft.toFixed(1)},${gvW.toFixed(1)}x${gvH.toFixed(1)}) gaps(gv=${gvBottomGap.toFixed(1)},ctrl=${controlBarBottomGap.toFixed(1)},spin=${spinBottomGap.toFixed(1)}) scale=${gvScale.toFixed(3)}`,
         vvOffsets.detected ? 'warn' : 'info'
       );
     }
