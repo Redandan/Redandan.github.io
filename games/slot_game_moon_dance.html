@@ -1275,13 +1275,12 @@ function _resolveTopInsetForLayout() {
 
   if (!_isHostedMode) {
     // ── Standalone PWA / Safari / in-app WebView ──────────────────────────
-    // In standalone iOS PWA the status bar safe area must come from CSS env().
-    // visualViewport.offsetTop is handled separately by _getViewportSafeOffsets()
-    // and must NOT be folded into resolvedTop, otherwise it gets added here and
-    // then subtracted again in the final transform, leaving the game under the
-    // status bar while still appearing vertically misaligned.
+    // In standalone mode, the browser viewport used by innerHeight is already
+    // the visible app area. Applying cssTop as an additional layout offset
+    // pushes the whole game down and leaves a permanent blank area at bottom.
+    // Keep cssTop only for logging/diagnostics.
     return {
-      resolvedTop: cssTop,
+      resolvedTop: 0,
       cssTop,
       vvTop,
       tgSafeTop: 0,
