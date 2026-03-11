@@ -535,7 +535,7 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
   flex:0 0 auto;
   background:#080520;
   border-top:3px solid #3a3a88;
-  padding:0 10px calc(4px + var(--control-safe-bottom, 0px));
+  padding:0 10px 4px;
   position:relative; z-index:20;
 }
 #control-bar::before{
@@ -1402,7 +1402,6 @@ function fitGame() {
     const viewportH = (_vvFixEnabled && _vv && _vv.height) ? Number(_vv.height) : window.innerHeight;
     const topInset = _resolveTopInsetForLayout();
     const layoutSafeTop = _isHostedMode ? topInset.resolvedTop : 0;
-    const controlSafeBottom = _isHostedMode ? 0 : _readCssSafeAreaBottom();
     const contentSafeTop = _isHostedMode ? 0 : topInset.cssTop;
     // Hosted TG mode needs the top inset removed from the usable height because
     // Telegram expands the viewport into the status-bar area. Standalone PWA
@@ -1411,7 +1410,6 @@ function fitGame() {
     const usableH = Math.max(viewportH - layoutSafeTop, 100);
 
     gvEl.style.setProperty('--layout-safe-top', `${contentSafeTop}px`);
-  gvEl.style.setProperty('--control-safe-bottom', `${controlSafeBottom}px`);
 
     gvScale = Math.min(viewportW / 430, usableH / 900);
     const offsetX = (viewportW - 430 * gvScale) / 2;
