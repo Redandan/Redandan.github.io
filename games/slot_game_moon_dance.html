@@ -1278,6 +1278,7 @@ function fitGame() {
 
     gvScale = Math.min(viewportW / 430, viewportH / 900);
     const offsetX = (viewportW - 430 * gvScale) / 2;
+    const offsetY = (viewportH - 900 * gvScale) / 2;
     const vvOffsets = _getViewportSafeOffsets();
 
     if (vvOffsets.detected) {
@@ -1288,7 +1289,7 @@ function fitGame() {
       } catch (_) {}
     }
 
-    gvEl.style.transform = `translate(${offsetX + vvOffsets.safeLeft}px,${vvOffsets.safeTop}px) scale(${gvScale})`;
+    gvEl.style.transform = `translate(${offsetX + vvOffsets.safeLeft}px,${offsetY + vvOffsets.safeTop}px) scale(${gvScale})`;
     const gvRect = gvEl.getBoundingClientRect();
     const gvTop = _safeNum(gvRect.top);
     const gvLeft = _safeNum(gvRect.left);
@@ -1302,7 +1303,7 @@ function fitGame() {
       _lastViewportFixDetected = vvOffsets.detected;
       _lastViewportFixLogAt = now;
       addLog(
-        `[VV_FIX][GAME] detected=${vvOffsets.detected} safeTop=${vvOffsets.safeTop.toFixed(1)} safeLeft=${vvOffsets.safeLeft.toFixed(1)} vv=(${vvOffsets.vvTop.toFixed(1)},${vvOffsets.vvLeft.toFixed(1)}) doc=(${vvOffsets.docTop.toFixed(1)},${vvOffsets.docLeft.toFixed(1)}) body=(${vvOffsets.bodyTop.toFixed(1)},${vvOffsets.bodyLeft.toFixed(1)}) gv=(${gvTop.toFixed(1)},${gvLeft.toFixed(1)},${gvW.toFixed(1)}x${gvH.toFixed(1)}) scale=${gvScale.toFixed(3)}`,
+        `[VV_FIX][GAME] detected=${vvOffsets.detected} safeTop=${vvOffsets.safeTop.toFixed(1)} safeLeft=${vvOffsets.safeLeft.toFixed(1)} offsetY=${offsetY.toFixed(1)} vv=(${vvOffsets.vvTop.toFixed(1)},${vvOffsets.vvLeft.toFixed(1)}) doc=(${vvOffsets.docTop.toFixed(1)},${vvOffsets.docLeft.toFixed(1)}) body=(${vvOffsets.bodyTop.toFixed(1)},${vvOffsets.bodyLeft.toFixed(1)}) gv=(${gvTop.toFixed(1)},${gvLeft.toFixed(1)},${gvW.toFixed(1)}x${gvH.toFixed(1)}) scale=${gvScale.toFixed(3)}`,
         vvOffsets.detected ? 'warn' : 'info'
       );
     }
