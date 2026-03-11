@@ -1081,6 +1081,10 @@ html, body { width:100%; height:var(--app-height, 100dvh); overflow:hidden; back
 <script type="module">
 import * as THREE from 'https://esm.sh/three@0.160.0';
 import { GLTFLoader } from 'https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+import { createViewportManager } from './_runtime/viewport_manager.js';
+import { createLogManager } from './_runtime/log_manager.js';
+import { createMenuManager } from './_runtime/menu_manager.js';
+import { createAnimationLoopManager } from './_runtime/animation_loop_manager.js';
 
 // ── Early game-state declarations ────────────────────────────────────────────
 // Declared here (before any event listeners or IIFEs) so that `applyBalance()`
@@ -1155,12 +1159,12 @@ window.addEventListener('message', (e) => {
 
   if (type === 'HOST_INIT') {
     const { jwt, balance: hostBalance, demoMode, username, tgSafeAreaTop } = e.data;
-    // Store safe area inset so fitGame() can push content below the status bar.
+    // Store safe area inset so viewport manager can push content below status bar.
     if (Number.isFinite(Number(tgSafeAreaTop))) {
-      _tgSafeAreaTop = Math.max(0, Number(tgSafeAreaTop));
+      viewportManager.setHostSafeTop(Number(tgSafeAreaTop));
     }
-    fitGame(); // re-layout immediately with the latest inset inputs
-    _logViewportDebug('HOST_INIT');
+    viewportManager.fit(); // re-layout immediately with the latest inset inputs
+    viewportManager.logDebug('HOST_INIT');
     window.__agoraAuth = { token: jwt };
     window.__hostDemoMode = !!demoMode;
 
@@ -1239,387 +1243,38 @@ setTimeout(() => {
 // ===== Log system =====
 const logPanel = document.getElementById('log-panel');
 const logToggle = document.getElementById('log-toggle');
-let logCount = 0;
-const MAX_LOGS = 200; // keep more entries so the log survives multiple sessions
-const LOG_ICONS = { error: '✗', warn: '!', info: '·' };
-const LOG_STORAGE_KEY = 'slot_game_log';
-
-logToggle.addEventListener('click', () => logPanel.classList.toggle('collapsed'));
-logPanel.classList.add('collapsed'); // start collapsed on mobile
-
-// --- Persistence helpers ---
-// In-memory mirror of what is in localStorage so addLog never re-parses JSON.
-let _logEntries = [];
-let _saveTimer = 0;
-function _saveStoredLogs() {
-  // Debounce: batch rapid-fire addLog calls (e.g. model-loading progress) into
-  // a single localStorage write 300 ms after the last call.
-  clearTimeout(_saveTimer);
-  _saveTimer = setTimeout(() => {
-    try { localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(_logEntries)); } catch (e) {
-      // Use the original console.warn (not the patched version that calls addLog)
-      // to avoid a recursive loop.
-      typeof _warn !== 'undefined' && _warn.call(console, 'slot_game: failed to persist logs:', e);
-    }
-  }, 300);
-}
-
-// Replay any logs saved from a previous session into the DOM on page load.
-(function _restoreLogs() {
-  try {
-    const stored = JSON.parse(localStorage.getItem(LOG_STORAGE_KEY) || '[]');
-    // Honour MAX_LOGS: if more entries were somehow stored, keep only the newest.
-    _logEntries = stored.slice(-MAX_LOGS);
-  } catch (_) { _logEntries = []; }
-  for (const e of _logEntries) {
-    const d = document.createElement('div');
-    d.className = `log-${e.type}`;
-    d.textContent = e.text;
-    logPanel.appendChild(d);
-    logCount++;
-  }
-})();
+const logManager = createLogManager({
+  logPanelEl: logPanel,
+  logToggleEl: logToggle,
+  maxLogs: 200,
+  storageKey: 'slot_game_log',
+  icons: { error: '✗', warn: '!', info: '·' },
+});
+const addLog = logManager.addLog;
+logManager.patchConsole();
 
 // ===== Uniform viewport scaling =====
-// #gv is a fixed 430×900 design canvas. Scale it as one unit to fit the screen.
-const gvEl = document.getElementById('gv');
-let _fitRaf = 0;
-// Track the CSS transform scale so renderers can compensate with a higher pixel ratio.
+// #gv is a fixed 430x900 design canvas. Scale it as one unit to fit the screen.
 let gvScale = Math.min(window.innerWidth / 430, window.innerHeight / 900);
-// Safe area inset from HOST_INIT (iPhone status-bar height reported by Telegram SDK).
-let _tgSafeAreaTop = 0;
-// True only when loaded inside the Telegram host iframe (?hosted=1).
-// In standalone PWA/Safari, innerHeight already excludes the status bar, so the
-// iOS fallback offset must NOT be applied.
 const _isHostedMode = new URLSearchParams(window.location.search).get('hosted') === '1';
-const _vv = window.visualViewport;
-const _vvFixEnabled = !!_vv;
-const _vvFixNeedPersistentSync = _vvFixEnabled && (('ontouchstart' in window) || Number(navigator.maxTouchPoints || 0) > 0);
-let _lastViewportFixDetected = null;
-let _lastViewportFixLogAt = 0;
-let _vvStubbornSyncTimer = 0;
+const ENABLE_VV_FIX_LOG = true;
+const viewportManager = createViewportManager({
+  gvEl: document.getElementById('gv'),
+  hostedMode: _isHostedMode,
+  enableVvFixLog: ENABLE_VV_FIX_LOG,
+  onScaleChange: (scale) => { gvScale = scale; },
+  onLog: (msg, type) => addLog(msg, type),
+});
 
-function _safeNum(value) {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : 0;
-}
-
-function _isLikelyIOSDevice() {
-  const ua = navigator.userAgent || '';
-  const maxTouchPoints = _safeNum(navigator.maxTouchPoints);
-  return /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && maxTouchPoints > 1);
-}
-
-function _readTelegramWebAppFromGame() {
-  try {
-    if (window.Telegram && window.Telegram.WebApp) return window.Telegram.WebApp;
-  } catch (_) {}
-  try {
-    if (window.parent && window.parent.Telegram && window.parent.Telegram.WebApp) {
-      return window.parent.Telegram.WebApp;
-    }
-  } catch (_) {}
-  return null;
-}
-
-function _readCssSafeAreaTop() {
-  // Reads env(safe-area-inset-top) exposed as --sat CSS variable on :root.
-  // This is the MOST RELIABLE source for standalone PWA on iOS with
-  // viewport-fit=cover, where innerHeight = full screen and the status bar
-  // physically overlaps the top of the content.
-  try {
-    const raw = getComputedStyle(document.documentElement).getPropertyValue('--sat').trim();
-    const val = parseFloat(raw);
-    return Number.isFinite(val) ? val : 0;
-  } catch (_) { return 0; }
-}
-
-function _readCssSafeAreaBottom() {
-  // Reads env(safe-area-inset-bottom) exposed as --sab CSS variable on :root.
-  // Helps keep bottom controls above iOS home-indicator reserved area.
-  try {
-    const raw = getComputedStyle(document.documentElement).getPropertyValue('--sab').trim();
-    const val = parseFloat(raw);
-    return Number.isFinite(val) ? val : 0;
-  } catch (_) { return 0; }
-}
-
-function _resolveTopInsetForLayout() {
-  const cssTop  = _readCssSafeAreaTop();  // env(safe-area-inset-top)
-  const vvTop   = (_vvFixEnabled && _vv) ? _safeNum(_vv.offsetTop) : 0;
-  let fallbackUsed = false;
-  let tgSafeTop = 0;
-
-  if (!_isHostedMode) {
-    // ── Standalone PWA / Safari / in-app WebView ──────────────────────────
-    // In standalone mode, reserve the top safe area so content is not covered
-    // by the status bar. Bottom safe area is handled by CSS padding on control
-    // bar (var(--sab)).
-    return {
-      resolvedTop: cssTop,
-      cssTop,
-      vvTop,
-      tgSafeTop: 0,
-      fallbackUsed: false,
-    };
-  }
-
-  // ── Hosted mode (TG iframe, ?hosted=1) ───────────────────────────────────
-  // Telegram's expand() makes the WebView full-screen including the status
-  // bar area, so innerHeight / vv.height contain those extra pixels and we
-  // must push the canvas down by the status bar height.
-  const tg = _readTelegramWebAppFromGame();
-  tgSafeTop = tg
-    ? _safeNum(tg.safeAreaInsets && tg.safeAreaInsets.top) +
-      _safeNum(tg.contentSafeAreaInsets && tg.contentSafeAreaInsets.top)
-    : 0;
-
-  // vvTop is a viewport drift signal, not a persistent safe-area inset.
-  // It is already compensated by vvOffsets.safeTop in fitGame().
-  let resolvedTop = Math.max(cssTop, _safeNum(_tgSafeAreaTop), tgSafeTop);
-
-  // Last resort: Telegram iOS returns 0 for all APIs — use known minimum.
-  if (resolvedTop < 1 && _isLikelyIOSDevice()) {
-    resolvedTop = 44;
-    fallbackUsed = true;
-  }
-
-  resolvedTop = Math.max(0, Math.min(80, resolvedTop));
-  return {
-    resolvedTop,
-    cssTop,
-    vvTop,
-    tgSafeTop,
-    fallbackUsed,
-  };
-}
-
-function _logViewportDebug(reason) {
-  const tg = _readTelegramWebAppFromGame();
-  const screenH = _safeNum(window.screen && window.screen.height);
-  const innerH = _safeNum(window.innerHeight);
-  const debugData = {
-    reason: String(reason || 'unknown'),
-    screenHeight: screenH,
-    bottomGap: _safeNum(screenH - innerH),
-    innerHeight: _safeNum(window.innerHeight),
-    vvHeight: (_vvFixEnabled && _vv) ? _safeNum(_vv.height) : 0,
-    vvOffsetTop: (_vvFixEnabled && _vv) ? _safeNum(_vv.offsetTop) : 0,
-    tgViewport: tg ? _safeNum(tg.viewportHeight) : 0,
-    tgSafe: tg ? _safeNum(tg.safeAreaInsets && tg.safeAreaInsets.top) : 0,
-    tgContentSafe: tg ? _safeNum(tg.contentSafeAreaInsets && tg.contentSafeAreaInsets.top) : 0,
-    hostSafeTop: _safeNum(_tgSafeAreaTop),
-    cssSafeTop: _readCssSafeAreaTop(),
-    isHosted: _isHostedMode,
-  };
-  console.log('[VV_FIX][GAME][DEBUG]', debugData);
-}
-
-function _syncAppViewportHeight() {
-  // iOS PWA: keep CSS height pinned to the visual viewport to avoid
-  // screen-vs-viewport mismatch causing visible bottom band.
-  const vvH = (_vvFixEnabled && _vv) ? _safeNum(_vv.height) : 0;
-  const appH = Math.max(100, vvH || _safeNum(window.innerHeight));
-  const px = `${appH}px`;
-  document.documentElement.style.setProperty('--app-height', px);
-  document.documentElement.style.height = px;
-  document.body.style.height = px;
-}
-window.__vvDebugContext = {
-  getGvScale: () => gvScale,
-  getHostSafeTop: () => _tgSafeAreaTop,
-  getRenderedLayout: () => window.__vvRenderedLayout || null,
-  getMode: () => ({
+window.__vvDebugContext = viewportManager.createDebugContext(
+  () => ({
     hosted: _isHostedMode,
     flutter: _isFlutterMode,
   }),
-};
+  () => viewportManager.getRenderedLayout(),
+);
 
-function _getViewportSafeOffsets() {
-  if (!_vvFixEnabled || !_vv) {
-    return {
-      safeTop: 0,
-      safeLeft: 0,
-      detected: false,
-      vvTop: 0,
-      vvLeft: 0,
-      docTop: 0,
-      docLeft: 0,
-      bodyTop: 0,
-      bodyLeft: 0,
-    };
-  }
-
-  const offsetTop = _safeNum(_vv.offsetTop);
-  const offsetLeft = _safeNum(_vv.offsetLeft);
-  const docRect = document.documentElement.getBoundingClientRect();
-  const bodyRect = document.body.getBoundingClientRect();
-  const docTop = _safeNum(docRect.top);
-  const docLeft = _safeNum(docRect.left);
-  const bodyTop = _safeNum(bodyRect.top);
-  const bodyLeft = _safeNum(bodyRect.left);
-
-  // Compensate BOTH visualViewport offset and document drift.
-  const safeTop = -offsetTop - docTop;
-  const safeLeft = -offsetLeft - docLeft;
-
-  const detected =
-      Math.abs(offsetTop) > 10 ||
-      Math.abs(offsetLeft) > 10 ||
-      Math.abs(docTop) > 2 ||
-      Math.abs(docLeft) > 2 ||
-      Math.abs(bodyTop) > 2 ||
-      Math.abs(bodyLeft) > 2;
-
-  return {
-    safeTop,
-    safeLeft,
-    detected,
-    vvTop: offsetTop,
-    vvLeft: offsetLeft,
-    docTop,
-    docLeft,
-    bodyTop,
-    bodyLeft,
-  };
-}
-
-function fitGame() {
-  cancelAnimationFrame(_fitRaf);
-  _fitRaf = requestAnimationFrame(() => {
-    const viewportW = (_vvFixEnabled && _vv && _vv.width) ? Number(_vv.width) : window.innerWidth;
-    const viewportH = (_vvFixEnabled && _vv && _vv.height) ? Number(_vv.height) : window.innerHeight;
-    const topInset = _resolveTopInsetForLayout();
-    const layoutSafeTop = _isHostedMode ? topInset.resolvedTop : 0;
-    const contentSafeTop = _isHostedMode ? 0 : topInset.cssTop;
-    // Hosted TG mode needs the top inset removed from the usable height because
-    // Telegram expands the viewport into the status-bar area. Standalone PWA
-    // should stay top-anchored below the safe area without vertically centering,
-    // otherwise the preserved top inset also creates a visible blank band below.
-    const usableH = Math.max(viewportH - layoutSafeTop, 100);
-
-    gvEl.style.setProperty('--layout-safe-top', `${contentSafeTop}px`);
-
-    gvScale = Math.min(viewportW / 430, usableH / 900);
-    const offsetX = (viewportW - 430 * gvScale) / 2;
-    // Always top-anchor the scaled game canvas. Avoid vertical centering,
-    // which can create perceived top/bottom blank bands in iOS PWA.
-    const offsetY = layoutSafeTop;
-    const vvOffsets = _getViewportSafeOffsets();
-
-    if (vvOffsets.detected) {
-      try {
-        // iOS PWA may keep document scroll coupled with visualViewport offset.
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-      } catch (_) {}
-    }
-
-    gvEl.style.transform = `translate(${offsetX + vvOffsets.safeLeft}px,${offsetY + vvOffsets.safeTop}px) scale(${gvScale})`;
-    const gvRect = gvEl.getBoundingClientRect();
-    const controlBarRect = document.getElementById('control-bar')?.getBoundingClientRect?.();
-    const spinWrapRect = document.getElementById('spin-wrap')?.getBoundingClientRect?.();
-    const gvTop = _safeNum(gvRect.top);
-    const gvLeft = _safeNum(gvRect.left);
-    const gvW = _safeNum(gvRect.width);
-    const gvH = _safeNum(gvRect.height);
-    const gvBottomGap = _safeNum(viewportH - gvRect.bottom);
-    const controlBarBottomGap = controlBarRect ? _safeNum(viewportH - controlBarRect.bottom) : 0;
-    const spinBottomGap = spinWrapRect ? _safeNum(viewportH - spinWrapRect.bottom) : 0;
-
-    // Expose the final rendered geometry to the standalone debugger so it can
-    // avoid false overflow positives caused by pre-transform snapshots.
-    window.__vvRenderedLayout = {
-      viewportW: _safeNum(viewportW),
-      viewportH: _safeNum(viewportH),
-      gvRect: {
-        top: gvTop,
-        left: gvLeft,
-        width: gvW,
-        height: gvH,
-        right: _safeNum(gvRect.right),
-        bottom: _safeNum(gvRect.bottom),
-      },
-      gaps: {
-        gv: gvBottomGap,
-        controlBar: controlBarBottomGap,
-        spin: spinBottomGap,
-      },
-      scale: _safeNum(gvScale),
-    };
-
-    // Keep logs concise: only log when status changes, or periodically while abnormal.
-    const now = Date.now();
-    if (vvOffsets.detected !== _lastViewportFixDetected ||
-        (vvOffsets.detected && now - _lastViewportFixLogAt > 2000)) {
-      _lastViewportFixDetected = vvOffsets.detected;
-      _lastViewportFixLogAt = now;
-      addLog(
-        `[VV_FIX][GAME] detected=${vvOffsets.detected} safeTop=${vvOffsets.safeTop.toFixed(1)} safeLeft=${vvOffsets.safeLeft.toFixed(1)} tgSafeAreaTop=${_tgSafeAreaTop.toFixed(1)} resolvedTop=${layoutSafeTop.toFixed(1)} cssTop=${topInset.cssTop.toFixed(1)} tgApiTop=${topInset.tgSafeTop.toFixed(1)} vvTop=${topInset.vvTop.toFixed(1)} fallback44=${topInset.fallbackUsed} offsetY=${offsetY.toFixed(1)} vv=(${vvOffsets.vvTop.toFixed(1)},${vvOffsets.vvLeft.toFixed(1)}) doc=(${vvOffsets.docTop.toFixed(1)},${vvOffsets.docLeft.toFixed(1)}) body=(${vvOffsets.bodyTop.toFixed(1)},${vvOffsets.bodyLeft.toFixed(1)}) gv=(${gvTop.toFixed(1)},${gvLeft.toFixed(1)},${gvW.toFixed(1)}x${gvH.toFixed(1)}) gaps(gv=${gvBottomGap.toFixed(1)},ctrl=${controlBarBottomGap.toFixed(1)},spin=${spinBottomGap.toFixed(1)}) scale=${gvScale.toFixed(3)}`,
-        vvOffsets.detected ? 'warn' : 'info'
-      );
-    }
-  });
-}
-_syncAppViewportHeight();
-fitGame();
-window.addEventListener('resize', () => {
-  _syncAppViewportHeight();
-  fitGame();
-});
-window.addEventListener('orientationchange', () => {
-  _syncAppViewportHeight();
-  fitGame();
-}, { passive: true });
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', () => {
-    _syncAppViewportHeight();
-    fitGame();
-  }, { passive: true });
-  window.visualViewport.addEventListener('scroll', fitGame, { passive: true });
-}
-
-if (_vvFixNeedPersistentSync) {
-  // Stubborn iOS offset can appear a bit later; keep a light periodic resync.
-  _vvStubbornSyncTimer = window.setInterval(() => {
-    fitGame();
-  }, 900);
-  window.addEventListener('pagehide', () => {
-    if (_vvStubbornSyncTimer) {
-      clearInterval(_vvStubbornSyncTimer);
-      _vvStubbornSyncTimer = 0;
-    }
-  }, { once: true });
-}
-
-function formatLogArgs(args) {
-  return args.map(x => typeof x === 'object' ? JSON.stringify(x) : String(x)).join(' ');
-}
-
-function addLog(msg, type = 'info') {
-  const text = `${LOG_ICONS[type] ?? '·'} [${new Date().toLocaleTimeString()}] ${msg}`;
-  const d = document.createElement('div');
-  d.className = `log-${type}`;
-  d.textContent = text;
-  logPanel.appendChild(d);
-  if (++logCount > MAX_LOGS) { logPanel.removeChild(logPanel.children[1]); logCount--; }
-  // Persist to localStorage so the log survives back-navigation and page reload.
-  // _logEntries is the in-memory mirror — no JSON.parse on every call.
-  _logEntries.push({ type, text });
-  if (_logEntries.length > MAX_LOGS) _logEntries.shift();
-  _saveStoredLogs();
-  // Auto-expand the log panel when an error occurs so the user sees it.
-  if (type === 'error') logPanel.classList.remove('collapsed');
-  // scrollTop forces a layout reflow; skip it when the panel is hidden (display:none).
-  if (logPanel.offsetParent !== null) logPanel.scrollTop = logPanel.scrollHeight;
-}
-
-const _log = console.log, _warn = console.warn, _err = console.error;
-console.log   = (...a) => { _log.apply(console, a);  addLog(formatLogArgs(a)); };
-console.warn  = (...a) => { _warn.apply(console, a); addLog(formatLogArgs(a), 'warn'); };
-console.error = (...a) => { _err.apply(console, a);  addLog(formatLogArgs(a), 'error'); };
-window.addEventListener('error', e => addLog(`Runtime: ${e.message} at ${e.filename}:${e.lineno}`, 'error'));
-window.addEventListener('unhandledrejection', e => addLog(`Unhandled: ${e.reason}`, 'error'));
+viewportManager.init();
 
 // ===== Mobile performance detection =====
 // Lower rendering quality on mobile to avoid GPU/CPU overload (laggy scrolling)
@@ -1719,7 +1374,6 @@ let charMixer  = null;
 let charModel  = null;
 let charAction = null;
 let charAnimating = false;   // true only while win dance animation is playing
-let charFrameSkip = 0;       // frame counter for idle render throttling (render ~15fps when idle)
 
 const gltfLoader = new GLTFLoader();
 
@@ -2263,23 +1917,9 @@ async function loadAndApplyPaytable() {
   try {
     let rtpData = null;
 
-    // Try flutter bridge first (native or Flutter Web with bridge)
-    if (_isFlutterMode && hasFlutterCallHandler()) {
-      const bridgeResult = await callFlutterHandler('getRtpTable');
-      if (bridgeResult && bridgeResult.success) {
-        rtpData = bridgeResult.data;
-      }
-    } else {
-      // Fallback: direct API call (no JWT required per SlotService comment)
-      const apiBase = window.__AGORA_API_BASE_URL || 'https://agoramarketapi.purrtechllc.com/api';
-      const resp = await fetch(`${apiBase}/slot/rtp`);
-      if (!resp.ok) {
-        addLog(`賠率表加載失敗: HTTP ${resp.status}`, 'warn');
-        return;
-      }
-      const json = await resp.json();
-      // Handle both wrapped ({ data: {...} }) and unwrapped responses
-      rtpData = json?.data ?? json;
+    const bridgeResult = await callFlutterHandler('getRtpTable');
+    if (bridgeResult && bridgeResult.success) {
+      rtpData = bridgeResult.data;
     }
 
     if (!rtpData) {
@@ -2386,57 +2026,15 @@ document.getElementById('btn-bet').addEventListener('click', () => {
 });
 
 // ===== Function menu (≡ button) =====
-const menuPopup = document.getElementById('menu-popup');
-
-function openMenu() {
-  const btn = document.getElementById('btn-menu');
-  const rect = btn.getBoundingClientRect();
-  // Position popup above the button, anchored to its right edge.
-  menuPopup.style.bottom = (window.innerHeight - rect.top + 6) + 'px';
-  menuPopup.style.right  = (window.innerWidth - rect.right) + 'px';
-  menuPopup.style.left   = 'auto';
-  menuPopup.classList.add('open');
-}
-function closeMenu() { menuPopup.classList.remove('open'); }
-
-document.getElementById('btn-menu').addEventListener('click', (e) => {
-  e.stopPropagation();
-  menuPopup.classList.contains('open') ? closeMenu() : openMenu();
-});
-document.addEventListener('click', (e) => {
-  if (!menuPopup.contains(e.target)) closeMenu();
-});
-
-document.getElementById('menu-copy-log').addEventListener('click', () => {
-  closeMenu();
-  // Collect all log entries (skip the header toggle element at index 0).
-  const lines = [];
-  const kids = logPanel.children;
-  for (let i = 1; i < kids.length; i++) lines.push(kids[i].textContent);
-  const text = lines.join('\n') || '(no logs)';
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text)
-      .then(() => addLog('日誌已複製到剪貼板', 'info'))
-      .catch(() => {
-        // Clipboard API blocked (e.g. file:// origin) — fall back to prompt.
-        prompt('複製以下日誌內容:', text);
-      });
-  } else {
-    prompt('複製以下日誌內容:', text);
-  }
-});
-
-document.getElementById('menu-clear-log').addEventListener('click', () => {
-  closeMenu();
-  // Remove all log entries from the DOM (keep the header toggle at index 0).
-  while (logPanel.children.length > 1) logPanel.removeChild(logPanel.lastChild);
-  logCount = 0;
-  // Wipe the in-memory array and cancel any pending debounced write.
-  _logEntries = [];
-  clearTimeout(_saveTimer);
-  try { localStorage.removeItem(LOG_STORAGE_KEY); } catch (e) {
-    typeof _warn !== 'undefined' && _warn.call(console, 'slot_game: failed to clear stored logs:', e);
-  }
+createMenuManager({
+  menuPopupEl: document.getElementById('menu-popup'),
+  menuButtonEl: document.getElementById('btn-menu'),
+  copyButtonEl: document.getElementById('menu-copy-log'),
+  clearButtonEl: document.getElementById('menu-clear-log'),
+  getLogsText: () => logManager.getLogsText(),
+  onCopySuccess: () => addLog('日誌已複製到剪貼板', 'info'),
+  onClear: () => logManager.clearLogs(),
+  promptFn: typeof window.prompt === 'function' ? window.prompt.bind(window) : null,
 });
 
 // ===== Auto-spin state =====
@@ -2796,75 +2394,27 @@ window.addEventListener('resize', () => {
 });
 
 // ===== Animation loop =====
-let lastTime = performance.now();
-renderer.setAnimationLoop(() => {
-  const now = performance.now();
-  const dt  = Math.min((now - lastTime) / 1000, 0.033);
-  lastTime  = now;
-  const t   = now / 1000;
-
-  // Vertical strip scroll with card recycling and smooth spin-up
-  reelGroups.forEach(strip => {
-    let { spinning, speed } = strip.userData;
-
-    // Smooth spin-up: ramp to MAX_SPIN_SPEED over first ~20 frames
-    if (spinning && speed < MAX_SPIN_SPEED) {
-      speed = Math.min(speed + MAX_SPIN_SPEED / 20, MAX_SPIN_SPEED);
-      strip.userData.speed = speed;
-    }
-
-    // Decelerate after stop signal
-    if (!spinning && speed > MIN_SPIN_SPEED) {
-      speed *= 0.88;
-      strip.userData.speed = speed;
-    }
-
-    const delta = speed > MIN_SPIN_SPEED ? speed : 0;
-    if (delta === 0) return;
-
-    // Move cards downward (classic slot reel fall direction)
-    // Compute maxY once per strip per frame to avoid O(n²) inner-loop during recycling
-    let stripMaxY = -Infinity;
-    strip.children.forEach(c => { if (c.position.y > stripMaxY) stripMaxY = c.position.y; });
-    strip.children.forEach(card => {
-      card.position.y -= delta;
-      // Recycle: card falls below strip bottom → teleport to above current top
-      if (card.position.y < -STRIP_CLIP) {
-        card.position.y = stripMaxY + CARD_H;
-        stripMaxY = card.position.y; // update so next recycled card stacks correctly
-      }
-    });
-  });
-
-  // Fill light ember flicker (living idle)
-  fillLight.intensity = 1.4 + Math.sin(t * 6.8) * 0.3 + Math.sin(t * 13.5) * 0.12;
-
-  // Orbiting stage lights — desktop only (per-fragment cost every frame)
-  if (!IS_MOBILE) {
-    const ORBIT_R = 6;
-    orbitLightA.position.set(Math.cos(t * 0.7) * ORBIT_R, Math.sin(t * 0.5) * 1.5, Math.sin(t * 0.7) * ORBIT_R);
-    orbitLightB.position.set(Math.sin(t * 0.55 + 1.5) * ORBIT_R, Math.cos(t * 0.65) * 1.2, Math.cos(t * 0.55 + 1.5) * ORBIT_R);
-    orbitLightA.intensity = 1.4 + Math.sin(t * 1.1) * 0.6;
-    orbitLightB.intensity = 1.2 + Math.cos(t * 0.9) * 0.5;
-  }
-
-  renderer.render(scene, camera);
-
-  // Character scene render (alpha blended over the CSS background)
-  // During win animation: full 60fps. When idle: throttle to ~15fps to save GPU.
-  if (charAnimating) {
-    if (charMixer) charMixer.update(dt);
-    charSpot.intensity = 2.5 + Math.sin(t * 1.4) * 0.5;
-    charRenderer.render(charScene, charCamera);
-  } else {
-    // Idle: render at ~15fps for subtle spotlight breathing
-    charFrameSkip = (charFrameSkip + 1) % 4;
-    if (charFrameSkip === 0) {
-      charSpot.intensity = 2.5 + Math.sin(t * 1.4) * 0.5;
-      charRenderer.render(charScene, charCamera);
-    }
-  }
+const animationLoopManager = createAnimationLoopManager({
+  renderer,
+  scene,
+  camera,
+  reelGroups,
+  fillLight,
+  maxSpinSpeed: MAX_SPIN_SPEED,
+  minSpinSpeed: MIN_SPIN_SPEED,
+  getStripClip: () => STRIP_CLIP,
+  getCardHeight: () => CARD_H,
+  isMobile: IS_MOBILE,
+  orbitLightA,
+  orbitLightB,
+  charRenderer,
+  charScene,
+  charCamera,
+  charSpot,
+  isCharAnimating: () => charAnimating,
+  getCharMixer: () => charMixer,
 });
+animationLoopManager.start();
 
 console.log('月光舞台 v3.0 已加載 – WebGL2 模式');
 addLog('月光舞台 v3.0 已加載', 'info');
