@@ -1802,8 +1802,8 @@ REEL_X.forEach((rx, ri) => {
 // ===== Game state =====
 // (balance and isSpinning are declared near the top of the module to avoid TDZ)
 
-const BET_LEVELS   = [25, 50, 100, 250, 500];
-let betIdx         = 3;                          // start at USDT 2.50 (250 units)
+const BET_LEVELS   = [100, 250, 500, 1000, 2500];
+let betIdx         = 1;                          // start at USDT 2.50 (250 units)
 const currentBet   = () => BET_LEVELS[betIdx];
 const MAX_SPIN_SPEED   = 0.32;
 const MIN_SPIN_SPEED   = 0.002; // minimum speed threshold before reel comes to rest

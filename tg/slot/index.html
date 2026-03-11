@@ -437,10 +437,10 @@
         var payload = {
           gameId: state.gameId,
           betIndex: Number.isFinite(betIndex) ? betIndex : 0,
-          betAmount: Number.isFinite(betAmount) ? betAmount : 250,
+          betAmount: Number.isFinite(betAmount) ? betAmount : 2.50,
           mode: mode,
           clientSeed: (req && req.clientSeed) || makeHex(16),
-          nonce: (req && req.nonce) || String(Date.now()),
+          nonce: Number(req && req.nonce) || Date.now(),
         };
         if (mode !== 'DEMO') {
           payload.clientRoundId = (req && req.clientRoundId) || makeHex(16);
