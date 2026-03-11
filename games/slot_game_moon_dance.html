@@ -1083,7 +1083,12 @@ window.addEventListener('message', (e) => {
   }
 
   if (type === 'HOST_INIT') {
-    const { jwt, balance: hostBalance, demoMode, username } = e.data;
+    const { jwt, balance: hostBalance, demoMode, username, tgSafeAreaTop } = e.data;
+    // Store safe area inset so fitGame() can push content below the status bar.
+    if (Number.isFinite(Number(tgSafeAreaTop)) && Number(tgSafeAreaTop) > 0) {
+      _tgSafeAreaTop = Number(tgSafeAreaTop);
+      fitGame(); // re-layout immediately with the correct inset
+    }
     window.__agoraAuth = { token: jwt };
     window.__hostDemoMode = !!demoMode;
 
@@ -1209,6 +1214,8 @@ const gvEl = document.getElementById('gv');
 let _fitRaf = 0;
 // Track the CSS transform scale so renderers can compensate with a higher pixel ratio.
 let gvScale = Math.min(window.innerWidth / 430, window.innerHeight / 900);
+// Safe area inset from HOST_INIT (iPhone status-bar height reported by Telegram SDK).
+let _tgSafeAreaTop = 0;
 const _vv = window.visualViewport;
 const _vvFixEnabled = !!_vv;
 const _vvFixNeedPersistentSync = _vvFixEnabled && (('ontouchstart' in window) || Number(navigator.maxTouchPoints || 0) > 0);
@@ -1275,10 +1282,13 @@ function fitGame() {
   _fitRaf = requestAnimationFrame(() => {
     const viewportW = (_vvFixEnabled && _vv && _vv.width) ? Number(_vv.width) : window.innerWidth;
     const viewportH = (_vvFixEnabled && _vv && _vv.height) ? Number(_vv.height) : window.innerHeight;
+    // Subtract the TG safe area inset (iPhone status bar) from usable height
+    // so the canvas fits and is centered within the truly visible region.
+    const usableH = Math.max(viewportH - _tgSafeAreaTop, 100);
 
-    gvScale = Math.min(viewportW / 430, viewportH / 900);
+    gvScale = Math.min(viewportW / 430, usableH / 900);
     const offsetX = (viewportW - 430 * gvScale) / 2;
-    const offsetY = (viewportH - 900 * gvScale) / 2;
+    const offsetY = _tgSafeAreaTop + (usableH - 900 * gvScale) / 2;
     const vvOffsets = _getViewportSafeOffsets();
 
     if (vvOffsets.detected) {
@@ -1303,7 +1313,7 @@ function fitGame() {
       _lastViewportFixDetected = vvOffsets.detected;
       _lastViewportFixLogAt = now;
       addLog(
-        `[VV_FIX][GAME] detected=${vvOffsets.detected} safeTop=${vvOffsets.safeTop.toFixed(1)} safeLeft=${vvOffsets.safeLeft.toFixed(1)} offsetY=${offsetY.toFixed(1)} vv=(${vvOffsets.vvTop.toFixed(1)},${vvOffsets.vvLeft.toFixed(1)}) doc=(${vvOffsets.docTop.toFixed(1)},${vvOffsets.docLeft.toFixed(1)}) body=(${vvOffsets.bodyTop.toFixed(1)},${vvOffsets.bodyLeft.toFixed(1)}) gv=(${gvTop.toFixed(1)},${gvLeft.toFixed(1)},${gvW.toFixed(1)}x${gvH.toFixed(1)}) scale=${gvScale.toFixed(3)}`,
+        `[VV_FIX][GAME] detected=${vvOffsets.detected} safeTop=${vvOffsets.safeTop.toFixed(1)} safeLeft=${vvOffsets.safeLeft.toFixed(1)} tgSafeAreaTop=${_tgSafeAreaTop.toFixed(1)} offsetY=${offsetY.toFixed(1)} vv=(${vvOffsets.vvTop.toFixed(1)},${vvOffsets.vvLeft.toFixed(1)}) doc=(${vvOffsets.docTop.toFixed(1)},${vvOffsets.docLeft.toFixed(1)}) body=(${vvOffsets.bodyTop.toFixed(1)},${vvOffsets.bodyLeft.toFixed(1)}) gv=(${gvTop.toFixed(1)},${gvLeft.toFixed(1)},${gvW.toFixed(1)}x${gvH.toFixed(1)}) scale=${gvScale.toFixed(3)}`,
         vvOffsets.detected ? 'warn' : 'info'
       );
     }

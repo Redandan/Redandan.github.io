@@ -496,12 +496,22 @@
         if (type === 'GAME_READY') {
           state.hostReady = true;
           setStatus('TG 入口已連線，準備啟動遊戲...');
+          // Include Telegram safe area insets so the game can avoid placing
+          // content under the iPhone status bar / bottom home indicator.
+          var tg2 = window.Telegram && window.Telegram.WebApp;
+          var safeTop = 0;
+          try {
+            safeTop += Number((tg2 && tg2.safeAreaInsets && tg2.safeAreaInsets.top) || 0);
+            safeTop += Number((tg2 && tg2.contentSafeAreaInsets && tg2.contentSafeAreaInsets.top) || 0);
+            if (!Number.isFinite(safeTop)) safeTop = 0;
+          } catch (_) {}
           postToGame({
             type: 'HOST_INIT',
             jwt: state.jwt,
             balance: state.balanceUsdt,
             demoMode: state.demoMode,
             username: state.username,
+            tgSafeAreaTop: safeTop,
           });
           flushHostLogsToGame();
           hostLog('GAME_READY received, host log bridge active');
