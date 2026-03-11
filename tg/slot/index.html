@@ -464,16 +464,14 @@
         var json = await resp.json();
         var data = json && json.data != null ? json.data : json;
 
-        // Current REST API shape uses units (100 units = 1 USDT) for prize/balance.
-        var prizeUnits = Number(data && data.prize != null ? data.prize : 0);
-        var balanceUnits = Number(
+        var prizeUsdt = Number(data && data.prize != null ? data.prize : 0);
+        if (!Number.isFinite(prizeUsdt)) prizeUsdt = 0;
+        var balanceUsdt = Number(
           data && data.balance != null
             ? data.balance
             : (data && data.newBalance != null ? data.newBalance : NaN)
         );
-
-        var prizeUsdt = Number.isFinite(prizeUnits) ? (prizeUnits / 100) : 0;
-        var balanceUsdt = Number.isFinite(balanceUnits) ? (balanceUnits / 100) : state.balanceUsdt;
+        if (!Number.isFinite(balanceUsdt)) balanceUsdt = state.balanceUsdt;
 
         state.balanceUsdt = balanceUsdt;
         state.demoMode = state.balanceUsdt < MIN_REAL_BET_USDT;
