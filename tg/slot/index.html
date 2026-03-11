@@ -78,6 +78,7 @@
       var _lastOffsetDetected = null;
       var _lastExtraSyncAt = 0;
       var _lastHostMetricsLogAt = 0;
+      var _telegramViewportHooked = false;
       var _pendingHostLogs = [];
 
       function hostLog(message, level) {
@@ -294,6 +295,24 @@
           setTimeout(queueSync, 1500);
         }
 
+        function logFrameBaseline(reason) {
+          var rootRect = rootEl ? rootEl.getBoundingClientRect() : null;
+          var frameRect = frameEl ? frameEl.getBoundingClientRect() : null;
+          hostLog(
+            'Frame baseline (' + reason + '): root=(' +
+            (rootRect ? safeNum(rootRect.top) : 0) + ',' +
+            (rootRect ? safeNum(rootRect.left) : 0) + ',' +
+            (rootRect ? safeNum(rootRect.width) : 0) + 'x' +
+            (rootRect ? safeNum(rootRect.height) : 0) + ')' +
+            ', frame=(' +
+            (frameRect ? safeNum(frameRect.top) : 0) + ',' +
+            (frameRect ? safeNum(frameRect.left) : 0) + ',' +
+            (frameRect ? safeNum(frameRect.width) : 0) + 'x' +
+            (frameRect ? safeNum(frameRect.height) : 0) + ')',
+            'info'
+          );
+        }
+
         vv.addEventListener('resize', queueSync, { passive: true });
         vv.addEventListener('scroll', queueSync, { passive: true });
         window.addEventListener('orientationchange', delayedSync, { passive: true });
@@ -301,6 +320,24 @@
         document.addEventListener('visibilitychange', function () {
           if (!document.hidden) delayedSync();
         });
+
+        // Telegram Mini App viewport can change without a standard vv resize event.
+        try {
+          var tg = window.Telegram && window.Telegram.WebApp;
+          if (tg && typeof tg.onEvent === 'function' && !_telegramViewportHooked) {
+            _telegramViewportHooked = true;
+            tg.onEvent('viewportChanged', function () {
+              delayedSync();
+              setTimeout(function () { logFrameBaseline('tg-viewportChanged'); }, 100);
+            });
+            hostLog('Telegram viewportChanged hook installed');
+          }
+        } catch (_) {}
+
+        // Export helpers for post-iframe-visible resync in boot().
+        window.__AGORA_TG_QUEUE_SYNC = queueSync;
+        window.__AGORA_TG_DELAYED_SYNC = delayedSync;
+        window.__AGORA_TG_LOG_FRAME_BASELINE = logFrameBaseline;
 
         delayedSync();
       }
@@ -539,10 +576,38 @@
           // early metrics may report frame=0x0 while the element is still display:none.
           setTimeout(function () {
             try { window.dispatchEvent(new Event('resize')); } catch (_) {}
+            try {
+              if (typeof window.__AGORA_TG_DELAYED_SYNC === 'function') {
+                window.__AGORA_TG_DELAYED_SYNC();
+              }
+              if (typeof window.__AGORA_TG_LOG_FRAME_BASELINE === 'function') {
+                window.__AGORA_TG_LOG_FRAME_BASELINE('after-display-60ms');
+              }
+            } catch (_) {}
           }, 60);
           setTimeout(function () {
             try { window.dispatchEvent(new Event('resize')); } catch (_) {}
+            try {
+              if (typeof window.__AGORA_TG_DELAYED_SYNC === 'function') {
+                window.__AGORA_TG_DELAYED_SYNC();
+              }
+              if (typeof window.__AGORA_TG_LOG_FRAME_BASELINE === 'function') {
+                window.__AGORA_TG_LOG_FRAME_BASELINE('after-display-240ms');
+              }
+            } catch (_) {}
           }, 240);
+
+          frameEl.addEventListener('load', function () {
+            try {
+              if (typeof window.__AGORA_TG_DELAYED_SYNC === 'function') {
+                window.__AGORA_TG_DELAYED_SYNC();
+              }
+              if (typeof window.__AGORA_TG_LOG_FRAME_BASELINE === 'function') {
+                window.__AGORA_TG_LOG_FRAME_BASELINE('iframe-load');
+              }
+            } catch (_) {}
+          }, { once: true });
+
           setStatus('TG 入口載入遊戲中...');
 
           window.addEventListener('message', handleGameMessage);
