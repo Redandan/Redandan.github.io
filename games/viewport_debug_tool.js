@@ -141,7 +141,8 @@
     if (gvOverflow && gvOverflow.bottomOverflow > 5) {
       issues.push('GAMEVIEW_OVERFLOW');
     }
-    if (envBottom > 0 && bodyPadding && bodyPadding.paddingBottom === 0) {
+    // Only flag safe-area-not-applied when there is a real bottom gap signal.
+    if (envBottom > 0 && bodyPadding && bodyPadding.paddingBottom === 0 && viewportGap && viewportGap.bodyBottomGap > 0) {
       issues.push('SAFE_AREA_NOT_APPLIED');
     }
     if (gvRect && gvRect.top > 3) {
