@@ -1268,22 +1268,41 @@ function _readCssSafeAreaTop() {
 }
 
 function _resolveTopInsetForLayout() {
-  const cssTop  = _readCssSafeAreaTop();  // env(safe-area-inset-top) — reliable on PWA/Safari
+  const cssTop  = _readCssSafeAreaTop();  // env(safe-area-inset-top)
   const vvTop   = (_vvFixEnabled && _vv) ? _safeNum(_vv.offsetTop) : 0;
-  const tg      = _readTelegramWebAppFromGame();
-  const tgSafeTop = tg
+  let fallbackUsed = false;
+  let tgSafeTop = 0;
+
+  if (!_isHostedMode) {
+    // ── Standalone PWA / Safari / in-app WebView ──────────────────────────
+    // The OS/browser already positions the viewport BELOW the status bar,
+    // so innerHeight is the truly usable height.  cssTop must NOT be added
+    // as an offsetY — that would double-deduct the status bar and push the
+    // canvas down, creating visible blank space at the bottom.
+    // Only compensate for an actual visualViewport.offsetTop drift (rare).
+    return {
+      resolvedTop: vvTop,
+      cssTop,
+      vvTop,
+      tgSafeTop: 0,
+      fallbackUsed: false,
+    };
+  }
+
+  // ── Hosted mode (TG iframe, ?hosted=1) ───────────────────────────────────
+  // Telegram's expand() makes the WebView full-screen including the status
+  // bar area, so innerHeight / vv.height contain those extra pixels and we
+  // must push the canvas down by the status bar height.
+  const tg = _readTelegramWebAppFromGame();
+  tgSafeTop = tg
     ? _safeNum(tg.safeAreaInsets && tg.safeAreaInsets.top) +
       _safeNum(tg.contentSafeAreaInsets && tg.contentSafeAreaInsets.top)
     : 0;
 
-  // Prefer CSS env (best for standalone PWA, viewport-fit=cover).
-  // Host value covers TG iframe where the host already resolved iOS fallback.
   let resolvedTop = Math.max(cssTop, _safeNum(_tgSafeAreaTop), tgSafeTop, vvTop);
-  let fallbackUsed = false;
 
-  // Last resort: TG iframe on iOS where Telegram SDK AND env() both return 0.
-  // Never apply to standalone PWA because innerHeight may already be adjusted.
-  if (resolvedTop < 1 && _isLikelyIOSDevice() && _isHostedMode) {
+  // Last resort: Telegram iOS returns 0 for all APIs — use known minimum.
+  if (resolvedTop < 1 && _isLikelyIOSDevice()) {
     resolvedTop = 44;
     fallbackUsed = true;
   }
