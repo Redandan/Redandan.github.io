@@ -181,6 +181,16 @@
 
         function publishOffsetStatus(metrics) {
           var detected = !!metrics.detected;
+          var rootRect = rootEl ? rootEl.getBoundingClientRect() : null;
+          var frameRect = frameEl ? frameEl.getBoundingClientRect() : null;
+          var rootTop = rootRect ? safeNum(rootRect.top) : 0;
+          var rootLeft = rootRect ? safeNum(rootRect.left) : 0;
+          var rootW = rootRect ? safeNum(rootRect.width) : 0;
+          var rootH = rootRect ? safeNum(rootRect.height) : 0;
+          var frameTop = frameRect ? safeNum(frameRect.top) : 0;
+          var frameLeft = frameRect ? safeNum(frameRect.left) : 0;
+          var frameW = frameRect ? safeNum(frameRect.width) : 0;
+          var frameH = frameRect ? safeNum(frameRect.height) : 0;
 
           window.__AGORA_VIEWPORT_OFFSET_STATUS = {
             detected: detected,
@@ -192,6 +202,14 @@
             bodyLeft: metrics.bodyLeft,
             safeTop: metrics.safeTop,
             safeLeft: metrics.safeLeft,
+            rootTop: rootTop,
+            rootLeft: rootLeft,
+            rootWidth: rootW,
+            rootHeight: rootH,
+            frameTop: frameTop,
+            frameLeft: frameLeft,
+            frameWidth: frameW,
+            frameHeight: frameH,
             threshold: OFFSET_THRESHOLD_PX,
             updatedAt: new Date().toISOString(),
             host: 'tg-slot',
@@ -206,7 +224,9 @@
               ', vv=(' + metrics.offsetTop + ',' + metrics.offsetLeft + ')' +
               ', doc=(' + metrics.docTop + ',' + metrics.docLeft + ')' +
               ', body=(' + metrics.bodyTop + ',' + metrics.bodyLeft + ')' +
-              ', safe=(' + metrics.safeTop + ',' + metrics.safeLeft + ')',
+              ', safe=(' + metrics.safeTop + ',' + metrics.safeLeft + ')' +
+              ', root=(' + rootTop + ',' + rootLeft + ',' + rootW + 'x' + rootH + ')' +
+              ', frame=(' + frameTop + ',' + frameLeft + ',' + frameW + 'x' + frameH + ')',
               detected ? 'warn' : 'info'
             );
             try {
@@ -220,7 +240,9 @@
               'Offset persists: vv=(' + metrics.offsetTop + ',' + metrics.offsetLeft + ')' +
               ', doc=(' + metrics.docTop + ',' + metrics.docLeft + ')' +
               ', body=(' + metrics.bodyTop + ',' + metrics.bodyLeft + ')' +
-              ', safe=(' + metrics.safeTop + ',' + metrics.safeLeft + ')',
+              ', safe=(' + metrics.safeTop + ',' + metrics.safeLeft + ')' +
+              ', root=(' + rootTop + ',' + rootLeft + ',' + rootW + 'x' + rootH + ')' +
+              ', frame=(' + frameTop + ',' + frameLeft + ',' + frameW + 'x' + frameH + ')',
               'warn'
             );
           }
