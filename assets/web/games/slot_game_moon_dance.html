@@ -1039,6 +1039,19 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
 })();
 </script>
 
+<script>
+(function () {
+  // Debug tool switch: set to false to disable auto-loading the standalone viewport debugger.
+  var ENABLE_VIEWPORT_DEBUG_TOOL = true;
+  if (!ENABLE_VIEWPORT_DEBUG_TOOL) return;
+  window.__VV_DEBUG_AUTO_INSTALL = true;
+  var s = document.createElement('script');
+  s.src = './viewport_debug_tool.js';
+  s.defer = true;
+  document.head.appendChild(s);
+})();
+</script>
+
 <script type="module">
 import * as THREE from 'https://esm.sh/three@0.160.0';
 import { GLTFLoader } from 'https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
@@ -1371,6 +1384,14 @@ function _logViewportDebug(reason) {
   };
   console.log('[VV_FIX][GAME][DEBUG]', debugData);
 }
+window.__vvDebugContext = {
+  getGvScale: () => gvScale,
+  getHostSafeTop: () => _tgSafeAreaTop,
+  getMode: () => ({
+    hosted: _isHostedMode,
+    flutter: _isFlutterMode,
+  }),
+};
 
 function _getViewportSafeOffsets() {
   if (!_vvFixEnabled || !_vv) {
