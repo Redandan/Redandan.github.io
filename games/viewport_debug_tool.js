@@ -147,11 +147,24 @@
     var canvasOverflow = payload && payload.layout ? payload.layout.canvasOverflow : null;
     var envBottom = payload && payload.safeArea ? safeNum(payload.safeArea.envBottomProbe) : 0;
     var renderedGaps = payload && payload.layout && payload.layout.rendered ? payload.layout.rendered.gaps : null;
+    var innerHeight = payload && payload.window ? safeNum(payload.window.innerHeight) : safeNum(window.innerHeight);
+    var rawGvRect = payload && payload.layout ? payload.layout.gvRect : null;
+    var gvScale = payload && payload.layout ? safeNum(payload.layout.gvScale || payload.layout.gvTransformScale || 1) : 1;
+    var rawBottomOverflow = gvOverflow ? safeNum(gvOverflow.bottomOverflow) : 0;
+
+    // If debugger sampled before transform is applied, gvRect may still be the
+    // design size (e.g. 900px). Use scaled effective height to avoid false positives.
+    if (!payload.layout.rendered && rawGvRect && gvScale > 0 && innerHeight > 0) {
+      var effectiveBottomOverflow = safeNum(rawGvRect.height * gvScale - innerHeight);
+      if (Math.abs(effectiveBottomOverflow) <= 2) {
+        rawBottomOverflow = 0;
+      }
+    }
 
     if (viewportGap && viewportGap.bodyBottomGap > 5) {
       issues.push('BODY_BOTTOM_GAP');
     }
-    if (gvOverflow && gvOverflow.bottomOverflow > 5) {
+    if (rawBottomOverflow > 5) {
       issues.push('GAMEVIEW_OVERFLOW');
     }
     // Only flag safe-area-not-applied when there is a real bottom gap signal.
@@ -244,6 +257,7 @@
           height: safeNum(screen.height),
           availWidth: safeNum(screen.availWidth),
           availHeight: safeNum(screen.availHeight),
+          bottomGap: safeNum(screen.height - window.innerHeight),
         },
         visualViewport: vv ? {
           width: safeNum(vv.width),

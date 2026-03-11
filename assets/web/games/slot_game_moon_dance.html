@@ -8,6 +8,7 @@
 <style>
 /* ===== Telegram Mini App CSS Variables ===== */
 :root {
+  --app-height: 100dvh;
   --tg-viewport-height: 100vh;
   /* Exposes iOS/Android safe-area-inset-top as a CSS variable so JS can read
      it via getComputedStyle.  Requires viewport-fit=cover to return non-zero
@@ -18,7 +19,7 @@
 
 /* ===== Reset ===== */
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
+html, body { width:100%; height:var(--app-height, 100dvh); overflow:hidden; background:#010010; }
 
 /* ===== Game Viewport – fixed design canvas, scaled to fit ===== */
 #gv {
@@ -631,6 +632,20 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
   border-top:1px solid rgba(139,96,16,.35);
   position:relative;
 }
+#ctrl-row2::before{
+  content:'';
+  position:absolute;
+  left:50%;
+  transform:translateX(-50%);
+  top:-6px;
+  bottom:0;
+  width:min(182px,56%);
+  border-radius:12px 12px 10px 10px;
+  background:linear-gradient(180deg,rgba(34,28,88,.92),rgba(10,8,34,.96));
+  box-shadow:0 0 10px rgba(84,102,255,.2);
+  pointer-events:none;
+  z-index:0;
+}
 .bal-item{display:flex; align-items:center; gap:5px; font-size:12px}
 .bal-item-left{justify-self:start}
 .bal-item-right{justify-self:end}
@@ -642,7 +657,10 @@ html, body { width:100%; height:100%; overflow:hidden; background:#010010; }
   align-self:stretch;
   display:flex;
   align-items:stretch;
+  position:relative;
+  z-index:1;
 }
+.bal-item-left,.bal-item-right{position:relative; z-index:1}
 .bal-center-badge{
   display:flex;
   align-items:center;
@@ -1378,8 +1396,12 @@ function _resolveTopInsetForLayout() {
 
 function _logViewportDebug(reason) {
   const tg = _readTelegramWebAppFromGame();
+  const screenH = _safeNum(window.screen && window.screen.height);
+  const innerH = _safeNum(window.innerHeight);
   const debugData = {
     reason: String(reason || 'unknown'),
+    screenHeight: screenH,
+    bottomGap: _safeNum(screenH - innerH),
     innerHeight: _safeNum(window.innerHeight),
     vvHeight: (_vvFixEnabled && _vv) ? _safeNum(_vv.height) : 0,
     vvOffsetTop: (_vvFixEnabled && _vv) ? _safeNum(_vv.offsetTop) : 0,
@@ -1391,6 +1413,17 @@ function _logViewportDebug(reason) {
     isHosted: _isHostedMode,
   };
   console.log('[VV_FIX][GAME][DEBUG]', debugData);
+}
+
+function _syncAppViewportHeight() {
+  // iOS PWA: keep CSS height pinned to the visual viewport to avoid
+  // screen-vs-viewport mismatch causing visible bottom band.
+  const vvH = (_vvFixEnabled && _vv) ? _safeNum(_vv.height) : 0;
+  const appH = Math.max(100, vvH || _safeNum(window.innerHeight));
+  const px = `${appH}px`;
+  document.documentElement.style.setProperty('--app-height', px);
+  document.documentElement.style.height = px;
+  document.body.style.height = px;
 }
 window.__vvDebugContext = {
   getGvScale: () => gvScale,
@@ -1528,10 +1561,21 @@ function fitGame() {
     }
   });
 }
+_syncAppViewportHeight();
 fitGame();
-window.addEventListener('resize', fitGame);
+window.addEventListener('resize', () => {
+  _syncAppViewportHeight();
+  fitGame();
+});
+window.addEventListener('orientationchange', () => {
+  _syncAppViewportHeight();
+  fitGame();
+}, { passive: true });
 if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', fitGame, { passive: true });
+  window.visualViewport.addEventListener('resize', () => {
+    _syncAppViewportHeight();
+    fitGame();
+  }, { passive: true });
   window.visualViewport.addEventListener('scroll', fitGame, { passive: true });
 }
 
