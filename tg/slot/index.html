@@ -464,7 +464,7 @@
         var json = await resp.json();
         var data = json && json.data != null ? json.data : json;
 
-        var prizeUsdt = Number(data && data.prize != null ? data.prize : 0);
+        var prizeUsdt = Number(data && data.winAmount != null ? data.winAmount : (data && data.prize != null ? data.prize : 0));
         if (!Number.isFinite(prizeUsdt)) prizeUsdt = 0;
         var balanceUsdt = Number(
           data && data.balance != null
