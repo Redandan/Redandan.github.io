@@ -53,6 +53,106 @@
     };
   }
 
+  function computeViewportGaps() {
+    var docRect = document.documentElement.getBoundingClientRect();
+    var bodyRect = document.body.getBoundingClientRect();
+    return {
+      bodyTopGap: safeNum(bodyRect.top - docRect.top),
+      bodyBottomGap: safeNum(docRect.bottom - bodyRect.bottom),
+      bodyLeftGap: safeNum(bodyRect.left - docRect.left),
+      bodyRightGap: safeNum(docRect.right - bodyRect.right),
+    };
+  }
+
+  function computeGvOverflow(gvRect) {
+    if (!gvRect) return null;
+    var vh = safeNum(window.innerHeight);
+    var vw = safeNum(window.innerWidth);
+    return {
+      bottomOverflow: safeNum(gvRect.bottom - vh),
+      topOverflow: safeNum(-gvRect.top),
+      rightOverflow: safeNum(gvRect.right - vw),
+      leftOverflow: safeNum(-gvRect.left),
+    };
+  }
+
+  function getTransformScale(el) {
+    if (!el) return null;
+    var style = getComputedStyle(el);
+    var transform = style.transform;
+    if (!transform || transform === 'none') return 1;
+
+    var matrix2d = transform.match(/matrix\(([^)]+)\)/);
+    if (matrix2d) {
+      var values2d = matrix2d[1].split(',');
+      var scaleX2d = parseFloat(values2d[0]);
+      return Number.isFinite(scaleX2d) ? scaleX2d : 1;
+    }
+
+    var matrix3d = transform.match(/matrix3d\(([^)]+)\)/);
+    if (matrix3d) {
+      var values3d = matrix3d[1].split(',');
+      var scaleX3d = parseFloat(values3d[0]);
+      return Number.isFinite(scaleX3d) ? scaleX3d : 1;
+    }
+
+    return 1;
+  }
+
+  function readBodySafePadding() {
+    var style = getComputedStyle(document.body);
+    return {
+      paddingTop: safeNum(String(style.paddingTop || '0').replace('px', '')),
+      paddingBottom: safeNum(String(style.paddingBottom || '0').replace('px', '')),
+    };
+  }
+
+  function detectCanvasOverflow() {
+    // Prefer gameplay canvases first; fall back to any canvas.
+    var canvas =
+      document.querySelector('#reel-canvas-wrap canvas') ||
+      document.querySelector('#char-canvas-wrap canvas') ||
+      document.querySelector('canvas');
+    if (!canvas) return null;
+
+    var r = canvas.getBoundingClientRect();
+    return {
+      width: safeNum(r.width),
+      height: safeNum(r.height),
+      topOverflow: safeNum(-r.top),
+      bottomOverflow: safeNum(r.bottom - window.innerHeight),
+      leftOverflow: safeNum(-r.left),
+      rightOverflow: safeNum(r.right - window.innerWidth),
+    };
+  }
+
+  function detectLayoutIssues(payload) {
+    var issues = [];
+    var viewportGap = payload && payload.layout ? payload.layout.viewportGap : null;
+    var gvOverflow = payload && payload.layout ? payload.layout.gvOverflow : null;
+    var bodyPadding = payload && payload.layout ? payload.layout.bodyPadding : null;
+    var gvRect = payload && payload.layout ? payload.layout.gvRect : null;
+    var canvasOverflow = payload && payload.layout ? payload.layout.canvasOverflow : null;
+    var envBottom = payload && payload.safeArea ? safeNum(payload.safeArea.envBottomProbe) : 0;
+
+    if (viewportGap && viewportGap.bodyBottomGap > 5) {
+      issues.push('BODY_BOTTOM_GAP');
+    }
+    if (gvOverflow && gvOverflow.bottomOverflow > 5) {
+      issues.push('GAMEVIEW_OVERFLOW');
+    }
+    if (envBottom > 0 && bodyPadding && bodyPadding.paddingBottom === 0) {
+      issues.push('SAFE_AREA_NOT_APPLIED');
+    }
+    if (gvRect && gvRect.top > 3) {
+      issues.push('GAMEVIEW_NOT_TOP_ALIGNED');
+    }
+    if (canvasOverflow && canvasOverflow.bottomOverflow > 5) {
+      issues.push('CANVAS_BOTTOM_OVERFLOW');
+    }
+    return issues;
+  }
+
   function readTelegramWebApp() {
     try {
       if (window.Telegram && window.Telegram.WebApp) return window.Telegram.WebApp;
@@ -159,9 +259,15 @@
           spinWrapRect: rect(spinWrap),
           spinStatusRect: rect(spinStatus),
           bodyRect: rect(body),
+          viewportGap: computeViewportGaps(),
+          bodyPadding: readBodySafePadding(),
+          gvTransformScale: getTransformScale(gv),
+          canvasOverflow: detectCanvasOverflow(),
         },
         extra: extra,
       };
+
+      payload.layout.gvOverflow = computeGvOverflow(payload.layout.gvRect);
 
       if (window.__vvDebugContext && typeof window.__vvDebugContext === 'object') {
         try {
@@ -176,6 +282,8 @@
           }
         } catch (_) {}
       }
+
+      payload.detectedIssues = detectLayoutIssues(payload);
 
       state.entries.push(payload);
       if (state.entries.length > state.maxEntries) state.entries.shift();
