@@ -74,7 +74,8 @@
 
       var OFFSET_THRESHOLD_PX = 10;
       var _vvRafPending = false;
-      var _lastOffsetDetected = false;
+      // null means "not logged yet" so first sync always emits baseline metrics.
+      var _lastOffsetDetected = null;
       var _lastExtraSyncAt = 0;
       var _lastHostMetricsLogAt = 0;
       var _pendingHostLogs = [];
