@@ -489,6 +489,27 @@
         };
       }
 
+      async function fetchRtpWithBackend() {
+        var resp = await fetch(API_BASE + '/slot/rtp', {
+          method: 'GET',
+          headers: {
+            'Authorization': 'Bearer ' + state.jwt,
+          },
+        });
+
+        if (!resp.ok) {
+          var text = '';
+          try { text = await resp.text(); } catch (_) {}
+          throw new Error('rtp failed: HTTP ' + resp.status + (text ? ' ' + text : ''));
+        }
+
+        var json = await resp.json();
+        return {
+          type: 'RTP_RESULT',
+          data: (json && json.data != null) ? json.data : json,
+        };
+      }
+
       function postToGame(message) {
         if (!frameEl || !frameEl.contentWindow) return;
         frameEl.contentWindow.postMessage(message, ORIGIN);
@@ -554,6 +575,17 @@
             })
             .catch(function (err) {
               postToGame({ type: 'SPIN_ERROR', message: String(err && err.message ? err.message : err) });
+            });
+          return;
+        }
+
+        if (type === 'RTP_REQUEST') {
+          fetchRtpWithBackend()
+            .then(function (result) {
+              postToGame(result);
+            })
+            .catch(function (err) {
+              postToGame({ type: 'RTP_ERROR', message: String(err && err.message ? err.message : err) });
             });
           return;
         }

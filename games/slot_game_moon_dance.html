@@ -1127,8 +1127,11 @@ setLoadProgress(5, '初始化引擎...');
 //                 HOST_LOG { level, message, ts }
 //                 SPIN_RESULT { symbols[3], multiplier, winAmount (USDT), newBalance (USDT), mode }
 //                 SPIN_ERROR  { message }
+//                 RTP_RESULT { data }
+//                 RTP_ERROR { message }
 //   Game → Host:  GAME_READY {}
 //                 SPIN_REQUEST { betIndex, betAmount, mode: 'REAL'|'DEMO' }
+//                 RTP_REQUEST {}
 //                 GO_BACK {}
 
 // Strict origin for postMessage — must match both directions.
@@ -1811,6 +1814,7 @@ const WIN_DISPLAY_MS        = 2100; // 1200ms fade-start + 900ms fade-out = regu
 // Max wait for SPIN_RESULT from the host page before treating the spin as failed.
 // 8 s gives the backend ample time on slow connections while not blocking the UI indefinitely.
 const SPIN_REQUEST_TIMEOUT_MS = 8000;
+const RTP_REQUEST_TIMEOUT_MS = 6000;
 
 
 const balanceEl = document.getElementById('balance-val');
@@ -1917,9 +1921,62 @@ async function loadAndApplyPaytable() {
   try {
     let rtpData = null;
 
-    const bridgeResult = await callFlutterHandler('getRtpTable');
-    if (bridgeResult && bridgeResult.success) {
-      rtpData = bridgeResult.data;
+    if (_isFlutterMode && hasFlutterCallHandler()) {
+      // ── Flutter native WebView: use inappwebview JS bridge ──
+      const bridgeResult = await callFlutterHandler('getRtpTable');
+      if (bridgeResult && bridgeResult.success) {
+        rtpData = bridgeResult.data;
+      }
+    } else if (window.parent !== window) {
+      // ── Inside an iframe (TG host or Flutter Web): use postMessage ──
+      const hostRtpResult = await new Promise((resolve) => {
+        let settled = false;
+        function onMsg(e) {
+          if (e.origin !== window.__gameOrigin) return;
+          if (e.source !== window.parent && e.source !== window && e.source !== null) return;
+          const d = e.data || {};
+          if (d.type !== 'RTP_RESULT' && d.type !== 'RTP_ERROR') return;
+          if (settled) return;
+          settled = true;
+          window.removeEventListener('message', onMsg);
+          clearTimeout(tOut);
+          resolve(d.type === 'RTP_RESULT' ? d : null);
+        }
+        window.addEventListener('message', onMsg);
+        const tOut = setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          window.removeEventListener('message', onMsg);
+          addLog('RTP_REQUEST timed out', 'warn');
+          resolve(null);
+        }, RTP_REQUEST_TIMEOUT_MS);
+        window.parent.postMessage({ type: 'RTP_REQUEST' }, window.__gameOrigin);
+      });
+
+      if (hostRtpResult && hostRtpResult.data != null) {
+        rtpData = hostRtpResult.data;
+      }
+    } else {
+      // ── Standalone (mobile browser / PWA, ?flutter=1 direct): direct REST fetch ──
+      const jwt = window.__agoraAuth && window.__agoraAuth.token;
+      if (!jwt) {
+        addLog('RTP fetch skipped: no JWT available', 'warn');
+      } else {
+        const apiBase = window.__AGORA_API_BASE_URL || 'https://agoramarketapi.purrtechllc.com/api';
+        try {
+          const resp = await fetch(`${apiBase}/slot/rtp`, {
+            headers: { 'Authorization': `Bearer ${jwt}` },
+          });
+          if (!resp.ok) {
+            addLog(`RTP fetch failed: HTTP ${resp.status}`, 'warn');
+          } else {
+            const json = await resp.json();
+            rtpData = (json && json.data != null) ? json.data : json;
+          }
+        } catch (fetchErr) {
+          addLog(`RTP fetch error: ${fetchErr}`, 'warn');
+        }
+      }
     }
 
     if (!rtpData) {
