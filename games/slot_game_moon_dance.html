@@ -1516,10 +1516,6 @@ function loadCharModel() {
     // Hide emoji placeholder — 3D model loaded
     document.getElementById('pig-char').classList.add('hidden');
     console.log('Character model loaded (moon_dance.glb)');
-    // If paytable is still pending, update status so user knows what's left.
-    if (!_paytableReady) setLoadProgress(95, '載入賠率表...');
-    _modelReady = true;
-    _checkAndUnlockSpin();
   },
   (xhr) => {
     if (xhr.lengthComputable) {
@@ -1550,11 +1546,8 @@ function loadCharModel() {
   },
   (err) => {
     console.error('Character model failed to load:', err?.message || String(err));
-    addLog(`3D 模型加載失敗: ${err?.message || String(err)}`, 'error');
-    // Keep the loader visible with an error message — do NOT set _modelReady,
-    // so the spin button stays locked.  User must refresh to retry.
-    glBar.style.background = '#ff4444';
-    setLoadProgress(100, '3D 模型加載失敗，請重新整理頁面');
+    addLog(`3D 模型加載失敗，以 Emoji 替代繼續: ${err?.message || String(err)}`, 'warn');
+    // Model is not a gate — game remains playable with the emoji placeholder.
   }
   );
 }
@@ -1834,10 +1827,9 @@ const spinBtn   = document.getElementById('spin-btn');
 const spinStatusEl = document.getElementById('spin-status');
 
 // ===== Loading readiness gates =====
-// Spin button stays disabled (set in HTML) until BOTH the 3D model and the
-// paytable have fully loaded.  Each async path calls _checkAndUnlockSpin()
-// when it finishes; only when both flags are true does it enable the button.
-let _modelReady    = false;
+// Spin button stays disabled (set in HTML) until the paytable has loaded.
+// The 3D model loads in the background and does not block gameplay.
+let _modelReady    = true;  // not a gate — model loads in background
 let _paytableReady = false;
 
 function _checkAndUnlockSpin() {
