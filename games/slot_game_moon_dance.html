@@ -753,6 +753,40 @@ html, body { width:100%; height:var(--app-height, 100dvh); overflow:hidden; back
   transition:opacity 0.6s ease, visibility 0.6s ease;
 }
 #game-loader.fade-out{ opacity:0; visibility:hidden; pointer-events:none; }
+/* ===== Auth error screen ===== */
+#auth-error{
+  position:fixed; inset:0; z-index:10000;
+  background:linear-gradient(160deg,#050218 0%,#0d0535 40%,#130848 70%,#050218 100%);
+  display:flex; align-items:center; justify-content:center;
+}
+#auth-error.hidden{ display:none; }
+#ae-inner{
+  display:flex; flex-direction:column; align-items:center; gap:20px;
+  width:min(300px,85vw); text-align:center;
+}
+#ae-icon{
+  width:64px; height:64px; border-radius:50%;
+  background:rgba(255,80,80,.12);
+  border:2px solid rgba(255,100,100,.35);
+  display:flex; align-items:center; justify-content:center;
+  font-size:28px; color:#ff7070;
+}
+#ae-title{
+  font-size:clamp(18px,5vw,22px); font-weight:700;
+  letter-spacing:4px; color:#c0ccff;
+}
+#ae-msg{
+  font-size:clamp(12px,3.5vw,14px); color:rgba(160,175,255,.65);
+  line-height:1.7;
+}
+#ae-btn{
+  margin-top:4px; padding:13px 44px;
+  background:linear-gradient(135deg,#4455cc,#6677ff);
+  color:#fff; border:none; border-radius:26px;
+  font-size:16px; font-weight:600; cursor:pointer; letter-spacing:2px;
+  box-shadow:0 4px 18px rgba(80,100,255,.4);
+}
+#ae-btn:active{ transform:scale(.95); }
 #gl-inner{
   display:flex; flex-direction:column; align-items:center; gap:14px;
   width:min(320px,85vw);
@@ -1045,6 +1079,16 @@ html, body { width:100%; height:var(--app-height, 100dvh); overflow:hidden; back
   </div>
 </div>
 
+<!-- Auth error screen — shown when JWT is absent or login check fails -->
+<div id="auth-error" class="hidden">
+  <div id="ae-inner">
+    <div id="ae-icon">&#128274;</div>
+    <div id="ae-title">尚未登入</div>
+    <div id="ae-msg">請先登入後再進行遊戲</div>
+    <button id="ae-btn" onclick="window.history.back(); window.parent.postMessage({type:'NAV_BACK'}, location.origin);">返回</button>
+  </div>
+</div>
+
 <!-- Big win overlay -->
 <div id="big-win" class="hidden">
   <div id="bw-title">BIG WIN!</div>
@@ -1115,6 +1159,19 @@ function hideLoader() {
   setTimeout(() => gameLoader.classList.add('fade-out'), 300);
 }
 
+// Show a full-screen auth error overlay and permanently lock the spin button.
+// Called when HOST_INIT arrives with no JWT, or when the auth timeout fires.
+let _authErrorShown = false;
+function showAuthError() {
+  if (_authErrorShown) return;
+  _authErrorShown = true;
+  // Force-hide the loader so the error screen appears cleanly.
+  _loaderHidden = true;
+  gameLoader.classList.add('fade-out');
+  document.getElementById('auth-error').classList.remove('hidden');
+  addLog('未登入狀態，顯示登入錯誤畫面', 'warn');
+}
+
 setLoadProgress(5, '初始化引擎...');
 
 // ===== Host Bridge (Telegram Mini App host ↔ game iframe protocol) =====
@@ -1162,6 +1219,14 @@ window.addEventListener('message', (e) => {
 
   if (type === 'HOST_INIT') {
     const { jwt, balance: hostBalance, demoMode, username, tgSafeAreaTop } = e.data;
+
+    // Auth gate: JWT is required to play.  Show error screen immediately if absent.
+    if (!jwt) {
+      addLog('HOST_INIT 無 JWT，判定為未登入', 'warn');
+      showAuthError();
+      return;
+    }
+
     // Store safe area inset so viewport manager can push content below status bar.
     if (Number.isFinite(Number(tgSafeAreaTop))) {
       viewportManager.setHostSafeTop(Number(tgSafeAreaTop));
@@ -1181,13 +1246,11 @@ window.addEventListener('message', (e) => {
 
     // Fetch fresh balance directly from /auth/me so we always display the
     // real server-side balance regardless of what HOST_INIT carried.
-    if (jwt) {
-      // Errors are already logged inside fetchAndApplyBalance(); we swallow the
-      // rejection here to avoid an unhandled-promise-rejection warning.
-      fetchAndApplyBalance(jwt).catch(() => {});
-      // Load paytable from backend after authentication
-      loadAndApplyPaytable().catch(() => {});
-    }
+    // Errors are already logged inside fetchAndApplyBalance(); swallow rejection
+    // here to avoid an unhandled-promise-rejection warning.
+    fetchAndApplyBalance(jwt).catch(() => {});
+    // Load paytable from backend after authentication
+    loadAndApplyPaytable().catch(() => {});
 
     console.log('[HOST] HOST_INIT: balance=' + hostBalance + ' USDT, demo=' + demoMode);
     return;
@@ -1838,6 +1901,14 @@ function _checkAndUnlockSpin() {
   spinBtn.disabled = false;
   addLog('遊戲就緒，可以開始旋轉', 'info');
 }
+
+// Auth timeout: if HOST_INIT hasn't arrived (and set a JWT) within 10 s,
+// treat the session as unauthenticated and show the error screen.
+setTimeout(function _authCheckTimeout() {
+  if (window.__agoraAuth?.token) return; // already authenticated
+  addLog('HOST_INIT 超時未到，判定為未登入', 'warn');
+  showAuthError();
+}, 10000);
 
 // Safety valve: if the paytable never signals ready within 12 s (e.g. HOST_INIT
 // was delayed or carried no JWT), unlock the game so it remains playable.
