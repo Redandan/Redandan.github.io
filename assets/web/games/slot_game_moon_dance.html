@@ -1057,6 +1057,7 @@ html, body { width:100%; height:var(--app-height, 100dvh); overflow:hidden; back
 
 <!-- Function menu popup (opened by ≡ btn-menu) -->
 <div id="menu-popup">
+  <button class="menu-item" id="menu-mute"><svg class="sym-icon" style="width:0.85em;height:0.85em"><use href="#icon-plus"/></svg> <span id="menu-mute-label">靜音</span></button>
   <button class="menu-item" id="menu-copy-log"><svg class="sym-icon" style="width:0.85em;height:0.85em"><use href="#icon-plus"/></svg> 複製日誌</button>
   <button class="menu-item" id="menu-clear-log"><svg class="sym-icon" style="width:0.85em;height:0.85em"><use href="#icon-close"/></svg> 清除日誌</button>
 </div>
@@ -2246,6 +2247,14 @@ createMenuManager({
   promptFn: typeof window.prompt === 'function' ? window.prompt.bind(window) : null,
 });
 
+// Mute toggle — sync label to saved state on load, then wire the button.
+const _muteLabelEl = document.getElementById('menu-mute-label');
+_muteLabelEl.textContent = soundManager.isMuted() ? '取消靜音' : '靜音';
+document.getElementById('menu-mute').addEventListener('click', () => {
+  const muted = soundManager.toggleMute();
+  _muteLabelEl.textContent = muted ? '取消靜音' : '靜音';
+});
+
 // ===== Auto-spin state =====
 let autoSpin      = false;
 let autoTimer     = null;
@@ -2297,6 +2306,48 @@ async function callFlutterHandler(handlerName, payload) {
     return null;
   }
 }
+
+// ── Sound Manager ─────────────────────────────────────────────────────────────
+const soundManager = (() => {
+  // Respect the user's previous mute preference across sessions.
+  let _muted = localStorage.getItem('_slot_muted') === '1';
+
+  function _make(src, loop) {
+    const a = new Audio(src);
+    a.loop    = !!loop;
+    a.preload = 'auto';
+    return a;
+  }
+
+  const _spinSnd = _make('sound/mixkit-arcade-slot-machine-wheel-1933.wav', true);
+  const _winSnd  = _make('sound/mixkit-slot-machine-win-1928.wav', false);
+  _spinSnd.volume = 0.55;
+  _winSnd.volume  = 0.85;
+
+  return {
+    isMuted: () => _muted,
+    toggleMute() {
+      _muted = !_muted;
+      localStorage.setItem('_slot_muted', _muted ? '1' : '0');
+      if (_muted) { _spinSnd.pause(); _winSnd.pause(); }
+      return _muted;
+    },
+    playSpin() {
+      if (_muted) return;
+      _spinSnd.currentTime = 0;
+      _spinSnd.play().catch(() => {});
+    },
+    stopSpin() {
+      _spinSnd.pause();
+      _spinSnd.currentTime = 0;
+    },
+    playWin() {
+      if (_muted) return;
+      _winSnd.currentTime = 0;
+      _winSnd.play().catch(() => {});
+    },
+  };
+})();
 
 // ── Paytable evaluation ──────────────────────────────────────────────────────
 // IMPORTANT: Runtime visuals come from symbols.png + spriteMap (not SVG labels)
@@ -2469,6 +2520,7 @@ async function doSpin() {
   // Launch all reels with gradual acceleration (start at 10% speed, ramp up over ~20 frames)
   reelGroups.forEach(g => { g.userData.spinning = true; g.userData.speed = MAX_SPIN_SPEED * 0.1; });
   document.getElementById('reel-canvas-wrap').classList.add('reel-spinning');
+  soundManager.playSpin();
 
   // Stop reels staggered — timing defined by REEL_STOP_DELAYS_MS constant.
   const stopDelays = REEL_STOP_DELAYS_MS;
@@ -2507,6 +2559,7 @@ async function doSpin() {
       // Remove motion blur when the last reel stops
       if (i === stopDelays.length - 1) {
         document.getElementById('reel-canvas-wrap').classList.remove('reel-spinning');
+        soundManager.stopSpin();
       }
     }, delay);
   });
@@ -2530,6 +2583,7 @@ async function doSpin() {
       if (!prize) addLog(`後端 multiplier=${multiplier} 但 winAmount 未返回`, 'warn');
       // Balance is managed by the host via SPIN_RESULT.newBalance; no local update needed.
       winEl.textContent     = '+USDT ' + prize.toFixed(2);
+      soundManager.playWin();
 
       // Flash reel section border — remove first to restart animation if already playing
       const rs = document.getElementById('reel-section');
