@@ -177,7 +177,9 @@ export function createViewportManager(config = {}) {
 
       // Expose bottom safe area in design-space px so the control bar can push
       // its content above the home indicator without changing the canvas scale.
-      const layoutSafeBottomDesign = gvScale > 0 ? cssBottom / gvScale : 0;
+      // Only apply in hosted mode (Telegram); in standalone PWA the control bar
+      // already clears the home indicator with the default 4px padding.
+      const layoutSafeBottomDesign = (hostedMode && gvScale > 0) ? cssBottom / gvScale : 0;
       gvEl.style.setProperty('--layout-safe-bottom', `${layoutSafeBottomDesign.toFixed(2)}px`);
 
       const offsetX = (viewportW - 430 * gvScale) / 2;
