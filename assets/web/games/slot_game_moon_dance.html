@@ -2247,14 +2247,6 @@ createMenuManager({
   promptFn: typeof window.prompt === 'function' ? window.prompt.bind(window) : null,
 });
 
-// Mute toggle — sync label to saved state on load, then wire the button.
-const _muteLabelEl = document.getElementById('menu-mute-label');
-_muteLabelEl.textContent = soundManager.isMuted() ? '取消靜音' : '靜音';
-document.getElementById('menu-mute').addEventListener('click', () => {
-  const muted = soundManager.toggleMute();
-  _muteLabelEl.textContent = muted ? '取消靜音' : '靜音';
-});
-
 // ===== Auto-spin state =====
 let autoSpin      = false;
 let autoTimer     = null;
@@ -2348,6 +2340,14 @@ const soundManager = (() => {
     },
   };
 })();
+
+// Mute toggle — sync label to saved state on load, then wire the button.
+const _muteLabelEl = document.getElementById('menu-mute-label');
+_muteLabelEl.textContent = soundManager.isMuted() ? '取消靜音' : '靜音';
+document.getElementById('menu-mute').addEventListener('click', () => {
+  const muted = soundManager.toggleMute();
+  _muteLabelEl.textContent = muted ? '取消靜音' : '靜音';
+});
 
 // ── Paytable evaluation ──────────────────────────────────────────────────────
 // IMPORTANT: Runtime visuals come from symbols.png + spriteMap (not SVG labels)
