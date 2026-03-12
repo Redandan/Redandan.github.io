@@ -2306,8 +2306,10 @@ async function callFlutterHandler(handlerName, payload) {
 async function doSpin() {
   if (isSpinning) return;
   
-  // Demo mode when host explicitly flagged insufficient funds.
-  const isDemoMode = window.__hostDemoMode;
+  // Demo mode: trust server-confirmed balance if available.
+  // __hostDemoMode may be stale (set from HOST_INIT before /auth/me completes),
+  // so override it when we already know balance > 0 from the server.
+  const isDemoMode = balance > 0 ? false : window.__hostDemoMode;
 
   isSpinning = true;
   spinBtn.disabled = true;
@@ -2347,16 +2349,14 @@ async function doSpin() {
     } else if (bridgeResult && bridgeResult.success === false) {
       addLog(`SPIN(bridge) failed: ${bridgeResult.message || 'unknown error'}`, 'error');
     }
-  } else {
+  } else if (window.parent !== window) {
     // ── Flutter Web entry (including Telegram): use postMessage ──
-    // On Flutter Web (desktop iframe or mobile direct navigation), the Dart side
-    // listens for SPIN_REQUEST and replies with SPIN_RESULT / SPIN_ERROR.
-    // Telegram Mini App also uses Flutter Web after auto-login in main.dart.
+    // Inside an iframe: the Dart parent listens for SPIN_REQUEST and replies
+    // with SPIN_RESULT / SPIN_ERROR.
     addLog(
       `[SPIN→] mode=${_spinMode} bet=USDT ${(currentBet()/100).toFixed(2)}` +
       ` betIdx=${betIdx} origin=${window.__gameOrigin || '(null)'}` +
-      ` parent=${window.parent !== window ? 'iframe' : 'top-level'}` +
-      ` jwt=${window.__agoraAuth?.token ? '✓' : '✗'}`,
+      ` parent=iframe jwt=${window.__agoraAuth?.token ? '✓' : '✗'}`,
       'info'
     );
     const spinResult = await postAndWait(
@@ -2373,16 +2373,68 @@ async function doSpin() {
           ? r.symbolIds.map(v => Number(v))
           : null,
         multiplier: Number(r.multiplier ?? 0),
-        // Support both formats: { winAmount } from backend and { prize } from legacy host.
         prize: Number(r.winAmount ?? r.prize ?? 0),
         newBalance: Number(r.newBalance ?? r.balance ?? NaN),
         mode: r.mode || _spinMode,
       };
     } else if (!spinResult.timedOut) {
-      // Flutter returned SPIN_ERROR explicitly.
       addLog(`[SPIN✗] Flutter 回應 SPIN_ERROR: ${spinResult.errorMessage}`, 'error');
     }
-    // timedOut case is already logged inside postAndWait.
+  } else {
+    // ── Standalone / iOS PWA (?flutter=1 direct, no parent iframe): direct REST spin ──
+    // window.parent === window means there is no host frame to postMessage to.
+    // Call the backend spin API directly using the JWT stored by HOST_INIT.
+    const jwt = window.__agoraAuth?.token;
+    addLog(
+      `[SPIN→REST] mode=${_spinMode} bet=USDT ${(currentBet()/100).toFixed(2)}` +
+      ` betIdx=${betIdx} jwt=${jwt ? '✓' : '✗ 無JWT'}`,
+      'info'
+    );
+    if (!jwt) {
+      addLog('[SPIN✗] 獨立模式缺少 JWT，無法直接請求後端', 'error');
+    } else {
+      const apiBase = window.__AGORA_API_BASE_URL || 'https://agoramarketapi.purrtechllc.com/api';
+      try {
+        const resp = await fetch(`${apiBase}/slot/spin`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${jwt}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            betIndex: betIdx,
+            betAmount: currentBet() / 100,
+            mode: _spinMode,
+            clientSeed: generateClientSeed(),
+            nonce: Date.now().toString(),
+            ...(_spinMode !== 'DEMO' ? { clientRoundId: generateClientSeed() } : {}),
+          }),
+        });
+        if (!resp.ok) {
+          addLog(`[SPIN✗REST] HTTP ${resp.status}`, 'error');
+        } else {
+          const json = await resp.json();
+          const r = (json && json.data != null) ? json.data : json;
+          if (r && (Array.isArray(r.symbols) || Array.isArray(r.symbolIds))) {
+            _hostSpinResult = {
+              symbols: Array.isArray(r.symbols) ? r.symbols : null,
+              symbolIds: Array.isArray(r.symbolIds)
+                ? r.symbolIds.map(v => Number(v))
+                : null,
+              multiplier: Number(r.multiplier ?? 0),
+              prize: Number(r.winAmount ?? r.prize ?? 0),
+              newBalance: Number(r.balance ?? r.newBalance ?? NaN),
+              mode: r.mode || _spinMode,
+            };
+            addLog(`[SPIN→REST] OK: ×${r.multiplier}`, 'info');
+          } else {
+            addLog(`[SPIN✗REST] 後端回應缺少 symbols/symbolIds: ${JSON.stringify(r).slice(0, 120)}`, 'error');
+          }
+        }
+      } catch (fetchErr) {
+        addLog(`[SPIN✗REST] 網路錯誤: ${fetchErr}`, 'error');
+      }
+    }
   }
 
   // Backend must return a valid SPIN_RESULT; no client-side fallback.
