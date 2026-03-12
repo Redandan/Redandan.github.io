@@ -719,7 +719,69 @@ html, body { width:100%; height:var(--app-height, 100dvh); overflow:hidden; back
 .menu-item:active{ background:rgba(96,101,216,.25); }
 
 /* ============================================================
-   9. BIG WIN OVERLAY
+   9. TRANSACTION HISTORY PANEL
+   ============================================================ */
+#txn-backdrop{
+  display:none; position:fixed; inset:0; z-index:700;
+  background:rgba(0,0,0,.55);
+}
+#txn-backdrop.open{ display:block; }
+#txn-panel{
+  display:none; position:fixed; left:0; right:0; bottom:0; z-index:701;
+  background:#0c0828; border-top:1.5px solid #6065d8;
+  border-radius:16px 16px 0 0; flex-direction:column;
+  max-height:72vh;
+  transform:translateY(100%); transition:transform .28s cubic-bezier(.4,0,.2,1);
+}
+#txn-panel.open{ transform:translateY(0); }
+#txn-header{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 18px 10px; border-bottom:1px solid rgba(96,101,216,.3);
+  flex-shrink:0;
+}
+#txn-title{ color:#c0ccff; font-size:15px; font-weight:700; letter-spacing:.5px; }
+#txn-close{
+  background:none; border:none; color:#888; font-size:18px;
+  cursor:pointer; padding:0 4px; line-height:1;
+}
+#txn-close:active{ color:#c0ccff; }
+#txn-list{
+  overflow-y:auto; flex:1; padding:8px 0;
+  -webkit-overflow-scrolling:touch;
+}
+.txn-row{
+  display:flex; align-items:center; gap:10px;
+  padding:10px 18px; border-bottom:1px solid rgba(96,101,216,.12);
+}
+.txn-icon{
+  width:30px; height:30px; border-radius:7px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; font-size:14px;
+}
+.txn-icon.in { background:rgba(60,200,100,.15); color:#3cc864; }
+.txn-icon.out{ background:rgba(255,80,80,.15);  color:#ff6464; }
+.txn-body{ flex:1; min-width:0; }
+.txn-type{ color:#c0ccff; font-size:13px; font-weight:600; }
+.txn-desc{ color:#666; font-size:11px; margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.txn-right{ text-align:right; flex-shrink:0; }
+.txn-amt{ font-size:14px; font-weight:700; }
+.txn-amt.in { color:#3cc864; }
+.txn-amt.out{ color:#ff6464; }
+.txn-time{ color:#555; font-size:11px; margin-top:1px; }
+#txn-footer{
+  flex-shrink:0; padding:10px 18px 14px; border-top:1px solid rgba(96,101,216,.2);
+  display:flex; justify-content:center;
+}
+#txn-load-more{
+  background:rgba(96,101,216,.2); border:1px solid rgba(96,101,216,.5);
+  color:#c0ccff; border-radius:8px; padding:7px 24px; font-size:13px;
+  cursor:pointer;
+}
+#txn-load-more:disabled{ opacity:.4; cursor:default; }
+.txn-empty{ text-align:center; color:#555; padding:32px 0; font-size:14px; }
+.txn-spinner{ text-align:center; color:#6065d8; padding:24px 0; font-size:22px; }
+
+/* ============================================================
+   10. BIG WIN OVERLAY
    ============================================================ */
 #big-win{
   position:fixed; inset:0; z-index:500; pointer-events:none;
@@ -1057,9 +1119,23 @@ html, body { width:100%; height:var(--app-height, 100dvh); overflow:hidden; back
 
 <!-- Function menu popup (opened by ≡ btn-menu) -->
 <div id="menu-popup">
+  <button class="menu-item" id="menu-txn">&#128179; 帳變紀錄</button>
   <button class="menu-item" id="menu-mute"><svg class="sym-icon" style="width:0.85em;height:0.85em"><use href="#icon-plus"/></svg> <span id="menu-mute-label">靜音</span></button>
   <button class="menu-item" id="menu-copy-log"><svg class="sym-icon" style="width:0.85em;height:0.85em"><use href="#icon-plus"/></svg> 複製日誌</button>
   <button class="menu-item" id="menu-clear-log"><svg class="sym-icon" style="width:0.85em;height:0.85em"><use href="#icon-close"/></svg> 清除日誌</button>
+</div>
+
+<!-- Transaction history panel -->
+<div id="txn-backdrop"></div>
+<div id="txn-panel">
+  <div id="txn-header">
+    <span id="txn-title">帳變紀錄</span>
+    <button id="txn-close">&#10005;</button>
+  </div>
+  <div id="txn-list"></div>
+  <div id="txn-footer">
+    <button id="txn-load-more">載入更多</button>
+  </div>
 </div>
 
 <!-- Loading screen overlay -->
@@ -2348,6 +2424,156 @@ document.getElementById('menu-mute').addEventListener('click', () => {
   const muted = soundManager.toggleMute();
   _muteLabelEl.textContent = muted ? '取消靜音' : '靜音';
 });
+
+// ===== Transaction history panel =====
+const txnPanel    = document.getElementById('txn-panel');
+const txnBackdrop = document.getElementById('txn-backdrop');
+const txnList     = document.getElementById('txn-list');
+const txnLoadMore = document.getElementById('txn-load-more');
+let _txnPage      = 1;
+let _txnHasMore   = false;
+let _txnLoading   = false;
+
+const TXN_TYPE_LABELS = {
+  DEPOSIT:   '入款', WITHDRAW:  '出款', PAYMENT:   '支出',
+  RECEIVE:   '收款', REFUND:    '退款', STAKING:   '質押',
+  UNSTAKING: '解質押', INTEREST: '利息',
+};
+
+// If Flutter bridge hasn't rebuilt yet, type may still arrive as {value:'...'} object.
+function _txnTypeStr(raw) {
+  if (!raw) return '';
+  if (typeof raw === 'string') return raw;
+  // Dart enum serialized as object: {value: 'PAYMENT'} or has toString
+  return raw.value || String(raw);
+}
+
+function _txnIsInflow(type, amount) {
+  return amount > 0;
+}
+
+function _txnFormatTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function _renderTxnRows(rows) {
+  rows.forEach(t => {
+    const amount   = t.amount ?? 0;
+    const typeKey  = _txnTypeStr(t.type);
+    const dir      = _txnIsInflow(typeKey, amount) ? 'in' : 'out';
+    const sign     = amount > 0 ? '+' : '';
+    const typeText = TXN_TYPE_LABELS[typeKey] || typeKey || '其他';
+    const desc     = t.description || t.remark || '';
+    const num      = new Intl.NumberFormat('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}).format(Math.abs(amount));
+    const icon     = dir === 'in' ? '↑' : '↓';
+    const row = document.createElement('div');
+    row.className = 'txn-row';
+    row.innerHTML = `
+      <div class="txn-icon ${dir}">${icon}</div>
+      <div class="txn-body">
+        <div class="txn-type">${typeText}</div>
+        ${desc ? `<div class="txn-desc">${desc}</div>` : ''}
+      </div>
+      <div class="txn-right">
+        <div class="txn-amt ${dir}">${sign}${num} ${t.currency || 'USDT'}</div>
+        <div class="txn-time">${_txnFormatTime(t.createdAt)}</div>
+      </div>`;
+    txnList.appendChild(row);
+  });
+}
+
+async function _fetchTransactions(page) {
+  const payload = { type: 'TRANSACTION_REQUEST', page, size: 10 };
+
+  // 3-way routing: native bridge → iframe postMessage → REST
+  if (_isFlutterMode && hasFlutterCallHandler()) {
+    const raw = await window.flutter_inappwebview.callHandler('getTransactions', { page, size: 10 });
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    if (!parsed?.success) throw new Error(parsed?.message || 'getTransactions failed');
+    return parsed.data;
+  } else if (window.parent !== window) {
+    const r = await postAndWait(payload, 'TRANSACTION_RESULT', 'TRANSACTION_ERROR', 8000, 'TRANSACTION_REQUEST timed out');
+    if (r.result) return r.result.data;
+    throw new Error(r.errorMessage || 'TRANSACTION_REQUEST failed');
+  } else {
+    // Standalone / iOS PWA — direct REST
+    const jwt = window.__agoraAuth?.token;
+    if (!jwt) throw new Error('無 JWT，請重新登入');
+    const apiBase = window.__AGORA_API_BASE_URL || 'https://agoramarketapi.purrtechllc.com/api';
+    const resp = await fetch(`${apiBase}/transactions/list`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${jwt}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: 'USDT', page, size: 10 }),
+    });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const json = await resp.json();
+    const d = json?.data ?? json;
+    return {
+      content:       d.content       ?? [],
+      totalElements: d.totalElements ?? 0,
+      hasMore:       (d.content?.length ?? 0) === 10,
+    };
+  }
+}
+
+async function _loadTxnPage(refresh) {
+  if (_txnLoading) return;
+  _txnLoading = true;
+  txnLoadMore.disabled = true;
+
+  if (refresh) {
+    _txnPage = 1;
+    txnList.innerHTML = '<div class="txn-spinner">&#9679;&#9679;&#9679;</div>';
+  }
+
+  try {
+    const data = await _fetchTransactions(_txnPage);
+    if (refresh) txnList.innerHTML = '';
+    const rows = data?.content ?? [];
+    if (rows.length === 0 && refresh) {
+      txnList.innerHTML = '<div class="txn-empty">暫無紀錄</div>';
+    } else {
+      _renderTxnRows(rows);
+      _txnPage++;
+    }
+    _txnHasMore = data?.hasMore ?? false;
+  } catch (e) {
+    if (refresh) txnList.innerHTML = `<div class="txn-empty">載入失敗: ${e.message}</div>`;
+    addLog(`帳變紀錄載入失敗: ${e.message}`, 'warn');
+  } finally {
+    _txnLoading = false;
+    txnLoadMore.disabled = !_txnHasMore;
+  }
+}
+
+function openTxnPanel() {
+  txnPanel.style.display = 'flex';
+  txnBackdrop.classList.add('open');
+  // Force reflow so transition plays
+  txnPanel.getBoundingClientRect();
+  txnPanel.classList.add('open');
+  _loadTxnPage(true);
+}
+
+function closeTxnPanel() {
+  txnPanel.classList.remove('open');
+  txnBackdrop.classList.remove('open');
+  txnPanel.addEventListener('transitionend', () => {
+    if (!txnPanel.classList.contains('open')) txnPanel.style.display = 'none';
+  }, { once: true });
+}
+
+document.getElementById('menu-txn').addEventListener('click', () => {
+  // Close menu popup first
+  document.getElementById('menu-popup').classList.remove('open');
+  openTxnPanel();
+});
+document.getElementById('txn-close').addEventListener('click', closeTxnPanel);
+txnBackdrop.addEventListener('click', closeTxnPanel);
+txnLoadMore.addEventListener('click', () => _loadTxnPage(false));
 
 // ── Paytable evaluation ──────────────────────────────────────────────────────
 // IMPORTANT: Runtime visuals come from symbols.png + spriteMap (not SVG labels)
