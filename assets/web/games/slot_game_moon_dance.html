@@ -2373,6 +2373,13 @@ function cancelAutoSpin() {
 
 document.getElementById('btn-back').addEventListener('click', () => {
   if (!cancelAutoSpin()) {
+    // When opened in a new tab via launchUrl (mobile PWA new-tab mode),
+    // close this tab to return to the Flutter PWA.
+    const _searchParams = new URLSearchParams(window.location.search);
+    if (_searchParams.get('newTab') === '1') {
+      window.close();
+      return;
+    }
     if (window._flutterBridge) {
       // Flutter entry (native WebView, Flutter Web iframe, or standalone mobile browser):
       // use the platform-aware bridge for back-navigation.
