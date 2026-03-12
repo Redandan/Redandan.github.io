@@ -29,6 +29,8 @@ export function createAnimationLoopManager(config = {}) {
 
   let lastTime = performance.now();
   let charFrameSkip = 0;
+  // Throttle stage lighting updates to ~30fps (every 2 render frames).
+  let lightFrameSkip = 0;
 
   function updateReels() {
     const stripClip = Number(getStripClip()) || 0;
@@ -51,20 +53,39 @@ export function createAnimationLoopManager(config = {}) {
       }
 
       const delta = speed > minSpinSpeed ? speed : 0;
+
+      // Track whether this strip was actively moving last frame.
+      // Updated before the early-return so the flag stays accurate even when idle.
+      const wasMoving = !!strip.userData.wasMoving;
+      strip.userData.wasMoving = delta > 0;
+
       if (delta === 0) return;
 
-      let stripMaxY = -Infinity;
-      strip.children.forEach((c) => {
-        if (c.position.y > stripMaxY) stripMaxY = c.position.y;
-      });
+      // Invalidate cached maxY when spin starts (positions may have changed after snap).
+      if (!wasMoving) strip.userData.maxY = undefined;
+
+      // Lazy-init: scan once on the first active frame to seed the cache.
+      if (!Number.isFinite(strip.userData.maxY)) {
+        let m = -Infinity;
+        strip.children.forEach((c) => { if (c.position.y > m) m = c.position.y; });
+        strip.userData.maxY = m;
+      }
+
+      let stripMaxY = strip.userData.maxY;
+      let recycled = false;
 
       strip.children.forEach((card) => {
         card.position.y -= delta;
         if (card.position.y < -stripClip) {
           card.position.y = stripMaxY + cardH;
           stripMaxY = card.position.y;
+          recycled = true;
         }
       });
+
+      // Maintain cache: if no card was recycled all positions dropped by delta;
+      // if cards were recycled, stripMaxY was updated incrementally in the loop above.
+      strip.userData.maxY = recycled ? stripMaxY : stripMaxY - delta;
     });
   }
 
@@ -112,7 +133,11 @@ export function createAnimationLoopManager(config = {}) {
     const t = now / 1000;
 
     updateReels();
-    updateStageLights(t);
+    // Lighting: update every other frame (~30fps) — trig ops are expensive on mobile.
+    if (++lightFrameSkip >= 2) {
+      lightFrameSkip = 0;
+      updateStageLights(t);
+    }
     renderer.render(scene, camera);
     renderCharacter(dt, t);
   }

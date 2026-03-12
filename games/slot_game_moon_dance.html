@@ -983,7 +983,7 @@ html, body { width:100%; height:var(--app-height, 100dvh); overflow:hidden; back
       </button>
       <div id="spin-wrap">
         <div id="spin-ring">
-          <button id="spin-btn" aria-label="旋轉">
+          <button id="spin-btn" disabled aria-label="旋轉">
             <span class="spin-ic">▶</span>
           </button>
         </div>
@@ -1281,7 +1281,8 @@ viewportManager.init();
 
 // ===== Mobile performance detection =====
 // Lower rendering quality on mobile to avoid GPU/CPU overload (laggy scrolling)
-const IS_MOBILE = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 768;
+// Feature-detect touch/coarse-pointer devices instead of UA sniffing (UA can be spoofed).
+const IS_MOBILE = window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 768;
 // DPR cap: multiply device DPR by the CSS viewport scale so the canvas buffer resolution
 // always matches the physical screen resolution of the reel area.  Cap at 2.5 to limit
 // GPU memory on very-high-DPI devices while still rendering crisply.
@@ -1516,7 +1517,10 @@ function loadCharModel() {
     // Hide emoji placeholder — 3D model loaded
     document.getElementById('pig-char').classList.add('hidden');
     console.log('Character model loaded (moon_dance.glb)');
-    hideLoader();
+    // If paytable is still pending, update status so user knows what's left.
+    if (!_paytableReady) setLoadProgress(95, '載入賠率表...');
+    _modelReady = true;
+    _checkAndUnlockSpin();
   },
   (xhr) => {
     if (xhr.lengthComputable) {
@@ -1547,7 +1551,11 @@ function loadCharModel() {
   },
   (err) => {
     console.error('Character model failed to load:', err?.message || String(err));
-    hideLoader(); // hide loader even on error so game is accessible
+    addLog(`3D 模型加載失敗: ${err?.message || String(err)}`, 'error');
+    // Keep the loader visible with an error message — do NOT set _modelReady,
+    // so the spin button stays locked.  User must refresh to retry.
+    glBar.style.background = '#ff4444';
+    setLoadProgress(100, '3D 模型加載失敗，請重新整理頁面');
   }
   );
 }
@@ -1557,9 +1565,10 @@ function loadCharModel() {
 const MOBILE_MODEL_LOAD_DELAY_MS = 1500;
 
 if (IS_MOBILE) {
-  // Mobile: hide loader immediately (game is playable with emoji) and fetch model
-  // quietly in the background so it doesn't compete with the first render.
-  hideLoader();
+  // Mobile: delay the GLB fetch so the reel renderer can complete its first
+  // frame and upload textures before the model download competes for bandwidth.
+  // The loader remains visible until _checkAndUnlockSpin() dismisses it.
+  setLoadProgress(30, '載入模型中...');
   setTimeout(loadCharModel, MOBILE_MODEL_LOAD_DELAY_MS);
 } else {
   loadCharModel();
@@ -1815,6 +1824,8 @@ const WIN_DISPLAY_MS        = 2100; // 1200ms fade-start + 900ms fade-out = regu
 // 8 s gives the backend ample time on slow connections while not blocking the UI indefinitely.
 const SPIN_REQUEST_TIMEOUT_MS = 8000;
 const RTP_REQUEST_TIMEOUT_MS = 6000;
+// Reel stop timing: three reels snap staggered, 450ms apart.
+const REEL_STOP_DELAYS_MS = [600, 1050, 1500];
 
 
 const balanceEl = document.getElementById('balance-val');
@@ -1822,6 +1833,29 @@ const winEl     = document.getElementById('win-val');
 const betLabel  = document.getElementById('bet-label');
 const spinBtn   = document.getElementById('spin-btn');
 const spinStatusEl = document.getElementById('spin-status');
+
+// ===== Loading readiness gates =====
+// Spin button stays disabled (set in HTML) until BOTH the 3D model and the
+// paytable have fully loaded.  Each async path calls _checkAndUnlockSpin()
+// when it finishes; only when both flags are true does it enable the button.
+let _modelReady    = false;
+let _paytableReady = false;
+
+function _checkAndUnlockSpin() {
+  if (!_modelReady || !_paytableReady) return;
+  if (!_loaderHidden) hideLoader();
+  spinBtn.disabled = false;
+  addLog('遊戲就緒，可以開始旋轉', 'info');
+}
+
+// Safety valve: if the paytable never signals ready within 12 s (e.g. HOST_INIT
+// was delayed or carried no JWT), unlock the game so it remains playable.
+setTimeout(function _paytableReadyFallback() {
+  if (_paytableReady) return;
+  _paytableReady = true;
+  addLog('賠率表加載超時，以默認賠率繼續', 'warn');
+  _checkAndUnlockSpin();
+}, 12000);
 betLabel.textContent  = '投注 USDT ' + (currentBet() / 100).toFixed(2);
 const jackpotMarqueeTextEl = document.getElementById('jackpot-marquee-text');
 
@@ -1916,6 +1950,35 @@ function applyBalance(usdt) {
   addLog(`餘額已更新: USDT ${(balance / 100).toFixed(2)}`, 'info');
 }
 
+// Shared helper: post a message to the parent frame and wait for a typed response.
+// Handles origin/source validation, settled-once guard, and timeout identical to
+// the inline patterns that originally appeared in loadAndApplyPaytable / doSpin.
+function postAndWait(payload, resultType, errorType, timeoutMs, timeoutMsg) {
+  return new Promise((resolve) => {
+    let settled = false;
+    function onMsg(e) {
+      if (e.origin !== window.__gameOrigin) return;
+      if (e.source !== window.parent && e.source !== window && e.source !== null) return;
+      const d = e.data || {};
+      if (d.type !== resultType && d.type !== errorType) return;
+      if (settled) return;
+      settled = true;
+      window.removeEventListener('message', onMsg);
+      clearTimeout(tOut);
+      resolve(d.type === resultType ? d : null);
+    }
+    window.addEventListener('message', onMsg);
+    const tOut = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      window.removeEventListener('message', onMsg);
+      addLog(timeoutMsg, 'warn');
+      resolve(null);
+    }, timeoutMs);
+    window.parent.postMessage(payload, window.__gameOrigin);
+  });
+}
+
 // Load paytable multipliers from backend and apply to UI.
 async function loadAndApplyPaytable() {
   try {
@@ -1929,29 +1992,11 @@ async function loadAndApplyPaytable() {
       }
     } else if (window.parent !== window) {
       // ── Inside an iframe (TG host or Flutter Web): use postMessage ──
-      const hostRtpResult = await new Promise((resolve) => {
-        let settled = false;
-        function onMsg(e) {
-          if (e.origin !== window.__gameOrigin) return;
-          if (e.source !== window.parent && e.source !== window && e.source !== null) return;
-          const d = e.data || {};
-          if (d.type !== 'RTP_RESULT' && d.type !== 'RTP_ERROR') return;
-          if (settled) return;
-          settled = true;
-          window.removeEventListener('message', onMsg);
-          clearTimeout(tOut);
-          resolve(d.type === 'RTP_RESULT' ? d : null);
-        }
-        window.addEventListener('message', onMsg);
-        const tOut = setTimeout(() => {
-          if (settled) return;
-          settled = true;
-          window.removeEventListener('message', onMsg);
-          addLog('RTP_REQUEST timed out', 'warn');
-          resolve(null);
-        }, RTP_REQUEST_TIMEOUT_MS);
-        window.parent.postMessage({ type: 'RTP_REQUEST' }, window.__gameOrigin);
-      });
+      const hostRtpResult = await postAndWait(
+        { type: 'RTP_REQUEST' },
+        'RTP_RESULT', 'RTP_ERROR',
+        RTP_REQUEST_TIMEOUT_MS, 'RTP_REQUEST timed out'
+      );
 
       if (hostRtpResult && hostRtpResult.data != null) {
         rtpData = hostRtpResult.data;
@@ -2066,6 +2111,11 @@ async function loadAndApplyPaytable() {
     }
   } catch (e) {
     addLog(`賠率表加載失敗: ${e}`, 'warn');
+  } finally {
+    // Mark paytable ready regardless of success/error/early-return so the
+    // spin button is never permanently blocked by a failed paytable fetch.
+    _paytableReady = true;
+    _checkAndUnlockSpin();
   }
 }
 
@@ -2200,34 +2250,11 @@ async function doSpin() {
     // On Flutter Web (desktop iframe or mobile direct navigation), the Dart side
     // listens for SPIN_REQUEST and replies with SPIN_RESULT / SPIN_ERROR.
     // Telegram Mini App also uses Flutter Web after auto-login in main.dart.
-    const rawSpinResult = await new Promise((resolve) => {
-      let settled = false;
-      function onMsg(e) {
-        if (e.origin !== window.__gameOrigin) return;
-        if (e.source !== window.parent && e.source !== window && e.source !== null) return;
-        const d = e.data || {};
-        if (d.type !== 'SPIN_RESULT' && d.type !== 'SPIN_ERROR') return;
-        if (settled) return;
-        settled = true;
-        window.removeEventListener('message', onMsg);
-        clearTimeout(tOut);
-        resolve(d.type === 'SPIN_RESULT' ? d : null);
-      }
-      window.addEventListener('message', onMsg);
-      const tOut = setTimeout(() => {
-        if (settled) return;
-        settled = true;
-        window.removeEventListener('message', onMsg);
-        addLog('SPIN_REQUEST timed out – spin cancelled', 'warn');
-        resolve(null);
-      }, SPIN_REQUEST_TIMEOUT_MS);
-      window.parent.postMessage({
-        type: 'SPIN_REQUEST',
-        betIndex: betIdx,
-        betAmount: currentBet() / 100,
-        mode: _spinMode,
-      }, window.__gameOrigin);
-    });
+    const rawSpinResult = await postAndWait(
+      { type: 'SPIN_REQUEST', betIndex: betIdx, betAmount: currentBet() / 100, mode: _spinMode },
+      'SPIN_RESULT', 'SPIN_ERROR',
+      SPIN_REQUEST_TIMEOUT_MS, 'SPIN_REQUEST timed out – spin cancelled'
+    );
 
     if (rawSpinResult) {
       _hostSpinResult = {
@@ -2259,6 +2286,9 @@ async function doSpin() {
   const forcedSymbolIds = Array.isArray(_hostSpinResult.symbolIds)
     ? _hostSpinResult.symbolIds.map(v => Number(v))
     : (forcedSyms ? forcedSyms.map(_resolveSymIdx) : null);
+  if (forcedSymbolIds && forcedSymbolIds.some(id => id < 0 || id >= spriteMap.length)) {
+    addLog(`後端返回了範圍外的 symbolId: [${forcedSymbolIds}]，將以最近牌位替代`, 'warn');
+  }
   if (typeof _hostSpinResult.newBalance === 'number') {
     // applyBalance() converts USDT float → internal ×100 units and updates the display.
     applyBalance(_hostSpinResult.newBalance);
@@ -2268,8 +2298,8 @@ async function doSpin() {
   reelGroups.forEach(g => { g.userData.spinning = true; g.userData.speed = MAX_SPIN_SPEED * 0.1; });
   document.getElementById('reel-canvas-wrap').classList.add('reel-spinning');
 
-  // Stop reels staggered (600 / 1050 / 1500 ms)
-  const stopDelays = [600, 1050, 1500];
+  // Stop reels staggered — timing defined by REEL_STOP_DELAYS_MS constant.
+  const stopDelays = REEL_STOP_DELAYS_MS;
   stopDelays.forEach((delay, i) => {
     setTimeout(() => {
       const strip = reelGroups[i];
@@ -2300,6 +2330,8 @@ async function doSpin() {
       const snapShift = -closest.position.y;
       strip.children.forEach(card => { card.position.y += snapShift; });
       strip.userData.speed = 0;
+      // Invalidate the cached maxY so the animation loop re-scans on the next spin start.
+      strip.userData.maxY = undefined;
       // Remove motion blur when the last reel stops
       if (i === stopDelays.length - 1) {
         document.getElementById('reel-canvas-wrap').classList.remove('reel-spinning');
@@ -2419,7 +2451,10 @@ function showBigWin(amount, title = 'BIG WIN!') {
 }
 
 // ===== Resize handler =====
+let _resizeDebounce;
 window.addEventListener('resize', () => {
+  clearTimeout(_resizeDebounce);
+  _resizeDebounce = setTimeout(() => {
   const nW = reelSection.clientWidth;
   const nH = 340; // canvas render height is fixed; section is 198px with overflow:hidden
   camera.aspect = nW / nH;
@@ -2440,6 +2475,8 @@ window.addEventListener('resize', () => {
       card.geometry = new THREE.PlaneGeometry(CARD_W, CARD_H);
       card.position.y = (i - Math.floor(N_STRIP / 2)) * CARD_H;
     });
+    // Invalidate cached maxY — card positions were just reset above.
+    strip.userData.maxY = undefined;
   });
   // Resize character renderer to match new center-stage dimensions
   const cW = charWrap.clientWidth  || nW;
@@ -2448,6 +2485,7 @@ window.addEventListener('resize', () => {
   charCamera.updateProjectionMatrix();
   charRenderer.setSize(cW, cH);
   charRenderer.setPixelRatio(calcDPR());
+  }, 150);
 });
 
 // ===== Animation loop =====
