@@ -2015,6 +2015,10 @@ function applyBalance(usdt) {
 // Shared helper: post a message to the parent frame and wait for a typed response.
 // Handles origin/source validation, settled-once guard, and timeout identical to
 // the inline patterns that originally appeared in loadAndApplyPaytable / doSpin.
+// postAndWait returns { result, timedOut, errorMessage }:
+//   success  → { result: <full message data>, timedOut: false, errorMessage: null }
+//   error    → { result: null, timedOut: false, errorMessage: <string> }
+//   timeout  → { result: null, timedOut: true,  errorMessage: <timeoutMsg> }
 function postAndWait(payload, resultType, errorType, timeoutMs, timeoutMsg) {
   return new Promise((resolve) => {
     let settled = false;
@@ -2027,7 +2031,10 @@ function postAndWait(payload, resultType, errorType, timeoutMs, timeoutMsg) {
       settled = true;
       window.removeEventListener('message', onMsg);
       clearTimeout(tOut);
-      resolve(d.type === resultType ? d : null);
+      resolve(d.type === resultType
+        ? { result: d, timedOut: false, errorMessage: null }
+        : { result: null, timedOut: false, errorMessage: d.message || d.error || `${errorType} received` }
+      );
     }
     window.addEventListener('message', onMsg);
     const tOut = setTimeout(() => {
@@ -2035,7 +2042,7 @@ function postAndWait(payload, resultType, errorType, timeoutMs, timeoutMsg) {
       settled = true;
       window.removeEventListener('message', onMsg);
       addLog(timeoutMsg, 'warn');
-      resolve(null);
+      resolve({ result: null, timedOut: true, errorMessage: timeoutMsg });
     }, timeoutMs);
     window.parent.postMessage(payload, window.__gameOrigin);
   });
@@ -2060,8 +2067,10 @@ async function loadAndApplyPaytable() {
         RTP_REQUEST_TIMEOUT_MS, 'RTP_REQUEST timed out'
       );
 
-      if (hostRtpResult && hostRtpResult.data != null) {
-        rtpData = hostRtpResult.data;
+      if (hostRtpResult.result?.data != null) {
+        rtpData = hostRtpResult.result.data;
+      } else if (!hostRtpResult.timedOut && hostRtpResult.errorMessage) {
+        addLog(`RTP_ERROR from host: ${hostRtpResult.errorMessage}`, 'warn');
       }
     } else {
       // ── Standalone (mobile browser / PWA, ?flutter=1 direct): direct REST fetch ──
@@ -2343,30 +2352,48 @@ async function doSpin() {
     // On Flutter Web (desktop iframe or mobile direct navigation), the Dart side
     // listens for SPIN_REQUEST and replies with SPIN_RESULT / SPIN_ERROR.
     // Telegram Mini App also uses Flutter Web after auto-login in main.dart.
-    const rawSpinResult = await postAndWait(
+    addLog(
+      `[SPIN→] mode=${_spinMode} bet=USDT ${(currentBet()/100).toFixed(2)}` +
+      ` betIdx=${betIdx} origin=${window.__gameOrigin || '(null)'}` +
+      ` parent=${window.parent !== window ? 'iframe' : 'top-level'}` +
+      ` jwt=${window.__agoraAuth?.token ? '✓' : '✗'}`,
+      'info'
+    );
+    const spinResult = await postAndWait(
       { type: 'SPIN_REQUEST', betIndex: betIdx, betAmount: currentBet() / 100, mode: _spinMode },
       'SPIN_RESULT', 'SPIN_ERROR',
-      SPIN_REQUEST_TIMEOUT_MS, 'SPIN_REQUEST timed out – spin cancelled'
+      SPIN_REQUEST_TIMEOUT_MS, `SPIN_REQUEST timed out after ${SPIN_REQUEST_TIMEOUT_MS/1000}s – spin cancelled`
     );
 
-    if (rawSpinResult) {
+    if (spinResult.result) {
+      const r = spinResult.result;
       _hostSpinResult = {
-        symbols: Array.isArray(rawSpinResult.symbols) ? rawSpinResult.symbols : null,
-        symbolIds: Array.isArray(rawSpinResult.symbolIds)
-          ? rawSpinResult.symbolIds.map(v => Number(v))
+        symbols: Array.isArray(r.symbols) ? r.symbols : null,
+        symbolIds: Array.isArray(r.symbolIds)
+          ? r.symbolIds.map(v => Number(v))
           : null,
-        multiplier: Number(rawSpinResult.multiplier ?? 0),
+        multiplier: Number(r.multiplier ?? 0),
         // Support both formats: { winAmount } from backend and { prize } from legacy host.
-        prize: Number(rawSpinResult.winAmount ?? rawSpinResult.prize ?? 0),
-        newBalance: Number(rawSpinResult.newBalance ?? rawSpinResult.balance ?? NaN),
-        mode: rawSpinResult.mode || _spinMode,
+        prize: Number(r.winAmount ?? r.prize ?? 0),
+        newBalance: Number(r.newBalance ?? r.balance ?? NaN),
+        mode: r.mode || _spinMode,
       };
+    } else if (!spinResult.timedOut) {
+      // Flutter returned SPIN_ERROR explicitly.
+      addLog(`[SPIN✗] Flutter 回應 SPIN_ERROR: ${spinResult.errorMessage}`, 'error');
     }
+    // timedOut case is already logged inside postAndWait.
   }
 
   // Backend must return a valid SPIN_RESULT; no client-side fallback.
   if (!(_hostSpinResult?.symbolIds?.length || _hostSpinResult?.symbols?.length)) {
-    addLog('旋轉請求失敗：後端無法回應，請稍後再試', 'error');
+    addLog(
+      `旋轉請求失敗：後端無回應或返回無效結果` +
+      ` | mode=${_spinMode} demo=${isDemoMode}` +
+      ` | jwt=${window.__agoraAuth?.token ? '✓' : '✗ 無JWT'}` +
+      ` | origin=${window.__gameOrigin || '未設定'}`,
+      'error'
+    );
     winEl.textContent = '請求失敗';
     isSpinning  = false;
     spinBtn.disabled = false;
