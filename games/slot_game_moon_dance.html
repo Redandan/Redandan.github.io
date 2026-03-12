@@ -3,10 +3,6 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-<meta name="theme-color" content="#050218" />
-<meta name="color-scheme" content="dark" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta http-equiv="Cache-Control" content="no-cache" />
 <title>月光舞台 - 夜舞老虎機</title>
 <style>
@@ -19,13 +15,11 @@
      on iPhone (status bar height ~44-59px).  0px is the safe fallback. */
   --sat: env(safe-area-inset-top, 0px);
   --sab: env(safe-area-inset-bottom, 0px);
-  --layout-safe-bottom: 0px;
 }
 
 /* ===== Reset ===== */
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-html { width:100%; height:var(--app-height, 100dvh); overflow:hidden; background:#000000; }
-body { width:100%; height:var(--app-height, 100dvh); overflow:hidden; background:#050218; }
+html, body { width:100%; height:var(--app-height, 100dvh); overflow:hidden; background:#010010; }
 
 /* ===== Game Viewport – fixed design canvas, scaled to fit ===== */
 #gv {
@@ -540,9 +534,9 @@ body { width:100%; height:var(--app-height, 100dvh); overflow:hidden; background
    ============================================================ */
 #control-bar{
   flex:0 0 auto;
-  background:linear-gradient(180deg,#080520 0%,#04010f 100%);
+  background:#080520;
   border-top:3px solid #3a3a88;
-  padding:0 10px max(4px, var(--layout-safe-bottom, 0px));
+  padding:0 10px 4px;
   position:relative; z-index:20;
 }
 #control-bar::before{
@@ -2373,13 +2367,6 @@ function cancelAutoSpin() {
 
 document.getElementById('btn-back').addEventListener('click', () => {
   if (!cancelAutoSpin()) {
-    // When opened in a new tab via launchUrl (mobile PWA new-tab mode),
-    // close this tab to return to the Flutter PWA.
-    const _searchParams = new URLSearchParams(window.location.search);
-    if (_searchParams.get('newTab') === '1') {
-      window.close();
-      return;
-    }
     if (window._flutterBridge) {
       // Flutter entry (native WebView, Flutter Web iframe, or standalone mobile browser):
       // use the platform-aware bridge for back-navigation.

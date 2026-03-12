@@ -53,16 +53,6 @@ export function createViewportManager(config = {}) {
     }
   }
 
-  function readCssSafeAreaBottom() {
-    try {
-      const raw = getComputedStyle(document.documentElement).getPropertyValue('--sab').trim();
-      const val = parseFloat(raw);
-      return Number.isFinite(val) ? val : 0;
-    } catch (_) {
-      return 0;
-    }
-  }
-
   function resolveTopInsetForLayout() {
     const cssTop = readCssSafeAreaTop();
     const vvTop = (vvFixEnabled && vv) ? safeNum(vv.offsetTop) : 0;
@@ -167,20 +157,12 @@ export function createViewportManager(config = {}) {
       const topInset = resolveTopInsetForLayout();
       const layoutSafeTop = hostedMode ? topInset.resolvedTop : 0;
       const contentSafeTop = hostedMode ? 0 : topInset.cssTop;
-      const cssBottom = readCssSafeAreaBottom();
       const usableH = Math.max(viewportH - layoutSafeTop, 100);
 
       gvEl.style.setProperty('--layout-safe-top', `${contentSafeTop}px`);
 
       gvScale = Math.min(viewportW / 430, usableH / 900);
       onScaleChange(gvScale);
-
-      // Expose bottom safe area in design-space px so the control bar can push
-      // its content above the home indicator without changing the canvas scale.
-      // Only apply in hosted mode (Telegram); in standalone PWA the control bar
-      // already clears the home indicator with the default 4px padding.
-      const layoutSafeBottomDesign = (hostedMode && gvScale > 0) ? cssBottom / gvScale : 0;
-      gvEl.style.setProperty('--layout-safe-bottom', `${layoutSafeBottomDesign.toFixed(2)}px`);
 
       const offsetX = (viewportW - 430 * gvScale) / 2;
       const offsetY = layoutSafeTop;
@@ -230,7 +212,7 @@ export function createViewportManager(config = {}) {
         lastViewportFixDetected = vvOffsets.detected;
         lastViewportFixLogAt = now;
         onLog(
-          `[VV_FIX][GAME] detected=${vvOffsets.detected} safeTop=${vvOffsets.safeTop.toFixed(1)} safeLeft=${vvOffsets.safeLeft.toFixed(1)} tgSafeAreaTop=${hostSafeTop.toFixed(1)} resolvedTop=${layoutSafeTop.toFixed(1)} cssTop=${topInset.cssTop.toFixed(1)} cssBottom=${cssBottom.toFixed(1)} tgApiTop=${topInset.tgSafeTop.toFixed(1)} vvTop=${topInset.vvTop.toFixed(1)} fallback44=${topInset.fallbackUsed} offsetY=${offsetY.toFixed(1)} vv=(${vvOffsets.vvTop.toFixed(1)},${vvOffsets.vvLeft.toFixed(1)}) doc=(${vvOffsets.docTop.toFixed(1)},${vvOffsets.docLeft.toFixed(1)}) body=(${vvOffsets.bodyTop.toFixed(1)},${vvOffsets.bodyLeft.toFixed(1)}) gv=(${gvTop.toFixed(1)},${gvLeft.toFixed(1)},${gvW.toFixed(1)}x${gvH.toFixed(1)}) gaps(gv=${gvBottomGap.toFixed(1)},ctrl=${controlBarBottomGap.toFixed(1)},spin=${spinBottomGap.toFixed(1)}) scale=${gvScale.toFixed(3)}`,
+          `[VV_FIX][GAME] detected=${vvOffsets.detected} safeTop=${vvOffsets.safeTop.toFixed(1)} safeLeft=${vvOffsets.safeLeft.toFixed(1)} tgSafeAreaTop=${hostSafeTop.toFixed(1)} resolvedTop=${layoutSafeTop.toFixed(1)} cssTop=${topInset.cssTop.toFixed(1)} tgApiTop=${topInset.tgSafeTop.toFixed(1)} vvTop=${topInset.vvTop.toFixed(1)} fallback44=${topInset.fallbackUsed} offsetY=${offsetY.toFixed(1)} vv=(${vvOffsets.vvTop.toFixed(1)},${vvOffsets.vvLeft.toFixed(1)}) doc=(${vvOffsets.docTop.toFixed(1)},${vvOffsets.docLeft.toFixed(1)}) body=(${vvOffsets.bodyTop.toFixed(1)},${vvOffsets.bodyLeft.toFixed(1)}) gv=(${gvTop.toFixed(1)},${gvLeft.toFixed(1)},${gvW.toFixed(1)}x${gvH.toFixed(1)}) gaps(gv=${gvBottomGap.toFixed(1)},ctrl=${controlBarBottomGap.toFixed(1)},spin=${spinBottomGap.toFixed(1)}) scale=${gvScale.toFixed(3)}`,
           vvOffsets.detected ? 'warn' : 'info'
         );
       }
