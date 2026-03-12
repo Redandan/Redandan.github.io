@@ -1112,7 +1112,7 @@ html, body { width:100%; height:var(--app-height, 100dvh); overflow:hidden; back
 <script>
 (function () {
   // Debug tool switch: set to false to disable auto-loading the standalone viewport debugger.
-  var ENABLE_VIEWPORT_DEBUG_TOOL = true;
+  var ENABLE_VIEWPORT_DEBUG_TOOL = false;
   if (!ENABLE_VIEWPORT_DEBUG_TOOL) return;
   window.__VV_DEBUG_AUTO_INSTALL = true;
   var s = document.createElement('script');
@@ -2125,11 +2125,12 @@ async function loadAndApplyPaytable() {
 
     if (Array.isArray(rtpData.entries)) {
       rtpData.entries.forEach((entry) => {
-        const multiplier = Number(entry?.multiplier ?? entry?.payout);
+        // Support full-name fields AND minified single-letter fields (a/b/c/d).
+        const multiplier = Number(entry?.multiplier ?? entry?.payout ?? entry?.c);
         if (Number.isNaN(multiplier)) return;
 
         // Must map symbol from backend symbol id to frontend spriteMap index.
-        const rawSymbol = entry?.symbolId ?? entry?.symIdx ?? entry?.symbol?.id ?? entry?.symbol;
+        const rawSymbol = entry?.symbolId ?? entry?.symIdx ?? entry?.symbol?.id ?? entry?.symbol ?? entry?.a;
         let symbolId = -1;
         if (typeof rawSymbol === 'number') {
           symbolId = rawSymbol;
@@ -2140,9 +2141,10 @@ async function loadAndApplyPaytable() {
         }
         if (symbolId < 0 || symbolId >= spriteMap.length) return;
 
+        // count: try explicit fields first, then extract ×N from description (field b).
         let count = Number(entry?.count ?? entry?.matchCount ?? entry?.hitCount);
         if (Number.isNaN(count)) {
-          const combo = String(entry?.combo ?? '');
+          const combo = String(entry?.combo ?? entry?.b ?? '');
           const m = combo.match(/×\s*(\d+)/);
           if (m) count = Number(m[1]);
         }
