@@ -1073,10 +1073,7 @@ html, body { width:100%; height:var(--app-height, 100dvh); overflow:hidden; back
         <div class="cb-disc">←</div>
         <span class="cb-label">&nbsp;</span>
       </button>
-      <button class="ctrl-btn" id="btn-spinset" aria-label="旋轉設置">
-        <div class="cb-disc">▶</div>
-        <span class="cb-label">旋轉設置</span>
-      </button>
+
       <div id="spin-wrap">
         <div id="spin-ring">
           <button id="spin-btn" disabled aria-label="旋轉">
@@ -1119,6 +1116,8 @@ html, body { width:100%; height:var(--app-height, 100dvh); overflow:hidden; back
 
 <!-- Function menu popup (opened by ≡ btn-menu) -->
 <div id="menu-popup">
+  <button class="menu-item" id="menu-deposit">&#128176; 充值</button>
+  <button class="menu-item" id="menu-withdraw">&#128184; 提款</button>
   <button class="menu-item" id="menu-txn">&#128179; 帳變紀錄</button>
   <button class="menu-item" id="menu-mute"><svg class="sym-icon" style="width:0.85em;height:0.85em"><use href="#icon-plus"/></svg> <span id="menu-mute-label">靜音</span></button>
   <button class="menu-item" id="menu-copy-log"><svg class="sym-icon" style="width:0.85em;height:0.85em"><use href="#icon-plus"/></svg> 複製日誌</button>
@@ -2565,6 +2564,20 @@ function closeTxnPanel() {
     if (!txnPanel.classList.contains('open')) txnPanel.style.display = 'none';
   }, { once: true });
 }
+
+function _goPage(handlerName, msgType, path) {
+  document.getElementById('menu-popup').classList.remove('open');
+  if (_isFlutterMode && hasFlutterCallHandler()) {
+    window.flutter_inappwebview.callHandler(handlerName).catch(() => {});
+  } else if (window.parent !== window) {
+    window.parent.postMessage({ type: msgType }, window.__gameOrigin || '*');
+  } else {
+    window.location.href = `${window.location.origin}/#${path}`;
+  }
+}
+
+document.getElementById('menu-deposit').addEventListener('click',  () => _goPage('goDeposit',  'GO_DEPOSIT',  '/wallet/deposit'));
+document.getElementById('menu-withdraw').addEventListener('click', () => _goPage('goWithdraw', 'GO_WITHDRAW', '/wallet/withdraw'));
 
 document.getElementById('menu-txn').addEventListener('click', () => {
   // Close menu popup first
