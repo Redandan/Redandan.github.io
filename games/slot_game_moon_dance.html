@@ -2426,7 +2426,7 @@ async function doSpin() {
   // Delegate transport to the loaded adapter (flutter_adapter.js / tg_adapter.js).
   const _hostSpinResult = await window.__gameHost?.spin({
     betIndex:     betIdx,
-    betAmount:    currentBet() / 100,
+    betAmount:    currentBet() / 10,
     mode:         _spinMode,
     clientSeed:   generateClientSeed(),
     nonce:        Date.now().toString(),
