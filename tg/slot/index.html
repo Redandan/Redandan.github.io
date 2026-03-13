@@ -508,6 +508,34 @@
         };
       }
 
+      async function fetchTransactionsWithBackend(page, size) {
+        var resp = await fetch(API_BASE + '/transactions/list', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + state.jwt,
+          },
+          body: JSON.stringify({ token: 'USDT', page: page, size: size }),
+        });
+
+        if (!resp.ok) {
+          var text = '';
+          try { text = await resp.text(); } catch (_) {}
+          throw new Error('transactions failed: HTTP ' + resp.status + (text ? ' ' + text : ''));
+        }
+
+        var json = await resp.json();
+        var d = (json && json.data != null) ? json.data : json;
+        return {
+          type: 'TRANSACTION_RESULT',
+          data: {
+            content:       (d && Array.isArray(d.content)) ? d.content : [],
+            totalElements: (d && d.totalElements != null) ? Number(d.totalElements) : 0,
+            hasMore:       (d && Array.isArray(d.content)) ? d.content.length === size : false,
+          },
+        };
+      }
+
       function postToGame(message) {
         if (!frameEl || !frameEl.contentWindow) return;
         frameEl.contentWindow.postMessage(message, ORIGIN);
@@ -585,6 +613,39 @@
             .catch(function (err) {
               postToGame({ type: 'RTP_ERROR', message: String(err && err.message ? err.message : err) });
             });
+          return;
+        }
+
+        if (type === 'TRANSACTION_REQUEST') {
+          var txPage = Number(data.page) || 1;
+          var txSize = Number(data.size) || 10;
+          fetchTransactionsWithBackend(txPage, txSize)
+            .then(function (result) {
+              postToGame(result);
+            })
+            .catch(function (err) {
+              postToGame({ type: 'TRANSACTION_ERROR', message: String(err && err.message ? err.message : err) });
+            });
+          return;
+        }
+
+        if (type === 'GO_DEPOSIT') {
+          try {
+            var tgApp = window.Telegram && window.Telegram.WebApp;
+            if (tgApp && typeof tgApp.openLink === 'function') {
+              tgApp.openLink(ORIGIN + '/#/wallet/deposit');
+            }
+          } catch (_) {}
+          return;
+        }
+
+        if (type === 'GO_WITHDRAW') {
+          try {
+            var tgApp2 = window.Telegram && window.Telegram.WebApp;
+            if (tgApp2 && typeof tgApp2.openLink === 'function') {
+              tgApp2.openLink(ORIGIN + '/#/wallet/withdraw');
+            }
+          } catch (_) {}
           return;
         }
 
