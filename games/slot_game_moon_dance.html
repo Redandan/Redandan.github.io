@@ -1213,6 +1213,13 @@ html, body { width:100%; height:var(--app-height, 100dvh); overflow:hidden; back
 })();
 </script>
 
+<!--
+  Host adapter — must load before the game module so window.__gameHost is
+  available when the module initialises.
+  • flutter_adapter.js  →  Flutter Native + Flutter Web iframe + Standalone PWA
+  • tg_adapter.js       →  Telegram Mini App (swap this tag to switch entry point)
+-->
+<script src="./_runtime/flutter_adapter.js"></script>
 
 <script type="module">
 import * as THREE from 'https://esm.sh/three@0.160.0';
@@ -1284,118 +1291,6 @@ setLoadProgress(5, '初始化引擎...');
 //                 GO_BACK {}
 
 // Strict origin for postMessage — must match both directions.
-window.__gameOrigin = window.location.origin;
-
-// Cache query-param flags once at module load so repeated reads are O(1).
-const _searchParams = new URLSearchParams(window.location.search);
-// true when opened by the Flutter app (?flutter=1 or window._flutterNative)
-const _isFlutterMode = _searchParams.get('flutter') === '1' || !!window._flutterNative;
-
-window.addEventListener('message', (e) => {
-  // Strict origin check.
-  // Source check: accept the parent frame (TG host or Flutter Web parent),
-  // the game's own window (native Flutter self-dispatch and injected shims),
-  // or null (programmatic MessageEvent dispatches from evaluateJavascript).
-  if (e.origin !== window.__gameOrigin) return;
-  if (e.source !== window.parent && e.source !== window && e.source !== null) return;
-
-  const { type } = e.data || {};
-
-  if (type === 'HOST_LOG') {
-    const level = String((e.data && e.data.level) || 'info').toLowerCase();
-    const logType = level === 'error' ? 'error' : (level === 'warn' ? 'warn' : 'info');
-    const message = String((e.data && e.data.message) || '[HOST_LOG]');
-    addLog(message, logType);
-    return;
-  }
-
-  if (type === 'HOST_INIT') {
-    const { jwt, balance: hostBalance, demoMode, username, tgSafeAreaTop } = e.data;
-
-    // Auth gate: JWT is required to play.  Show error screen immediately if absent.
-    if (!jwt) {
-      addLog('HOST_INIT 無 JWT，判定為未登入', 'warn');
-      showAuthError();
-      return;
-    }
-
-    // Store safe area inset so viewport manager can push content below status bar.
-    if (Number.isFinite(Number(tgSafeAreaTop))) {
-      viewportManager.setHostSafeTop(Number(tgSafeAreaTop));
-    }
-    viewportManager.fit(); // re-layout immediately with the latest inset inputs
-    window.__agoraAuth = { token: jwt };
-    window.__hostDemoMode = !!demoMode;
-
-    // Apply balance from HOST_INIT immediately (may be 0 if the Dart side
-    // failed to fetch the profile; fetchAndApplyBalance will correct it).
-    applyBalance(Number(hostBalance) || 0);
-
-    if (username) {
-      localStorage.setItem('first_name', username);
-      window.__agoraAuth.firstName = username;
-    }
-
-    // Fetch fresh balance directly from /auth/me so we always display the
-    // real server-side balance regardless of what HOST_INIT carried.
-    // Errors are already logged inside fetchAndApplyBalance(); swallow rejection
-    // here to avoid an unhandled-promise-rejection warning.
-    fetchAndApplyBalance(jwt).catch(() => {});
-    // Load paytable from backend after authentication
-    loadAndApplyPaytable().catch(() => {});
-
-    console.log('[HOST] HOST_INIT: balance=' + hostBalance + ' USDT, demo=' + demoMode);
-    return;
-  }
-  // SPIN_RESULT / SPIN_ERROR are handled inside doSpin's Promise resolver.
-});
-
-// Notify the parent host that the game is ready to receive HOST_INIT.
-// setTimeout(0) ensures the listener above is registered first.
-setTimeout(() => {
-  window.parent.postMessage({ type: 'GAME_READY' }, window.__gameOrigin);
-  console.log('[HOST] GAME_READY sent');
-}, 0);
-
-// ===== Flutter mobile-browser self-host fallback =====
-// When the game is opened with ?flutter=1 — either as a full page (mobile
-// browser / PWA) or inside a Flutter Web desktop iframe — read auth data from
-// localStorage and dispatch HOST_INIT so doSpin() can use the JWT directly.
-//
-// For the iframe (desktop) case the Dart shim's evaluateJavascript also
-// dispatches HOST_INIT; this IIFE acts as a belt-and-suspenders fallback in
-// case evaluateJavascript delivery is delayed or runs in the wrong context.
-// The second HOST_INIT simply overwrites __agoraAuth (idempotent).
-(function () {
-  var p = new URLSearchParams(window.location.search);
-  if (p.get('flutter') !== '1') return;  // only active in flutter mode
-
-  var _jwt     = localStorage.getItem('_flutter_game_jwt')     || '';
-  var _balance = parseFloat(localStorage.getItem('_flutter_game_balance') || '0');
-  var _origin  = window.location.origin;
-
-  if (!_jwt) {
-    // localStorage may still be populated later (Dart writes it in _injectFlutterHostShim).
-    // Log a warning rather than hard-failing; doSpin will also try localStorage directly.
-    console.warn('[FLUTTER_HOST] No JWT in localStorage yet; will retry on spin.');
-  }
-
-  // Dispatch HOST_INIT so the game's message listener receives JWT + balance.
-  // 100 ms delay gives the Dart side time to write JWT to localStorage before
-  // we read it (avoids an empty-JWT HOST_INIT overwriting a good one).
-  setTimeout(function () {
-    var jwt     = localStorage.getItem('_flutter_game_jwt')     || '';
-    var balance = parseFloat(localStorage.getItem('_flutter_game_balance') || '0');
-    if (!jwt) return;  // nothing useful to dispatch; Dart shim will arrive later
-    window.postMessage({
-      type: 'HOST_INIT',
-      jwt: jwt,
-      balance: balance,
-      demoMode: (balance < 0.25),
-      username: '',
-    }, _origin);
-  }, 100);
-})();
 
 // ===== Log system =====
 const logPanel = document.getElementById('log-panel');
@@ -1425,8 +1320,8 @@ const viewportManager = createViewportManager({
 
 window.__vvDebugContext = viewportManager.createDebugContext(
   () => ({
-    hosted: _isHostedMode,
-    flutter: _isFlutterMode,
+    hosted:  _isHostedMode,
+    adapter: window.__gameHost ? 'loaded' : 'none',
   }),
   () => viewportManager.getRenderedLayout(),
 );
@@ -1968,10 +1863,6 @@ const AUTO_SPIN_PRESS_DELAY = 500;  // ms long-press to activate auto-spin
 const AUTO_SPIN_INTERVAL    = 600;  // ms pause between normal auto-spin rounds
 const BIG_WIN_DISPLAY_MS    = 3200; // 2300ms fade-start + 900ms fade-out = total big-win overlay duration
 const WIN_DISPLAY_MS        = 2100; // 1200ms fade-start + 900ms fade-out = regular win overlay duration
-// Max wait for SPIN_RESULT from the host page before treating the spin as failed.
-// 8 s gives the backend ample time on slow connections while not blocking the UI indefinitely.
-const SPIN_REQUEST_TIMEOUT_MS = 8000;
-const RTP_REQUEST_TIMEOUT_MS = 6000;
 // Reel stop timing: three reels snap staggered, 450ms apart.
 const REEL_STOP_DELAYS_MS = [600, 1050, 1500];
 
@@ -1981,6 +1872,41 @@ const winEl     = document.getElementById('win-val');
 const betLabel  = document.getElementById('bet-label');
 const spinBtn   = document.getElementById('spin-btn');
 const spinStatusEl = document.getElementById('spin-status');
+
+// ── Host init callback ────────────────────────────────────────────────────────
+// Defined HERE (after balanceEl / winEl / spinBtn) so the adapter's retry loop
+// cannot call it before these DOM constants are initialised (TDZ guard).
+// flutter_adapter.js polls typeof window._game_onHostInit === 'function' every
+// 50 ms and only fires once this definition is reached.
+window._game_onHostInit = function ({ jwt, balance: hostBalance, demoMode, username, tgSafeAreaTop } = {}) {
+  if (!jwt) {
+    addLog('HOST_INIT 無 JWT，判定為未登入', 'warn');
+    showAuthError();
+    return;
+  }
+
+  if (Number.isFinite(Number(tgSafeAreaTop))) {
+    viewportManager.setHostSafeTop(Number(tgSafeAreaTop));
+  }
+  viewportManager.fit();
+
+  window.__agoraAuth    = { token: jwt };
+  window.__hostDemoMode = !!demoMode;
+
+  applyBalance(Number(hostBalance) || 0);
+
+  if (username) {
+    localStorage.setItem('first_name', username);
+    window.__agoraAuth.firstName = username;
+  }
+
+  fetchAndApplyBalance().catch(() => {});
+  loadAndApplyPaytable().catch(() => {});
+
+  addLog(`[CORE] HOST_INIT: balance=${hostBalance} USDT demo=${demoMode}`, 'info');
+};
+
+window._game_showAuthError = showAuthError;
 
 // ===== Loading readiness gates =====
 // Spin button stays disabled (set in HTML) until the paytable has loaded.
@@ -1995,13 +1921,15 @@ function _checkAndUnlockSpin() {
   addLog('遊戲就緒，可以開始旋轉', 'info');
 }
 
-// Auth timeout: if HOST_INIT hasn't arrived (and set a JWT) within 10 s,
-// treat the session as unauthenticated and show the error screen.
+// Auth timeout: if HOST_INIT hasn't arrived (and set a JWT) within the allowed
+// window, treat the session as unauthenticated and show the error screen.
+// Flutter self-host retries localStorage for up to 15 s on first launch, so
+// use 18 s to give the adapter enough room before giving up.
 setTimeout(function _authCheckTimeout() {
   if (window.__agoraAuth?.token) return; // already authenticated
   addLog('HOST_INIT 超時未到，判定為未登入', 'warn');
   showAuthError();
-}, 10000);
+}, 18000);
 
 // Safety valve: if the paytable never signals ready within 12 s (e.g. HOST_INIT
 // was delayed or carried no JWT), unlock the game so it remains playable.
@@ -2067,48 +1995,13 @@ function updateBalanceDisplay() {
 //   { userInfo: { balance: 1.23 } }          ← standard server response
 //   { data: { balance: 1.23 } }              ← legacy wrapper
 //   { balance: 1.23 }                        ← flat (Telegram exchange-jwt compat)
-async function fetchAndApplyBalance(jwt) {
-  if (_isFlutterMode && hasFlutterCallHandler()) {
-    const bridgeResult = await callFlutterHandler('getCurrentUser');
-    if (!bridgeResult || bridgeResult.success === false) {
-      addLog(`餘額更新失敗: ${bridgeResult?.message || 'bridge unavailable'}`, 'warn');
-      return;
-    }
-    const user = bridgeResult.data || {};
-    const usdt = Number(user.balance) || 0;
-    applyBalance(usdt);
-    // Update demo mode based on the freshly fetched balance.
-    window.__hostDemoMode = usdt < 0.25;
-    refreshJackpotBanner();
-    addLog(`餘額已從 SDK 更新: USDT ${usdt.toFixed(2)}`, 'info');
-    return;
-  }
-
-  const apiBase = API_BASE;
-  try {
-    const resp = await fetch(`${apiBase}/auth/me`, {
-      headers: { 'Authorization': `Bearer ${jwt}` },
-    });
-    if (!resp.ok) {
-      addLog(`餘額更新失敗: HTTP ${resp.status}`, 'warn');
-      return;
-    }
-    const json = await resp.json();
-    // Support multiple API response shapes:
-    //   { userInfo: { balance } }   ← standard server response
-    //   { data: { balance } }       ← legacy wrapper
-    //   { balance }                 ← flat
-    const dataOrRoot    = (json && json.data    != null) ? json.data    : json;
-    const userInfoOrData = (dataOrRoot && dataOrRoot.userInfo != null) ? dataOrRoot.userInfo : dataOrRoot;
-    const usdt = Number(userInfoOrData?.balance) || 0;
-    applyBalance(usdt);
-    // Update demo mode based on the freshly fetched balance.
-    window.__hostDemoMode = usdt < 0.25;
-    refreshJackpotBanner();
-    addLog(`餘額已從伺服器更新: USDT ${usdt.toFixed(2)}`, 'info');
-  } catch (e) {
-    addLog(`餘額更新失敗: ${e}`, 'warn');
-  }
+async function fetchAndApplyBalance(_jwt) {
+  const usdt = await window.__gameHost?.getBalance();
+  if (usdt === null || usdt === undefined) return;
+  applyBalance(usdt);
+  window.__hostDemoMode = usdt < 0.25;
+  refreshJackpotBanner();
+  addLog(`餘額已更新: USDT ${usdt.toFixed(2)}`, 'info');
 }
 
 // Apply balance received from the host (USDT float → units ×100).
@@ -2122,121 +2015,16 @@ function applyBalance(usdt) {
   addLog(`餘額已更新: USDT ${(balance / 100).toFixed(2)}`, 'info');
 }
 
-// Shared helper: post a message to the parent frame and wait for a typed response.
-// Handles origin/source validation, settled-once guard, and timeout identical to
-// the inline patterns that originally appeared in loadAndApplyPaytable / doSpin.
-// postAndWait returns { result, timedOut, errorMessage }:
-//   success  → { result: <full message data>, timedOut: false, errorMessage: null }
-//   error    → { result: null, timedOut: false, errorMessage: <string> }
-//   timeout  → { result: null, timedOut: true,  errorMessage: <timeoutMsg> }
-function postAndWait(payload, resultType, errorType, timeoutMs, timeoutMsg) {
-  return new Promise((resolve) => {
-    let settled = false;
-    function onMsg(e) {
-      if (e.origin !== window.__gameOrigin) return;
-      if (e.source !== window.parent && e.source !== window && e.source !== null) return;
-      const d = e.data || {};
-      if (d.type !== resultType && d.type !== errorType) return;
-      if (settled) return;
-      settled = true;
-      window.removeEventListener('message', onMsg);
-      clearTimeout(tOut);
-      resolve(d.type === resultType
-        ? { result: d, timedOut: false, errorMessage: null }
-        : { result: null, timedOut: false, errorMessage: d.message || d.error || `${errorType} received` }
-      );
-    }
-    window.addEventListener('message', onMsg);
-    const tOut = setTimeout(() => {
-      if (settled) return;
-      settled = true;
-      window.removeEventListener('message', onMsg);
-      addLog(timeoutMsg, 'warn');
-      resolve({ result: null, timedOut: true, errorMessage: timeoutMsg });
-    }, timeoutMs);
-    window.parent.postMessage(payload, window.__gameOrigin);
-  });
-}
-
 // Load paytable multipliers from backend and apply to UI.
 async function loadAndApplyPaytable() {
   try {
-    let rtpData = null;
-
-    if (_isFlutterMode && hasFlutterCallHandler()) {
-      // ── Flutter native WebView: use inappwebview JS bridge ──
-      const bridgeResult = await callFlutterHandler('getRtpTable');
-      if (bridgeResult && bridgeResult.success) {
-        rtpData = bridgeResult.data;
-      }
-    } else if (window.parent !== window) {
-      // ── Inside an iframe (TG host or Flutter Web): use postMessage ──
-      const hostRtpResult = await postAndWait(
-        { type: 'RTP_REQUEST' },
-        'RTP_RESULT', 'RTP_ERROR',
-        RTP_REQUEST_TIMEOUT_MS, 'RTP_REQUEST timed out'
-      );
-
-      if (hostRtpResult.result?.data != null) {
-        rtpData = hostRtpResult.result.data;
-      } else if (!hostRtpResult.timedOut && hostRtpResult.errorMessage) {
-        addLog(`RTP_ERROR from host: ${hostRtpResult.errorMessage}`, 'warn');
-      }
-    } else {
-      // ── Standalone (mobile browser / PWA, ?flutter=1 direct): direct REST fetch ──
-      const jwt = window.__agoraAuth && window.__agoraAuth.token;
-      if (!jwt) {
-        addLog('RTP fetch skipped: no JWT available', 'warn');
-      } else {
-        const apiBase = API_BASE;
-        try {
-          const resp = await fetch(`${apiBase}/slot/rtp`, {
-            headers: { 'Authorization': `Bearer ${jwt}` },
-          });
-          if (!resp.ok) {
-            addLog(`RTP fetch failed: HTTP ${resp.status}`, 'warn');
-          } else {
-            const json = await resp.json();
-            rtpData = (json && json.data != null) ? json.data : json;
-          }
-        } catch (fetchErr) {
-          addLog(`RTP fetch error: ${fetchErr}`, 'warn');
-        }
-      }
-    }
+    addLog(`[RTP→] jwt=${window.__agoraAuth?.token ? '✓' : '✗'} adapter=${window.__gameHost ? '✓' : '✗'}`, 'info');
+    const rtpData = await window.__gameHost?.getRtp();
+    addLog(`[RTP←] data=${rtpData ? JSON.stringify(rtpData).slice(0, 80) : 'null'}`, 'info');
 
     if (!rtpData) {
       addLog('賠率表數據為空', 'warn');
       return;
-    }
-
-    // Fallback: Flutter Web bridge sometimes serialises nested Dart objects as {}
-    // (no enumerable keys).  If that happens, re-fetch directly from the REST API
-    // so the game always receives real paytable data.
-    if (
-      Array.isArray(rtpData.entries) &&
-      rtpData.entries.length > 0 &&
-      Object.keys(rtpData.entries[0] || {}).length === 0
-    ) {
-      addLog('賠率表 entries 為空物件（Flutter Bridge 序列化異常），改用 REST 直接獲取', 'warn');
-      const _fallbackJwt = window.__agoraAuth?.token;
-      if (_fallbackJwt) {
-        try {
-          const apiBase = API_BASE;
-          const resp = await fetch(`${apiBase}/slot/rtp`, {
-            headers: { 'Authorization': `Bearer ${_fallbackJwt}` },
-          });
-          if (resp.ok) {
-            const json = await resp.json();
-            rtpData = (json && json.data != null) ? json.data : json;
-            addLog('賠率表 REST 直接獲取成功', 'info');
-          } else {
-            addLog(`賠率表 REST 獲取失敗: HTTP ${resp.status}`, 'warn');
-          }
-        } catch (fetchErr) {
-          addLog(`賠率表 REST 獲取失敗: ${fetchErr}`, 'warn');
-        }
-      }
     }
 
     // Build entry rows from backend and keep original visual style.
@@ -2395,26 +2183,6 @@ function generateClientSeed() {
   return Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
 }
 
-function hasFlutterCallHandler() {
-  const bridge = window.flutter_inappwebview;
-  return !!(bridge && typeof bridge.callHandler === 'function');
-}
-
-async function callFlutterHandler(handlerName, payload) {
-  if (!_isFlutterMode || !hasFlutterCallHandler()) return null;
-  const bridge = window.flutter_inappwebview;
-
-  try {
-    const raw = payload === undefined
-      ? await bridge.callHandler(handlerName)
-      : await bridge.callHandler(handlerName, payload);
-    return typeof raw === 'string' ? JSON.parse(raw) : raw;
-  } catch (err) {
-    addLog(`Flutter handler ${handlerName} failed: ${err}`, 'warn');
-    return null;
-  }
-}
-
 // ── Sound Manager ─────────────────────────────────────────────────────────────
 const soundManager = (() => {
   // Respect the user's previous mute preference across sessions.
@@ -2567,37 +2335,7 @@ function _renderTxnRows(rows) {
 }
 
 async function _fetchTransactions(page) {
-  const payload = { type: 'TRANSACTION_REQUEST', page, size: 10 };
-
-  // 3-way routing: native bridge → iframe postMessage → REST
-  if (_isFlutterMode && hasFlutterCallHandler()) {
-    const raw = await window.flutter_inappwebview.callHandler('getTransactions', { page, size: 10 });
-    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-    if (!parsed?.success) throw new Error(parsed?.message || 'getTransactions failed');
-    return parsed.data;
-  } else if (window.parent !== window) {
-    const r = await postAndWait(payload, 'TRANSACTION_RESULT', 'TRANSACTION_ERROR', 8000, 'TRANSACTION_REQUEST timed out');
-    if (r.result) return r.result.data;
-    throw new Error(r.errorMessage || 'TRANSACTION_REQUEST failed');
-  } else {
-    // Standalone / iOS PWA — direct REST
-    const jwt = window.__agoraAuth?.token;
-    if (!jwt) throw new Error('無 JWT，請重新登入');
-    const apiBase = API_BASE;
-    const resp = await fetch(`${apiBase}/transactions/list`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${jwt}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: 'USDT', page, size: 10 }),
-    });
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const json = await resp.json();
-    const d = json?.data ?? json;
-    return {
-      content:       d.content       ?? [],
-      totalElements: d.totalElements ?? 0,
-      hasMore:       (d.content?.length ?? 0) === 10,
-    };
-  }
+  return window.__gameHost.getTransactions(page, 10);
 }
 
 async function _loadTxnPage(refresh) {
@@ -2648,19 +2386,13 @@ function closeTxnPanel() {
   }, { once: true });
 }
 
-function _goPage(handlerName, msgType, path) {
+function _goPage(dest) {
   document.getElementById('menu-popup').classList.remove('open');
-  if (_isFlutterMode && hasFlutterCallHandler()) {
-    window.flutter_inappwebview.callHandler(handlerName).catch(() => {});
-  } else if (window.parent !== window) {
-    if (window.__gameOrigin) window.parent.postMessage({ type: msgType }, window.__gameOrigin);
-  } else {
-    window.location.href = `${window.location.origin}/#${path}`;
-  }
+  window.__gameHost?.navigate(dest);
 }
 
-document.getElementById('menu-deposit').addEventListener('click',  () => _goPage('goDeposit',  'GO_DEPOSIT',  '/wallet/deposit'));
-document.getElementById('menu-withdraw').addEventListener('click', () => _goPage('goWithdraw', 'GO_WITHDRAW', '/wallet/withdraw'));
+document.getElementById('menu-deposit').addEventListener('click',  () => _goPage('deposit'));
+document.getElementById('menu-withdraw').addEventListener('click', () => _goPage('withdraw'));
 
 document.getElementById('menu-txn').addEventListener('click', () => {
   // Close menu popup first
@@ -2676,17 +2408,6 @@ txnLoadMore.addEventListener('click', () => _loadTxnPage(false));
 // Symbol index mapping currently in use:
 //   0=apple, 1=cherry, 2=seven, 3=lemon, 4=bar, 5=grapes
 // Paytable (multiplier applied to current bet):
-/** Normalise a raw spin API response (from postMessage or REST) into a unified shape. */
-function _parseSpinResult(r, fallbackMode) {
-  return {
-    symbols:    Array.isArray(r.symbols)   ? r.symbols                        : null,
-    symbolIds:  Array.isArray(r.symbolIds) ? r.symbolIds.map(v => Number(v)) : null,
-    multiplier: Number(r.multiplier ?? 0),
-    prize:      Number(r.winAmount ?? r.prize ?? 0),
-    newBalance: Number(r.newBalance ?? r.balance ?? NaN),
-    mode:       r.mode || fallbackMode,
-  };
-}
 
 async function doSpin() {
   if (isSpinning) return;
@@ -2702,106 +2423,15 @@ async function doSpin() {
 
   const _spinMode = isDemoMode ? 'DEMO' : 'REAL';
 
-  let _hostSpinResult = null;
-
-  if (_isFlutterMode && hasFlutterCallHandler()) {
-    // ── Flutter native entry: use inappwebview JS bridge (SDK-backed in Dart) ──
-    addLog(`SPIN(bridge) → ${_spinMode} bet=${betIdx}`, 'info');
-    const bridgeResult = await callFlutterHandler('spin', {
-      betIndex: betIdx,
-      betAmount: currentBet() / 100,
-      mode: _spinMode,
-      clientSeed: generateClientSeed(),
-      nonce: Date.now().toString(),
-      ...(_spinMode !== 'DEMO' ? { clientRoundId: generateClientSeed() } : {}),
-    });
-
-    const bridgePayload = bridgeResult && bridgeResult.data != null ? bridgeResult.data : null;
-    if (bridgePayload && Array.isArray(bridgePayload.symbols) && bridgePayload.symbols.length > 0) {
-      _hostSpinResult = {
-        symbols: bridgePayload.symbols,
-        symbolIds: Array.isArray(bridgePayload.symbolIds)
-          ? bridgePayload.symbolIds.map(v => Number(v))
-          : null,
-        multiplier: bridgePayload.multiplier,
-        // Accept both winAmount (backend) and prize (legacy host payload).
-        prize: Number(bridgePayload.winAmount ?? bridgePayload.prize ?? 0),
-        // Backend returns balance as USDT float (e.g. 1974.80).
-        newBalance: Number(bridgePayload.balance ?? bridgePayload.newBalance ?? NaN),
-        mode: bridgePayload.mode || _spinMode,
-      };
-      addLog(`SPIN(bridge) OK: ${JSON.stringify(bridgePayload.symbols)} ×${bridgePayload.multiplier}`, 'info');
-    } else if (bridgeResult && bridgeResult.success === false) {
-      addLog(`SPIN(bridge) failed: ${bridgeResult.message || 'unknown error'}`, 'error');
-    }
-  } else if (window.parent !== window) {
-    // ── Flutter Web entry (including Telegram): use postMessage ──
-    // Inside an iframe: the Dart parent listens for SPIN_REQUEST and replies
-    // with SPIN_RESULT / SPIN_ERROR.
-    addLog(
-      `[SPIN→] mode=${_spinMode} bet=USDT ${(currentBet()/100).toFixed(2)}` +
-      ` betIdx=${betIdx} origin=${window.__gameOrigin || '(null)'}` +
-      ` parent=iframe jwt=${window.__agoraAuth?.token ? '✓' : '✗'}`,
-      'info'
-    );
-    const spinResult = await postAndWait(
-      { type: 'SPIN_REQUEST', betIndex: betIdx, betAmount: currentBet() / 100, mode: _spinMode },
-      'SPIN_RESULT', 'SPIN_ERROR',
-      SPIN_REQUEST_TIMEOUT_MS, `SPIN_REQUEST timed out after ${SPIN_REQUEST_TIMEOUT_MS/1000}s – spin cancelled`
-    );
-
-    if (spinResult.result) {
-      _hostSpinResult = _parseSpinResult(spinResult.result, _spinMode);
-    } else if (!spinResult.timedOut) {
-      addLog(`[SPIN✗] Flutter 回應 SPIN_ERROR: ${spinResult.errorMessage}`, 'error');
-    }
-  } else {
-    // ── Standalone / iOS PWA (?flutter=1 direct, no parent iframe): direct REST spin ──
-    // window.parent === window means there is no host frame to postMessage to.
-    // Call the backend spin API directly using the JWT stored by HOST_INIT.
-    const jwt = window.__agoraAuth?.token;
-    addLog(
-      `[SPIN→REST] mode=${_spinMode} bet=USDT ${(currentBet()/100).toFixed(2)}` +
-      ` betIdx=${betIdx} jwt=${jwt ? '✓' : '✗ 無JWT'}`,
-      'info'
-    );
-    if (!jwt) {
-      addLog('[SPIN✗] 獨立模式缺少 JWT，無法直接請求後端', 'error');
-    } else {
-      const apiBase = API_BASE;
-      try {
-        const resp = await fetch(`${apiBase}/slot/spin`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${jwt}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            betIndex: betIdx,
-            betAmount: currentBet() / 100,
-            mode: _spinMode,
-            clientSeed: generateClientSeed(),
-            nonce: Date.now().toString(),
-            ...(_spinMode !== 'DEMO' ? { clientRoundId: generateClientSeed() } : {}),
-          }),
-        });
-        if (!resp.ok) {
-          addLog(`[SPIN✗REST] HTTP ${resp.status}`, 'error');
-        } else {
-          const json = await resp.json();
-          const r = (json && json.data != null) ? json.data : json;
-          if (r && (Array.isArray(r.symbols) || Array.isArray(r.symbolIds))) {
-            _hostSpinResult = _parseSpinResult(r, _spinMode);
-            addLog(`[SPIN→REST] OK: ×${r.multiplier}`, 'info');
-          } else {
-            addLog(`[SPIN✗REST] 後端回應缺少 symbols/symbolIds: ${JSON.stringify(r).slice(0, 120)}`, 'error');
-          }
-        }
-      } catch (fetchErr) {
-        addLog(`[SPIN✗REST] 網路錯誤: ${fetchErr}`, 'error');
-      }
-    }
-  }
+  // Delegate transport to the loaded adapter (flutter_adapter.js / tg_adapter.js).
+  const _hostSpinResult = await window.__gameHost?.spin({
+    betIndex:     betIdx,
+    betAmount:    currentBet() / 100,
+    mode:         _spinMode,
+    clientSeed:   generateClientSeed(),
+    nonce:        Date.now().toString(),
+    clientRoundId: generateClientSeed(),
+  });
 
   // Backend must return a valid SPIN_RESULT; no client-side fallback.
   if (!(_hostSpinResult?.symbolIds?.length || _hostSpinResult?.symbols?.length)) {
@@ -2896,7 +2526,7 @@ async function doSpin() {
         ? (spriteMap[n]?.name?.toUpperCase() ?? `SYM${n}`)
         : 'SYM?';
     });
-    addLog(`花色: ${displaySymbols.join(' ')} → ×${multiplier}`, multiplier >= 10 ? 'info' : 'warn');
+    addLog(`花色: ${displaySymbols.join(' ')} → ×${multiplier}`, multiplier > 0 ? 'info' : 'warn');
 
     if (multiplier > 0) {
       const prize = Number(_hostSpinResult.prize ?? 0);
