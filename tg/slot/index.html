@@ -4,35 +4,690 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="dark" />
-  <title>AgoraMarket</title>
-  <style>html,body{margin:0;background:#050218;}</style>
+  <title>AgoraMarket TG 入口頁</title>
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: #050218;
+      color: #dfe3ff;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+    #root {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at 50% 25%, #1a1054 0%, #09042a 45%, #040116 100%);
+    }
+    #status {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      font-size: 13px;
+      line-height: 1.4;
+      color: #c8ceff;
+      text-shadow: 0 0 6px rgba(160, 175, 255, 0.45);
+      z-index: 2;
+      pointer-events: none;
+    }
+    #gameFrame {
+      border: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      background: #000;
+    }
+  </style>
 </head>
 <body>
+  <div id="root">
+    <div id="status">初始化 TG 入口頁...</div>
+    <iframe id="gameFrame" title="AgoraMarket TG 入口頁 - Moon Dance" allow="autoplay; clipboard-write"></iframe>
+  </div>
+
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
-  (function () {
-    'use strict';
-    var tg        = window.Telegram && window.Telegram.WebApp;
-    var hasBridge = !!(window.flutter_inappwebview &&
-      typeof window.flutter_inappwebview.callHandler === 'function');
+    (function () {
+      'use strict';
 
-    if (!tg && !hasBridge) {
-      console.error('[tg/slot] neither Telegram.WebApp nor Flutter bridge available');
-      return;
-    }
+      var statusEl = document.getElementById('status');
+      var frameEl = document.getElementById('gameFrame');
+      var rootEl = document.getElementById('root');
 
-    if (tg) { tg.ready(); tg.expand(); }
+      var ORIGIN = window.location.origin;
+      var API_BASE = window.__AGORA_API_BASE_URL || 'https://agoramarketapi.purrtechllc.com/api';
+      var MIN_REAL_BET_USDT = 0.25;
 
-    var game = (new URLSearchParams(window.location.search).get('game') || 'moon_dance')
-      .replace(/[^a-z0-9_]/g, '');
+      var state = {
+        gameId: 'moon_dance',
+        jwt: '',
+        balanceUsdt: 0,
+        demoMode: true,
+        username: '',
+        hostReady: false,
+      };
 
-    if (game !== 'moon_dance') {
-      console.error('[tg/slot] unknown game:', game);
-      return;
-    }
+      var OFFSET_THRESHOLD_PX = 10;
+      var _vvRafPending = false;
+      // null means "not logged yet" so first sync always emits baseline metrics.
+      var _lastOffsetDetected = null;
+      var _lastExtraSyncAt = 0;
+      var _lastHostMetricsLogAt = 0;
+      var _telegramViewportHooked = false;
+      var _pendingHostLogs = [];
 
-    window.location.replace('/games/slot_game_' + game + '.html?tg=1&_ts=' + Date.now());
-  })();
+      function hostLog(message, level) {
+        var lv = level || 'info';
+        var text = '[TG_HOST][VV] ' + String(message || '');
+
+        if (lv === 'error') {
+          console.error(text);
+        } else if (lv === 'warn') {
+          console.warn(text);
+        } else {
+          console.log(text);
+        }
+
+        var payload = {
+          type: 'HOST_LOG',
+          level: lv,
+          message: text,
+          ts: Date.now(),
+        };
+
+        if (state.hostReady && frameEl && frameEl.contentWindow) {
+          postToGame(payload);
+        } else {
+          _pendingHostLogs.push(payload);
+          if (_pendingHostLogs.length > 80) _pendingHostLogs.shift();
+        }
+      }
+
+      function flushHostLogsToGame() {
+        if (!state.hostReady || !frameEl || !frameEl.contentWindow) return;
+        if (_pendingHostLogs.length === 0) return;
+        for (var i = 0; i < _pendingHostLogs.length; i++) {
+          postToGame(_pendingHostLogs[i]);
+        }
+        _pendingHostLogs = [];
+      }
+
+      function initViewportOffsetSync() {
+        var ua = navigator.userAgent || '';
+        var maxTouchPoints = Number(navigator.maxTouchPoints || 0);
+        var isIOS = /iPad|iPhone|iPod/.test(ua) ||
+          (/Macintosh/.test(ua) && maxTouchPoints > 1);
+        var vv = window.visualViewport;
+
+        // Keep this object available even when sync is skipped.
+        if (!window.__AGORA_VIEWPORT_OFFSET_STATUS) {
+          window.__AGORA_VIEWPORT_OFFSET_STATUS = {
+            detected: false,
+            offsetTop: 0,
+            offsetLeft: 0,
+            threshold: OFFSET_THRESHOLD_PX,
+            updatedAt: new Date().toISOString(),
+            host: 'tg-slot',
+          };
+        }
+
+        if (!vv || !rootEl) {
+          hostLog('Sync skipped: isIOS=' + isIOS + ', visualViewport=' + !!vv + ', hasRoot=' + !!rootEl, 'warn');
+          return;
+        }
+
+        hostLog('Sync initialized: isIOS=' + isIOS + ', maxTouchPoints=' + maxTouchPoints);
+
+        function safeNum(v) {
+          var n = Number(v);
+          return Number.isFinite(n) ? n : 0;
+        }
+
+        function getHostViewportMetrics() {
+          var offsetTop = safeNum(vv.offsetTop);
+          var offsetLeft = safeNum(vv.offsetLeft);
+          var docRect = document.documentElement.getBoundingClientRect();
+          var bodyRect = document.body.getBoundingClientRect();
+          var docTop = safeNum(docRect.top);
+          var docLeft = safeNum(docRect.left);
+          var bodyTop = safeNum(bodyRect.top);
+          var bodyLeft = safeNum(bodyRect.left);
+          var safeTop = -offsetTop - docTop;
+          var safeLeft = -offsetLeft - docLeft;
+          var detected =
+            Math.abs(offsetTop) > OFFSET_THRESHOLD_PX ||
+            Math.abs(offsetLeft) > OFFSET_THRESHOLD_PX ||
+            Math.abs(docTop) > 2 ||
+            Math.abs(docLeft) > 2 ||
+            Math.abs(bodyTop) > 2 ||
+            Math.abs(bodyLeft) > 2;
+
+          return {
+            offsetTop: offsetTop,
+            offsetLeft: offsetLeft,
+            docTop: docTop,
+            docLeft: docLeft,
+            bodyTop: bodyTop,
+            bodyLeft: bodyLeft,
+            safeTop: safeTop,
+            safeLeft: safeLeft,
+            detected: detected,
+          };
+        }
+
+        function publishOffsetStatus(metrics) {
+          var detected = !!metrics.detected;
+          var rootRect = rootEl ? rootEl.getBoundingClientRect() : null;
+          var frameRect = frameEl ? frameEl.getBoundingClientRect() : null;
+          var rootTop = rootRect ? safeNum(rootRect.top) : 0;
+          var rootLeft = rootRect ? safeNum(rootRect.left) : 0;
+          var rootW = rootRect ? safeNum(rootRect.width) : 0;
+          var rootH = rootRect ? safeNum(rootRect.height) : 0;
+          var frameTop = frameRect ? safeNum(frameRect.top) : 0;
+          var frameLeft = frameRect ? safeNum(frameRect.left) : 0;
+          var frameW = frameRect ? safeNum(frameRect.width) : 0;
+          var frameH = frameRect ? safeNum(frameRect.height) : 0;
+
+          window.__AGORA_VIEWPORT_OFFSET_STATUS = {
+            detected: detected,
+            offsetTop: metrics.offsetTop,
+            offsetLeft: metrics.offsetLeft,
+            docTop: metrics.docTop,
+            docLeft: metrics.docLeft,
+            bodyTop: metrics.bodyTop,
+            bodyLeft: metrics.bodyLeft,
+            safeTop: metrics.safeTop,
+            safeLeft: metrics.safeLeft,
+            rootTop: rootTop,
+            rootLeft: rootLeft,
+            rootWidth: rootW,
+            rootHeight: rootH,
+            frameTop: frameTop,
+            frameLeft: frameLeft,
+            frameWidth: frameW,
+            frameHeight: frameH,
+            threshold: OFFSET_THRESHOLD_PX,
+            updatedAt: new Date().toISOString(),
+            host: 'tg-slot',
+          };
+
+          var now = Date.now();
+          if (detected !== _lastOffsetDetected) {
+            _lastOffsetDetected = detected;
+            _lastHostMetricsLogAt = now;
+            hostLog(
+              'Offset state changed: detected=' + detected +
+              ', vv=(' + metrics.offsetTop + ',' + metrics.offsetLeft + ')' +
+              ', doc=(' + metrics.docTop + ',' + metrics.docLeft + ')' +
+              ', body=(' + metrics.bodyTop + ',' + metrics.bodyLeft + ')' +
+              ', safe=(' + metrics.safeTop + ',' + metrics.safeLeft + ')' +
+              ', root=(' + rootTop + ',' + rootLeft + ',' + rootW + 'x' + rootH + ')' +
+              ', frame=(' + frameTop + ',' + frameLeft + ',' + frameW + 'x' + frameH + ')',
+              detected ? 'warn' : 'info'
+            );
+            try {
+              window.dispatchEvent(new CustomEvent('agora:viewport-offset-status', {
+                detail: window.__AGORA_VIEWPORT_OFFSET_STATUS,
+              }));
+            } catch (_) {}
+          } else if (detected && now - _lastHostMetricsLogAt > 2000) {
+            _lastHostMetricsLogAt = now;
+            hostLog(
+              'Offset persists: vv=(' + metrics.offsetTop + ',' + metrics.offsetLeft + ')' +
+              ', doc=(' + metrics.docTop + ',' + metrics.docLeft + ')' +
+              ', body=(' + metrics.bodyTop + ',' + metrics.bodyLeft + ')' +
+              ', safe=(' + metrics.safeTop + ',' + metrics.safeLeft + ')' +
+              ', root=(' + rootTop + ',' + rootLeft + ',' + rootW + 'x' + rootH + ')' +
+              ', frame=(' + frameTop + ',' + frameLeft + ',' + frameW + 'x' + frameH + ')',
+              'warn'
+            );
+          }
+
+          return detected;
+        }
+
+        function applyToRoot(metrics) {
+          rootEl.style.width = vv.width + 'px';
+          rootEl.style.height = vv.height + 'px';
+          rootEl.style.transformOrigin = '0 0';
+          rootEl.style.willChange = 'transform';
+          rootEl.style.transform = 'translate3d(' + metrics.safeLeft + 'px,' + metrics.safeTop + 'px,0)';
+        }
+
+        function syncNow() {
+          _vvRafPending = false;
+
+          var metrics = getHostViewportMetrics();
+          var offsetDetected = publishOffsetStatus(metrics);
+          try {
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+          } catch (_) {}
+          applyToRoot(metrics);
+
+          // If offset is abnormal, schedule extra sync frames for faster convergence.
+          if (offsetDetected) {
+            var now = Date.now();
+            if (now - _lastExtraSyncAt > 800) {
+              _lastExtraSyncAt = now;
+              hostLog('Offset abnormal, scheduling extra sync frames');
+              setTimeout(queueSync, 40);
+              setTimeout(queueSync, 180);
+            }
+          }
+        }
+
+        function queueSync() {
+          if (_vvRafPending) return;
+          _vvRafPending = true;
+          (window.requestAnimationFrame || function (cb) { return setTimeout(cb, 16); })(syncNow);
+        }
+
+        function delayedSync() {
+          queueSync();
+          setTimeout(queueSync, 60);
+          setTimeout(queueSync, 600);
+          setTimeout(queueSync, 1500);
+        }
+
+        function logFrameBaseline(reason) {
+          var rootRect = rootEl ? rootEl.getBoundingClientRect() : null;
+          var frameRect = frameEl ? frameEl.getBoundingClientRect() : null;
+          hostLog(
+            'Frame baseline (' + reason + '): root=(' +
+            (rootRect ? safeNum(rootRect.top) : 0) + ',' +
+            (rootRect ? safeNum(rootRect.left) : 0) + ',' +
+            (rootRect ? safeNum(rootRect.width) : 0) + 'x' +
+            (rootRect ? safeNum(rootRect.height) : 0) + ')' +
+            ', frame=(' +
+            (frameRect ? safeNum(frameRect.top) : 0) + ',' +
+            (frameRect ? safeNum(frameRect.left) : 0) + ',' +
+            (frameRect ? safeNum(frameRect.width) : 0) + 'x' +
+            (frameRect ? safeNum(frameRect.height) : 0) + ')',
+            'info'
+          );
+        }
+
+        vv.addEventListener('resize', queueSync, { passive: true });
+        vv.addEventListener('scroll', queueSync, { passive: true });
+        window.addEventListener('orientationchange', delayedSync, { passive: true });
+        window.addEventListener('pageshow', delayedSync, { passive: true });
+        document.addEventListener('visibilitychange', function () {
+          if (!document.hidden) delayedSync();
+        });
+
+        // Telegram Mini App viewport can change without a standard vv resize event.
+        try {
+          var tg = window.Telegram && window.Telegram.WebApp;
+          if (tg && typeof tg.onEvent === 'function' && !_telegramViewportHooked) {
+            _telegramViewportHooked = true;
+            tg.onEvent('viewportChanged', function () {
+              delayedSync();
+              setTimeout(function () { logFrameBaseline('tg-viewportChanged'); }, 100);
+            });
+            hostLog('Telegram viewportChanged hook installed');
+          }
+        } catch (_) {}
+
+        // Export helpers for post-iframe-visible resync in boot().
+        window.__AGORA_TG_QUEUE_SYNC = queueSync;
+        window.__AGORA_TG_DELAYED_SYNC = delayedSync;
+        window.__AGORA_TG_LOG_FRAME_BASELINE = logFrameBaseline;
+
+        delayedSync();
+      }
+
+      function setStatus(text) {
+        if (!statusEl) return;
+        var t = String(text || '').trim();
+        if (!t) {
+          statusEl.textContent = '';
+          statusEl.style.display = 'none';
+          return;
+        }
+        statusEl.textContent = t;
+        statusEl.style.display = 'block';
+      }
+
+      function redirectError(reason) {
+        var safeReason = encodeURIComponent(reason || 'boot_error');
+        window.location.replace('/tg/error.html?reason=' + safeReason);
+      }
+
+      function parseGameId() {
+        var q = new URLSearchParams(window.location.search);
+        var game = (q.get('game') || 'moon_dance').trim();
+        if (game !== 'moon_dance') return null;
+        return game;
+      }
+
+      function ensureDefaultGameParam(gameId) {
+        var q = new URLSearchParams(window.location.search);
+        if (q.get('game')) return;
+        q.set('game', gameId);
+        var newUrl = window.location.pathname + '?' + q.toString() + window.location.hash;
+        history.replaceState(null, '', newUrl);
+      }
+
+      function normalizeExchangePayload(raw) {
+        var body = raw && raw.data != null ? raw.data : raw;
+        var jwt = String(
+          (body && (body.jwt || body.token || body.accessToken)) ||
+          (raw && (raw.jwt || raw.token || raw.accessToken)) ||
+          ''
+        ).trim();
+
+        var userInfo = (body && body.userInfo) || body || {};
+        var balance = Number(
+          userInfo.balance != null ? userInfo.balance :
+          (body && body.balance != null ? body.balance : 0)
+        );
+        if (Number.isNaN(balance)) balance = 0;
+
+        var username = String(
+          (userInfo.firstName || userInfo.username || userInfo.name || '')
+        ).trim();
+
+        return {
+          jwt: jwt,
+          balanceUsdt: balance,
+          username: username,
+        };
+      }
+
+      async function exchangeJwt(initData) {
+        var resp = await fetch(API_BASE + '/auth/telegram-webapp/exchange-jwt', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ initData: initData }),
+        });
+
+        if (!resp.ok) {
+          var text = '';
+          try { text = await resp.text(); } catch (_) {}
+          throw new Error('exchange failed: HTTP ' + resp.status + (text ? ' ' + text : ''));
+        }
+
+        var json = await resp.json();
+        return normalizeExchangePayload(json);
+      }
+
+      function makeHex(bytes) {
+        var arr = new Uint8Array(bytes);
+        crypto.getRandomValues(arr);
+        var out = '';
+        for (var i = 0; i < arr.length; i++) {
+          out += arr[i].toString(16).padStart(2, '0');
+        }
+        return out;
+      }
+
+      async function spinWithBackend(req) {
+        var mode = String(req && req.mode ? req.mode : (state.demoMode ? 'DEMO' : 'REAL')).toUpperCase();
+        var betIndex = Number(req && req.betIndex);
+        var betAmount = Number(req && req.betAmount);
+
+        var payload = {
+          gameId: state.gameId,
+          betIndex: Number.isFinite(betIndex) ? betIndex : 0,
+          betAmount: Number.isFinite(betAmount) ? betAmount : 2.50,
+          mode: mode,
+          clientSeed: (req && req.clientSeed) || makeHex(16),
+          nonce: Number(req && req.nonce) || Date.now(),
+        };
+        if (mode !== 'DEMO') {
+          payload.clientRoundId = (req && req.clientRoundId) || makeHex(16);
+        }
+
+        var resp = await fetch(API_BASE + '/slot/spin', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + state.jwt,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!resp.ok) {
+          var text = '';
+          try { text = await resp.text(); } catch (_) {}
+          throw new Error('spin failed: HTTP ' + resp.status + (text ? ' ' + text : ''));
+        }
+
+        var json = await resp.json();
+        var data = json && json.data != null ? json.data : json;
+
+        var prizeUsdt = Number(data && data.winAmount != null ? data.winAmount : (data && data.prize != null ? data.prize : 0));
+        if (!Number.isFinite(prizeUsdt)) prizeUsdt = 0;
+        var balanceUsdt = Number(
+          data && data.balance != null
+            ? data.balance
+            : (data && data.newBalance != null ? data.newBalance : NaN)
+        );
+        if (!Number.isFinite(balanceUsdt)) balanceUsdt = state.balanceUsdt;
+
+        state.balanceUsdt = balanceUsdt;
+        state.demoMode = state.balanceUsdt < MIN_REAL_BET_USDT;
+
+        return {
+          type: 'SPIN_RESULT',
+          symbols: Array.isArray(data && data.symbols) ? data.symbols : [],
+          symbolIds: Array.isArray(data && data.symbolIds) ? data.symbolIds : null,
+          multiplier: Number(data && data.multiplier != null ? data.multiplier : 0),
+          winAmount: prizeUsdt,
+          newBalance: balanceUsdt,
+          mode: String(data && data.mode ? data.mode : mode),
+        };
+      }
+
+      async function fetchRtpWithBackend() {
+        var resp = await fetch(API_BASE + '/slot/rtp', {
+          method: 'GET',
+          headers: {
+            'Authorization': 'Bearer ' + state.jwt,
+          },
+        });
+
+        if (!resp.ok) {
+          var text = '';
+          try { text = await resp.text(); } catch (_) {}
+          throw new Error('rtp failed: HTTP ' + resp.status + (text ? ' ' + text : ''));
+        }
+
+        var json = await resp.json();
+        return {
+          type: 'RTP_RESULT',
+          data: (json && json.data != null) ? json.data : json,
+        };
+      }
+
+      function postToGame(message) {
+        if (!frameEl || !frameEl.contentWindow) return;
+        frameEl.contentWindow.postMessage(message, ORIGIN);
+      }
+
+      function handleGameMessage(event) {
+        if (event.origin !== ORIGIN) return;
+        if (!frameEl || event.source !== frameEl.contentWindow) return;
+
+        var data = event.data || {};
+        var type = data.type;
+
+        if (type === 'GAME_READY') {
+          state.hostReady = true;
+          setStatus('TG 入口已連線，準備啟動遊戲...');
+          // Include Telegram safe area insets so the game can avoid placing
+          // content under the iPhone status bar / bottom home indicator.
+          var tg2 = window.Telegram && window.Telegram.WebApp;
+          var ua2 = navigator.userAgent || '';
+          var mtp2 = Number(navigator.maxTouchPoints || 0);
+          var isIOS2 = /iPad|iPhone|iPod/.test(ua2) ||
+            (/Macintosh/.test(ua2) && mtp2 > 1);
+          var vv2 = window.visualViewport;
+          var vvOffsetTop2 = 0;
+          var safeTop = 0;
+          try {
+            safeTop += Number((tg2 && tg2.safeAreaInsets && tg2.safeAreaInsets.top) || 0);
+            safeTop += Number((tg2 && tg2.contentSafeAreaInsets && tg2.contentSafeAreaInsets.top) || 0);
+            vvOffsetTop2 = Number((vv2 && vv2.offsetTop) || 0);
+            if (!Number.isFinite(safeTop)) safeTop = 0;
+            if (!Number.isFinite(vvOffsetTop2)) vvOffsetTop2 = 0;
+          } catch (_) {}
+          safeTop = Math.max(safeTop, vvOffsetTop2);
+          // Telegram iOS may report safe area as 0 even when status bar overlaps.
+          if (safeTop < 1 && isIOS2) safeTop = 44;
+          hostLog(
+            'HOST_INIT safeTop resolved=' + safeTop +
+            ' (tg=' + Number((tg2 && tg2.safeAreaInsets && tg2.safeAreaInsets.top) || 0) +
+            ', tgContent=' + Number((tg2 && tg2.contentSafeAreaInsets && tg2.contentSafeAreaInsets.top) || 0) +
+            ', vvTop=' + vvOffsetTop2 + ', isIOS=' + isIOS2 + ')'
+          );
+          postToGame({
+            type: 'HOST_INIT',
+            jwt: state.jwt,
+            balance: state.balanceUsdt,
+            demoMode: state.demoMode,
+            username: state.username,
+            tgSafeAreaTop: safeTop,
+          });
+          flushHostLogsToGame();
+          hostLog('GAME_READY received, host log bridge active');
+          // Hide the startup overlay once the game handshake is complete.
+          setTimeout(function () {
+            if (state.hostReady) setStatus('');
+          }, 900);
+          return;
+        }
+
+        if (type === 'SPIN_REQUEST') {
+          spinWithBackend(data)
+            .then(function (result) {
+              postToGame(result);
+            })
+            .catch(function (err) {
+              postToGame({ type: 'SPIN_ERROR', message: String(err && err.message ? err.message : err) });
+            });
+          return;
+        }
+
+        if (type === 'RTP_REQUEST') {
+          fetchRtpWithBackend()
+            .then(function (result) {
+              postToGame(result);
+            })
+            .catch(function (err) {
+              postToGame({ type: 'RTP_ERROR', message: String(err && err.message ? err.message : err) });
+            });
+          return;
+        }
+
+        if (type === 'GO_BACK') {
+          try {
+            if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.close === 'function') {
+              window.Telegram.WebApp.close();
+              return;
+            }
+          } catch (_) {}
+          history.back();
+        }
+      }
+
+      async function boot() {
+        try {
+          initViewportOffsetSync();
+
+          state.gameId = parseGameId();
+          if (!state.gameId) {
+            redirectError('unknown_game');
+            return;
+          }
+          ensureDefaultGameParam(state.gameId);
+
+          var tg = window.Telegram && window.Telegram.WebApp;
+          if (!tg) {
+            redirectError('no_telegram');
+            return;
+          }
+
+          tg.ready();
+          tg.expand();
+
+          var initData = String(tg.initData || '').trim();
+          if (!initData) {
+            redirectError('no_initdata');
+            return;
+          }
+
+          setStatus('TG 身分驗證中...');
+          var auth = await exchangeJwt(initData);
+          if (!auth.jwt) {
+            redirectError('exchange_failed');
+            return;
+          }
+
+          state.jwt = auth.jwt;
+          state.balanceUsdt = Number(auth.balanceUsdt || 0);
+          state.username = auth.username || '';
+          state.demoMode = state.balanceUsdt < MIN_REAL_BET_USDT;
+
+          // Add a cache-buster so iframe always picks up the latest game diagnostics/fixes.
+          var gameSrc = '/games/slot_game_moon_dance.html?hosted=1&_ts=' + Date.now();
+          frameEl.src = gameSrc;
+          frameEl.style.display = 'block';
+          // Trigger host viewport sync after iframe becomes visible; without this,
+          // early metrics may report frame=0x0 while the element is still display:none.
+          setTimeout(function () {
+            try { window.dispatchEvent(new Event('resize')); } catch (_) {}
+            try {
+              if (typeof window.__AGORA_TG_DELAYED_SYNC === 'function') {
+                window.__AGORA_TG_DELAYED_SYNC();
+              }
+              if (typeof window.__AGORA_TG_LOG_FRAME_BASELINE === 'function') {
+                window.__AGORA_TG_LOG_FRAME_BASELINE('after-display-60ms');
+              }
+            } catch (_) {}
+          }, 60);
+          setTimeout(function () {
+            try { window.dispatchEvent(new Event('resize')); } catch (_) {}
+            try {
+              if (typeof window.__AGORA_TG_DELAYED_SYNC === 'function') {
+                window.__AGORA_TG_DELAYED_SYNC();
+              }
+              if (typeof window.__AGORA_TG_LOG_FRAME_BASELINE === 'function') {
+                window.__AGORA_TG_LOG_FRAME_BASELINE('after-display-240ms');
+              }
+            } catch (_) {}
+          }, 240);
+
+          frameEl.addEventListener('load', function () {
+            try {
+              if (typeof window.__AGORA_TG_DELAYED_SYNC === 'function') {
+                window.__AGORA_TG_DELAYED_SYNC();
+              }
+              if (typeof window.__AGORA_TG_LOG_FRAME_BASELINE === 'function') {
+                window.__AGORA_TG_LOG_FRAME_BASELINE('iframe-load');
+              }
+            } catch (_) {}
+          }, { once: true });
+
+          setStatus('TG 入口載入遊戲中...');
+
+          window.addEventListener('message', handleGameMessage);
+        } catch (err) {
+          console.error('[TG_HOST] boot error:', err);
+          redirectError('boot_error');
+        }
+      }
+
+      boot();
+    })();
   </script>
 </body>
 </html>

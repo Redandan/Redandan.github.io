@@ -1199,44 +1199,27 @@ html, body { width:100%; height:var(--app-height, 100dvh); overflow:hidden; back
   <div id="bw-amount">+USDT 0</div>
 </div>
 
-<!-- Guard: block direct browser access without an auth context.
-     Allowed entry points:
-       ?tg=1      — Telegram Mini App (tg_adapter.js handles auth)
-       ?flutter=1 — Flutter app SlotGamePage WebView (mobile web)
+<!-- Guard: redirect direct browser access to the Telegram Mini App entry point.
+     Exceptions:
+       ?hosted=1  — loaded by the TG Mini App host page (web/tg/slot/index.html)
+       ?flutter=1 — loaded by the Flutter app's SlotGamePage WebView
        _flutterNative — injected at document-start by Flutter native InAppWebView -->
 <script>
 (function () {
   var p = new URLSearchParams(window.location.search);
-  if (p.get('tg') === '1' || p.get('flutter') === '1' || window._flutterNative) return;
-  // Telegram browser detected but ?tg=1 missing — add it automatically.
-  if (window.Telegram && window.Telegram.WebApp) {
-    window.location.replace(window.location.pathname + '?tg=1&_ts=' + Date.now());
-    return;
+  if (p.get('hosted') !== '1' && p.get('flutter') !== '1' && !window._flutterNative) {
+    window.location.replace('/tg/slot/');
   }
-  console.warn('[slot] direct access without auth context — ignored');
 })();
 </script>
 
 <!--
   Host adapter — must load before the game module so window.__gameHost is
   available when the module initialises.
-
-  Adapter selection rules (evaluated in order):
-  1. ?tg=1      → tg_adapter.js       (Telegram Mini App: bridge or REST)
-  2. (default)  → flutter_adapter.js  (Flutter native / Flutter Web / PWA)
-
-  Do NOT auto-detect window.Telegram.WebApp here: the Flutter web app may run
-  inside Telegram browser and still want flutter_adapter.js (JWT from localStorage).
-  Use explicit ?tg=1 to opt into tg_adapter.js.
+  • flutter_adapter.js  →  Flutter Native + Flutter Web iframe + Standalone PWA
+  • tg_adapter.js       →  Telegram Mini App (swap this tag to switch entry point)
 -->
-<script>
-(function () {
-  var _src = new URLSearchParams(window.location.search).get('tg') === '1'
-    ? './_runtime/tg_adapter.js'
-    : './_runtime/flutter_adapter.js';
-  document.write('<script src="' + _src + '"><\/script>');
-})();
-</script>
+<script src="./_runtime/flutter_adapter.js"></script>
 
 <script type="module">
 import * as THREE from 'https://esm.sh/three@0.160.0';
@@ -1290,6 +1273,25 @@ function showAuthError() {
 
 setLoadProgress(5, '初始化引擎...');
 
+// ===== Host Bridge (Telegram Mini App host ↔ game iframe protocol) =====
+// Opened exclusively via web/tg/slot/index.html with query param ?hosted=1.
+// The host page handles Telegram initData exchange and balance checks; this
+// game page only renders visuals and communicates back via postMessage.
+//
+// Message protocol (all messages carry a `type` string field):
+//   Host → Game:  HOST_INIT  { jwt, balance (USDT), demoMode, username }
+//                 HOST_LOG { level, message, ts }
+//                 SPIN_RESULT { symbols[3], multiplier, winAmount (USDT), newBalance (USDT), mode }
+//                 SPIN_ERROR  { message }
+//                 RTP_RESULT { data }
+//                 RTP_ERROR { message }
+//   Game → Host:  GAME_READY {}
+//                 SPIN_REQUEST { betIndex, betAmount, mode: 'REAL'|'DEMO' }
+//                 RTP_REQUEST {}
+//                 GO_BACK {}
+
+// Strict origin for postMessage — must match both directions.
+
 // ===== Log system =====
 const logPanel = document.getElementById('log-panel');
 const logToggle = document.getElementById('log-toggle');
@@ -1306,10 +1308,11 @@ logManager.patchConsole();
 // ===== Uniform viewport scaling =====
 // #gv is a fixed 430x900 design canvas. Scale it as one unit to fit the screen.
 let gvScale = Math.min(window.innerWidth / 430, window.innerHeight / 900);
+const _isHostedMode = new URLSearchParams(window.location.search).get('hosted') === '1';
 const ENABLE_VV_FIX_LOG = false;
 const viewportManager = createViewportManager({
   gvEl: document.getElementById('gv'),
-  hostedMode: false,
+  hostedMode: _isHostedMode,
   enableVvFixLog: ENABLE_VV_FIX_LOG,
   onScaleChange: (scale) => { gvScale = scale; },
   onLog: (msg, type) => addLog(msg, type),
@@ -1317,6 +1320,7 @@ const viewportManager = createViewportManager({
 
 window.__vvDebugContext = viewportManager.createDebugContext(
   () => ({
+    hosted:  _isHostedMode,
     adapter: window.__gameHost ? 'loaded' : 'none',
   }),
   () => viewportManager.getRenderedLayout(),
