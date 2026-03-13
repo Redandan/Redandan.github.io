@@ -231,10 +231,18 @@
       if (!jwt) { _log('SPIN(REST) 缺少 JWT', 'error'); return null; }
       _log(`SPIN(REST) → ${mode} betIdx=${betIndex}`, 'info');
       try {
+        const restBody = {
+          gameId: 'moon_dance',
+          betAmount,
+          mode,
+          clientSeed,
+          nonce: parseInt(nonce, 10) || Date.now(),
+        };
+        if (mode !== 'DEMO') restBody.clientRoundId = clientRoundId;
         const resp = await fetch(`${API_BASE}/slot/spin`, {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${jwt}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify(params),
+          body: JSON.stringify(restBody),
         });
         if (!resp.ok) { _log(`SPIN(REST) HTTP ${resp.status}`, 'error'); return null; }
         const json = await resp.json();
