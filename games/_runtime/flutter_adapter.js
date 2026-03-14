@@ -34,7 +34,7 @@
   };
 
   const _params        = new URLSearchParams(window.location.search);
-  const _isFlutterMode = _params.get('flutter') === '1' || !!window._flutterNative;
+  const _isFlutterMode = _params.get('flutter') === '1' || _params.get('hosted') === '1' || !!window._flutterNative;
 
   // ── Flutter native bridge helpers ─────────────────────────────────────────
 
@@ -156,7 +156,9 @@
       if (jwt) {
         clearInterval(_selfHostTimer);
         var bal = parseFloat(localStorage.getItem('_flutter_game_balance') || '0');
-        _deliverHostInit({ jwt: jwt, balance: bal, demoMode: bal < 0.25, username: '' });
+        var tgSafeTop = parseFloat(localStorage.getItem('_flutter_game_tg_safe_top') || '0');
+        _deliverHostInit({ jwt: jwt, balance: bal, demoMode: bal < 0.25, username: '',
+          tgSafeAreaTop: isNaN(tgSafeTop) ? 0 : tgSafeTop });
         return;
       }
       if (++_selfHostRetries >= 50) { // 50 × 300 ms = 15 s

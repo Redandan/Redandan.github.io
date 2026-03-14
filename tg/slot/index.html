@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>AgoraMarket</title>
   <style>
     html, body {
@@ -14,19 +14,72 @@
   </style>
 </head>
 <body>
-  <p>載入中...</p>
+  <p id="status">載入中...</p>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     (function () {
+      var API_BASE = 'https://agoramarketapi.purrtechllc.com/api';
+      var statusEl = document.getElementById('status');
+      function setStatus(t) { if (statusEl) statusEl.textContent = t; }
+
       var tg = window.Telegram && window.Telegram.WebApp;
-      if (tg) {
-        tg.ready();
-        tg.expand();
-      }
-      // Redirect to Flutter PWA — TelegramMiniAppAuthService handles auth via
-      // window.Telegram.WebApp.initData (still available in the same browser tab).
-      window.location.replace('/#/games/moon_dance');
+      if (!tg) { setStatus('請在 Telegram 中開啟'); return; }
+      tg.ready();
+      tg.expand();
+
+      var initData = String(tg.initData || '').trim();
+      if (!initData) { setStatus('無法取得 Telegram 身分資訊'); return; }
+
+      (async function () {
+        try {
+          setStatus('驗證身分中...');
+          var resp = await fetch(API_BASE + '/auth/telegram-webapp/exchange-jwt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ initData: initData }),
+          });
+          if (!resp.ok) {
+            var txt = ''; try { txt = await resp.text(); } catch (_) {}
+            console.error('[tg/slot] auth failed:', resp.status, txt);
+            setStatus('登入失敗 (' + resp.status + ')');
+            return;
+          }
+          var json = await resp.json();
+          var body = json.data != null ? json.data : json;
+          var jwt = String(body.jwt || body.token || body.accessToken || '').trim();
+          if (!jwt) { setStatus('登入失敗（無 token）'); return; }
+
+          var userInfo = body.userInfo || body || {};
+          var balance = Number(
+            userInfo.balance != null ? userInfo.balance :
+            body.balance != null ? body.balance : 0
+          );
+          if (isNaN(balance)) balance = 0;
+
+          // Read TG safe area before navigating away (unavailable after redirect)
+          var safeTop = 0;
+          try {
+            safeTop = (tg.safeAreaInsets && tg.safeAreaInsets.top || 0) +
+                      (tg.contentSafeAreaInsets && tg.contentSafeAreaInsets.top || 0);
+          } catch (_) {}
+
+          // Store for flutter_adapter.js self-host path
+          localStorage.setItem('_flutter_game_jwt',         jwt);
+          localStorage.setItem('_flutter_game_balance',     balance.toFixed(4));
+          localStorage.setItem('_flutter_game_api_base',    API_BASE);
+          localStorage.setItem('_flutter_game_id',          'moon_dance');
+          localStorage.setItem('_flutter_game_tg_safe_top', String(safeTop));
+
+          setStatus('進入遊戲中...');
+          // Use ?hosted=1 so viewport_manager enables the TG safe-area offset logic.
+          // flutter_adapter.js treats hosted=1 the same as flutter=1 for self-host transport.
+          window.location.replace('/games/slot_game_moon_dance.html?hosted=1&_ts=' + Date.now());
+        } catch (err) {
+          console.error('[tg/slot] error:', err);
+          setStatus('載入錯誤，請重試');
+        }
+      })();
     })();
   </script>
 </body>
