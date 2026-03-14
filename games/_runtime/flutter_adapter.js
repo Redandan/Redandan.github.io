@@ -142,6 +142,30 @@
     }
   }
 
+  // ── Flutter self-host fallback (mobile Flutter Web / TG redirect path) ──────
+  // On mobile Flutter Web, SlotGamePage navigates the browser directly to the
+  // game URL (no parent frame, no bridge).  Dart writes the JWT and balance to
+  // localStorage before navigating; this poller delivers HOST_INIT once found.
+  // Also used when TG host redirects to Flutter PWA and Flutter navigates the
+  // browser to the game URL on mobile.
+  if (_isFlutterMode) {
+    var _selfHostRetries = 0;
+    var _selfHostTimer = setInterval(function () {
+      if (_initDelivered) { clearInterval(_selfHostTimer); return; }
+      var jwt = localStorage.getItem('_flutter_game_jwt') || '';
+      if (jwt) {
+        clearInterval(_selfHostTimer);
+        var bal = parseFloat(localStorage.getItem('_flutter_game_balance') || '0');
+        _deliverHostInit({ jwt: jwt, balance: bal, demoMode: bal < 0.25, username: '' });
+        return;
+      }
+      if (++_selfHostRetries >= 50) { // 50 × 300 ms = 15 s
+        clearInterval(_selfHostTimer);
+        console.warn('[flutter_adapter] JWT not found in localStorage after 15 s');
+      }
+    }, 300);
+  }
+
   // Send GAME_READY so the Flutter/TG host knows the iframe is alive.
   setTimeout(() => {
     if (window.parent !== window && window.__gameOrigin) {
