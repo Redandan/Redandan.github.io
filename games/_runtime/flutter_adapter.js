@@ -244,9 +244,14 @@
         }
         _log(`SPIN(rest) → ${mode} bet=${betIndex}`, 'info');
         try {
-          var body = { betIndex, betAmount, mode,
+          var gameId = localStorage.getItem('_flutter_game_id') || 'moon_dance';
+          var body = {
+            gameId,
+            betAmount,
+            mode,
+            demoMode: mode === 'DEMO',
             clientSeed: clientSeed || undefined,
-            nonce:      nonce      || undefined,
+            nonce:      nonce ? Number(nonce) : Date.now(),
           };
           if (mode !== 'DEMO') body.clientRoundId = clientRoundId || undefined;
           var resp = await fetch(apiBase + '/slot/spin', {
@@ -256,7 +261,9 @@
             body: JSON.stringify(body),
           });
           if (!resp.ok) {
-            _log(`SPIN(rest) HTTP ${resp.status}`, 'error');
+            var errText = '';
+            try { errText = await resp.text(); } catch (_) {}
+            _log(`SPIN(rest) HTTP ${resp.status}: ${errText.slice(0, 200)}`, 'error');
             return null;
           }
           var json = await resp.json();
