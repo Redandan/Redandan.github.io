@@ -431,6 +431,26 @@
         throw new Error(r.errorMessage || 'TRANSACTION_REQUEST failed');
       }
 
+      // ── Branch 3: REST (mobile Flutter Web / TG hosted path) ─────────────
+      if (_isFlutterMode) {
+        var apiBase = localStorage.getItem('_flutter_game_api_base') || '';
+        var jwt     = localStorage.getItem('_flutter_game_jwt') || '';
+        if (!apiBase || !jwt) throw new Error('getTransactions: no apiBase or JWT in localStorage');
+        var resp = await fetch(apiBase + '/transactions/list', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt },
+          body: JSON.stringify({ token: 'USDT', page: page || 0, size: size }),
+        });
+        if (!resp.ok) throw new Error('getTransactions HTTP ' + resp.status);
+        var json = await resp.json();
+        var d = json.data != null ? json.data : json;
+        return {
+          content:       (d && d.content)       || [],
+          totalElements: (d && d.totalElements) || 0,
+          hasMore:       ((d && d.content && d.content.length) || 0) === size,
+        };
+      }
+
       throw new Error('getTransactions: 無可用入口（非 bridge / 非 iframe）');
     },
 
@@ -453,8 +473,8 @@
         if (window.__gameOrigin) window.parent.postMessage({ type: cfg.msg }, window.__gameOrigin);
       } else if (_isFlutterMode) {
         // Branch 3: self-host / TG hosted — no bridge or parent frame.
-        // Try TG Mini App close first (native injection); fall back to history.back().
         if (dest === 'back') {
+          // Try TG Mini App close (native injection); fall back to history.back().
           try {
             if (window.Telegram && window.Telegram.WebApp) {
               window.Telegram.WebApp.close();
@@ -462,6 +482,9 @@
             }
           } catch (_) {}
           window.history.back();
+        } else if (dest === 'deposit' || dest === 'withdraw') {
+          // Navigate to the Flutter PWA route for deposit/withdraw.
+          window.location.replace('/#/' + dest);
         }
       } else {
         _log(`navigate(${dest}): 無可用入口（非 bridge / 非 iframe）`, 'warn');

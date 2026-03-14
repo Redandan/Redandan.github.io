@@ -2694,14 +2694,11 @@ function cancelAutoSpin() {
 
 document.getElementById('btn-back').addEventListener('click', () => {
   if (!cancelAutoSpin()) {
-    if (window._flutterBridge) {
-      // Flutter entry (native WebView, Flutter Web iframe, or standalone mobile browser):
-      // use the platform-aware bridge for back-navigation.
-      window._flutterBridge.goBack();
-    } else {
-      // Telegram Mini App entry: ask the TG host page to close the iframe.
-      window.parent.postMessage({ type: 'GO_BACK' }, window.__gameOrigin);
-    }
+    // __gameHost.navigate handles all branches:
+    //   Branch 1 — native Flutter bridge (goBack handler)
+    //   Branch 2 — iframe postMessage (GO_BACK)
+    //   Branch 3 — TG hosted / self-host (Telegram.WebApp.close or history.back)
+    window.__gameHost?.navigate('back');
   }
 });
 
