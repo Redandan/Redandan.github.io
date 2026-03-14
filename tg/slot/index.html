@@ -589,7 +589,23 @@
         }
 
         if (type === 'BALANCE_REQUEST') {
-          postToGame({ type: 'BALANCE_RESULT', balance: state.balanceUsdt });
+          fetch(API_BASE + '/auth/me', {
+            headers: { 'Authorization': 'Bearer ' + state.jwt },
+          })
+            .then(function (r) {
+              if (!r.ok) throw new Error('HTTP ' + r.status);
+              return r.json();
+            })
+            .then(function (json) {
+              var body     = json && json.data != null ? json.data : json;
+              var userInfo = (body && body.userInfo) || body || {};
+              var balance  = Number(userInfo.balance) || 0;
+              state.balanceUsdt = balance;
+              postToGame({ type: 'BALANCE_RESULT', balance: balance });
+            })
+            .catch(function (err) {
+              postToGame({ type: 'BALANCE_ERROR', message: String(err && err.message ? err.message : err) });
+            });
           return;
         }
 
