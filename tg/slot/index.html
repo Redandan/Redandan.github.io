@@ -588,6 +588,43 @@
           return;
         }
 
+        if (type === 'BALANCE_REQUEST') {
+          postToGame({ type: 'BALANCE_RESULT', balance: state.balanceUsdt });
+          return;
+        }
+
+        if (type === 'TRANSACTION_REQUEST') {
+          var txPage = Number(data.page) || 0;
+          var txSize = Number(data.size) || 10;
+          fetch(API_BASE + '/transactions/list', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + state.jwt,
+            },
+            body: JSON.stringify({ token: 'USDT', page: txPage, size: txSize }),
+          })
+            .then(function (r) {
+              if (!r.ok) throw new Error('HTTP ' + r.status);
+              return r.json();
+            })
+            .then(function (json) {
+              var d = json && json.data != null ? json.data : json;
+              postToGame({
+                type: 'TRANSACTION_RESULT',
+                data: {
+                  content:       (d && d.content)       || [],
+                  totalElements: (d && d.totalElements) || 0,
+                  hasMore:       ((d && d.content && d.content.length) || 0) === txSize,
+                },
+              });
+            })
+            .catch(function (err) {
+              postToGame({ type: 'TRANSACTION_ERROR', message: String(err && err.message ? err.message : err) });
+            });
+          return;
+        }
+
         if (type === 'GO_BACK') {
           try {
             if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.close === 'function') {

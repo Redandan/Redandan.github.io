@@ -1,9 +1,9 @@
 /**
  * flutter_adapter.js
  *
- * Host adapter for Flutter Native WebView + Flutter Web iframe + Standalone PWA.
+ * Host adapter for Flutter Native WebView + Flutter Web iframe.
  * Sets up window.__gameHost so the game core (slot_game_moon_dance.html) is
- * decoupled from transport (bridge vs postMessage vs REST).
+ * decoupled from transport (bridge vs postMessage).
  *
  * Timing safety:
  *   This script is a plain <script> and runs before the ES module (which loads
@@ -17,6 +17,10 @@
  *   window.__gameHost.getBalance()           → Promise<number | null>
  *   window.__gameHost.getTransactions(p, sz) → Promise<TxnPage | null>
  *   window.__gameHost.navigate(dest)         → void  ('back'|'deposit'|'withdraw')
+ *
+ * Entry points:
+ *   Branch 1 — Flutter Native WebView: window.flutter_inappwebview bridge
+ *   Branch 2 — Flutter Web iframe / TG host: postMessage protocol
  */
 (function () {
   'use strict';
@@ -29,9 +33,7 @@
     else console.log('[flutter_adapter]', msg);
   };
 
-  const API_BASE = window.__AGORA_API_BASE_URL || 'https://agoramarketapi.purrtechllc.com/api';
-
-  const _params       = new URLSearchParams(window.location.search);
+  const _params        = new URLSearchParams(window.location.search);
   const _isFlutterMode = _params.get('flutter') === '1' || !!window._flutterNative;
 
   // ── Flutter native bridge helpers ─────────────────────────────────────────
@@ -108,7 +110,8 @@
       const { jwt, balance, demoMode, username, tgSafeAreaTop } = e.data;
       _deliverHostInit({ jwt, balance, demoMode, username, tgSafeAreaTop });
     }
-    // SPIN_RESULT / SPIN_ERROR are captured inside _postAndWait resolvers.
+    // SPIN_RESULT / SPIN_ERROR / BALANCE_RESULT / TRANSACTION_RESULT etc.
+    // are captured inside _postAndWait resolvers.
   });
 
   // ── Pending-queue: HOST_INIT may arrive before the ES module finishes loading ──
@@ -146,28 +149,6 @@
     }
     console.log('[flutter_adapter] GAME_READY sent');
   }, 0);
-
-  // ── Flutter self-host fallback ────────────────────────────────────────────
-  // When the page is opened with ?flutter=1 (PWA / mobile browser), Dart writes
-  // the JWT to localStorage asynchronously.  Retry every 300 ms for up to 15 s
-  // so we catch the JWT even on slow first-launch writes.
-  if (_isFlutterMode) {
-    var _selfHostRetries = 0;
-    var _selfHostTimer = setInterval(function () {
-      if (_initDelivered) { clearInterval(_selfHostTimer); return; }
-      var jwt = localStorage.getItem('_flutter_game_jwt') || '';
-      if (jwt) {
-        clearInterval(_selfHostTimer);
-        var bal = parseFloat(localStorage.getItem('_flutter_game_balance') || '0');
-        _deliverHostInit({ jwt: jwt, balance: bal, demoMode: bal < 0.25, username: '' });
-        return;
-      }
-      if (++_selfHostRetries >= 50) { // 50 × 300 ms = 15 s
-        clearInterval(_selfHostTimer);
-        console.warn('[flutter_adapter] JWT not found in localStorage after 15 s');
-      }
-    }, 300);
-  }
 
   // ── window.__gameHost implementation ──────────────────────────────────────
 
@@ -226,44 +207,8 @@
         return null;
       }
 
-      // ── Branch 3: Standalone / iOS PWA — direct REST ───────────────────
-      const jwt = window.__agoraAuth?.token;
-      if (!jwt) { _log('SPIN(REST) 缺少 JWT', 'error'); return null; }
-      _log(`SPIN(REST) → ${mode} betIdx=${betIndex}`, 'info');
-      try {
-        const restBody = {
-          gameId: 'moon_dance',
-          betAmount,
-          mode,
-          clientSeed,
-          nonce: parseInt(nonce, 10) || Date.now(),
-        };
-        if (mode !== 'DEMO') restBody.clientRoundId = clientRoundId;
-        const resp = await fetch(`${API_BASE}/slot/spin`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${jwt}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify(restBody),
-        });
-        if (!resp.ok) { _log(`SPIN(REST) HTTP ${resp.status}`, 'error'); return null; }
-        const json = await resp.json();
-        const d = json?.data ?? json;
-        if (d && (Array.isArray(d.symbols) || Array.isArray(d.symbolIds))) {
-          _log(`SPIN(REST) OK: ×${d.multiplier}`, 'info');
-          return {
-            symbols:    Array.isArray(d.symbols)    ? d.symbols                        : null,
-            symbolIds:  Array.isArray(d.symbolIds)  ? d.symbolIds.map(v => Number(v)) : null,
-            multiplier: Number(d.multiplier ?? 0),
-            prize:      Number(d.winAmount ?? d.prize ?? 0),
-            newBalance: Number(d.balance ?? d.newBalance ?? NaN),
-            mode:       d.mode || mode,
-          };
-        }
-        _log(`SPIN(REST) 缺少 symbols: ${JSON.stringify(d).slice(0, 120)}`, 'error');
-        return null;
-      } catch (err) {
-        _log(`SPIN(REST) 網路錯誤: ${err}`, 'error');
-        return null;
-      }
+      _log('SPIN: 無可用入口（非 bridge / 非 iframe）', 'error');
+      return null;
     },
 
     /**
@@ -278,22 +223,21 @@
           const data = res.data ?? null;
           // Flutter bridge serialisation bug: Dart model objects lose all
           // fields when JS-serialised, producing entries:[{},{},{},...].
-          // Detect and fall through to REST fallback below.
+          // Detect and return null so the caller falls back gracefully.
           const hasEmptyEntries =
             data &&
             Array.isArray(data.entries) &&
             data.entries.length > 0 &&
             Object.keys(data.entries[0] || {}).length === 0;
 
-          if (!hasEmptyEntries) return data; // good data — use it
-          _log('RTP(bridge) entries 全為空物件，改用 REST 獲取', 'warn');
-          // fall through to REST
+          if (!hasEmptyEntries) return data;
+          _log('RTP(bridge) entries 全為空物件', 'warn');
         }
-        // Bridge failed or returned bad data — try REST directly
+        return null;
       }
 
       // ── Branch 2: iframe postMessage ───────────────────────────────────
-      if (!_isFlutterMode && window.parent !== window) {
+      if (window.parent !== window) {
         const r = await _postAndWait(
           { type: 'RTP_REQUEST' },
           'RTP_RESULT', 'RTP_ERROR',
@@ -304,22 +248,8 @@
         return null;
       }
 
-      // ── Branch 3: REST (standalone, or bridge fallback) ───────────────
-      const jwt = window.__agoraAuth?.token;
-      if (!jwt) { _log('getRtp: 無 JWT', 'warn'); return null; }
-      try {
-        const resp = await fetch(`${API_BASE}/slot/rtp`, {
-          headers: { 'Authorization': `Bearer ${jwt}` },
-        });
-        if (!resp.ok) { _log(`getRtp HTTP ${resp.status}`, 'warn'); return null; }
-        const json = await resp.json();
-        const data = json?.data ?? json;
-        _log('RTP(REST) 獲取成功', 'info');
-        return data;
-      } catch (err) {
-        _log(`getRtp(REST) 失敗: ${err}`, 'warn');
-        return null;
-      }
+      _log('getRtp: 無可用入口（非 bridge / 非 iframe）', 'warn');
+      return null;
     },
 
     /**
@@ -327,7 +257,7 @@
      * Returns number or null on failure.
      */
     async getBalance() {
-      // ── Flutter native bridge ─────────────────────────────────────────
+      // ── Branch 1: Flutter native bridge ─────────────────────────────────
       if (_isFlutterMode && _hasBridge()) {
         const res = await _bridge('getCurrentUser');
         if (!res || res.success === false) {
@@ -337,22 +267,20 @@
         return Number((res.data || {}).balance) || 0;
       }
 
-      // ── REST (iframe or standalone — iframe mode calls /auth/me via JWT) ─
-      const jwt = window.__agoraAuth?.token;
-      if (!jwt) return null;
-      try {
-        const resp = await fetch(`${API_BASE}/auth/me`, {
-          headers: { 'Authorization': `Bearer ${jwt}` },
-        });
-        if (!resp.ok) { _log(`getBalance HTTP ${resp.status}`, 'warn'); return null; }
-        const json       = await resp.json();
-        const data       = json?.data    ?? json;
-        const userInfo   = data?.userInfo ?? data;
-        return Number(userInfo?.balance) || 0;
-      } catch (err) {
-        _log(`getBalance 失敗: ${err}`, 'warn');
+      // ── Branch 2: iframe postMessage ──────────────────────────────────
+      if (window.parent !== window) {
+        const r = await _postAndWait(
+          { type: 'BALANCE_REQUEST' },
+          'BALANCE_RESULT', 'BALANCE_ERROR',
+          6000, 'BALANCE_REQUEST timed out'
+        );
+        if (r.result) return Number(r.result.balance) || 0;
+        if (!r.timedOut && r.errorMessage) _log(`BALANCE_ERROR: ${r.errorMessage}`, 'warn');
         return null;
       }
+
+      _log('getBalance: 無可用入口（非 bridge / 非 iframe）', 'warn');
+      return null;
     },
 
     /**
@@ -360,7 +288,7 @@
      * Returns { content, totalElements, hasMore } or null on failure.
      */
     async getTransactions(page, size = 10) {
-      // ── Flutter native bridge ─────────────────────────────────────────
+      // ── Branch 1: Flutter native bridge ─────────────────────────────────
       if (_isFlutterMode && _hasBridge()) {
         const raw    = await window.flutter_inappwebview.callHandler('getTransactions', { page, size });
         const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
@@ -368,7 +296,7 @@
         return parsed.data;
       }
 
-      // ── iframe postMessage ────────────────────────────────────────────
+      // ── Branch 2: iframe postMessage ──────────────────────────────────
       if (window.parent !== window) {
         const r = await _postAndWait(
           { type: 'TRANSACTION_REQUEST', page, size },
@@ -379,22 +307,7 @@
         throw new Error(r.errorMessage || 'TRANSACTION_REQUEST failed');
       }
 
-      // ── Standalone REST ───────────────────────────────────────────────
-      const jwt = window.__agoraAuth?.token;
-      if (!jwt) throw new Error('無 JWT，請重新登入');
-      const resp = await fetch(`${API_BASE}/transactions/list`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${jwt}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: 'USDT', page, size }),
-      });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const json = await resp.json();
-      const d    = json?.data ?? json;
-      return {
-        content:       d.content       ?? [],
-        totalElements: d.totalElements ?? 0,
-        hasMore:       (d.content?.length ?? 0) === size,
-      };
+      throw new Error('getTransactions: 無可用入口（非 bridge / 非 iframe）');
     },
 
     /**
@@ -403,9 +316,9 @@
      */
     navigate(dest) {
       const NAV = {
-        back:     { handler: 'goBack',     msg: 'GO_BACK',     path: '/'               },
-        deposit:  { handler: 'goDeposit',  msg: 'GO_DEPOSIT',  path: '/wallet/deposit' },
-        withdraw: { handler: 'goWithdraw', msg: 'GO_WITHDRAW', path: '/wallet/withdraw'},
+        back:     { handler: 'goBack',     msg: 'GO_BACK'     },
+        deposit:  { handler: 'goDeposit',  msg: 'GO_DEPOSIT'  },
+        withdraw: { handler: 'goWithdraw', msg: 'GO_WITHDRAW' },
       };
       const cfg = NAV[dest];
       if (!cfg) { console.warn('[flutter_adapter] unknown nav dest:', dest); return; }
@@ -415,7 +328,7 @@
       } else if (window.parent !== window) {
         if (window.__gameOrigin) window.parent.postMessage({ type: cfg.msg }, window.__gameOrigin);
       } else {
-        window.location.href = `${window.location.origin}/#${cfg.path}`;
+        _log(`navigate(${dest}): 無可用入口（非 bridge / 非 iframe）`, 'warn');
       }
     },
   };
