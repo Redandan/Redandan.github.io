@@ -334,13 +334,35 @@
         return null;
       }
 
-      // ── Branch 3: localStorage cache (mobile Flutter Web / PWA direct nav) ─
-      // Flutter pre-fetches RTP via Dart SDK and stores it in localStorage
-      // before navigating the browser directly to the game URL.
+      // ── Branch 3: localStorage cache or REST (mobile Flutter / TG hosted) ─
       if (_isFlutterMode) {
         var cached = localStorage.getItem('_flutter_game_rtp');
         if (cached) {
           try { return JSON.parse(cached); } catch (_) {}
+        }
+        // Cache miss — fetch directly from REST API.
+        var apiBase = localStorage.getItem('_flutter_game_api_base') || '';
+        var jwt     = localStorage.getItem('_flutter_game_jwt') || '';
+        var gameId  = localStorage.getItem('_flutter_game_id') || 'moon_dance';
+        if (apiBase && jwt) {
+          try {
+            var resp = await fetch(
+              apiBase + '/slot/rtp?gameId=' + encodeURIComponent(gameId),
+              { headers: { 'Authorization': 'Bearer ' + jwt } }
+            );
+            if (resp.ok) {
+              var json = await resp.json();
+              var data = json.data ?? json;
+              if (data) {
+                localStorage.setItem('_flutter_game_rtp', JSON.stringify(data));
+                return data;
+              }
+            } else {
+              _log('getRtp(rest) HTTP ' + resp.status, 'warn');
+            }
+          } catch (err) {
+            _log('getRtp(rest) error: ' + err, 'warn');
+          }
         }
       }
 
@@ -429,6 +451,18 @@
         window.flutter_inappwebview.callHandler(cfg.handler).catch(() => {});
       } else if (window.parent !== window) {
         if (window.__gameOrigin) window.parent.postMessage({ type: cfg.msg }, window.__gameOrigin);
+      } else if (_isFlutterMode) {
+        // Branch 3: self-host / TG hosted — no bridge or parent frame.
+        // Try TG Mini App close first (native injection); fall back to history.back().
+        if (dest === 'back') {
+          try {
+            if (window.Telegram && window.Telegram.WebApp) {
+              window.Telegram.WebApp.close();
+              return;
+            }
+          } catch (_) {}
+          window.history.back();
+        }
       } else {
         _log(`navigate(${dest}): 無可用入口（非 bridge / 非 iframe）`, 'warn');
       }
