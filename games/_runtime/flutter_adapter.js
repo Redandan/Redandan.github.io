@@ -272,6 +272,16 @@
         return null;
       }
 
+      // ── Branch 3: localStorage cache (mobile Flutter Web / PWA direct nav) ─
+      // Flutter pre-fetches RTP via Dart SDK and stores it in localStorage
+      // before navigating the browser directly to the game URL.
+      if (_isFlutterMode) {
+        var cached = localStorage.getItem('_flutter_game_rtp');
+        if (cached) {
+          try { return JSON.parse(cached); } catch (_) {}
+        }
+      }
+
       _log('getRtp: 無可用入口（非 bridge / 非 iframe）', 'warn');
       return null;
     },
@@ -301,6 +311,12 @@
         if (r.result) return Number(r.result.balance) || 0;
         if (!r.timedOut && r.errorMessage) _log(`BALANCE_ERROR: ${r.errorMessage}`, 'warn');
         return null;
+      }
+
+      // ── Branch 3: localStorage cache (mobile Flutter Web / PWA direct nav) ─
+      if (_isFlutterMode) {
+        var cached = parseFloat(localStorage.getItem('_flutter_game_balance') || '0');
+        return isNaN(cached) ? 0 : cached;
       }
 
       _log('getBalance: 無可用入口（非 bridge / 非 iframe）', 'warn');
