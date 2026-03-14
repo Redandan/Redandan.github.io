@@ -231,6 +231,59 @@
         return null;
       }
 
+      // ── Branch 3: self-host REST (mobile Flutter Web / PWA direct nav) ─
+      // Flutter navigated the browser directly to the game URL; no bridge or
+      // iframe is available.  Call the spin API directly with the JWT that
+      // Flutter cached in localStorage before navigating.
+      if (_isFlutterMode) {
+        var apiBase = localStorage.getItem('_flutter_game_api_base') || '';
+        var jwt     = localStorage.getItem('_flutter_game_jwt') || '';
+        if (!apiBase || !jwt) {
+          _log('SPIN: no apiBase or JWT in localStorage', 'error');
+          return null;
+        }
+        _log(`SPIN(rest) → ${mode} bet=${betIndex}`, 'info');
+        try {
+          var body = { betIndex, betAmount, mode,
+            clientSeed: clientSeed || undefined,
+            nonce:      nonce      || undefined,
+          };
+          if (mode !== 'DEMO') body.clientRoundId = clientRoundId || undefined;
+          var resp = await fetch(apiBase + '/slot/spin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json',
+                       'Authorization': 'Bearer ' + jwt },
+            body: JSON.stringify(body),
+          });
+          if (!resp.ok) {
+            _log(`SPIN(rest) HTTP ${resp.status}`, 'error');
+            return null;
+          }
+          var json = await resp.json();
+          var d = (json.data ?? json) || {};
+          if (!(Array.isArray(d.symbols) || Array.isArray(d.symbolIds))) {
+            _log('SPIN(rest) invalid response', 'error');
+            return null;
+          }
+          // Update cached balance so getBalance() stays fresh.
+          if (d.balance != null) {
+            localStorage.setItem('_flutter_game_balance', String(d.balance));
+          }
+          _log(`SPIN(rest) OK: ×${d.multiplier}`, 'info');
+          return {
+            symbols:    Array.isArray(d.symbols)    ? d.symbols                        : null,
+            symbolIds:  Array.isArray(d.symbolIds)  ? d.symbolIds.map(v => Number(v)) : null,
+            multiplier: Number(d.multiplier ?? 0),
+            prize:      Number(d.winAmount ?? d.prize ?? 0),
+            newBalance: Number(d.balance ?? d.newBalance ?? NaN),
+            mode:       d.mode || mode,
+          };
+        } catch (err) {
+          _log('SPIN(rest) error: ' + err, 'error');
+          return null;
+        }
+      }
+
       _log('SPIN: 無可用入口（非 bridge / 非 iframe）', 'error');
       return null;
     },
