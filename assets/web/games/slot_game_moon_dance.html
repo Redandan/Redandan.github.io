@@ -1199,15 +1199,16 @@ html, body { width:100%; height:var(--app-height, 100dvh); overflow:hidden; back
   <div id="bw-amount">+USDT 0</div>
 </div>
 
-<!-- Guard: redirect direct browser access to the Flutter Web slot route.
+<!-- Guard: redirect direct browser access to the Telegram Mini App entry point.
      Exceptions:
+       ?hosted=1  — loaded by the TG Mini App host page (web/tg/slot/index.html)
        ?flutter=1 — loaded by the Flutter app's SlotGamePage WebView
        _flutterNative — injected at document-start by Flutter native InAppWebView -->
 <script>
 (function () {
   var p = new URLSearchParams(window.location.search);
-  if (p.get('flutter') !== '1' && !window._flutterNative) {
-    window.location.replace('/#/slot/moon_dance');
+  if (p.get('hosted') !== '1' && p.get('flutter') !== '1' && !window._flutterNative) {
+    window.location.replace('/tg/slot/');
   }
 })();
 </script>
@@ -1273,7 +1274,7 @@ function showAuthError() {
 setLoadProgress(5, '初始化引擎...');
 
 // ===== Host Bridge (Telegram Mini App host ↔ game iframe protocol) =====
-// Opened via Flutter Web SlotGamePage (kIsWeb) with query param ?flutter=1.
+// Opened exclusively via web/tg/slot/index.html with query param ?hosted=1.
 // The host page handles Telegram initData exchange and balance checks; this
 // game page only renders visuals and communicates back via postMessage.
 //

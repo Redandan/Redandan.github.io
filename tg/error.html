@@ -112,10 +112,11 @@ if (detail || reason !== 'unknown') {
   document.getElementById('err-code').textContent = `錯誤代碼: ${reason}${detail ? ' – ' + detail.slice(0, 120) : ''}`;
 }
 
-// Retry button: go back to the Flutter Web slot route
+// Retry button: go back to the slot host URL (strip this error page path)
 document.getElementById('btn-retry').addEventListener('click', (e) => {
   e.preventDefault();
-  window.location.href = '/#/slot/moon_dance';
+  // Navigate to /tg/slot/ relative to this error page (which lives at /tg/error.html)
+  window.location.href = new URL('slot/', window.location.href).href;
 });
 </script>
 </body>
