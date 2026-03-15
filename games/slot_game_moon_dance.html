@@ -1822,21 +1822,22 @@ function _drawPaytableSymbolCanvas(canvasEl, symIdx) {
   ctx.drawImage(symTextures[idx].image, 0, 0, canvasEl.width, canvasEl.height);
 }
 
-function _buildPaytableRow(symbolId, count, multiplier) {
+// symIds: array of sprite indices to display (e.g. [0,1,1] = WILD+CHERRY×2)
+function _buildPaytableRow(symIds, multiplier) {
   const row = document.createElement('div');
   row.className = 'pt-row';
 
   const syms = document.createElement('span');
   syms.className = 'pt-syms';
-  for (let i = 0; i < count; i++) {
+  symIds.forEach((sid) => {
     const cv = document.createElement('canvas');
     cv.className = 'pt-sym-img';
     cv.width = 26;
     cv.height = 26;
-    cv.dataset.symIdx = String(symbolId);
+    cv.dataset.symIdx = String(sid);
     syms.appendChild(cv);
-    _drawPaytableSymbolCanvas(cv, symbolId);
-  }
+    _drawPaytableSymbolCanvas(cv, sid);
+  });
 
   const val = document.createElement('span');
   val.className = 'pt-val';
@@ -1845,6 +1846,48 @@ function _buildPaytableRow(symbolId, count, multiplier) {
   row.appendChild(syms);
   row.appendChild(val);
   return row;
+}
+
+/** Parse one RTP entry → { symIds, multiplier } for paytable display.
+ *  Handles: X×3 | WILD+X×2 | WILD×2+X | X×2 (consolation)
+ *  Returns null when the entry cannot be parsed. */
+function _parseRtpEntry(entry) {
+  const multiplier = Number(entry?.multiplier ?? entry?.payout ?? entry?.c);
+  if (Number.isNaN(multiplier)) return null;
+
+  const rawSymbol = entry?.symbolId ?? entry?.symIdx ?? entry?.symbol?.id ?? entry?.symbol ?? entry?.a;
+  let symbolId = -1;
+  if (typeof rawSymbol === 'number') {
+    symbolId = rawSymbol;
+  } else if (rawSymbol != null) {
+    const s = String(rawSymbol).trim();
+    const parsed = Number(s);
+    symbolId = Number.isNaN(parsed) ? _resolveSymIdx(s) : parsed;
+  }
+  if (symbolId < 0 || symbolId >= spriteMap.length) return null;
+
+  const combo = String(entry?.combo ?? entry?.b ?? '');
+  let symIds;
+
+  if (/WILD×2\+/i.test(combo)) {
+    // "WILD×2+CHERRY" → [WILD, WILD, CHERRY]
+    const m = combo.match(/WILD×2\+(\w+)/i);
+    const targetId = m ? _resolveSymIdx(m[1].toLowerCase()) : -1;
+    symIds = [0, 0, targetId >= 0 ? targetId : symbolId];
+  } else if (/WILD\+/i.test(combo) && /×2/.test(combo)) {
+    // "WILD+CHERRY×2" → [WILD, CHERRY, CHERRY]
+    symIds = [0, symbolId, symbolId];
+  } else if (/×3/.test(combo)) {
+    // "CHERRY×3" → [CHERRY, CHERRY, CHERRY]
+    symIds = [symbolId, symbolId, symbolId];
+  } else if (/×2/.test(combo)) {
+    // "CHERRY×2 (安慰獎)" — consolation, 2 symbols only
+    symIds = [symbolId, symbolId];
+  } else {
+    return null;
+  }
+
+  return { symIds, multiplier };
 }
 
 let _syncingPaytableScroll = false;
@@ -1891,7 +1934,7 @@ function _renderPaytableRows(rows) {
   cols.forEach((col, idx) => {
     col.innerHTML = '';
     perCol[idx].forEach((item) => {
-      col.appendChild(_buildPaytableRow(item.symbolId, item.count, item.multiplier));
+      col.appendChild(_buildPaytableRow(item.symIds, item.multiplier));
     });
     col.scrollTop = 0;
   });
@@ -2139,66 +2182,41 @@ async function loadAndApplyPaytable() {
 
     if (Array.isArray(rtpData.entries)) {
       rtpData.entries.forEach((entry) => {
-        // Support full-name fields AND minified single-letter fields (a/b/c/d).
-        const multiplier = Number(entry?.multiplier ?? entry?.payout ?? entry?.c);
-        if (Number.isNaN(multiplier)) return;
-
-        // Must map symbol from backend symbol id to frontend spriteMap index.
-        const rawSymbol = entry?.symbolId ?? entry?.symIdx ?? entry?.symbol?.id ?? entry?.symbol ?? entry?.a;
-        let symbolId = -1;
-        if (typeof rawSymbol === 'number') {
-          symbolId = rawSymbol;
-        } else if (rawSymbol != null) {
-          const s = String(rawSymbol).trim();
-          const parsed = Number(s);
-          symbolId = Number.isNaN(parsed) ? _resolveSymIdx(s) : parsed;
-        }
-        if (symbolId < 0 || symbolId >= spriteMap.length) return;
-
-        // count: try explicit fields first, then extract ×N from description (field b).
-        let count = Number(entry?.count ?? entry?.matchCount ?? entry?.hitCount);
-        if (Number.isNaN(count)) {
-          const combo = String(entry?.combo ?? entry?.b ?? '');
-          const m = combo.match(/×\s*(\d+)/);
-          if (m) count = Number(m[1]);
-        }
-        if (Number.isNaN(count) || count < 1) return;
-
-        rows.push({ symbolId, count: Math.min(3, Math.floor(count)), multiplier });
+        const parsed = _parseRtpEntry(entry);
+        if (parsed) rows.push(parsed);
       });
     }
 
-    // Fallback for legacy map/array paytable formats.
+    // Fallback for legacy map/array paytable formats (no combo string available).
     if (rows.length === 0) {
       const paytable = rtpData.paytable ?? rtpData;
       if (Array.isArray(paytable)) {
         paytable.forEach((entry) => {
           const symbolId = Number(entry?.symbolId ?? entry?.symIdx ?? entry?.symbol);
-          const count = Number(entry?.count ?? entry?.matchCount);
+          const count = Math.min(3, Math.floor(Number(entry?.count ?? entry?.matchCount)));
           const multiplier = Number(entry?.multiplier ?? entry?.payout);
-          if (Number.isNaN(symbolId) || Number.isNaN(count) || Number.isNaN(multiplier)) return;
+          if (isNaN(symbolId) || isNaN(count) || isNaN(multiplier)) return;
           if (symbolId < 0 || symbolId >= spriteMap.length) return;
-          rows.push({ symbolId, count: Math.min(3, Math.floor(count)), multiplier });
+          rows.push({ symIds: Array(count).fill(symbolId), multiplier });
         });
       } else if (paytable && typeof paytable === 'object') {
         Object.keys(paytable).forEach((sid) => {
           const symbolId = Number(sid);
-          if (Number.isNaN(symbolId) || symbolId < 0 || symbolId >= spriteMap.length) return;
-          const counts = paytable[sid] || {};
-          Object.keys(counts).forEach((c) => {
-            const count = Number(c);
-            const multiplier = Number(counts[c]);
-            if (Number.isNaN(count) || Number.isNaN(multiplier)) return;
-            rows.push({ symbolId, count: Math.min(3, Math.floor(count)), multiplier });
+          if (isNaN(symbolId) || symbolId < 0 || symbolId >= spriteMap.length) return;
+          Object.keys(paytable[sid] || {}).forEach((c) => {
+            const count = Math.min(3, Math.floor(Number(c)));
+            const multiplier = Number(paytable[sid][c]);
+            if (isNaN(count) || isNaN(multiplier)) return;
+            rows.push({ symIds: Array(count).fill(symbolId), multiplier });
           });
         });
       }
     }
 
-    // Merge duplicate keys (same symbol + count) and keep the highest multiplier.
+    // Dedup by exact symbol sequence — keeps consolation prizes separate from WILD combos.
     const dedupMap = new Map();
     rows.forEach((row) => {
-      const key = `${row.symbolId}:${row.count}`;
+      const key = row.symIds.join(',');
       const prev = dedupMap.get(key);
       if (!prev || row.multiplier > prev.multiplier) {
         dedupMap.set(key, row);
