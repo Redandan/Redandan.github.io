@@ -640,27 +640,11 @@ html, body { width:100%; height:var(--app-height, 100dvh); overflow:hidden; back
 
 /* Balance row */
 #ctrl-row2{
-  display:grid;
-  grid-template-columns:1fr minmax(156px,1.25fr) 1fr;
+  display:flex;
   align-items:center;
-  gap:8px;
-  padding:3px 6px 2px;
+  justify-content:space-between;
+  padding:3px 12px 2px;
   border-top:1px solid rgba(139,96,16,.35);
-  position:relative;
-}
-#ctrl-row2::before{
-  content:'';
-  position:absolute;
-  left:50%;
-  transform:translateX(-50%);
-  top:-6px;
-  bottom:0;
-  width:min(182px,56%);
-  border-radius:12px 12px 10px 10px;
-  background:linear-gradient(180deg,rgba(34,28,88,.92),rgba(10,8,34,.96));
-  box-shadow:0 0 10px rgba(84,102,255,.2);
-  pointer-events:none;
-  z-index:0;
 }
 .bal-item{display:flex; align-items:center; gap:5px; font-size:12px}
 .bal-item-left{justify-self:start}
@@ -668,34 +652,9 @@ html, body { width:100%; height:var(--app-height, 100dvh); overflow:hidden; back
 .bal-icon{font-size:14px}
 .bal-lbl{color:#8888cc; font-size:10px; letter-spacing:.3px}
 .bal-val{color:#c0ccff; font-weight:bold; font-size:14px; min-width:54px}
-.bal-center-item{
-  justify-self:center;
-  align-self:stretch;
-  display:flex;
-  align-items:stretch;
-  position:relative;
-  z-index:1;
-}
 .bal-item-left,.bal-item-right{position:relative; z-index:1}
-.bal-center-badge{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  width:100%;
-  min-width:142px;
-  min-height:100%;
-  padding:0 12px;
-  border:1px solid rgba(144,152,255,.42);
-  border-radius:12px;
-  background:linear-gradient(180deg,rgba(36,30,96,.98),rgba(12,10,42,.98));
-  color:#c0ccff;
-  font-size:12px;
-  font-weight:bold;
-  letter-spacing:.5px;
-  text-shadow:0 0 6px rgba(192,204,255,.35);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 0 14px rgba(90,110,255,.22);
-  white-space:nowrap;
-}
+/* Bet amount shown as cb-label under the + button */
+#bet-label{ font-size:10px; color:#c0ccff; font-weight:bold; letter-spacing:.3px }
 
 /* ============================================================
    7. LOG PANEL
@@ -1161,9 +1120,6 @@ html, body { width:100%; height:var(--app-height, 100dvh); overflow:hidden; back
         <span class="bal-icon"><svg class="sym-icon"><use href="#sym-diamond"/></svg></span>
         <span class="bal-lbl">餘額</span>
         <span class="bal-val" id="balance-val">—</span>
-      </div>
-      <div class="bal-center-item">
-        <span class="bal-center-badge" id="spin-status">單注 USDT 2.50</span>
       </div>
       <div class="bal-item bal-item-right">
         <span class="bal-icon"><svg class="sym-icon"><use href="#sym-star"/></svg></span>
@@ -2021,7 +1977,7 @@ const balanceEl = document.getElementById('balance-val');
 const winEl     = document.getElementById('win-val');
 const betLabel  = document.getElementById('bet-label');
 const spinBtn   = document.getElementById('spin-btn');
-const spinStatusEl = document.getElementById('spin-status');
+const spinStatusEl = null; // removed — bet amount is now shown in bet-label (cb-label under + button)
 
 // ── Host init callback ────────────────────────────────────────────────────────
 // Defined HERE (after balanceEl / winEl / spinBtn) so the adapter's retry loop
@@ -2089,24 +2045,22 @@ setTimeout(function _paytableReadyFallback() {
   addLog('賠率表加載超時，以默認賠率繼續', 'warn');
   _checkAndUnlockSpin();
 }, 12000);
-// betLabel cb-label stays as static "投注"; amount is shown in row2 spin-status badge.
 const jackpotMarqueeTextEl = document.getElementById('jackpot-marquee-text');
 
+// Bet amount is shown directly as the cb-label under the + button.
 function refreshSpinStatus() {
-  if (!spinStatusEl) return;
-  const modeLabel = window.__hostDemoMode ? '試玩' : '每注';
-  spinStatusEl.textContent = `${modeLabel} USDT ${(currentBet() / 100).toFixed(2)}`;
-  spinStatusEl.style.color = '';
+  if (betLabel) betLabel.textContent = (currentBet() / 100).toFixed(2);
 }
 
 let _statusToastTimer = null;
-/** Briefly show an error/info message in the spin-status badge, then restore normal text. */
+/** Briefly show a toast message as the bet label, then restore the amount. */
 function showStatusToast(msg, colorHex, durationMs = 2200) {
-  if (!spinStatusEl) return;
+  if (!betLabel) return;
   clearTimeout(_statusToastTimer);
-  spinStatusEl.textContent = msg;
-  spinStatusEl.style.color = colorHex;
+  betLabel.textContent = msg;
+  betLabel.style.color = colorHex;
   _statusToastTimer = setTimeout(() => {
+    betLabel.style.color = '';
     refreshSpinStatus();
   }, durationMs);
 }
@@ -2252,9 +2206,7 @@ document.getElementById('btn-bet').addEventListener('click', () => {
   betIdx = (betIdx + 1) % BET_LEVELS.length;
   refreshSpinStatus();
   // Flash the row2 badge to signal the bet change
-  spinStatusEl.style.animation = 'none';
-  void spinStatusEl.offsetWidth;
-  spinStatusEl.style.animation = 'betFlash .4s ease';
+  if (betLabel) { betLabel.style.animation = 'none'; void betLabel.offsetWidth; betLabel.style.animation = 'betFlash .4s ease'; }
 });
 
 // ===== Function menu (≡ button) =====
