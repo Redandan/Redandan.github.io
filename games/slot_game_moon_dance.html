@@ -2503,8 +2503,8 @@ async function doSpin() {
   // Delegate transport to the loaded adapter (flutter_adapter.js / tg_adapter.js).
   const _hostSpinResult = await window.__gameHost?.spin({
     betIndex:     betIdx,
-    // Keep request amount in the same units as BET_LEVELS (100 units = 1 USDT).
-    betAmount:    currentBet(),
+    // Backend expects USDT amount; BET_LEVELS is stored as display units ×100.
+    betAmount:    currentBet() / 100,
     mode:         _spinMode,
     clientSeed:   generateClientSeed(),
     nonce:        Date.now().toString(),
