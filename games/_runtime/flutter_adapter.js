@@ -483,9 +483,8 @@
           } catch (_) {}
           window.history.back();
         } else if (dest === 'deposit' || dest === 'withdraw') {
-          // Navigate to the actual Flutter wallet routes.
-          var walletPath = dest === 'deposit' ? '/#/wallet/deposit' : '/#/wallet/withdraw';
-          window.location.replace(walletPath);
+          // Navigate to the Flutter PWA route for deposit/withdraw.
+          window.location.replace('/#/' + dest);
         }
       } else {
         _log(`navigate(${dest}): 無可用入口（非 bridge / 非 iframe）`, 'warn');

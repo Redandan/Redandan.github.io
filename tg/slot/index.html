@@ -19,13 +19,9 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     (function () {
+      var API_BASE = 'https://agoramarketapi.purrtechllc.com/api';
       var statusEl = document.getElementById('status');
       function setStatus(t) { if (statusEl) statusEl.textContent = t; }
-
-      function resolveGameId() {
-        var game = new URLSearchParams(window.location.search).get('game');
-        return game && game.trim() ? game.trim() : 'moon_dance';
-      }
 
       var tg = window.Telegram && window.Telegram.WebApp;
       if (!tg) { setStatus('請在 Telegram 中開啟'); return; }
@@ -35,14 +31,73 @@
       var initData = String(tg.initData || '').trim();
       if (!initData) { setStatus('無法取得 Telegram 身分資訊'); return; }
 
-      try {
-        var gameId = resolveGameId();
-        setStatus('進入遊戲中...');
-        window.location.replace('/#/games/' + encodeURIComponent(gameId));
-      } catch (err) {
-        console.error('[tg/slot] error:', err);
-        setStatus('載入錯誤，請重試');
-      }
+      (async function () {
+        try {
+          setStatus('驗證身分中...');
+          var resp = await fetch(API_BASE + '/auth/telegram-webapp/exchange-jwt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ initData: initData }),
+          });
+          if (!resp.ok) {
+            var txt = ''; try { txt = await resp.text(); } catch (_) {}
+            console.error('[tg/slot] auth failed:', resp.status, txt);
+            setStatus('登入失敗 (' + resp.status + ')');
+            return;
+          }
+          var json = await resp.json();
+          var body = json.data != null ? json.data : json;
+          var jwt = String(body.jwt || body.token || body.accessToken || '').trim();
+          if (!jwt) { setStatus('登入失敗（無 token）'); return; }
+
+          var userInfo = body.userInfo || body || {};
+          var balance = Number(
+            userInfo.balance != null ? userInfo.balance :
+            body.balance != null ? body.balance : 0
+          );
+          if (isNaN(balance)) balance = 0;
+
+          // exchange-jwt may not include balance — fetch real balance from /auth/me
+          setStatus('取得餘額中...');
+          try {
+            var meResp = await fetch(API_BASE + '/auth/me', {
+              headers: { 'Authorization': 'Bearer ' + jwt },
+            });
+            if (meResp.ok) {
+              var meJson = await meResp.json();
+              var meBody = meJson.data != null ? meJson.data : meJson;
+              var meUser = meBody.userInfo || meBody || {};
+              var realBal = Number(
+                meUser.balance != null ? meUser.balance :
+                meBody.balance != null ? meBody.balance : balance
+              );
+              if (!isNaN(realBal)) balance = realBal;
+            }
+          } catch (_) {}
+
+          // Read TG safe area before navigating away (unavailable after redirect)
+          var safeTop = 0;
+          try {
+            safeTop = (tg.safeAreaInsets && tg.safeAreaInsets.top || 0) +
+                      (tg.contentSafeAreaInsets && tg.contentSafeAreaInsets.top || 0);
+          } catch (_) {}
+
+          // Store for flutter_adapter.js self-host path
+          localStorage.setItem('_flutter_game_jwt',         jwt);
+          localStorage.setItem('_flutter_game_balance',     balance.toFixed(4));
+          localStorage.setItem('_flutter_game_api_base',    API_BASE);
+          localStorage.setItem('_flutter_game_id',          'moon_dance');
+          localStorage.setItem('_flutter_game_tg_safe_top', String(safeTop));
+
+          setStatus('進入遊戲中...');
+          // Use ?hosted=1 so viewport_manager enables the TG safe-area offset logic.
+          // flutter_adapter.js treats hosted=1 the same as flutter=1 for self-host transport.
+          window.location.replace('/games/slot_game_moon_dance.html?hosted=1&_ts=' + Date.now());
+        } catch (err) {
+          console.error('[tg/slot] error:', err);
+          setStatus('載入錯誤，請重試');
+        }
+      })();
     })();
   </script>
 </body>

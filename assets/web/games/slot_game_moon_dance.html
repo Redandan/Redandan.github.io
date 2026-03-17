@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8" />
@@ -800,8 +800,9 @@ html, body { width:100%; height:var(--app-height, 100dvh); overflow:hidden; back
 .txn-empty{ text-align:center; color:#555; padding:32px 0; font-size:14px; }
 .txn-spinner{ text-align:center; color:#6065d8; padding:24px 0; font-size:22px; }
 
+
 /* ============================================================
-   10. BIG WIN OVERLAY
+   11. BIG WIN OVERLAY
    ============================================================ */
 #big-win{
   position:fixed; inset:0; z-index:500; pointer-events:none;
@@ -1188,6 +1189,8 @@ html, body { width:100%; height:var(--app-height, 100dvh); overflow:hidden; back
   </div>
 </div>
 
+<!-- Wallet panel injected by wallet_panel.js -->
+
 <!-- Loading screen overlay -->
 <div id="game-loader">
   <div id="gl-inner">
@@ -1250,6 +1253,7 @@ import { createViewportManager } from './_runtime/viewport_manager.js';
 import { createLogManager } from './_runtime/log_manager.js';
 import { createMenuManager } from './_runtime/menu_manager.js';
 import { createAnimationLoopManager } from './_runtime/animation_loop_manager.js';
+import { initWalletPanel, openWalletPanel, closeWalletPanel, walletIsOpen, walletUpdateBalance } from './_runtime/wallet_panel.js';
 
 // ── Early game-state declarations ────────────────────────────────────────────
 // Declared here (before any event listeners or IIFEs) so that `applyBalance()`
@@ -2086,6 +2090,7 @@ function refreshJackpotBanner() {
 
 function updateBalanceDisplay() {
   balanceEl.textContent = 'USDT ' + (balance / 100).toFixed(2);
+  walletUpdateBalance(balance / 100);
   refreshSpinStatus();
   refreshJackpotBanner();
 }
@@ -2447,6 +2452,7 @@ async function _loadTxnPage(refresh) {
 }
 
 function openTxnPanel() {
+  if (walletIsOpen()) closeWalletPanel();
   txnPanel.style.display = 'flex';
   txnBackdrop.classList.add('open');
   // Force reflow so transition plays
@@ -2465,6 +2471,10 @@ function closeTxnPanel() {
 
 function _goPage(dest) {
   document.getElementById('menu-popup').classList.remove('open');
+  if (dest === 'deposit' || dest === 'withdraw') {
+    openWalletPanel(dest);
+    return;
+  }
   window.__gameHost?.navigate(dest);
 }
 
@@ -2479,6 +2489,23 @@ document.getElementById('menu-txn').addEventListener('click', () => {
 document.getElementById('txn-close').addEventListener('click', closeTxnPanel);
 txnBackdrop.addEventListener('click', closeTxnPanel);
 txnLoadMore.addEventListener('click', () => _loadTxnPage(false));
+
+initWalletPanel({
+  getToken:        () => window.__agoraAuth?.token || localStorage.getItem('_flutter_game_jwt') || '',
+  getBalance:      () => window.__gameHost?.getBalance?.(),
+  onBalanceChange: (usdt) => {
+    balance = Math.round(usdt * 100);
+    window.__hostDemoMode = usdt < 0.25;
+    updateBalanceDisplay();
+  },
+  onLog:        (msg, level) => addLog(msg, level),
+  onBeforeOpen: () => closeTxnPanel(),
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (walletIsOpen()) closeWalletPanel();
+  else if (txnPanel.classList.contains('open')) closeTxnPanel();
+});
 
 // ── Paytable evaluation ──────────────────────────────────────────────────────
 // IMPORTANT: Runtime visuals come from symbols.png + spriteMap (not SVG labels)
