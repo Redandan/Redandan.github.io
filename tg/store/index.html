@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>AgoraMarket</title>
+  <style>
+    html, body {
+      margin: 0; width: 100%; height: 100%;
+      background: #0a0a0a;
+      display: flex; align-items: center; justify-content: center;
+    }
+    p { color: #c0ccff; font-family: Arial, sans-serif; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <p id="status">載入中...</p>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    (function () {
+      var API_BASE = 'https://agoramarketapi.purrtechllc.com/api';
+      var statusEl = document.getElementById('status');
+      function setStatus(t) { if (statusEl) statusEl.textContent = t; }
+
+      var tg = window.Telegram && window.Telegram.WebApp;
+      if (!tg) { setStatus('請在 Telegram 中開啟'); return; }
+      tg.ready();
+      tg.expand();
+
+      var initData = String(tg.initData || '').trim();
+      if (!initData) { setStatus('無法取得 Telegram 身分資訊'); return; }
+
+      (async function () {
+        try {
+          setStatus('驗證身分中...');
+          var resp = await fetch(API_BASE + '/auth/telegram-webapp/exchange-jwt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ initData: initData }),
+          });
+          if (!resp.ok) {
+            var txt = ''; try { txt = await resp.text(); } catch (_) {}
+            console.error('[tg/store] auth failed:', resp.status, txt);
+            setStatus('登入失敗 (' + resp.status + ')');
+            return;
+          }
+
+          var json = await resp.json();
+          var body = json.data != null ? json.data : json;
+          var jwt = String(body.jwt || body.token || body.accessToken || '').trim();
+          if (!jwt) { setStatus('登入失敗（無 token）'); return; }
+
+          var userInfo = body.userInfo || body || {};
+          var userId = String(userInfo.id || userInfo.userId || body.userId || '');
+          var userRole = String(userInfo.role || body.role || 'USER').toUpperCase();
+
+          // 儲存至 localStorage，Flutter 啟動時讀取
+          localStorage.setItem('_tg_store_jwt',  jwt);
+          localStorage.setItem('_tg_store_uid',  userId);
+          localStorage.setItem('_tg_store_role', userRole);
+
+          // 決定跳轉目標，優先順序：
+          //   1. start_param（t.me 深連結）：product_123 / seller_456
+          //   2. URL query param（直連）：?type=product&id=123 / ?type=seller&id=456
+          //   3. fallback → /#/
+          var target = '/#/';
+          try {
+            var startParam = String(
+              (tg.initDataUnsafe && tg.initDataUnsafe.start_param) || ''
+            ).trim();
+            var qp = new URLSearchParams(window.location.search);
+
+            if (startParam.startsWith('product_')) {
+              var pid = startParam.slice('product_'.length);
+              if (pid) target = '/#/products/' + encodeURIComponent(pid);
+            } else if (startParam.startsWith('seller_')) {
+              var sid = startParam.slice('seller_'.length);
+              if (sid) target = '/#/store/' + encodeURIComponent(sid);
+            } else if (qp.get('type') === 'product' && qp.get('id')) {
+              target = '/#/products/' + encodeURIComponent(qp.get('id'));
+            } else if (qp.get('type') === 'seller' && qp.get('id')) {
+              target = '/#/store/' + encodeURIComponent(qp.get('id'));
+            }
+          } catch (_) {}
+
+          setStatus('進入商城中...');
+          window.location.replace(target);
+        } catch (err) {
+          console.error('[tg/store] error:', err);
+          setStatus('載入錯誤，請重試');
+        }
+      })();
+    })();
+  </script>
+</body>
+</html>
