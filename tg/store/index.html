@@ -27,6 +27,9 @@
       if (!tg) { setStatus('請在 Telegram 中開啟'); return; }
       tg.ready();
       tg.expand();
+      if (typeof tg.requestFullscreen === 'function') {
+        tg.requestFullscreen();
+      }
 
       var initData = String(tg.initData || '').trim();
       if (!initData) { setStatus('無法取得 Telegram 身分資訊'); return; }
