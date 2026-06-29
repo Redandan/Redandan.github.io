@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- 針對 HTML 文件的緩存控制 - 短期緩存以便 Service Worker 處理 -->
+    <meta http-equiv="Cache-Control" content="max-age=300, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <!-- 版本化緩存標識 -->
+    <meta name="cache-version" content="1.0.1807">
+  <base href="/">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <!-- ???????????????????????????????????????????HTML -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  
+  <!-- Permissions Policy -->
+  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(self), notifications=(self), payment=(), publickey-credentials-get=(self), publickey-credentials-create=(self)">
+  
+  <meta name="description" content="Agora Market - Your Trading Community">
+  <meta name="keywords" content="marketplace, shopping, trading, agora">
+  <meta name="author" content="Agora Market">
+  <meta name="robots" content="index, follow">
+  <meta name="version" content="1.0.1807+1807">
+
+  <!-- Fix 1: Removed vh-based viewport logic - conflicts with visualViewport root model -->
+  
+  <script>
+    // Early global error diagnostics to capture exact source of prod-only failures
+    (function(){
+      if (window.__errorHooksInstalled) return; window.__errorHooksInstalled = true;
+      window.addEventListener('error', function(event){
+        try {
+          console.error('[FATAL_ERROR]', {
+            message: event.message,
+            filename: event.filename,
+            lineno: event.lineno,
+            colno: event.colno,
+            stack: event.error && event.error.stack || null
+          });
+        } catch(_) {}
+      });
+      window.addEventListener('unhandledrejection', function(event){
+        try {
+          console.error('[UNHANDLED_REJECTION]', {
+            reason: (event && event.reason) || null
+          });
+        } catch(_) {}
+      });
+      console.log('[DIAG] index.html diagnostics installed, version meta:', (document.querySelector('meta[name="version"]')||{}).content);
+    })();
+
+  </script>
+  
+  <script>
+    (function () {
+      'use strict';
+
+      function isIOSStandaloneStartup() {
+        try {
+          var ua = navigator.userAgent || '';
+          var maxTouchPoints = Number(navigator.maxTouchPoints || 0);
+          var isIOS = /iPad|iPhone|iPod/.test(ua) ||
+            (/Macintosh/.test(ua) && maxTouchPoints > 1);
+          if (!isIOS) return false;
+          return window.matchMedia('(display-mode: standalone)').matches ||
+            window.matchMedia('(display-mode: fullscreen)').matches ||
+            window.matchMedia('(display-mode: minimal-ui)').matches ||
+            window.navigator.standalone === true;
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function revealStartupLoading(reason) {
+        var root = document.documentElement;
+        if (!root) return;
+        root.classList.add('agora-startup-layout-ready');
+        root.classList.remove('agora-startup-layout-pending');
+        window.__AGORA_STARTUP_REVEAL_REASON = reason || 'ready';
+      }
+
+      window.__AGORA_REVEAL_STARTUP_LOADING = revealStartupLoading;
+
+      if (isIOSStandaloneStartup()) {
+        document.documentElement.classList.add(
+          'agora-ios-standalone-startup',
+          'agora-startup-layout-pending'
+        );
+        window.__AGORA_STARTUP_REVEAL_REASON = 'pending';
+        setTimeout(function () {
+          revealStartupLoading('fallback-timeout');
+        }, 1800);
+      } else {
+        revealStartupLoading('not-ios-standalone');
+      }
+    })();
+  </script>
+
+
+  <style>
+    #update-banner {
+      position: fixed;
+      left: 16px;
+      right: 16px;
+      bottom: 16px;
+      z-index: 10000;
+      display: none;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: rgba(0,0,0,0.85);
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    }
+    #update-banner button {
+      margin-left: 12px;
+      padding: 6px 10px;
+      border: 0;
+      border-radius: 6px;
+      background: #6A4C93;
+      color: #fff;
+      cursor: pointer;
+    }
+  </style>
+
+  <!-- Cross-Origin Isolation Headers for SharedArrayBuffers -->
+  
+
+  <!-- Viewport meta tags for proper mobile scaling -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  
+  <!-- theme-color: ?????????????????????????????????????????????????media query ???????????????????? -->
+  <meta name="theme-color" content="#1A1A1A">
+  <!-- ??????????????????????????????????????-->
+  <meta name="theme-color" content="#1A1A1A" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#2196F3" media="(prefers-color-scheme: light)">
+
+  <!-- Material Icons Font for Web -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <!-- ???????black-translucent ????????????????????????????????????????????????? -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Agora Market">
+  
+  <!-- iOS icon -->
+  <link rel="apple-touch-icon" href="icons/new_favicon/apple-touch-icon.png">
+
+  <!-- iOS splash screens -->
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3)" href="splash/iPhone_16_Pro_portrait_blank_v4.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)" href="splash/iPhone_14_Pro_Max_portrait_blank_v4.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)" href="splash/iPhone_14_Pro_portrait_blank_v4.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)" href="splash/iPhone_14_Plus_portrait_blank_v4.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)" href="splash/iPhone_14_portrait_blank_v4.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="icons/new_favicon/favicon.svg">
+  <link rel="icon" type="image/png" sizes="96x96" href="icons/new_favicon/favicon-96x96.png">
+  <link rel="icon" type="image/x-icon" href="icons/new_favicon/favicon.ico">
+  <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
+
+  <title>Agora Market</title>
+  <link rel="manifest" href="manifest.json?v=1.0.1807">
+  
+  <!-- PWA ?????????????????? -->
+  <meta name="application-name" content="Agora Market">
+  <meta name="msapplication-TileColor" content="#2196F3">
+  <meta name="msapplication-tap-highlight" content="no">
+  
+  <!-- ???????????????????????????????????????????? -->
+  <link rel="preload" href="flutter_bootstrap.1.0.1807.js" as="script">
+  <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+  <!-- API server preconnect ?????? DNS+TLS handshake???????????API ??????100-200ms -->
+  <link rel="preconnect" href="https://agoramarketapi.purrtechllc.com" crossorigin>
+  <link rel="dns-prefetch" href="https://agoramarketapi.purrtechllc.com">
+  <!-- canvaskit CDN fallback?????main ????????????????????? Flutter ??fallback ??gstatic??->
+  <link rel="dns-prefetch" href="https://www.gstatic.com">
+  
+  <!-- SEO ?????????????Open Graph - ???????PNG -->
+  <meta property="og:title" content="Agora Market">
+  <meta property="og:description" content="Agora Market - Your Trading Community">
+  <meta property="og:image" content="/icons/new_favicon/web-app-manifest-512x512.png">
+  <meta property="og:image:secure_url" content="/icons/new_favicon/web-app-manifest-512x512.png">
+  <meta property="og:url" content="https://redandan.github.io">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="zh_TW">
+  
+  <!-- Twitter Card - ???????PNG -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Agora Market">
+  <meta name="twitter:description" content="Agora Market - Your Trading Community">
+  <meta name="twitter:image" content="/icons/new_favicon/web-app-manifest-512x512.png">
+  <meta name="twitter:image:src" content="/icons/new_favicon/web-app-manifest-512x512.png">
+  
+  <style>
+    :root {
+      --startup-canvas: #0b0d12;
+      --startup-text: #ffffff;
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --startup-canvas: #f6f8fb;
+        --startup-text: #182234;
+      }
+    }
+
+    /* Patch 1: Removed all position: fixed - root cause of iOS 17 touch offset */
+    
+    /* Patch 3: Apple official viewport CSS */
+    html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      -webkit-text-size-adjust: 100%;
+      background: var(--startup-canvas);
+      overscroll-behavior: none;
+      touch-action: manipulation;
+    }
+
+    /* Final iOS 17 fix: body relative (Apple-approved, viewport handled by #flutter-root) */
+    body {
+      position: relative;
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      -webkit-text-size-adjust: 100%;
+      background: var(--startup-canvas);
+      overscroll-behavior: none;
+      touch-action: manipulation;
+    }
+
+    #flutter-root {
+      /* iOS 17+ PWA: avoid position: fixed (WebKit visualViewport desync trigger) */
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      will-change: transform;
+      transform-origin: 0 0;
+      overflow: hidden;
+      /* iOS standalone overrides width/height from the visualViewport sync script. */
+    }
+
+    #flutter-root flutter-view,
+    #flutter-root flt-glass-pane,
+    #flutter-root flt-scene-host {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    #loading-screen {
+      /*
+       * Startup-only overlay. Keep it outside the transformed Flutter root and
+       * avoid position: fixed because iOS standalone PWA can offset fixed
+       * elements during the launch viewport transition.
+       */
+      position: absolute;
+      inset: 0;
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      background: #0b0d12;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      pointer-events: auto;
+      color: var(--startup-text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      overflow: hidden;
+    }
+
+    html.agora-ios-standalone-startup:not(.agora-startup-layout-ready) body.flutter-ready #loading-screen,
+    html.agora-ios-standalone-startup:not(.agora-startup-layout-ready) body.flutter-ready.immediate #loading-screen {
+      display: flex !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform: none !important;
+      transition: none !important;
+      pointer-events: auto !important;
+    }
+
+    .loading-text {
+      padding: calc(16px + env(safe-area-inset-top, 0)) calc(20px + env(safe-area-inset-right, 0)) calc(16px + env(safe-area-inset-bottom, 0)) calc(20px + env(safe-area-inset-left, 0));
+      color: var(--startup-text);
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.4;
+      letter-spacing: 0;
+      text-align: center;
+    }
+    
+    .flutter-ready #loading-screen {
+      opacity: 0;
+      visibility: hidden;
+      transform: scale(0.95);
+      transition: opacity 0.8s ease-out, visibility 0.8s ease-out, transform 0.8s ease-out;
+      pointer-events: none;
+    }
+    
+    /* ???????????????????????????????????????????????*/
+    .flutter-ready.immediate #loading-screen {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      display: none !important;
+      transition: none !important;
+      pointer-events: none !important;
+    }
+    
+    .flutter-ready flt-scene-host,
+    .flutter-ready flt-glass-pane,
+    .flutter-ready canvas {
+      opacity: 1 !important;
+      visibility: visible !important;
+      display: block !important;
+    }
+    
+    .flutter-ready body {
+      background: var(--startup-canvas);
+      padding: 0 !important;
+      /* DO NOT use position: fixed - causes touch offset on iOS 17+ */
+      overflow: hidden;
+    }
+
+    /* Patch 1: Removed all position: fixed from .flutter-ready rules */
+  </style>
+</head>
+<body>
+  <!-- Loading screen lives outside #flutter-root so iOS PWA viewport transforms cannot move it. -->
+  <div id="loading-screen">
+    <div class="loading-text" id="loading-text">&#36617;&#20837;&#20013;...</div>
+  </div>
+
+  <!-- Patch 2: Flutter root container for iOS 17+ touch fix -->
+  <div id="flutter-root">
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      var logs = window.__AGORA_STARTUP_LAYOUT_LOGS = window.__AGORA_STARTUP_LAYOUT_LOGS || [];
+
+      function isStandalone() {
+        try {
+          return window.matchMedia('(display-mode: standalone)').matches ||
+            window.matchMedia('(display-mode: fullscreen)').matches ||
+            window.matchMedia('(display-mode: minimal-ui)').matches ||
+            window.navigator.standalone === true;
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function elementSnapshot(label, element) {
+        if (!element) return label + '=null';
+        try {
+          var rect = element.getBoundingClientRect();
+          var style = window.getComputedStyle(element);
+          return label +
+            ' rect=(' + rect.left.toFixed(1) + ',' + rect.top.toFixed(1) + ',' +
+            rect.width.toFixed(1) + 'x' + rect.height.toFixed(1) + ')' +
+            ' display=' + style.display +
+            ' visibility=' + style.visibility +
+            ' opacity=' + style.opacity +
+            ' background=' + style.backgroundColor +
+            ' position=' + style.position +
+            ' top=' + style.top +
+            ' height=' + style.height +
+            ' transform=' + style.transform;
+        } catch (e) {
+          return label + ' snapshot failed: ' + e.message;
+        }
+      }
+
+      function snapshot(label) {
+        try {
+          var vv = window.visualViewport;
+          var parts = [
+            label,
+            't=' + Math.round(performance.now()),
+            'htmlClasses=' + ((document.documentElement && document.documentElement.className) || ''),
+            'classes=' + ((document.body && document.body.className) || ''),
+            'startupReveal=' + (window.__AGORA_STARTUP_REVEAL_REASON || 'unset'),
+            'standalone=' + isStandalone(),
+            'inner=' + window.innerWidth + 'x' + window.innerHeight,
+            'screen=' + window.screen.width + 'x' + window.screen.height,
+            'dpr=' + window.devicePixelRatio
+          ];
+          if (vv) {
+            parts.push('vv=' + vv.width + 'x' + vv.height +
+              ' offset=(' + vv.offsetLeft + ',' + vv.offsetTop + ')' +
+              ' scale=' + vv.scale);
+          } else {
+            parts.push('vv=null');
+          }
+          parts.push(elementSnapshot('html', document.documentElement));
+          parts.push(elementSnapshot('body', document.body));
+          parts.push(elementSnapshot('loading', document.getElementById('loading-screen')));
+          parts.push(elementSnapshot('flutterRoot', document.getElementById('flutter-root')));
+          logs.push(parts.join(' | '));
+          if (logs.length > 40) logs.shift();
+        } catch (e) {
+          logs.push(label + ' failed: ' + e.message);
+        }
+      }
+
+      snapshot('inline');
+      (window.requestAnimationFrame || function (cb) { return setTimeout(cb, 16); })(function () {
+        snapshot('raf1');
+        (window.requestAnimationFrame || function (cb) { return setTimeout(cb, 16); })(function () {
+          snapshot('raf2');
+        });
+      });
+      setTimeout(function () { snapshot('t60'); }, 60);
+      setTimeout(function () { snapshot('t250'); }, 250);
+      setTimeout(function () { snapshot('t800'); }, 800);
+      setTimeout(function () { snapshot('t1500'); }, 1500);
+      setTimeout(function () { snapshot('t3000'); }, 3000);
+    })();
+  </script>
+  
+  <!-- ????????????????? Flutter ???????????????????????????????????????????? -->
+  <script>
+    (function() {
+      'use strict';
+      
+      // ??????Flutter ??????????????
+      function checkFlutterReady() {
+        // ??????Flutter ???????????????????????????????
+        const hasFlutterElements = document.querySelector('flt-scene-host') !== null ||
+                                  document.querySelector('flt-glass-pane') !== null ||
+                                  document.querySelector('canvas') !== null;
+        
+        // ??????body ???????????flutter-ready ?????????????????????
+        const isAlreadyReady = document.body && document.body.classList.contains('flutter-ready');
+        
+        if (hasFlutterElements || isAlreadyReady) {
+          console.log('[LOADING_SCREEN] Flutter already ready, hiding loading screen immediately (skipping animation)');
+          
+          // ????????????????????????????????
+          if (document.body) {
+            document.body.classList.add('flutter-ready', 'immediate');
+          }
+          
+          // ???? Flutter ??????
+          const flutterElements = document.querySelectorAll('flt-scene-host, flt-glass-pane, canvas');
+          flutterElements.forEach(function(element) {
+            element.style.opacity = '1';
+            element.style.visibility = 'visible';
+            element.style.display = 'block';
+          });
+          
+          return true;
+        }
+        
+        return false;
+      }
+      
+      // ??????????????????????DOM ?????????????????
+      // ???????requestAnimationFrame ???????????????????????Flutter ????????????????????????
+      function scheduleCheck() {
+        if (window.requestAnimationFrame) {
+          requestAnimationFrame(function() {
+            requestAnimationFrame(checkFlutterReady);
+          });
+        } else {
+          setTimeout(checkFlutterReady, 50);
+        }
+      }
+      
+      if (document.readyState === 'loading') {
+        // DOM ???????????????????DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', scheduleCheck);
+      } else {
+        // DOM ?????????????????????
+        scheduleCheck();
+      }
+      
+      // ??????load ???????????????????????????????
+      window.addEventListener('load', function() {
+        setTimeout(checkFlutterReady, 100);
+      }, { once: true });
+
+      setTimeout(function() {
+        if (checkFlutterReady()) return;
+        var loadingText = document.getElementById('loading-text');
+        if (loadingText) {
+          loadingText.textContent = '\u8f09\u5165\u6642\u9593\u8f03\u9577\uff0c\u8acb\u6aa2\u67e5\u7db2\u8def\u6216\u91cd\u65b0\u6574\u7406\u3002';
+        }
+      }, 8000);
+      
+      // ???????????? Flutter ??????????????????MutationObserver??
+      if (document.body) {
+        const observer = new MutationObserver(function(mutations) {
+          if (checkFlutterReady()) {
+            observer.disconnect(); // ???????????????
+          }
+        });
+        
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true
+        });
+        
+        // 5 ???????????????????????????????????????
+        setTimeout(function() {
+          observer.disconnect();
+        }, 5000);
+      }
+    })();
+  </script>
+  
+  <!-- Reverted: remove external scripts that caused production errors -->
+  
+  <!-- Web Push JavaScript API -->
+  <script>
+    // Web Push ?????????????API
+    (function() {
+      'use strict';
+      
+      console.log('[WEB_PUSH_API] Web Push API initializing...');
+      
+      // ??? Web Push API ?????
+      window.WebPushAPI = {
+        
+        /**
+         * ??????????????
+         * @param {string} vapidKey - VAPID ?????????(????????????????????????????????????????????
+         * @param {string} token - ???? token (????????????????????????????????????????????
+         * @returns {Promise<Object>} ???????? (??JSON ????????)
+         */
+        async requestNotificationPermission(vapidKey, token) {
+          console.log('[WEB_PUSH_API] Starting permission request process...');
+          console.log('[WEB_PUSH_API] VAPID Key:', vapidKey ? 'provided' : 'not provided');
+          console.log('[WEB_PUSH_API] Token:', token ? 'provided' : 'not provided');
+          
+          try {
+            // 1. ???????????????????
+            if (!this.checkBrowserSupport()) {
+              throw new Error('Browser does not support Web Push');
+            }
+            
+            // 2. ??????????????
+            const permissionResult = await this.requestPermission();
+            console.log('[WEB_PUSH_API] Permission request result:', permissionResult);
+            
+            if (permissionResult !== 'granted') {
+              return {
+                success: false,
+                status: permissionResult,
+                error: 'Permission denied: ' + permissionResult
+              };
+            }
+            
+            // 3. ????????????????????????????????
+            const subscriptionData = await this.createPushSubscription(vapidKey);
+            console.log('[WEB_PUSH_API] Push subscription created successfully');
+            
+            // ????? JSON ???????????????????????????????????????
+            const result = {
+              success: true,
+              status: 'permission_granted',
+              subscriptionData: subscriptionData
+            };
+            console.log('[WEB_PUSH_API] Returning result:', result);
+            return JSON.stringify(result);
+            
+          } catch (error) {
+            console.error('[WEB_PUSH_API] Permission request failed:', error);
+            const errorResult = {
+              success: false,
+              status: 'permission_error',
+              error: error.message
+            };
+            console.log('[WEB_PUSH_API] Returning error result:', errorResult);
+            return JSON.stringify(errorResult);
+          }
+        },
+        
+        /**
+         * ???????????????????
+         * @returns {boolean} ?????????
+         */
+        checkBrowserSupport() {
+          const hasServiceWorker = 'serviceWorker' in navigator;
+          const hasPushManager = 'PushManager' in window;
+          const hasNotification = 'Notification' in window;
+          
+          console.log('[WEB_PUSH_API] Browser support check:');
+          console.log('  - Service Worker:', hasServiceWorker);
+          console.log('  - Push Manager:', hasPushManager);
+          console.log('  - Notification:', hasNotification);
+          
+          return hasServiceWorker && hasPushManager && hasNotification;
+        },
+        
+        /**
+         * ??????????????
+         * @returns {Promise<string>} ????????
+         */
+        async requestPermission() {
+          console.log('[WEB_PUSH_API] Requesting notification permission...');
+          
+          if (Notification.permission === 'granted') {
+            console.log('[WEB_PUSH_API] Permission already granted');
+            return 'granted';
+          }
+          
+          if (Notification.permission === 'denied') {
+            console.log('[WEB_PUSH_API] Permission already denied');
+            return 'denied';
+          }
+          
+          // ????????
+          const permission = await Notification.requestPermission();
+          console.log('[WEB_PUSH_API] Permission request result:', permission);
+          
+          return permission;
+        },
+        
+        /**
+         * ??????????????????????????
+         * @param {string} vapidKey - VAPID ?????????
+         * @returns {Promise<Object>} ???????
+         */
+        async createPushSubscription(vapidKey) {
+          console.log('[WEB_PUSH_API] Starting push subscription creation...');
+          
+          try {
+            // 1. ?????????Flutter????????ice Worker ????
+            const registration = await navigator.serviceWorker.ready;
+            console.log('[WEB_PUSH_API] Using existing Service Worker registration');
+            
+            // 2. ??????????????????????????
+            const subscription = await registration.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: this.urlBase64ToUint8Array(vapidKey)
+            });
+            
+            console.log('[WEB_PUSH_API] Push subscription created successfully');
+            console.log('[WEB_PUSH_API] Subscription endpoint:', subscription.endpoint);
+            
+            // 3. ??????????????????????????????????
+            const deviceInfo = this.generateDeviceInfo();
+            const subscriptionData = {
+              endpoint: subscription.endpoint,
+              keys: {
+                p256dh: this.arrayBufferToBase64(subscription.getKey('p256dh')),
+                auth: this.arrayBufferToBase64(subscription.getKey('auth'))
+              },
+              userAgent: deviceInfo.userAgent,
+              deviceType: deviceInfo.deviceType,
+              deviceName: deviceInfo.deviceName
+            };
+            
+            return subscriptionData;
+            
+          } catch (error) {
+            console.error('[WEB_PUSH_API] Push subscription creation failed:', error);
+            throw new Error('Push subscription creation failed: ' + error.message);
+          }
+        },
+        
+        /**
+         * ???????????????????????
+         * @returns {Object} ????????????????????
+         */
+        generateDeviceInfo() {
+          const userAgent = navigator.userAgent;
+          const deviceName = navigator.platform + ' - ' + (navigator.userAgentData?.brands?.[0]?.brand || 'Unknown Browser');
+          const deviceId = this.generateDeviceId();
+          const browserInfo = {
+            name: navigator.userAgentData?.brands?.[0]?.brand || 'Unknown',
+            version: navigator.userAgentData?.brands?.[0]?.version || 'Unknown',
+            platform: navigator.platform,
+            userAgent: userAgent
+          };
+          const screenInfo = {
+            width: screen.width,
+            height: screen.height,
+            colorDepth: screen.colorDepth,
+            pixelDepth: screen.pixelDepth
+          };
+          
+          return {
+            userAgent,
+            deviceType: 'web',
+            deviceName,
+            deviceId,
+            browserInfo,
+            screenInfo
+          };
+        },
+        
+        /**
+         * ??????????????? ID
+         * @returns {string} ???????????? ID
+         */
+        generateDeviceId() {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          ctx.textBaseline = 'top';
+          ctx.font = '14px Arial';
+          ctx.fillText('Device fingerprint', 2, 2);
+          
+          const fingerprint = [
+            navigator.userAgent,
+            navigator.language,
+            screen.width + 'x' + screen.height,
+            new Date().getTimezoneOffset(),
+            canvas.toDataURL()
+          ].join('|');
+          
+          // ???????hash ?????
+          let hash = 0;
+          for (let i = 0; i < fingerprint.length; i++) {
+            const char = fingerprint.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // ???????32 ??????
+          }
+          
+          return Math.abs(hash).toString(36);
+        },
+        
+        /**
+         * ??VAPID ???????????????Uint8Array
+         * @param {string} base64String - Base64 ????????
+         * @returns {Uint8Array} Uint8Array
+         */
+        urlBase64ToUint8Array(base64String) {
+          const padding = '='.repeat((4 - base64String.length % 4) % 4);
+          const base64 = (base64String + padding)
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+          
+          const rawData = window.atob(base64);
+          const outputArray = new Uint8Array(rawData.length);
+          
+          for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+          }
+          
+          return outputArray;
+        },
+        
+        /**
+         * ??ArrayBuffer ???????Base64
+         * @param {ArrayBuffer} buffer - ArrayBuffer
+         * @returns {string} Base64 ????????
+         */
+        arrayBufferToBase64(buffer) {
+          const bytes = new Uint8Array(buffer);
+          let binary = '';
+          for (let i = 0; i < bytes.byteLength; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          return window.btoa(binary);
+        }
+      };
+      
+      console.log('[WEB_PUSH_API] Web Push API initialization completed');
+      
+      // ??????????????Flutter ??????
+      window.requestNotificationPermission = window.WebPushAPI.requestNotificationPermission.bind(window.WebPushAPI);
+      
+    })();
+  </script>
+
+  <!-- iOS 17+ PWA visualViewport synchronizer (single source of truth) -->
+  <script>
+    (function () {
+      'use strict';
+
+      const ua = navigator.userAgent || '';
+      const maxTouchPoints = Number(navigator.maxTouchPoints || 0);
+      const isIOS = /iPad|iPhone|iPod/.test(ua) ||
+            (/Macintosh/.test(ua) && maxTouchPoints > 1);
+      const isStandalone = (function () {
+        try {
+          return window.matchMedia('(display-mode: standalone)').matches ||
+                 window.navigator.standalone === true ||
+                 window.matchMedia('(display-mode: fullscreen)').matches;
+        } catch (_) {
+          return false;
+        }
+      })();
+
+      // Initialize log storage even if skipped
+      if (!window.__VV_SYNC_LOGS) {
+        window.__VV_SYNC_LOGS = [];
+      }
+      
+      function logSync(message, level) {
+        level = level || 'info';
+        const timestamp = new Date().toISOString();
+        const logEntry = { timestamp: timestamp, level: level, message: message };
+        window.__VV_SYNC_LOGS.push(logEntry);
+        if (window.__VV_SYNC_LOGS.length > 100) {
+          window.__VV_SYNC_LOGS.shift();
+        }
+        if (level === 'error') {
+          console.error('[VV_SYNC]', message);
+        } else if (level === 'warn') {
+          console.warn('[VV_SYNC]', message);
+        } else {
+          console.log('[VV_SYNC]', message);
+        }
+      }
+      
+      if (!isIOS || !isStandalone || !window.visualViewport) {
+        logSync('Skipped: isIOS=' + isIOS + ', isStandalone=' + isStandalone + ', visualViewport=' + !!window.visualViewport);
+        if (typeof window.__AGORA_REVEAL_STARTUP_LOADING === 'function') {
+          window.__AGORA_REVEAL_STARTUP_LOADING('visualViewport-sync-skipped');
+        }
+        return;
+      }
+
+      // Guard to avoid double-application with legacy scripts
+      window.__AGORA_VV_SYNC_INSTALLED = true;
+      
+      // Initialize log storage for viewport debug page
+      if (!window.__VV_SYNC_LOGS) {
+        window.__VV_SYNC_LOGS = [];
+      }
+      
+      function logSync(message, level) {
+        level = level || 'info';
+        const timestamp = new Date().toISOString();
+        const logEntry = { timestamp: timestamp, level: level, message: message };
+        window.__VV_SYNC_LOGS.push(logEntry);
+        // Keep only last 100 logs
+        if (window.__VV_SYNC_LOGS.length > 100) {
+          window.__VV_SYNC_LOGS.shift();
+        }
+        // Also log to console
+        if (level === 'error') {
+          console.error('[VV_SYNC]', message);
+        } else if (level === 'warn') {
+          console.warn('[VV_SYNC]', message);
+        } else {
+          console.log('[VV_SYNC]', message);
+        }
+      }
+      
+      logSync('Initializing visualViewport synchronizer');
+
+      const vv = window.visualViewport;
+      const OFFSET_THRESHOLD_PX = 10;
+      let lastOffsetDetected = false;
+      let lastExtraSyncAt = 0;
+      let startupRevealTimer = 0;
+      let startupRevealSignature = '';
+
+      // Expose latest offset state for runtime inspection from Flutter/debug tools.
+      if (!window.__AGORA_VIEWPORT_OFFSET_STATUS) {
+        window.__AGORA_VIEWPORT_OFFSET_STATUS = {
+          detected: false,
+          offsetTop: 0,
+          offsetLeft: 0,
+          threshold: OFFSET_THRESHOLD_PX,
+          updatedAt: new Date().toISOString()
+        };
+      }
+
+      function getRoot() {
+        const root = document.getElementById('flutter-root');
+        if (!root) {
+          logSync('#flutter-root not found', 'warn');
+        }
+        return root;
+      }
+
+      // Move Flutter engine DOM into #flutter-root so a single transform controls visuals + hit-test
+      function ensureFlutterElementsInRoot(root) {
+        if (!root) return;
+        const selectors = ['flutter-view', 'flt-glass-pane', 'flt-scene-host'];
+        let movedCount = 0;
+        for (let i = 0; i < selectors.length; i++) {
+          const el = document.querySelector(selectors[i]);
+          if (!el) continue;
+          if (el.parentElement === root) continue;
+          root.insertBefore(el, root.firstChild);
+          movedCount++;
+        }
+        if (movedCount > 0) {
+          logSync('Moved ' + movedCount + ' Flutter elements into #flutter-root');
+        }
+      }
+
+      function computeSafeOffsets() {
+        // iOS 17+ WebKit bug: offsetTop represents visual viewport offset
+        // For iOS 26.2: offsetTop contains incorrect offset that needs compensation
+        // We compensate the full offsetTop to align visual and hit-test coordinates
+        const safeTop = -vv.offsetTop;
+        const safeLeft = -vv.offsetLeft;
+        
+        // Debug logging (only log when offset is significant)
+        if (Math.abs(vv.offsetTop) > 5 || Math.abs(vv.offsetLeft) > 5) {
+          logSync('offsetTop=' + vv.offsetTop + ', offsetLeft=' + vv.offsetLeft + 
+                 ', safeTop=' + safeTop + ', safeLeft=' + safeLeft);
+        }
+        
+        return { safeTop, safeLeft };
+      }
+
+      function publishOffsetStatus() {
+        const offsetTop = Number(vv.offsetTop || 0);
+        const offsetLeft = Number(vv.offsetLeft || 0);
+        const detected = Math.abs(offsetTop) > OFFSET_THRESHOLD_PX || Math.abs(offsetLeft) > OFFSET_THRESHOLD_PX;
+
+        window.__AGORA_VIEWPORT_OFFSET_STATUS = {
+          detected: detected,
+          offsetTop: offsetTop,
+          offsetLeft: offsetLeft,
+          threshold: OFFSET_THRESHOLD_PX,
+          updatedAt: new Date().toISOString()
+        };
+
+        if (detected !== lastOffsetDetected) {
+          lastOffsetDetected = detected;
+          logSync('Offset state changed: detected=' + detected + ', top=' + offsetTop + ', left=' + offsetLeft, detected ? 'warn' : 'info');
+          try {
+            window.dispatchEvent(new CustomEvent('agora:viewport-offset-status', {
+              detail: window.__AGORA_VIEWPORT_OFFSET_STATUS
+            }));
+          } catch (_) {}
+        }
+
+        return detected;
+      }
+
+      function applyToRoot(root) {
+        if (!root) {
+          logSync('applyToRoot: root is null', 'warn');
+          return;
+        }
+        const { safeTop, safeLeft } = computeSafeOffsets();
+        root.style.width = vv.width + 'px';
+        root.style.height = vv.height + 'px';
+        root.style.willChange = 'transform';
+        root.style.transformOrigin = '0 0';
+        const transform = 'translate3d(' + safeLeft + 'px,' + safeTop + 'px,0)';
+        root.style.transform = transform;
+        
+        // Verify transform was applied
+        const computedStyle = window.getComputedStyle(root);
+        const appliedTransform = computedStyle.transform;
+        if (appliedTransform === 'none' && (safeTop !== 0 || safeLeft !== 0)) {
+          logSync('Transform not applied! Expected: ' + transform + ', Got: ' + appliedTransform, 'error');
+        } else if (appliedTransform !== 'none') {
+          logSync('Transform applied: ' + appliedTransform);
+        }
+        
+        try { 
+          root.getBoundingClientRect(); // force reflow for compositor alignment
+        } catch (e) {
+          logSync('getBoundingClientRect failed: ' + e.message, 'warn');
+        }
+
+        // Diagnostic: trace extra offset when root position != expected (e.g. -124 vs -62)
+        if (Math.abs(safeTop) > 5 || Math.abs(safeLeft) > 5) {
+          try {
+            const r = root.getBoundingClientRect();
+            const b = document.body.getBoundingClientRect();
+            const h = document.documentElement.getBoundingClientRect();
+            const bodyTransform = (window.getComputedStyle(document.body).transform || 'none');
+            const htmlTransform = (window.getComputedStyle(document.documentElement).transform || 'none');
+            const bodyScroll = document.body.scrollTop || 0;
+            const docScroll = document.documentElement.scrollTop || 0;
+            logSync('DIAG root=(' + r.left.toFixed(0) + ',' + r.top.toFixed(0) + ') body.top=' + b.top.toFixed(0) + ' html.top=' + h.top.toFixed(0) +
+              ' bodyScroll=' + bodyScroll + ' docScroll=' + docScroll +
+              ' bodyTransform=' + (bodyTransform === 'none' ? 'none' : bodyTransform.substring(0, 40) + '...') +
+              ' htmlTransform=' + (htmlTransform === 'none' ? 'none' : htmlTransform.substring(0, 40) + '...'));
+          } catch (diagE) {
+            logSync('DIAG failed: ' + diagE.message, 'warn');
+          }
+        }
+      }
+
+      function viewportSignature() {
+        return [
+          window.innerWidth || 0,
+          window.innerHeight || 0,
+          vv.width || 0,
+          vv.height || 0,
+          vv.offsetLeft || 0,
+          vv.offsetTop || 0,
+          vv.scale || 1
+        ].join('x');
+      }
+
+      function scheduleStartupReveal(reason) {
+        if (typeof window.__AGORA_REVEAL_STARTUP_LOADING !== 'function') return;
+
+        startupRevealSignature = viewportSignature();
+        if (startupRevealTimer) {
+          clearTimeout(startupRevealTimer);
+        }
+
+        startupRevealTimer = setTimeout(function () {
+          if (viewportSignature() !== startupRevealSignature) {
+            scheduleStartupReveal(reason + '-rescheduled');
+            return;
+          }
+
+          (window.requestAnimationFrame || function (cb) { return setTimeout(cb, 16); })(function () {
+            (window.requestAnimationFrame || function (cb) { return setTimeout(cb, 16); })(function () {
+              if (viewportSignature() === startupRevealSignature) {
+                window.__AGORA_REVEAL_STARTUP_LOADING(reason);
+              } else {
+                scheduleStartupReveal(reason + '-raf-rescheduled');
+              }
+            });
+          });
+        }, 320);
+      }
+
+      let rafPending = false;
+      let syncCount = 0;
+      function syncNow() {
+        rafPending = false;
+        const root = getRoot();
+        if (!root) {
+          // Retry later if root doesn't exist yet
+          if (syncCount < 50) { // Try for ~5 seconds (50 * 100ms)
+            syncCount++;
+            setTimeout(queueSync, 100);
+          } else {
+            logSync('#flutter-root not found after 50 attempts', 'error');
+          }
+          return;
+        }
+        ensureFlutterElementsInRoot(root);
+        const offsetDetected = publishOffsetStatus();
+        // iOS PWA: docScroll matches offsetTop (e.g. 62), so body is already at -62; our transform adds another -62 => double offset. Zero document scroll so only #flutter-root transform applies.
+        if (Math.abs(vv.offsetTop) > 5 || Math.abs(vv.offsetLeft) > 5) {
+          try {
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+          } catch (_) {}
+        }
+        applyToRoot(root);
+        scheduleStartupReveal('visualViewport-stable-sync');
+
+        // When offset is abnormal, request a couple of extra frames to converge faster.
+        if (offsetDetected) {
+          const now = Date.now();
+          if (now - lastExtraSyncAt > 800) {
+            lastExtraSyncAt = now;
+            setTimeout(queueSync, 40);
+            setTimeout(queueSync, 180);
+          }
+        }
+
+        syncCount++;
+        if (syncCount === 1) {
+          logSync('First sync completed');
+        }
+      }
+
+      function queueSync() {
+        if (rafPending) return;
+        rafPending = true;
+        (window.requestAnimationFrame || function (cb) { return setTimeout(cb, 16); })(syncNow);
+      }
+
+      function delayedSync() {
+        queueSync();
+        setTimeout(queueSync, 60);
+        setTimeout(queueSync, 600);
+        setTimeout(queueSync, 1500);
+      }
+
+      vv.addEventListener('resize', queueSync, { passive: true });
+      vv.addEventListener('scroll', queueSync, { passive: true });
+      window.addEventListener('orientationchange', delayedSync, { passive: true });
+      window.addEventListener('pageshow', delayedSync, { passive: true });
+      document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) delayedSync();
+      });
+
+      if (window.MutationObserver) {
+        const mo = new MutationObserver(function () { queueSync(); });
+        mo.observe(document.body, { childList: true, subtree: true });
+        setTimeout(function () { try { mo.disconnect(); } catch (_) {} }, 10000);
+      }
+
+      delayedSync();
+    })();
+  </script>
+
+  <!-- iOS standalone PWA edge-swipe back guard.
+       WebKit's native history swipe animates a page snapshot before Flutter
+       receives popstate, which can flash the stale route for one frame. Capture
+       the left-edge swipe early and route it through history.back() instead. -->
+  <script>
+    (function () {
+      'use strict';
+
+      if (window.__AGORA_IOS_EDGE_BACK_GUARD_INSTALLED) return;
+
+      var ua = navigator.userAgent || '';
+      var maxTouchPoints = Number(navigator.maxTouchPoints || 0);
+      var isIOS = /iPad|iPhone|iPod/.test(ua) ||
+        (/Macintosh/.test(ua) && maxTouchPoints > 1);
+      var isStandalone = false;
+      try {
+        isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+          window.navigator.standalone === true ||
+          window.matchMedia('(display-mode: fullscreen)').matches;
+      } catch (_) {
+        isStandalone = false;
+      }
+
+      if (!isIOS || !isStandalone) return;
+
+      window.__AGORA_IOS_EDGE_BACK_GUARD_INSTALLED = true;
+
+      var EDGE_WIDTH_PX = 28;
+      var MIN_BACK_SWIPE_PX = 48;
+      var HORIZONTAL_RATIO = 1.35;
+      var tracking = null;
+      var suppressingNativeSwipe = false;
+
+      function canGoBack() {
+        return window.history && window.history.length > 1;
+      }
+
+      function resetTracking() {
+        tracking = null;
+        suppressingNativeSwipe = false;
+      }
+
+      function stopNativeSwipe(event) {
+        try {
+          event.preventDefault();
+          event.stopPropagation();
+        } catch (_) {}
+      }
+
+      document.addEventListener('touchstart', function (event) {
+        if (!canGoBack() || event.touches.length !== 1) return;
+
+        var touch = event.touches[0];
+        if (touch.clientX > EDGE_WIDTH_PX) return;
+
+        tracking = {
+          startX: touch.clientX,
+          startY: touch.clientY,
+          lastX: touch.clientX,
+          lastY: touch.clientY
+        };
+        suppressingNativeSwipe = true;
+        stopNativeSwipe(event);
+      }, { capture: true, passive: false });
+
+      document.addEventListener('touchmove', function (event) {
+        if (!tracking || event.touches.length !== 1) return;
+
+        var touch = event.touches[0];
+        var dx = touch.clientX - tracking.startX;
+        var dy = Math.abs(touch.clientY - tracking.startY);
+
+        tracking.lastX = touch.clientX;
+        tracking.lastY = touch.clientY;
+
+        if (dx > 8 && dx > dy) {
+          suppressingNativeSwipe = true;
+          stopNativeSwipe(event);
+        }
+      }, { capture: true, passive: false });
+
+      document.addEventListener('touchend', function (event) {
+        if (!tracking) return;
+
+        var dx = tracking.lastX - tracking.startX;
+        var dy = Math.abs(tracking.lastY - tracking.startY);
+        var shouldGoBack = suppressingNativeSwipe &&
+          dx >= MIN_BACK_SWIPE_PX &&
+          dx > dy * HORIZONTAL_RATIO;
+
+        if (shouldGoBack) {
+          stopNativeSwipe(event);
+          window.setTimeout(function () {
+            window.history.back();
+          }, 0);
+        }
+
+        resetTracking();
+      }, { capture: true, passive: false });
+
+      document.addEventListener('touchcancel', resetTracking, {
+        capture: true,
+        passive: true
+      });
+    })();
+  </script>
+
+  <script src="passkey_helper.js"></script>
+  <script>
+    (function() {
+      var versionMeta = document.querySelector('meta[name="version"]');
+      var currentVersion = versionMeta ? versionMeta.getAttribute('content') : '';
+      var versionKey = 'agora_web_bootstrap_version';
+
+      function loadFlutterBootstrap() {
+        var script = document.createElement('script');
+        script.src = "flutter_bootstrap.1.0.1807.js";
+        script.async = true;
+        document.body.appendChild(script);
+      }
+
+      async function resetStaleRuntimeCache() {
+        if (!currentVersion || !window.localStorage) return;
+        var previousVersion = localStorage.getItem(versionKey);
+        if (previousVersion === currentVersion) return;
+
+        if (navigator.serviceWorker) {
+          var registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map(function(registration) {
+            return registration.unregister();
+          }));
+        }
+
+        if (window.caches) {
+          var cacheNames = await caches.keys();
+          await Promise.all(cacheNames.map(function(cacheName) {
+            return caches.delete(cacheName);
+          }));
+        }
+
+        localStorage.setItem(versionKey, currentVersion);
+      }
+
+      resetStaleRuntimeCache()
+        .catch(function(error) {
+          console.warn('[BOOTSTRAP_CACHE_RESET]', error);
+        })
+        .then(loadFlutterBootstrap);
+    })();
+  </script>
+
+  <!-- Fix 2: Removed pwa_viewport_fix.js - conflicts with visualViewport root model -->
+
+  <!-- Web Vitals ???????? -->
+  <script src="web_vitals.js"></script>
+  
+  <!-- ?????????????? -->
+  <script src="offline_handler.js"></script>
+  
+  <!-- GitHub Pages 404 ??????????????-->
+  <script>
+    // ?????404.html ????????????????
+    (function() {
+      try {
+        var savedPath = sessionStorage.getItem('_404_redirect_path');
+        if (savedPath) {
+          // ????????????????????????????????
+          sessionStorage.removeItem('_404_redirect_path');
+          
+          // ???????????????????????????????????????????????????????????????
+          var currentPath = window.location.pathname + window.location.search + window.location.hash;
+          if (currentPath !== savedPath && savedPath !== '/index.html') {
+            // ???????replaceState ????? URL?????????????????
+            // ??????Flutter ??????????????????????? URL ?????????
+            window.history.replaceState(null, '', savedPath);
+            console.log('[404_REDIRECT] Restored path:', savedPath);
+          }
+        }
+      } catch (e) {
+        console.error('[404_REDIRECT] Failed to restore path:', e);
+      }
+    })();
+  </script>
+  
+  <!-- OAuth ??????????????????????????????????????? -->
+  <script>
+    // Detect OAuth callback and update loading screen
+    (function() {
+      try {
+        var urlParams = new URLSearchParams(window.location.search);
+        var savedPath = sessionStorage.getItem('_404_redirect_path') || '';
+        var isOAuth = urlParams.has('tokenId') || 
+                     window.location.pathname.includes('/oauth2-callback') ||
+                     savedPath.includes('tokenId=') ||
+                     savedPath.includes('/oauth2-callback');
+        
+        if (isOAuth) {
+          var loadingText = document.getElementById('loading-text');
+          if (loadingText) loadingText.textContent = '\u6b63\u5728\u8655\u7406\u767b\u5165...';
+        }
+      } catch (e) {
+        // Silent fail, don't block
+      }
+    })();
+  </script>
+  <script>
+    // ?????????????? Flutter ??????
+    window.registerMessageHandler = function(callback) {
+      window._messageHandler = callback;
+    };
+
+    // ???????????Service Worker ?????
+    window.handleServiceWorkerMessage = function(data) {
+      if (window._messageHandler) {
+        window._messageHandler(data);
+      }
+    };
+  </script>
+  
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

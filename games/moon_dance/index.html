@@ -1,0 +1,2981 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<meta http-equiv="Cache-Control" content="no-cache" />
+<title>月光舞台 - 夜舞老虎機</title>
+<style>
+/* ===== Telegram Mini App CSS Variables ===== */
+:root {
+  --app-height: 100dvh;
+  --tg-viewport-height: 100vh;
+  /* Exposes iOS/Android safe-area-inset-top as a CSS variable so JS can read
+     it via getComputedStyle.  Requires viewport-fit=cover to return non-zero
+     on iPhone (status bar height ~44-59px).  0px is the safe fallback. */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+}
+
+/* ===== Reset ===== */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:100%; height:var(--app-height, 100dvh); overflow:hidden; background:#010010; }
+
+/* ===== Game Viewport – fixed design canvas, scaled to fit ===== */
+#gv {
+  position:fixed;
+  top:0; left:0;
+  width:430px;
+  height:900px;
+  padding-top:var(--layout-safe-top, 0px);
+  transform-origin:top left;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  font-family:'PingFang SC','Microsoft YaHei','Noto Sans TC','Arial',sans-serif;
+  background:linear-gradient(180deg,#0d0535 0%,#130848 14%,#0e062e 30%,#0a0428 52%,#080320 72%,#050218 100%);
+}
+/* ── Star field: tiny twinkling dots on the background ── */
+#gv::before{
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:0;
+  background-image:
+    radial-gradient(1px 1px at  7%  6%,rgba(255,255,255,.80),transparent),
+    radial-gradient(1px 1px at 18% 12%,rgba(200,220,255,.70),transparent),
+    radial-gradient(1px 1px at 32%  4%,rgba(255,255,255,.60),transparent),
+    radial-gradient(1px 1px at 47%  9%,rgba(180,200,255,.75),transparent),
+    radial-gradient(1px 1px at 61%  3%,rgba(255,255,255,.55),transparent),
+    radial-gradient(1px 1px at 75%  8%,rgba(200,210,255,.80),transparent),
+    radial-gradient(1px 1px at 89% 14%,rgba(255,255,255,.65),transparent),
+    radial-gradient(1px 1px at  4% 22%,rgba(180,200,255,.70),transparent),
+    radial-gradient(1px 1px at 23% 19%,rgba(255,255,255,.50),transparent),
+    radial-gradient(1px 1px at 55% 17%,rgba(200,220,255,.65),transparent),
+    radial-gradient(1px 1px at 82% 21%,rgba(255,255,255,.70),transparent),
+    radial-gradient(1px 1px at 12% 35%,rgba(180,200,255,.55),transparent),
+    radial-gradient(1px 1px at 38% 30%,rgba(255,255,255,.45),transparent),
+    radial-gradient(1px 1px at 68% 28%,rgba(200,210,255,.60),transparent),
+    radial-gradient(1px 1px at 93% 32%,rgba(255,255,255,.75),transparent);
+  animation:starTwinkle 4s ease-in-out infinite alternate;
+}
+@keyframes starTwinkle{
+  0%  {opacity:.55}
+  33% {opacity:1}
+  66% {opacity:.7}
+  100%{opacity:.4}
+}
+
+@keyframes shimmer {
+  0%{background-position:200% 0} 100%{background-position:-200% 0}
+}
+
+/* ============================================================
+   2. PAYTABLE PANEL
+   ============================================================ */
+#paytable {
+  flex:0 0 auto;
+  margin:2px 3px;
+  background:#080520;
+  border:2.5px solid #5560c8;
+  border-radius:8px;
+  padding:3px 14px;
+  display:flex;
+  align-items:stretch;
+  gap:4px;
+  max-height:136px;
+  overflow:hidden;
+  /* Bottom fade: hints that content is scrollable */
+  -webkit-mask-image:linear-gradient(to bottom,black 70%,transparent 100%);
+  mask-image:linear-gradient(to bottom,black 70%,transparent 100%);
+}
+.pt-col{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  gap:1px;
+  min-height:0;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  /* -webkit-overflow-scrolling:touch — deprecated, removed */
+  touch-action:pan-y;
+  scrollbar-width:none;
+  -ms-overflow-style:none;
+}
+.pt-col::-webkit-scrollbar{display:none}
+.pt-row{
+  display:flex; align-items:center; height:30px;
+  border-bottom:1px solid rgba(100,110,220,.18); gap:4px;
+}
+.pt-row:last-child{border-bottom:none}
+.pt-syms{font-size:15px; line-height:1; flex:1; color:#eee; letter-spacing:-1px}
+.pt-val{color:#c0ccff; font-size:15px; font-weight:bold; text-shadow:0 0 6px rgba(192,204,255,.55); min-width:38px; text-align:right}
+.pt-syms-any{font-size:13px; color:#c0ccff; letter-spacing:0}
+.pt-div{flex:0 0 1px; background:linear-gradient(180deg,transparent,#6065d8 30%,#6065d8 70%,transparent); align-self:stretch; margin:3px 0}
+/* Wild badge */
+#pt-wild{flex:0 0 68px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px}
+#wild-badge{
+  width:58px; height:58px; border-radius:50%;
+  background:radial-gradient(circle at 38% 30%,#6688ff,#2244cc 55%,#001166);
+  border:2.5px solid #c0ccff;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  box-shadow:0 0 14px rgba(80,100,255,.6),0 0 28px rgba(60,80,255,.3);
+  animation:wildPulse 2s ease-in-out infinite;
+  will-change:filter;
+}
+@keyframes wildPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.5)}}
+.wi-pig{font-size:24px; line-height:1}
+/* Inline SVG icon helper – sizes via parent font-size (1em) */
+.sym-icon{display:inline-block;width:1em;height:1em;vertical-align:-0.1em;fill:currentColor;overflow:visible}
+/* Paytable canvas symbol images – populated from symTextures after JS loads */
+.pt-sym-img{display:inline-block;vertical-align:middle;border-radius:3px;margin:0 1px}
+.wi-mult{color:#c0ccff; font-size:13px; font-weight:bold; text-shadow:0 0 5px #c0ccff}
+#wild-label{color:#c0ccff; font-size:12px; font-weight:bold; letter-spacing:2px; text-shadow:0 0 5px rgba(192,204,255,.6)}
+
+/* ============================================================
+   3. JACKPOT BANNER
+   ============================================================ */
+#jackpot-banner {
+  flex:0 0 auto;
+  background:linear-gradient(90deg,#040215,#0a0535 25%,#120840 50%,#0a0535 75%,#040215);
+  border-top:2px solid #5560c8; border-bottom:2px solid #5560c8;
+  text-align:center; color:#c0ccff;
+  font-size:17px; font-weight:bold;
+  padding:6px; letter-spacing:1px;
+  position:relative; overflow:hidden;
+  text-shadow:0 0 8px rgba(192,204,255,.6);
+  animation:jackpotPulse 2.6s ease-in-out infinite;
+  will-change:filter;
+}
+#jackpot-marquee-track{
+  width:100%; overflow:hidden; white-space:nowrap; position:relative; z-index:1;
+}
+#jackpot-marquee-text{
+  display:inline-block;
+  padding-left:100%;
+  animation:jackpotMarquee 18s linear infinite;
+}
+#jackpot-banner::before{
+  content:''; position:absolute; top:0; left:-80%; width:40%; height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.14),transparent);
+  animation:jSheen 3.4s linear infinite;
+  will-change:transform;
+}
+/* Use transform:translateX instead of left to avoid layout triggers.
+   left:-80% keeps element off-screen in base state; translateX(500%) = 5×own_width =
+   200% of parent → final position −80%+200%=120% of parent (off right). */
+@keyframes jSheen{0%{transform:translateX(0)}100%{transform:translateX(500%)}}
+@keyframes jackpotPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.5)}}
+@keyframes jackpotMarquee{
+  0%{transform:translateX(0)}
+  100%{transform:translateX(-100%)}
+}
+
+/* ============================================================
+   4. REEL SECTION
+   ============================================================ */
+#reel-section {
+  flex:0 0 auto;
+  height:198px;
+  margin:2px 3px;
+  position:relative;
+  background:#040215;
+  border:3px solid #5560c8;
+  border-radius:6px;
+  overflow:hidden;
+  box-shadow:0 0 30px rgba(80,100,255,.55),0 0 60px rgba(60,80,255,.2),inset 0 0 40px rgba(0,0,0,.6);
+}
+/* Scan-line light sweep over reels */
+#reel-section::before{
+  content:''; position:absolute; inset:0; z-index:3; pointer-events:none;
+  background:linear-gradient(180deg,transparent 0%,rgba(140,160,255,.07) 48%,rgba(180,200,255,.14) 50%,rgba(140,160,255,.07) 52%,transparent 100%);
+  animation:scanSweep 4s linear infinite;
+  will-change:transform;
+}
+@keyframes scanSweep{
+  0%  {transform:translateY(-100%)}
+  100%{transform:translateY(100%)}
+}
+#reel-canvas-wrap{position:absolute; top:-71px; left:0; right:0; height:340px; z-index:1}
+#reel-canvas-wrap canvas{display:block; width:100%!important; height:100%!important}
+/* Chrome overlay */
+#reel-chrome{position:absolute; inset:0; z-index:2; pointer-events:none}
+/* Gold separator bars */
+.reel-sep{
+  position:absolute; top:0; bottom:0; width:5px;
+  background:linear-gradient(180deg,#2233aa,#6070ff 35%,#4455cc 65%,#1a2288);
+  box-shadow:0 0 8px rgba(100,120,255,.45);
+}
+.reel-sep.s1{left:calc(33.33% - 2px)} .reel-sep.s2{left:calc(66.66% - 2px)}
+/* Payline stripe */
+#payline{
+  position:absolute; top:50%; left:0; right:0; height:2px;
+  background:rgba(140,160,255,.22); transform:translateY(-50%);
+}
+#payline::before,#payline::after{
+  content:''; position:absolute; top:50%; transform:translateY(-50%);
+  width:8px; height:8px; border-radius:50%; background:#c0ccff;
+  box-shadow:0 0 6px #c0ccff; animation:paylinePulse .85s ease-in-out infinite alternate;
+}
+#payline::before{left:6px} #payline::after{right:6px}
+@keyframes paylinePulse{0%{opacity:.35}100%{opacity:1}}
+/* Motion blur during fast spin – replaced with subtle opacity for mobile GPU efficiency */
+#reel-canvas-wrap.reel-spinning{opacity:.92; transition:opacity .15s}
+#reel-canvas-wrap{transition:opacity .25s}
+/* Reel section win flash */
+#reel-section.reel-win{animation:reelWinFlash .32s ease-in-out 5}
+@keyframes reelWinFlash{
+  0%,100%{border-color:#5560c8;box-shadow:0 0 22px rgba(80,100,200,.3),inset 0 0 40px rgba(0,0,0,.6)}
+  50%{border-color:#c0ccff;box-shadow:0 0 55px rgba(180,200,255,.95),0 0 110px rgba(100,120,255,.55),inset 0 0 22px rgba(160,180,255,.12)}
+}
+/* Coin rain (big win) – uses CSS variable for Telegram viewport adaptation */
+@keyframes coinFall{
+  0%{transform:translateY(0) rotate(0deg);opacity:1}
+  80%{opacity:.8}
+  100%{transform:translateY(calc(var(--tg-viewport-height) * 1.1)) rotate(720deg);opacity:0}
+}
+/* Idle coin sparkles in scene area */
+.s-coin{
+  position:absolute; pointer-events:none; z-index:4;
+  animation:sCoinRise linear infinite;
+  will-change:transform, opacity;
+}
+.s-coin svg{ fill:rgba(192,200,255,0.85) }
+@keyframes sCoinRise{
+  0%{transform:translateY(0) rotate(0deg);opacity:0}
+  8%{opacity:.8}
+  88%{opacity:.5}
+  100%{transform:translateY(-90px) rotate(200deg);opacity:0}
+}
+/* Bet label change flash */
+@keyframes betFlash{0%,100%{color:#c0ccff}50%{color:#fff;text-shadow:0 0 8px #fff}}
+
+/* ============================================================
+   5. SCENE AREA  (pillars + moon gate + pig placeholder)
+   ============================================================ */
+#scene-area{
+  flex:1; position:relative; min-height:0;
+  display:flex; align-items:stretch; overflow:hidden;
+}
+/* Greek-key border top */
+#scene-top-border{
+  position:absolute; top:0; left:0; right:0; height:14px;
+  background:repeating-linear-gradient(90deg,
+    #080520 0px,#080520 12px,#5560c8 12px,#5560c8 14px);
+  z-index:6;
+}
+/* Purple pillars */
+.pillar{
+  flex:0 0 46px;
+  background:linear-gradient(90deg,#0d0030,#3300aa 30%,#6600ff 50%,#3300aa 70%,#0d0030);
+  border-right:2.5px solid #5560c8; border-left:2.5px solid #5560c8;
+  position:relative; overflow:visible;
+  display:flex; flex-direction:column; align-items:center;
+  padding-top:14px;
+}
+.pillar.right{border-left:2.5px solid #5560c8; border-right:none}
+.p-ring{width:100%; height:7px; background:linear-gradient(180deg,#c0ccff 0%,#6070c8 100%); margin:8px 0}
+/* Couplet scroll on pillar */
+.couplet{
+  position:absolute; top:20px;
+  width:42px; min-height:140px;
+  background:linear-gradient(180deg,#1a0060 0%,#2a0088 30%,#1a0070 60%,#0a0040 100%);
+  border:2px solid #9098ff; border-radius:4px;
+  padding:6px 3px;
+  display:flex; flex-direction:column; align-items:center; justify-content:space-evenly;
+  box-shadow:0 0 14px rgba(120,80,255,.55),0 0 30px rgba(80,60,200,.25),inset 0 0 10px rgba(0,0,0,.5);
+  z-index:5;
+}
+/* Top and bottom scroll roller nubs */
+.couplet::before,.couplet::after{
+  content:''; position:absolute; left:50%; transform:translateX(-50%);
+  width:48px; height:6px;
+  background:linear-gradient(90deg,#2a1a88,#9088ff 40%,#c0ccff 50%,#9088ff 60%,#2a1a88);
+  border-radius:3px; border:1px solid #6070cc;
+}
+.couplet::before{top:-4px}
+.couplet::after{bottom:-4px}
+/* Couplet characters – opacity pulse instead of text-shadow (GPU composited) */
+.c-char{
+  color:#c0ccff; font-size:16px; font-weight:bold;
+  text-shadow:0 0 7px rgba(180,200,255,.85), 0 0 14px rgba(100,120,255,.5);
+  line-height:1.35;
+  animation:charShimmer 3.6s ease-in-out infinite alternate;
+  will-change:opacity;
+}
+.couplet .c-char:nth-child(2){animation-delay:.4s}
+.couplet .c-char:nth-child(3){animation-delay:.8s}
+.couplet .c-char:nth-child(4){animation-delay:1.2s}
+.couplet .c-char:nth-child(5){animation-delay:1.6s}
+@keyframes charShimmer{
+  0%  {opacity:.7}
+  100%{opacity:1}
+}
+
+/* Center stage */
+#center-stage{
+  flex:1; position:relative;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:flex-end;
+  overflow:hidden;
+}
+/* ── Stage logo spotlight ── */
+#stage-logo{
+  position:absolute; top:0; left:0; right:0;
+  height:52px; z-index:8; pointer-events:none;
+  display:flex; align-items:center; justify-content:center;
+}
+/* Two converging spotlight beams from top-left and top-right */
+#stage-logo::before,#stage-logo::after{
+  content:''; position:absolute; top:0;
+  width:0; height:0; pointer-events:none;
+  will-change:opacity, transform;
+}
+#stage-logo::before{
+  left:8%;
+  border-left:20px solid transparent;
+  border-right:20px solid transparent;
+  border-top:52px solid rgba(180,160,255,.12);
+  filter:blur(6px);
+  animation:spotLeft 4s ease-in-out infinite alternate;
+}
+#stage-logo::after{
+  right:8%;
+  border-left:20px solid transparent;
+  border-right:20px solid transparent;
+  border-top:52px solid rgba(120,160,255,.12);
+  filter:blur(6px);
+  animation:spotRight 4s ease-in-out infinite alternate;
+}
+/* Use transform instead of left/right to avoid layout triggers */
+@keyframes spotLeft{0%{opacity:.5}100%{opacity:1;transform:translateX(17px)}}
+@keyframes spotRight{0%{opacity:.5}100%{opacity:1;transform:translateX(-17px)}}
+/* Logo text container */
+#logo-text{
+  position:relative; z-index:2;
+  text-align:center; line-height:1;
+}
+#logo-title{
+  display:block;
+  font-size:22px;
+  font-weight:900; letter-spacing:4px;
+  color:#e8eaff;
+  text-shadow:
+    0 0 8px rgba(180,200,255,1),
+    0 0 20px rgba(120,140,255,.9),
+    0 0 40px rgba(80,100,255,.6),
+    0 0 70px rgba(60,80,200,.4);
+  animation:logoGlow 2.8s ease-in-out infinite alternate;
+  will-change:opacity;
+}
+#logo-sub{
+  display:block;
+  font-size:11px;
+  letter-spacing:5px;
+  color:#8890cc;
+  text-transform:uppercase;
+  margin-top:2px;
+  text-shadow:0 0 6px rgba(120,140,255,.55);
+}
+/* Horizontal shimmer bar under logo */
+#logo-bar{
+  display:block; width:100%; height:1px; margin-top:5px;
+  background:linear-gradient(90deg,transparent 0%,#6070ff 20%,#c0ccff 50%,#6070ff 80%,transparent 100%);
+  background-size:200% 100%;
+  animation:shimmer 2.2s linear infinite;
+}
+/* Logo glow – opacity pulse keeps static text-shadow always visible (GPU composited) */
+@keyframes logoGlow{
+  0%{opacity:.75}
+  100%{opacity:1}
+}
+/* Stage spotlight beams – opacity only (no filter change); static blur cached by GPU */
+#center-stage::before{
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:3;
+  background:
+    conic-gradient(from 238deg at 0% 0%,    transparent 0deg, rgba(120,100,255,.07) 10deg, transparent 20deg),
+    conic-gradient(from 292deg at 100% 0%,  transparent 0deg, rgba(80,120,255,.07)  10deg, transparent 20deg);
+  filter:blur(2px);
+  animation:beamSway 6s ease-in-out infinite alternate;
+}
+@keyframes beamSway{
+  0%  {opacity:.6}
+  50% {opacity:1}
+  100%{opacity:.55}
+}
+/* Upgraded spotlight behind model for depth */
+#center-stage::after{
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:4;
+  background:radial-gradient(ellipse 70% 85% at 50% 65%, rgba(120,100,255,.18) 0%, rgba(60,40,180,.06) 55%, transparent 75%);
+  animation:stagePulse 3.5s ease-in-out infinite alternate;
+  will-change:opacity;
+}
+@keyframes stagePulse{
+  0%  {opacity:.6}
+  100%{opacity:1}
+}
+/* Moon gate – opacity pulse replaces box-shadow animation (GPU composited) */
+#moon-gate{
+  position:absolute;
+  top:50%; left:50%; transform:translate(-50%,-54%);
+  width:210px; height:210px;
+  border-radius:50%;
+  border:6px solid #5560c8;
+  background:linear-gradient(145deg,#050220,#020115);
+  box-shadow:0 0 0 3px #2a2a88,0 0 24px rgba(60,80,200,.35),inset 0 0 20px rgba(0,0,0,.6);
+  overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+  animation:gateGlow 3s ease-in-out infinite alternate;
+  will-change:opacity;
+}
+@keyframes gateGlow{
+  0%  {opacity:.75}
+  100%{opacity:1}
+}
+#moon-gate::before{
+  content:''; position:absolute; inset:8px; border-radius:50%;
+  border:2px solid rgba(100,120,255,.3);
+}
+/* Wooden door inside gate */
+#gate-door{
+  width:56%; height:80%;
+  background:linear-gradient(90deg,#050218 49%,#020112 51%);
+  border-radius:48% 48% 0 0;
+  border:1.5px solid #1a1860;
+  position:relative;
+}
+/* Door studs */
+#gate-door::before{
+  content:'· · · ·'; position:absolute; top:30px; left:50%; transform:translateX(-50%);
+  color:#3a3a88; font-size:12px; letter-spacing:6px; writing-mode:horizontal-tb;
+}
+/* Door knocker rings */
+#gate-door::after{
+  content:''; position:absolute;
+  top:52%; left:50%; transform:translate(-50%,-50%);
+  width:54%; height:5px;
+  border-top:2px solid #5560c8;
+}
+
+/* Pig character placeholder (3D model – leave as emoji placeholder) */
+#pig-char{
+  position:absolute; bottom:0; left:50%; transform:translateX(-50%);
+  display:flex; flex-direction:column; align-items:center;
+  z-index:5;
+}
+#pig-char.hidden{display:none}
+/* 3D character canvas wrapper */
+#char-canvas-wrap{
+  position:absolute; bottom:0; left:0; right:0; top:0;
+  z-index:5; pointer-events:none; overflow:hidden;
+}
+#char-canvas-wrap canvas{display:block; width:100%!important; height:100%!important}
+#pig-emoji{
+  width:68px; height:68px;
+  filter:drop-shadow(0 6px 16px rgba(180,80,0,.7));
+  animation:pigBob 2.2s ease-in-out infinite;
+  will-change:transform;
+}
+#pig-shadow{
+  width:52px; height:10px;
+  background:radial-gradient(ellipse,rgba(0,0,0,.55),transparent);
+  margin-top:-6px;
+  animation:pigShadow 2.2s ease-in-out infinite;
+  will-change:transform, opacity;
+}
+@keyframes pigBob{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-7px) scale(1.03)}}
+@keyframes pigShadow{0%,100%{transform:scaleX(1); opacity:.6}50%{transform:scaleX(.8); opacity:.4}}
+/* Red diamond in pig's hand (decorative) */
+#pig-char::before{
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' width='22' height='22'%3E%3Cpath fill='%23c04040' d='M 50 5 L 59 41 L 95 50 L 59 59 L 50 95 L 41 59 L 5 50 L 41 41 Z'/%3E%3C/svg%3E");
+  position:absolute; bottom:22px; right:-12px;
+  animation:envBob 2.2s .4s ease-in-out infinite;
+  will-change:transform;
+}
+@keyframes envBob{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(4deg) translateY(-3px)}}
+
+/* Stage floor planks */
+#stage-floor{
+  position:absolute; bottom:22px; left:0; right:0; height:28px;
+  background:
+    repeating-linear-gradient(90deg,
+      rgba(100,80,200,.06) 0px, rgba(100,80,200,.06) 1px,
+      transparent 1px, transparent 60px),
+    linear-gradient(180deg,
+      rgba(60,40,160,.0) 0%,
+      rgba(100,80,200,.18) 40%,
+      rgba(140,120,255,.25) 60%,
+      rgba(80,60,180,.12) 100%);
+  z-index:6; pointer-events:none;
+}
+/* Stage footlights row */
+#stage-footlights{
+  position:absolute; bottom:4px; left:0; right:0; height:18px;
+  display:flex; align-items:center; justify-content:space-evenly;
+  padding:0 8%; z-index:7; pointer-events:none;
+}
+/* Stage footlights – opacity pulse instead of box-shadow animation (GPU composited) */
+.footlight{
+  display:block; width:10px; height:10px; border-radius:50%;
+  background:radial-gradient(circle,#fff 0%,#b0a0ff 40%,#6040cc 80%,transparent 100%);
+  box-shadow:0 0 10px 5px rgba(140,120,255,.75), 0 0 22px 7px rgba(80,60,200,.45);
+  animation:footlightPulse 2.4s ease-in-out infinite alternate;
+  will-change:opacity;
+}
+.footlight.fl0{animation-delay:0s}
+.footlight.fl1{animation-delay:.3s}
+.footlight.fl2{animation-delay:.6s}
+.footlight.fl3{animation-delay:.9s}
+.footlight.fl4{animation-delay:1.2s}
+.footlight.fl5{animation-delay:1.5s}
+.footlight.fl6{animation-delay:1.8s}
+.footlight.fl7{animation-delay:2.1s}
+@keyframes footlightPulse{
+  0%  {opacity:.45}
+  100%{opacity:1}
+}
+
+/* ============================================================
+   6. CONTROL BAR
+   ============================================================ */
+#control-bar{
+  flex:0 0 auto;
+  background:#080520;
+  border-top:3px solid #3a3a88;
+  padding:0 10px 4px;
+  position:relative; z-index:20;
+}
+#control-bar::before{
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,transparent,#9098ff 30%,#c0ccff 50%,#9098ff 70%,transparent);
+  background-size:200% 100%;
+  animation:shimmer 2.8s linear infinite;
+}
+/* Floor glow — use transform instead of width to avoid layout triggers.
+   left:50% + translateX(-50%) centers the element; scaleX replaces width animation. */
+#control-bar::after{
+  content:''; position:absolute; bottom:0; left:50%;
+  width:160px; height:30px; pointer-events:none;
+  background:radial-gradient(ellipse at 50% 100%,rgba(120,100,255,.35),transparent 70%);
+  animation:floorGlow 2.8s ease-in-out infinite alternate;
+  will-change:opacity, transform;
+}
+@keyframes floorGlow{
+  0%  {opacity:.5; transform:translateX(-50%) scaleX(.75)}
+  100%{opacity:1;  transform:translateX(-50%) scaleX(1)}
+}
+/* Button row */
+#ctrl-row1{
+  display:flex; align-items:center; justify-content:space-between;
+  height:74px; position:relative;
+}
+/* Generic control button */
+.ctrl-btn{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:3px; background:none; border:none; cursor:pointer; color:#ddd;
+  -webkit-tap-highlight-color:transparent; padding:2px; min-width:52px;
+}
+.cb-disc{
+  width:40px; height:40px; border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.12),rgba(0,0,0,.6));
+  border:2px solid #3a3a88;
+  display:flex; align-items:center; justify-content:center;
+  font-size:19px; color:#c0ccff;
+  transition:transform .12s,box-shadow .12s;
+}
+.ctrl-btn:active .cb-disc{transform:scale(.88)}
+.ctrl-btn:active .cb-disc{box-shadow:inset 0 2px 6px rgba(0,0,0,.7)}
+.cb-label{font-size:9px; color:#c8c8c8; letter-spacing:.4px; white-space:nowrap}
+
+/* BIG SPIN BUTTON – elevated center */
+#spin-wrap{
+  position:absolute; left:50%; transform:translateX(-50%);
+  bottom:-2px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+}
+/* Rotating gold ring – filter:brightness instead of box-shadow animation (GPU composited) */
+#spin-ring{
+  width:82px; height:82px; border-radius:50%;
+  background:conic-gradient(from 0deg,#8090ff,#aa66ff,#c0ccff,#5566cc,#8090ff);
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 0 24px rgba(120,140,255,.7),0 0 50px rgba(80,60,255,.35);
+  animation:ringPulse 2.2s ease-in-out infinite alternate;
+  will-change:filter;
+}
+@keyframes ringPulse{
+  0%  {filter:brightness(1)}
+  100%{filter:brightness(1.6)}
+}
+#spin-btn{
+  width:70px; height:70px; border-radius:50%; border:none; cursor:pointer;
+  background:
+    radial-gradient(circle at 34% 27%,rgba(255,255,255,.28),transparent 52%),
+    radial-gradient(circle at center,#182060,#0d1548 48%,#050820);
+  box-shadow:inset 0 3px 10px rgba(255,255,255,.18),inset 0 -4px 8px rgba(0,0,0,.7),
+             0 4px 14px rgba(0,0,0,.85);
+  display:flex; align-items:center; justify-content:center;
+  font-size:28px; position:relative; overflow:hidden;
+  transition:transform .1s;
+  -webkit-tap-highlight-color:transparent;
+}
+/* Sheen sweep */
+#spin-btn::before{
+  content:''; position:absolute; top:-50%; left:-50%; width:200%; height:200%;
+  background:linear-gradient(45deg,transparent 38%,rgba(255,255,255,.22) 50%,transparent 62%);
+  animation:btnSheen 2.6s ease-in-out infinite;
+}
+@keyframes btnSheen{0%{transform:translateX(-120%) translateY(-120%)}100%{transform:translateX(70%) translateY(70%)}}
+#spin-btn:active{transform:scale(.93)}
+#spin-btn:disabled{opacity:.5; cursor:not-allowed}
+.spin-ic{position:relative; z-index:1; font-size:28px; pointer-events:none}
+/* Auto-spin active: ring shifts to warm orange */
+#spin-ring.auto-active{
+  background:conic-gradient(from 0deg,#ff8844,#ffbb44,#ffdd66,#ffbb44,#ff8844);
+  box-shadow:0 0 24px rgba(255,160,80,.85),0 0 50px rgba(255,100,40,.4);
+}
+/* Auto badge label — sits below the spin-wrap, outside the clipped button */
+#spin-auto-badge{
+  display:block; text-align:center; margin-top:2px;
+  font-size:8px; font-weight:bold; color:#ffcc66; letter-spacing:1.5px;
+  pointer-events:none; text-shadow:0 0 4px #ff8800;
+}
+/* Mute button: disc goes red-tinted when muted */
+#btn-mute.is-muted .cb-disc{ border-color:#774444; color:#ff9999; }
+
+/* Balance row */
+#ctrl-row2{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:3px 12px 2px;
+  border-top:1px solid rgba(139,96,16,.35);
+}
+.bal-item{display:flex; align-items:center; gap:5px; font-size:12px}
+.bal-item-left{justify-self:start}
+.bal-item-right{justify-self:end}
+.bal-icon{font-size:14px}
+.bal-lbl{color:#8888cc; font-size:10px; letter-spacing:.3px}
+.bal-val{color:#c0ccff; font-weight:bold; font-size:14px; min-width:54px}
+.bal-item-left,.bal-item-right{position:relative; z-index:1}
+/* Bet amount shown as cb-label under the + button */
+#bet-label{ font-size:10px; color:#c0ccff; font-weight:bold; letter-spacing:.3px }
+
+/* ============================================================
+   7. LOG PANEL
+   ============================================================ */
+#log-panel{
+  display:none; /* hidden from screen; logs are still accumulated for copy-log */
+  position:fixed; bottom:0; right:0;
+  width:min(340px,90vw); max-height:200px;
+  background:rgba(0,0,0,.92); border:2px solid #6065d8;
+  border-radius:8px 0 0 0;
+  padding:8px; font-family:monospace; font-size:10px;
+  color:#88aaff; overflow-y:auto; z-index:999;
+  transition:max-height .3s, opacity .3s;
+}
+#log-panel.collapsed{max-height:26px; overflow:hidden; opacity:.4}
+#log-panel div{margin:2px 0; border-bottom:1px solid #222}
+.log-error{color:#ff6666} .log-warn{color:#ffaa44} .log-info{color:#88aaff}
+#log-toggle{color:#c0ccff; font-weight:bold; cursor:pointer; user-select:none}
+
+/* ============================================================
+   7b. ANIMATION DEBUG PANEL (Redan-only)
+   ============================================================ */
+#anim-debug-panel{
+  position:fixed; bottom:210px; right:0;
+  width:min(380px,96vw); background:rgba(5,2,24,.97);
+  border:2px solid #f0a030; border-radius:8px 0 0 8px;
+  padding:10px 12px; z-index:1100; font-family:monospace; font-size:12px;
+  color:#ffd080; box-shadow:0 0 18px rgba(240,160,48,.35);
+}
+#anim-debug-header{
+  font-weight:bold; font-size:13px; margin-bottom:8px;
+  display:flex; justify-content:space-between; align-items:center;
+  border-bottom:1px solid #f0a03066; padding-bottom:5px;
+}
+#anim-debug-close{ cursor:pointer; color:#ff8866; font-size:16px; padding:0 4px; }
+.anim-debug-row{
+  display:flex; align-items:center; gap:5px; margin:5px 0; flex-wrap:wrap;
+}
+.anim-debug-label{
+  width:68px; font-size:11px; color:#ffcc66; flex-shrink:0;
+}
+.anim-debug-row label{ font-size:10px; color:#aaa; }
+.anim-debug-row input[type=number]{
+  width:52px; background:#111; border:1px solid #444; border-radius:4px;
+  color:#fff; padding:3px 4px; font-size:11px; text-align:center;
+}
+.adb-play-btn, #adb-apply-btn, #adb-reset-btn{
+  background:#2a1f00; border:1px solid #f0a030; border-radius:5px;
+  color:#ffd080; padding:3px 9px; font-size:11px; cursor:pointer;
+}
+.adb-play-btn:hover, #adb-apply-btn:hover{ background:#f0a030; color:#000; }
+#adb-reset-btn{ border-color:#6065d8; color:#a0aaff; background:#0d0d28; }
+#adb-reset-btn:hover{ background:#6065d8; color:#fff; }
+#adb-status{
+  margin-top:7px; font-size:10px; color:#80ee80; min-height:14px;
+  border-top:1px solid #333; padding-top:5px;
+}
+
+/* ============================================================
+   8. MENU POPUP
+   ============================================================ */
+#menu-popup{
+  display:none; position:fixed; z-index:600;
+  background:rgba(8,5,32,.97); border:1.5px solid #6065d8;
+  border-radius:10px; padding:6px 0; min-width:150px;
+  box-shadow:0 4px 24px rgba(0,0,0,.7);
+}
+#menu-popup.open{ display:block; }
+.menu-item{
+  display:block; width:100%; padding:11px 18px;
+  background:none; border:none; cursor:pointer;
+  color:#c0ccff; font-size:13px; text-align:left;
+  white-space:nowrap; letter-spacing:.4px;
+}
+.menu-item:active{ background:rgba(96,101,216,.25); }
+.menu-item:focus-visible{ outline:2px solid #6065d8; outline-offset:-2px; border-radius:4px; }
+.menu-divider{
+  height:1px; margin:4px 12px;
+  background:rgba(96,101,216,.3);
+  pointer-events:none;
+}
+
+/* ============================================================
+   9. TRANSACTION HISTORY PANEL
+   ============================================================ */
+#txn-backdrop{
+  display:none; position:fixed; inset:0; z-index:700;
+  background:rgba(0,0,0,.55);
+}
+#txn-backdrop.open{ display:block; }
+#txn-panel{
+  display:none; position:fixed; left:0; right:0; bottom:0; z-index:701;
+  background:#0c0828; border-top:1.5px solid #6065d8;
+  border-radius:16px 16px 0 0; flex-direction:column;
+  max-height:72vh;
+  transform:translateY(100%); transition:transform .28s cubic-bezier(.4,0,.2,1);
+}
+#txn-panel.open{ transform:translateY(0); }
+#txn-header{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 18px 10px; border-bottom:1px solid rgba(96,101,216,.3);
+  flex-shrink:0;
+}
+#txn-title{ color:#c0ccff; font-size:15px; font-weight:700; letter-spacing:.5px; }
+#txn-close{
+  background:none; border:none; color:#888; font-size:18px;
+  cursor:pointer; padding:8px 12px; line-height:1;
+  margin:-8px -8px -8px 0; border-radius:8px;
+}
+#txn-close:active{ color:#c0ccff; background:rgba(96,101,216,.18); }
+#txn-list{
+  overflow-y:auto; flex:1; padding:8px 0;
+  /* -webkit-overflow-scrolling:touch — deprecated, removed */
+}
+.txn-row{
+  display:flex; align-items:center; gap:10px;
+  padding:10px 18px; border-bottom:1px solid rgba(96,101,216,.12);
+}
+.txn-icon{
+  width:30px; height:30px; border-radius:7px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; font-size:14px;
+}
+.txn-icon.in { background:rgba(60,200,100,.15); color:#3cc864; }
+.txn-icon.out{ background:rgba(255,80,80,.15);  color:#ff6464; }
+.txn-body{ flex:1; min-width:0; }
+.txn-type{ color:#c0ccff; font-size:13px; font-weight:600; }
+.txn-desc{ color:#666; font-size:11px; margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.txn-right{ text-align:right; flex-shrink:0; }
+.txn-amt{ font-size:14px; font-weight:700; }
+.txn-amt.in { color:#3cc864; }
+.txn-amt.out{ color:#ff6464; }
+.txn-time{ color:#555; font-size:11px; margin-top:1px; }
+#txn-footer{
+  flex-shrink:0; padding:10px 18px 14px; border-top:1px solid rgba(96,101,216,.2);
+  display:flex; justify-content:center;
+}
+#txn-load-more{
+  background:rgba(96,101,216,.2); border:1px solid rgba(96,101,216,.5);
+  color:#c0ccff; border-radius:8px; padding:7px 24px; font-size:13px;
+  cursor:pointer;
+}
+#txn-load-more:disabled{ opacity:.4; cursor:default; }
+.txn-empty{ text-align:center; color:#555; padding:32px 0; font-size:14px; }
+.txn-spinner{ text-align:center; color:#6065d8; padding:24px 0; font-size:22px; }
+
+
+/* ============================================================
+   11. BIG WIN OVERLAY
+   ============================================================ */
+#big-win{
+  position:fixed; inset:0; z-index:500; pointer-events:none;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background:radial-gradient(ellipse at center,rgba(40,30,120,.55),transparent 70%);
+}
+#bw-title{
+  font-size:clamp(56px,15vw,80px); font-weight:900; color:#c0ccff;
+  text-shadow:0 0 20px #c0ccff,0 0 40px #8899ff,0 0 80px #6677ff,
+              0 3px 0 #223388,0 6px 0 #111844;
+  line-height:1.1;
+  animation:bwPop .5s cubic-bezier(.175,.885,.32,1.275) both;
+}
+#bw-amount{
+  font-size:clamp(40px,11vw,58px); font-weight:bold; color:#fff;
+  text-shadow:0 0 14px #c0ccff,0 0 28px #8899ff;
+  animation:bwPop .5s .2s cubic-bezier(.175,.885,.32,1.275) both;
+}
+@keyframes bwPop{
+  0%{opacity:0; transform:scale(.1) rotate(-10deg)}
+  70%{transform:scale(1.12) rotate(2deg)}
+  100%{opacity:1; transform:scale(1) rotate(0)}
+}
+.hidden{display:none!important}
+
+/* ===== Loading screen ===== */
+#game-loader{
+  position:fixed; inset:0; z-index:9999;
+  background:linear-gradient(160deg,#050218 0%,#0d0535 40%,#130848 70%,#050218 100%);
+  display:flex; align-items:center; justify-content:center;
+  transition:opacity 0.6s ease, visibility 0.6s ease;
+}
+#game-loader.fade-out{ opacity:0; visibility:hidden; pointer-events:none; }
+/* ===== Auth error screen ===== */
+#auth-error{
+  position:fixed; inset:0; z-index:10000;
+  background:linear-gradient(160deg,#050218 0%,#0d0535 40%,#130848 70%,#050218 100%);
+  display:flex; align-items:center; justify-content:center;
+}
+#auth-error.hidden{ display:none; }
+#ae-inner{
+  display:flex; flex-direction:column; align-items:center; gap:20px;
+  width:min(300px,85vw); text-align:center;
+}
+#ae-icon{
+  width:64px; height:64px; border-radius:50%;
+  background:rgba(255,80,80,.12);
+  border:2px solid rgba(255,100,100,.35);
+  display:flex; align-items:center; justify-content:center;
+  font-size:28px; color:#ff7070;
+}
+#ae-title{
+  font-size:clamp(18px,5vw,22px); font-weight:700;
+  letter-spacing:4px; color:#c0ccff;
+}
+#ae-msg{
+  font-size:clamp(12px,3.5vw,14px); color:rgba(160,175,255,.65);
+  line-height:1.7;
+}
+#ae-btn{
+  margin-top:4px; padding:13px 44px;
+  background:linear-gradient(135deg,#4455cc,#6677ff);
+  color:#fff; border:none; border-radius:26px;
+  font-size:16px; font-weight:600; cursor:pointer; letter-spacing:2px;
+  box-shadow:0 4px 18px rgba(80,100,255,.4);
+}
+#ae-btn:active{ transform:scale(.95); }
+#gl-inner{
+  display:flex; flex-direction:column; align-items:center; gap:14px;
+  width:min(320px,85vw);
+}
+#gl-logo{
+  font-size:clamp(28px,7vw,40px); font-weight:900; letter-spacing:6px;
+  color:#c0ccff;
+  text-shadow:0 0 18px rgba(140,160,255,.9), 0 0 40px rgba(100,130,255,.55), 0 0 70px rgba(80,100,255,.3);
+  animation:glLogoPulse 2.2s ease-in-out infinite;
+}
+@keyframes glLogoPulse{
+  0%,100%{text-shadow:0 0 18px rgba(140,160,255,.9),0 0 40px rgba(100,130,255,.55),0 0 70px rgba(80,100,255,.3)}
+  50%{text-shadow:0 0 28px rgba(180,200,255,1),0 0 60px rgba(140,170,255,.75),0 0 100px rgba(110,140,255,.45)}
+}
+#gl-sub{
+  font-size:clamp(11px,3vw,14px); letter-spacing:4px; text-transform:uppercase;
+  color:rgba(160,175,255,.55); margin-top:-8px;
+}
+#gl-spinner{
+  position:relative; width:52px; height:52px;
+  margin:6px 0;
+}
+.gl-dot{
+  position:absolute; width:10px; height:10px; border-radius:50%;
+  background:#c0ccff;
+  box-shadow:0 0 8px rgba(160,180,255,.8);
+  animation:glDotOrbit 1.4s linear infinite;
+}
+.gl-dot.d0{animation-delay:0s}
+.gl-dot.d1{animation-delay:-.23s}
+.gl-dot.d2{animation-delay:-.46s}
+.gl-dot.d3{animation-delay:-.70s}
+.gl-dot.d4{animation-delay:-.93s}
+.gl-dot.d5{animation-delay:-1.16s}
+@keyframes glDotOrbit{
+  0%  {transform:rotate(0deg)   translateX(20px) scale(1);   opacity:1}
+  50% {transform:rotate(180deg) translateX(20px) scale(0.5); opacity:0.4}
+  100%{transform:rotate(360deg) translateX(20px) scale(1);   opacity:1}
+}
+#gl-bar-wrap{
+  width:100%; height:6px; background:rgba(255,255,255,.08);
+  border-radius:3px; overflow:hidden;
+  border:1px solid rgba(160,180,255,.18);
+}
+#gl-bar{
+  height:100%; width:0%; border-radius:3px;
+  background:linear-gradient(90deg,#6065d8,#9098ff,#c0ccff);
+  box-shadow:0 0 8px rgba(160,180,255,.6);
+  transition:width 0.25s ease;
+}
+#gl-status{
+  font-size:clamp(11px,2.5vw,13px); color:rgba(160,175,255,.6);
+  letter-spacing:1px; min-height:18px;
+}
+</style>
+
+</head>
+<body>
+
+<!-- ========== SVG SYMBOL DEFINITIONS (reused via <use href="#…">) ========== -->
+<svg id="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" style="display:none;position:absolute">
+  <defs>
+    <!-- Game symbol 0: Moon / WILD – crescent (two-arc outline) -->
+    <symbol id="sym-moon" viewBox="0 0 100 100">
+      <path d="M 50 8 A 42 42 0 0 0 50 92 A 45 45 0 0 1 50 8 Z"/>
+    </symbol>
+    <!-- Game symbol 1: Dancer – head + flared dress + two arms -->
+    <symbol id="sym-dancer" viewBox="0 0 100 100">
+      <path d="M 50 3 A 9 9 0 0 1 50 21 A 9 9 0 0 1 50 3 Z M 40 22 L 12 80 L 50 68 L 88 80 L 60 22 Z M 40 28 C 26 18 12 22 8 36 C 14 30 26 26 40 32 Z M 60 28 C 74 18 88 22 92 36 C 86 30 74 26 60 32 Z"/>
+    </symbol>
+    <!-- Game symbol 2: Star – classic 5-pointed star -->
+    <symbol id="sym-star" viewBox="0 0 100 100">
+      <path d="M 50 5 L 60.6 35.4 L 92.8 36.1 L 67.1 55.6 L 76.5 86.4 L 50 68 L 23.5 86.4 L 32.9 55.6 L 7.2 36.1 L 39.4 35.4 Z"/>
+    </symbol>
+    <!-- Game symbol 3: Note – eighth note (oval head + stem + flag) -->
+    <symbol id="sym-note" viewBox="0 0 100 100">
+      <path d="M 26 72 A 14 10 0 1 0 54 72 A 14 10 0 1 0 26 72 Z M 52 22 L 56 22 L 56 72 L 52 72 Z M 56 22 L 84 14 L 84 34 L 56 42 Z"/>
+    </symbol>
+    <!-- Game symbol 4: Diamond – 4-pointed star -->
+    <symbol id="sym-diamond" viewBox="0 0 100 100">
+      <path d="M 50 5 L 59 41 L 95 50 L 59 59 L 50 95 L 41 59 L 5 50 L 41 41 Z"/>
+    </symbol>
+    <!-- Game symbol 5: Sparkle – 8-pointed star -->
+    <symbol id="sym-sparkle" viewBox="0 0 100 100">
+      <path d="M 50 6 L 57 34 L 81 19 L 66 44 L 94 50 L 66 57 L 81 81 L 57 66 L 50 94 L 44 66 L 19 81 L 34 57 L 6 50 L 34 44 L 19 19 L 44 34 Z"/>
+    </symbol>
+    <!-- UI: right-pointing chevron (log toggle) -->
+    <symbol id="icon-chevron" viewBox="0 0 100 100">
+      <path d="M 30 15 L 72 50 L 30 85 L 20 74 L 52 50 L 20 26 Z"/>
+    </symbol>
+    <!-- UI: plus / copy -->
+    <symbol id="icon-plus" viewBox="0 0 100 100">
+      <path d="M 43 5 L 57 5 L 57 43 L 95 43 L 95 57 L 57 57 L 57 95 L 43 95 L 43 57 L 5 57 L 5 43 L 43 43 Z"/>
+    </symbol>
+    <!-- UI: X / close / clear -->
+    <symbol id="icon-close" viewBox="0 0 100 100">
+      <path d="M 16 5 L 50 39 L 84 5 L 95 16 L 61 50 L 95 84 L 84 95 L 50 61 L 16 95 L 5 84 L 39 50 L 5 16 Z"/>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- ========== GAME VIEWPORT ========== -->
+<div id="gv">
+
+  <!-- 2. Paytable -->
+  <div id="paytable">
+    <div class="pt-col">
+      <div class="pt-row">
+        <span class="pt-syms"><canvas class="pt-sym-img" data-sym-idx="0" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="0" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="0" width="26" height="26"></canvas></span><span class="pt-val">500</span>
+      </div>
+      <div class="pt-row">
+        <span class="pt-syms"><canvas class="pt-sym-img" data-sym-idx="0" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="0" width="26" height="26"></canvas></span><span class="pt-val">10</span>
+      </div>
+      <div class="pt-row">
+        <span class="pt-syms"><canvas class="pt-sym-img" data-sym-idx="1" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="1" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="1" width="26" height="26"></canvas></span><span class="pt-val">20</span>
+      </div>
+      <div class="pt-row">
+        <span class="pt-syms"><canvas class="pt-sym-img" data-sym-idx="2" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="2" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="2" width="26" height="26"></canvas></span><span class="pt-val">15</span>
+      </div>
+    </div>
+    <div class="pt-div"></div>
+    <div id="pt-wild">
+      <div id="wild-badge">
+        <span class="wi-pig"><canvas class="pt-sym-img" data-sym-idx="0" width="42" height="42"></canvas></span>
+      </div>
+      <span id="wild-label">百搭</span>
+    </div>
+    <div class="pt-div"></div>
+    <div class="pt-col">
+      <div class="pt-row">
+        <span class="pt-syms"><canvas class="pt-sym-img" data-sym-idx="3" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="3" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="3" width="26" height="26"></canvas></span><span class="pt-val">10</span>
+      </div>
+      <div class="pt-row">
+        <span class="pt-syms"><canvas class="pt-sym-img" data-sym-idx="4" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="4" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="4" width="26" height="26"></canvas></span><span class="pt-val">8</span>
+      </div>
+      <div class="pt-row">
+        <span class="pt-syms"><canvas class="pt-sym-img" data-sym-idx="5" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="5" width="26" height="26"></canvas></span><span class="pt-val">3</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Jackpot banner -->
+  <div id="jackpot-banner">
+    <div id="jackpot-marquee-track">
+      <span id="jackpot-marquee-text">月光舞台 · 最高獎勵 ×20 · 每次旋轉都有機會！· Wild 符號可替代任意圖示 ·</span>
+    </div>
+  </div>
+
+  <!-- 4. Reel section (Three.js WebGL2) -->
+  <div id="reel-section">
+    <div id="reel-canvas-wrap"></div>
+    <div id="reel-chrome">
+      <div class="reel-sep s1"></div>
+      <div class="reel-sep s2"></div>
+      <div id="payline"></div>
+    </div>
+  </div>
+
+  <!-- 5. Scene area -->
+  <div id="scene-area">
+    <div id="scene-top-border"></div>
+    <!-- Left pillar -->
+    <div class="pillar left">
+      <div class="p-ring"></div>
+      <div class="p-ring"></div>
+      <div class="couplet">
+        <span class="c-char">夜</span><span class="c-char">舞</span>
+        <span class="c-char">生</span><span class="c-char">輝</span>
+      </div>
+    </div>
+    <!-- Center -->
+    <div id="center-stage">
+      <!-- Spotlight LOGO at top of stage -->
+      <div id="stage-logo">
+        <div id="logo-text">
+          <span id="logo-title">月光舞台</span>
+          <span id="logo-sub">Moon Dance Stage</span>
+          <span id="logo-bar"></span>
+        </div>
+      </div>
+      <div id="moon-gate"><div id="gate-door"></div></div>
+      <!-- Character: SVG fallback while 3D model loads -->
+      <div id="pig-char">
+        <div id="pig-emoji"><svg viewBox="0 0 100 100" width="68" height="68" style="fill:#c0a0ff"><use href="#sym-moon"/></svg></div>
+        <div id="pig-shadow"></div>
+      </div>
+      <!-- 3D character model (moon_dance.glb) -->
+      <div id="char-canvas-wrap"></div>
+      <!-- Idle coin sparkles -->
+      <span class="s-coin" style="left:18%;bottom:28%;animation-duration:3.2s;animation-delay:0s"><svg class="sym-icon" width="15" height="15"><use href="#sym-diamond"/></svg></span>
+      <span class="s-coin" style="left:72%;bottom:20%;animation-duration:4.1s;animation-delay:1.3s"><svg class="sym-icon" width="13" height="13"><use href="#sym-star"/></svg></span>
+      <span class="s-coin" style="left:38%;bottom:14%;animation-duration:3.7s;animation-delay:0.6s"><svg class="sym-icon" width="12" height="12"><use href="#sym-sparkle"/></svg></span>
+      <span class="s-coin" style="left:55%;bottom:32%;animation-duration:4.8s;animation-delay:2.0s"><svg class="sym-icon" width="14" height="14"><use href="#sym-diamond"/></svg></span>
+      <span class="s-coin" style="left:80%;bottom:40%;animation-duration:3.5s;animation-delay:0.9s"><svg class="sym-icon" width="11" height="11"><use href="#sym-moon"/></svg></span>
+    </div>
+    <!-- Right pillar -->
+    <div class="pillar right">
+      <div class="p-ring"></div>
+      <div class="p-ring"></div>
+      <div class="couplet">
+        <span class="c-char">月</span><span class="c-char">光</span>
+        <span class="c-char">閃</span><span class="c-char">耀</span>
+      </div>
+    </div>
+    <div id="stage-floor"></div>
+    <div id="stage-footlights">
+      <span class="footlight fl0"></span>
+      <span class="footlight fl1"></span>
+      <span class="footlight fl2"></span>
+      <span class="footlight fl3"></span>
+      <span class="footlight fl4"></span>
+      <span class="footlight fl5"></span>
+      <span class="footlight fl6"></span>
+      <span class="footlight fl7"></span>
+    </div>
+  </div>
+
+  <!-- 6. Control bar -->
+  <div id="control-bar">
+    <div id="ctrl-row1">
+      <button class="ctrl-btn" id="btn-back" aria-label="返回">
+        <div class="cb-disc">⬅️</div>
+        <span class="cb-label">返回</span>
+      </button>
+      <button class="ctrl-btn" id="btn-mute" aria-label="靜音">
+        <div class="cb-disc" id="mute-disc">🔊</div>
+        <span class="cb-label">靜音</span>
+      </button>
+
+      <div id="spin-wrap">
+        <div id="spin-ring">
+          <button id="spin-btn" disabled aria-label="旋轉">
+            <span class="spin-ic">▶</span>
+          </button>
+        </div>
+        <span id="spin-auto-badge" class="hidden">AUTO</span>
+      </div>
+      <button class="ctrl-btn" id="btn-bet" aria-label="加注">
+        <div class="cb-disc"><svg class="sym-icon" style="width:0.9em;height:0.9em"><use href="#icon-plus"/></svg></div>
+        <span class="cb-label" id="bet-label">加注</span>
+      </button>
+      <button class="ctrl-btn" id="btn-menu" aria-label="菜單">
+        <div class="cb-disc">≡</div>
+        <span class="cb-label">菜單</span>
+      </button>
+    </div>
+    <div id="ctrl-row2">
+      <div class="bal-item bal-item-left">
+        <span class="bal-icon"><svg class="sym-icon"><use href="#sym-diamond"/></svg></span>
+        <span class="bal-lbl">餘額</span>
+        <span class="bal-val" id="balance-val">—</span>
+      </div>
+      <div class="bal-item bal-item-right">
+        <span class="bal-icon"><svg class="sym-icon"><use href="#sym-star"/></svg></span>
+        <span class="bal-lbl">贏獎</span>
+        <span class="bal-val" id="win-val">—</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- #gv -->
+
+<!-- Log panel (hidden from screen; accumulates logs for copy-log feature) -->
+<div id="log-panel">
+  <div id="log-toggle"><svg class="sym-icon" style="width:0.8em;height:0.8em"><use href="#icon-chevron"/></svg> 日誌 (點擊收起)</div>
+</div>
+
+<!-- ── Animation Debug Panel (Redan-only) ──────────────────────────────── -->
+<div id="anim-debug-panel" style="display:none">
+  <div id="anim-debug-header">🎬 動畫偵錯 <span id="adb-total-frames" style="font-size:10px;color:#aaa;font-weight:normal"></span><span id="anim-debug-close">✕</span></div>
+  <div class="anim-debug-row">
+    <span class="anim-debug-label">Big Win</span>
+    <label>開始</label><input type="number" id="adb-big-start" value="1"   min="0" step="1">
+    <label>結束</label><input type="number" id="adb-big-end"   value="548" min="1" step="1">
+    <button class="adb-play-btn" data-type="big">▶ 播放</button>
+  </div>
+  <div class="anim-debug-row">
+    <span class="anim-debug-label">Small Win</span>
+    <label>開始</label><input type="number" id="adb-sm-start"  value="549" min="0" step="1">
+    <label>結束</label><input type="number" id="adb-sm-end"    value="923" min="1" step="1">
+    <button class="adb-play-btn" data-type="small">▶ 播放</button>
+  </div>
+  <div class="anim-debug-row">
+    <span class="anim-debug-label">Fall</span>
+    <label>開始</label><input type="number" id="adb-fall-start" value="924"  min="0" step="1">
+    <label>結束</label><input type="number" id="adb-fall-end"   value="1050" min="1" step="1">
+    <button class="adb-play-btn" data-type="fall">▶ 播放</button>
+  </div>
+  <div class="anim-debug-row" style="justify-content:space-between">
+    <button id="adb-apply-btn">✅ 套用幀設定</button>
+    <button id="adb-reset-btn">↩ 重設預設值</button>
+  </div>
+  <div id="adb-status"></div>
+</div>
+
+<!-- Function menu popup (opened by ≡ btn-menu) -->
+<div id="menu-popup">
+  <button class="menu-item" id="menu-deposit">💰 充值</button>
+  <button class="menu-item" id="menu-withdraw">💸 提款</button>
+  <div class="menu-divider"></div>
+  <button class="menu-item" id="menu-txn">💳 帳變紀錄</button>
+  <div class="menu-divider"></div>
+  <button class="menu-item" id="menu-copy-log">📋 複製日誌</button>
+  <button class="menu-item" id="menu-clear-log">🗑️ 清除日誌</button>
+</div>
+
+<!-- Transaction history panel -->
+<div id="txn-backdrop"></div>
+<div id="txn-panel">
+  <div id="txn-header">
+    <span id="txn-title">帳變紀錄</span>
+    <button id="txn-close">&#10005;</button>
+  </div>
+  <div id="txn-list"></div>
+  <div id="txn-footer">
+    <button id="txn-load-more">載入更多</button>
+  </div>
+</div>
+
+<!-- Wallet panel injected by wallet_panel.js -->
+
+<!-- Loading screen overlay -->
+<div id="game-loader">
+  <div id="gl-inner">
+    <div id="gl-logo">月光舞台</div>
+    <div id="gl-sub">Moon Dance Stage</div>
+    <div id="gl-spinner">
+      <span class="gl-dot d0"></span>
+      <span class="gl-dot d1"></span>
+      <span class="gl-dot d2"></span>
+      <span class="gl-dot d3"></span>
+      <span class="gl-dot d4"></span>
+      <span class="gl-dot d5"></span>
+    </div>
+    <div id="gl-bar-wrap"><div id="gl-bar"></div></div>
+    <div id="gl-status">載入中...</div>
+  </div>
+</div>
+
+<!-- Auth error screen — shown when JWT is absent or login check fails -->
+<div id="auth-error" class="hidden">
+  <div id="ae-inner">
+    <div id="ae-icon">&#128274;</div>
+    <div id="ae-title">尚未登入</div>
+    <div id="ae-msg">請先登入後再進行遊戲</div>
+    <button id="ae-btn" onclick="window.history.back(); window.parent.postMessage({type:'NAV_BACK'}, location.origin);">返回</button>
+  </div>
+</div>
+
+<!-- Big win overlay -->
+<div id="big-win" class="hidden">
+  <div id="bw-title">大獎！</div>
+  <div id="bw-amount">+USDT 0</div>
+</div>
+
+<!-- Guard: redirect direct browser access to the Telegram Mini App entry point.
+     Exceptions:
+       ?hosted=1  — loaded by the TG Mini App host page (web/tg/slot/index.html)
+       ?flutter=1 — loaded by the Flutter app's SlotGamePage WebView
+       _flutterNative — injected at document-start by Flutter native InAppWebView -->
+<script>
+(function () {
+  var p = new URLSearchParams(window.location.search);
+  if (p.get('hosted') !== '1' && p.get('flutter') !== '1' && !window._flutterNative) {
+    window.location.replace('/tg/slot/');
+  }
+})();
+</script>
+
+<!--
+  Host adapter — must load before the game module so window.__gameHost is
+  available when the module initialises.
+  • flutter_adapter.js  →  Flutter Native + Flutter Web iframe + Standalone PWA
+-->
+<script src="../_runtime/flutter_adapter.js?v=1.0.1807"></script>
+
+<script type="module">
+import * as THREE from 'https://esm.sh/three@0.160.0';
+import { GLTFLoader } from 'https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'https://esm.sh/three@0.160.0/examples/jsm/loaders/DRACOLoader.js';
+import { createViewportManager } from '../_runtime/viewport_manager.js';
+import { createLogManager } from '../_runtime/log_manager.js';
+import { createMenuManager } from '../_runtime/menu_manager.js';
+import { createAnimationLoopManager } from '../_runtime/animation_loop_manager.js';
+import { initWalletPanel, openWalletPanel, closeWalletPanel, walletIsOpen, walletUpdateBalance } from '../_runtime/wallet_panel.js';
+
+// ── Early game-state declarations ────────────────────────────────────────────
+// Declared here (before any event listeners or IIFEs) so that `applyBalance()`
+// — which is a hoisted function declaration — never hits a TDZ error even if
+// HOST_INIT fires before the Three.js setup block at the bottom of the module
+// has been reached during execution.
+let balance    = 0; // USDT × 100 units; updated by applyBalance() on HOST_INIT / SPIN_RESULT
+let isSpinning = false;
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ===== Loading screen =====
+const gameLoader   = document.getElementById('game-loader');
+const glBar        = document.getElementById('gl-bar');
+const glStatus     = document.getElementById('gl-status');
+let   _loaderHidden = false;
+
+function setLoadProgress(pct, msg) {
+  // Clamp progress bar to 0-100% to prevent visual overflow
+  const clampedPct = Math.max(0, Math.min(pct, 100));
+  glBar.style.width = clampedPct + '%';
+  if (msg) glStatus.textContent = msg;
+}
+
+function hideLoader() {
+  if (_loaderHidden) return;
+  _loaderHidden = true;
+  setLoadProgress(100, '載入完成！');
+  setTimeout(() => gameLoader.classList.add('fade-out'), 300);
+}
+
+// Show a full-screen auth error overlay and permanently lock the spin button.
+// Called when HOST_INIT arrives with no JWT, or when the auth timeout fires.
+let _authErrorShown = false;
+function showAuthError() {
+  if (_authErrorShown) return;
+  _authErrorShown = true;
+  // Force-hide the loader so the error screen appears cleanly.
+  _loaderHidden = true;
+  gameLoader.classList.add('fade-out');
+  document.getElementById('auth-error').classList.remove('hidden');
+  addLog('未登入狀態，顯示登入錯誤畫面', 'warn');
+}
+
+setLoadProgress(5, '初始化引擎...');
+
+// ===== Host Bridge (Telegram Mini App host ↔ game iframe protocol) =====
+// Opened exclusively via web/tg/slot/index.html with query param ?hosted=1.
+// The host page handles Telegram initData exchange and balance checks; this
+// game page only renders visuals and communicates back via postMessage.
+//
+// Message protocol (all messages carry a `type` string field):
+//   Host → Game:  HOST_INIT  { jwt, balance (USDT), demoMode, username }
+//                 HOST_LOG { level, message, ts }
+//                 SPIN_RESULT { symbols[3], multiplier, winAmount (USDT), newBalance (USDT), mode }
+//                 SPIN_ERROR  { message }
+//                 RTP_RESULT { data }
+//                 RTP_ERROR { message }
+//   Game → Host:  GAME_READY {}
+//                 SPIN_REQUEST { betIndex, betAmount, mode: 'REAL'|'DEMO' }
+//                 RTP_REQUEST {}
+//                 GO_BACK {}
+
+// Strict origin for postMessage — must match both directions.
+
+// ===== Log system =====
+const logPanel = document.getElementById('log-panel');
+const logToggle = document.getElementById('log-toggle');
+const logManager = createLogManager({
+  logPanelEl: logPanel,
+  logToggleEl: logToggle,
+  maxLogs: 200,
+  storageKey: 'slot_game_log',
+  icons: { error: '✗', warn: '!', info: '·' },
+});
+const addLog = logManager.addLog;
+logManager.patchConsole();
+
+// ===== Uniform viewport scaling =====
+// #gv is a fixed 430x900 design canvas. Scale it as one unit to fit the screen.
+let gvScale = Math.min(window.innerWidth / 430, window.innerHeight / 900);
+const _isHostedMode = new URLSearchParams(window.location.search).get('hosted') === '1';
+const ENABLE_VV_FIX_LOG = false;
+const viewportManager = createViewportManager({
+  gvEl: document.getElementById('gv'),
+  hostedMode: _isHostedMode,
+  enableVvFixLog: ENABLE_VV_FIX_LOG,
+  onScaleChange: (scale) => { gvScale = scale; },
+  onLog: (msg, type) => addLog(msg, type),
+});
+
+window.__vvDebugContext = viewportManager.createDebugContext(
+  () => ({
+    hosted:  _isHostedMode,
+    adapter: window.__gameHost ? 'loaded' : 'none',
+  }),
+  () => viewportManager.getRenderedLayout(),
+);
+
+viewportManager.init();
+
+// ===== Mobile performance detection =====
+// Lower rendering quality on mobile to avoid GPU/CPU overload (laggy scrolling)
+// Feature-detect touch/coarse-pointer devices instead of UA sniffing (UA can be spoofed).
+const IS_MOBILE = window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 768;
+// DPR cap: multiply device DPR by the CSS viewport scale so the canvas buffer resolution
+// always matches the physical screen resolution of the reel area.  Cap at 2.5 to limit
+// GPU memory on very-high-DPI devices while still rendering crisply.
+const DPR_CAP = 2.5;
+// Compute effective pixel ratio: devicePixelRatio × gvScale ensures the canvas buffer
+// has enough pixels to cover the physical display area after the CSS scale() transform.
+function calcDPR() { return Math.min(window.devicePixelRatio * gvScale, DPR_CAP); }
+
+// ===== WebGL2 renderer (WebGPU removed for broad iOS/Android compatibility) =====
+// Using THREE.WebGLRenderer ensures the game works on iOS 10.1+ WKWebView and
+// older Android WebView without requiring importmaps or top-level await.
+// Top-level await (needed for dynamic WebGPU import) is only available in
+// iOS 15+ modules, so removing it makes the module load on iOS 12–14 as well.
+
+// ===== Three.js scene setup (reel section only) =====
+const reelSection = document.getElementById('reel-section');
+const W = reelSection.clientWidth;
+// Canvas renders at 340px (bleeds 71px above/below the 198px section, clipped by overflow:hidden)
+// Section: 42.5px (top edge row) + 113px (winner row) + 42.5px (bottom edge row) = 198px
+const H = 340;
+
+setLoadProgress(10, '建立場景...');
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x040215);
+
+const camera = new THREE.PerspectiveCamera(38, W / H, 0.1, 60);
+camera.position.set(0, 0, 6.8);
+camera.lookAt(0, 0, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: !IS_MOBILE, alpha: false });
+renderer.setSize(W, H);
+renderer.setPixelRatio(calcDPR());
+// ACES filmic tone mapping is expensive on mobile — use linear for better throughput
+renderer.toneMapping = IS_MOBILE ? THREE.LinearToneMapping : THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.35;
+document.getElementById('reel-canvas-wrap').appendChild(renderer.domElement);
+setLoadProgress(20, '初始化渲染器...');
+
+// ===== Lighting =====
+scene.add(new THREE.AmbientLight(0xb0b8ff, 0.7));
+const keyLight = new THREE.DirectionalLight(0xd0d8ff, 2.2);
+keyLight.position.set(4, 8, 8);
+scene.add(keyLight);
+const rimLight = new THREE.DirectionalLight(0x6644ff, 1.6);
+rimLight.position.set(-5, 3, -3);
+scene.add(rimLight);
+const fillLight = new THREE.PointLight(0x8844ff, 1.4, 22);
+fillLight.position.set(0, 2, 6);
+scene.add(fillLight);
+// Two colored orbiting point lights for disco/stage feel
+// Skip on mobile — dynamic point lights require per-fragment shader computation every frame
+const orbitLightA = new THREE.PointLight(0xaa44ff, 1.8, 18); // purple
+const orbitLightB = new THREE.PointLight(0x44aaff, 1.6, 16); // blue
+if (!IS_MOBILE) {
+  scene.add(orbitLightA);
+  scene.add(orbitLightB);
+}
+
+// ===== Character scene (moon_dance.glb) =====
+const charWrap     = document.getElementById('char-canvas-wrap');
+const charW        = charWrap.clientWidth  || 200;
+const charH        = charWrap.clientHeight || 200;
+
+const charScene    = new THREE.Scene();
+
+const charCamera   = new THREE.PerspectiveCamera(50, charW / charH, 0.1, 50);
+charCamera.position.set(0, 0.9, 3.04); // updated post-load to camZ = CHAR_FIT_TARGET * 1.2
+charCamera.lookAt(0, 0.9, 0);
+
+const charRenderer = new THREE.WebGLRenderer({ antialias: !IS_MOBILE, alpha: true });
+charRenderer.setSize(charW, charH);
+charRenderer.setPixelRatio(calcDPR());
+charRenderer.setClearColor(0x000000, 0); // fully transparent background
+charWrap.appendChild(charRenderer.domElement);
+
+// Character lighting — neutral white so GLB material colours render correctly
+charScene.add(new THREE.AmbientLight(0xffffff, 0.6));
+const charKey = new THREE.DirectionalLight(0xfff8f0, 1.8); // slightly warm white key
+charKey.position.set(2, 6, 5);
+charScene.add(charKey);
+const charRim = new THREE.DirectionalLight(0xddeeff, 0.8); // cool blue rim for depth
+charRim.position.set(-4, 2, -2);
+charScene.add(charRim);
+// Stage spotlight from above — purple hue to match moon dance theme
+const charSpot = new THREE.SpotLight(0xaa88ff, 2.5, 12, Math.PI / 5, 0.35);
+charSpot.position.set(0, 8, 3);
+charSpot.target.position.set(0, 1, 0); // aim at chest height
+charScene.add(charSpot);
+charScene.add(charSpot.target);
+
+let charMixer  = null;
+let charModel  = null;
+let charAction = null;       // legacy reference (unused after subclip setup)
+let charAnimating = false;   // true only while win dance animation is playing
+
+// ── Subclip actions (set up after GLB loads) ─────────────────────────────────
+// Frame table (60 fps):
+//   1–219  → Big Win  (~3.6 s)
+//   220–369 → Small Win (~2.5 s)
+//   370–420 → Fall / no-win ×2 (~0.85 s)
+const CHAR_FPS             = 60;
+const CHAR_FRAMES_BIG_WIN  = { start: 1,   end: 548  };
+const CHAR_FRAMES_SMALL_WIN= { start: 549, end: 923  };
+const CHAR_FRAMES_FALL     = { start: 924, end: 1050 };
+let charActionBigWin   = null;
+let charActionSmallWin = null;
+let charActionFall     = null;
+let _consecutiveMisses = 0;  // trigger fall after 2 consecutive no-wins
+
+/** Stop all subclip actions and play the requested one. */
+function _playCharAnim(type) {
+  [charActionBigWin, charActionSmallWin, charActionFall].forEach(a => { if (a) a.stop(); });
+  let action = null;
+  if      (type === 'big')   action = charActionBigWin;
+  else if (type === 'small') action = charActionSmallWin;
+  else if (type === 'fall')  action = charActionFall;
+  if (action) { charAnimating = true; action.reset().play(); }
+}
+
+const gltfLoader = new GLTFLoader();
+
+// Draco mesh-compression decoder.  moon_dance.glb is now Draco-compressed
+// (KHR_draco_mesh_compression in extensionsRequired) — without this loader
+// the GLTFLoader would throw "no DRACOLoader instance provided" on load().
+// gstatic CDN is recommended: it's already cached for most users and saves
+// hosting the ~500 KB decoder files ourselves.  Pinned to the same version
+// three.js 0.160 ships with to avoid decoder/encoder drift.
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+gltfLoader.setDRACOLoader(dracoLoader);
+
+// moon_dance.glb uses the KHR_materials_pbrSpecularGlossiness extension which
+// Three.js removed from core in r156.  Without this plugin every material falls
+// back to a plain gray MeshStandardMaterial.  The plugin converts:
+//   diffuseFactor/diffuseTexture  → color / map
+//   glossinessFactor              → roughness = 1 − glossiness
+//   specularGlossinessTexture     → roughnessMap (approximation)
+const SPEC_GLOSS_EXT = 'KHR_materials_pbrSpecularGlossiness';
+gltfLoader.register(parser => ({
+  name: SPEC_GLOSS_EXT,
+  getMaterialType(materialIndex) {
+    const mat = parser.json.materials?.[materialIndex];
+    if (!mat?.extensions?.[SPEC_GLOSS_EXT]) return null;
+    return THREE.MeshStandardMaterial;
+  },
+  extendMaterialParams(materialIndex, materialParams) {
+    const mat = parser.json.materials?.[materialIndex];
+    if (!mat?.extensions?.[SPEC_GLOSS_EXT]) return Promise.resolve();
+    const ext     = mat.extensions[SPEC_GLOSS_EXT];
+    const pending = [];
+    if (Array.isArray(ext.diffuseFactor)) {
+      const [r, g, b, a] = ext.diffuseFactor;
+      materialParams.color   = new THREE.Color(r, g, b);
+      materialParams.opacity = a ?? 1;
+    }
+    if (ext.diffuseTexture !== undefined) {
+      pending.push(parser.assignTexture(materialParams, 'map', ext.diffuseTexture, THREE.SRGBColorSpace));
+    }
+    materialParams.metalness = 0;
+    materialParams.roughness = ext.glossinessFactor !== undefined ? 1 - ext.glossinessFactor : 1;
+    if (ext.specularGlossinessTexture !== undefined) {
+      pending.push(parser.assignTexture(materialParams, 'roughnessMap', ext.specularGlossinessTexture));
+    }
+    return Promise.all(pending);
+  }
+}));
+
+// On mobile: show a "ready" state immediately and start model background fetch later
+setLoadProgress(IS_MOBILE ? 100 : 30, IS_MOBILE ? '遊戲就緒' : '載入 3D 模型...');
+
+// ===== Lazy 3D model loading =====
+// On mobile, the game becomes interactive immediately with the emoji placeholder.
+// The GLB is loaded in the background after a short delay so it doesn't block
+// the first spin and doesn't compete with the reel renderer for bandwidth.
+//
+// On desktop (or fast connections), load immediately as before.
+//
+// Connection speed gate: if navigator.connection reports slow-2g/2g, skip the
+// 3D model entirely to avoid blocking on a high-latency mobile network.
+function shouldSkipGlb() {
+  // Network Information API — only unprefixed form is in the current spec;
+  // prefixed moz/webkit variants were experimental and removed, kept here only as
+  // a defensive fallback for very old WebView builds.
+  const conn = navigator.connection; // mozConnection/webkitConnection removed from all browsers
+  if (!conn) return false;
+  return conn.effectiveType === 'slow-2g' || conn.effectiveType === '2g';
+}
+
+function loadCharModel() {
+  if (shouldSkipGlb()) {
+    console.warn('慢速網絡 — 跳過 3D 模型載入');
+    hideLoader();
+    return;
+  }
+  const progressState = {
+    startLogged: false,
+    midLogged: false,
+    doneLogged: false,
+    over100Warned: false,
+  };
+  gltfLoader.load('./moon_dance.glb',
+  (gltf) => {
+    charModel = gltf.scene;
+    const CHAR_FIT_TARGET = 2.535; // 1.95 × 1.3 = 2.535 (second 30 % enlargement)
+    const CHAR_Y_OFFSET   = -0.55; // shift model down so raised arms don't clip top edge
+
+    // Step 1 – add to scene so updateWorldMatrix propagates the full hierarchy
+    // (including Node 4's built-in 0.0254 inches→metres scale matrix).
+    charScene.add(charModel);
+    charModel.updateWorldMatrix(true, true);
+
+    // expandByObject is intentionally NOT used here.  Three.js r155+ made it call
+    // SkinnedMesh.computeBoundingBox() which applies bone-weight transforms; but
+    // bone matrices are uninitialised before the first render, so every skinned
+    // vertex collapses near the origin → returns ~0.087 m instead of ~2.9 m.
+    // Instead we do a manual traverse: setFromBufferAttribute gives the REST-POSE
+    // local bounds (no bones), then applyMatrix4(matrixWorld) converts them to the
+    // correct world-space extent.
+    const worldBox = new THREE.Box3();
+    const _meshBox = new THREE.Box3();
+    charModel.traverse(node => {
+      if (!node.isMesh) return;
+      const pos = node.geometry.getAttribute('position');
+      if (!pos) return;
+      _meshBox.setFromBufferAttribute(pos);   // REST-POSE local bounds
+      _meshBox.applyMatrix4(node.matrixWorld); // world-space transform
+      worldBox.union(_meshBox);
+    });
+    const worldSize   = worldBox.getSize(new THREE.Vector3());
+    const worldCenter = worldBox.getCenter(new THREE.Vector3());
+
+    // Step 2 – fit: scale so the tallest dimension = CHAR_FIT_TARGET world units.
+    // Use multiplyScalar (not setScalar) to PRESERVE the GLB's existing root scale
+    // (e.g. 0.01 for a Mixamo cm→m conversion).  setScalar would overwrite it,
+    // making the model ~100× taller than intended and showing only the shoes.
+    const fitScale = CHAR_FIT_TARGET / Math.max(worldSize.x, worldSize.y, worldSize.z);
+    charModel.scale.multiplyScalar(fitScale);
+
+    // Step 3 – reposition: feet at y=0, centered on x/z.
+    // worldBox was measured before the multiplicative scale, so we still multiply
+    // by fitScale to convert old-world coords → new-world coords.
+    charModel.position.set(
+      -worldCenter.x * fitScale,
+      -worldBox.min.y * fitScale + CHAR_Y_OFFSET,  // feet at y=0 + downward offset
+      -worldCenter.z * fitScale
+    );
+
+    // Step 4 – aim camera at waist/chest level (40% of model height from ground).
+    const modelWorldH = worldSize.y * fitScale;   // ≈ CHAR_FIT_TARGET
+    const scaledMidY  = modelWorldH * 0.35;       // slightly below centre → headroom for raised arms
+    const camZ        = CHAR_FIT_TARGET * 1.2;    // model fills ~87% of frame height (almost full section, slight breathing room)
+    charCamera.position.set(0, scaledMidY, camZ);
+    charCamera.lookAt(0, scaledMidY, 0);
+    charCamera.updateProjectionMatrix();
+    // Set up animation — idle (rest pose); only plays on win/fall events
+    if (gltf.animations && gltf.animations.length > 0) {
+      charMixer = new THREE.AnimationMixer(charModel);
+      const baseClip = gltf.animations[0];
+      window.__anim_baseClip = baseClip; // exposed for AnimDebugPanel
+      // Show total frame count in debug panel header
+      const _totalFrames = Math.round(baseClip.duration * CHAR_FPS);
+      const _tfEl = document.getElementById('adb-total-frames');
+      if (_tfEl) _tfEl.textContent = `總幀數 ${_totalFrames} (${baseClip.duration.toFixed(2)}s @ ${CHAR_FPS}fps)　`;
+
+      // Create sub-clips from the shared frame table
+      const bigClip   = THREE.AnimationUtils.subclip(baseClip, 'bigWin',   CHAR_FRAMES_BIG_WIN.start,   CHAR_FRAMES_BIG_WIN.end,   CHAR_FPS);
+      const smallClip = THREE.AnimationUtils.subclip(baseClip, 'smallWin', CHAR_FRAMES_SMALL_WIN.start, CHAR_FRAMES_SMALL_WIN.end, CHAR_FPS);
+      const fallClip  = THREE.AnimationUtils.subclip(baseClip, 'fall',     CHAR_FRAMES_FALL.start,      CHAR_FRAMES_FALL.end,      CHAR_FPS);
+
+      charActionBigWin   = charMixer.clipAction(bigClip);
+      charActionSmallWin = charMixer.clipAction(smallClip);
+      charActionFall     = charMixer.clipAction(fallClip);
+
+      [charActionBigWin, charActionSmallWin, charActionFall].forEach(a => {
+        a.setLoop(THREE.LoopOnce);
+        a.clampWhenFinished = false; // return to rest pose (t=0) on finish
+      });
+      // 'finished' fires when any LoopOnce action ends → reset charAnimating flag
+      charMixer.addEventListener('finished', () => { charAnimating = false; });
+      // Do NOT call .play() — model stays in rest pose until triggered
+    }
+    // Hide emoji placeholder — 3D model loaded
+    document.getElementById('pig-char').classList.add('hidden');
+    console.log('Character model loaded (moon_dance.glb)');
+  },
+  (xhr) => {
+    if (xhr.lengthComputable) {
+      // Clamp progress to [0, 100] to avoid spurious over-100% reports from browser prefetch
+      const rawPct = xhr.loaded / xhr.total * 100;
+      const pct = Math.min(Math.round(rawPct), 100);
+      // Map model loading 0-100% to overall progress 30-90%
+      const overallPct = Math.min(30 + Math.round(pct * 0.6), 90); // cap at 90% until complete
+      if (!IS_MOBILE) setLoadProgress(overallPct, `載入模型 ${pct}%`);
+      // Log one-time milestones only, to avoid repeated 100% spam.
+      if (!progressState.startLogged && pct < 10) {
+        console.log(`Model loading: ${pct}%`);
+        progressState.startLogged = true;
+      }
+      if (!progressState.midLogged && pct >= 50 && pct < 100) {
+        console.log(`Model loading: ${pct}%`);
+        progressState.midLogged = true;
+      }
+      if (!progressState.doneLogged && pct === 100) {
+        console.log('Model loading: 100%');
+        progressState.doneLogged = true;
+      }
+      if (!progressState.over100Warned && rawPct > 100) {
+        console.warn(`Model loading raw progress >100 detected: ${rawPct.toFixed(2)}% (clamped)`);
+        progressState.over100Warned = true;
+      }
+    }
+  },
+  (err) => {
+    console.error('Character model failed to load:', err?.message || String(err));
+    addLog(`3D 模型加載失敗，以 Emoji 替代繼續: ${err?.message || String(err)}`, 'warn');
+    // Model is not a gate — game remains playable with the emoji placeholder.
+  }
+  );
+}
+
+// Delay (ms) before the background GLB fetch starts on mobile — long enough for the
+// reel renderer to complete its first frame and textures to upload to GPU.
+const MOBILE_MODEL_LOAD_DELAY_MS = 1500;
+
+if (IS_MOBILE) {
+  // Mobile: delay the GLB fetch so the reel renderer can complete its first
+  // frame and upload textures before the model download competes for bandwidth.
+  // The loader remains visible until _checkAndUnlockSpin() dismisses it.
+  setLoadProgress(30, '載入模型中...');
+  setTimeout(loadCharModel, MOBILE_MODEL_LOAD_DELAY_MS);
+} else {
+  loadCharModel();
+}
+
+// ===== Symbol texture factory =====
+
+// ===== Load symbols sprite sheet (symbols.png) without blocking game startup =====
+// The sprite sheet is a 1×9 vertical strip (9 symbols stacked top-to-bottom, 307×2700 px total).
+// UV coordinates in spriteMap are resolution-independent.
+let _symbolsSpriteLoaded = false;
+const _symbolsSpriteImg = new Image();
+const _symbolsSpriteReady = new Promise((resolve) => {
+  _symbolsSpriteImg.onload = () => {
+    _symbolsSpriteLoaded = true;
+    resolve(_symbolsSpriteImg);
+  };
+  _symbolsSpriteImg.onerror = () => {
+    addLog('symbols.png 載入失敗，先使用文字符號', 'warn');
+    resolve(null);
+  };
+  _symbolsSpriteImg.src = './symbols.png';
+});
+
+// Named sprite map – UV coordinates (0–1) for each cell in the 1×9 vertical strip.
+// Sheet: 9 symbols stacked top-to-bottom, each 307×300 px (total 307×2700 px).
+// Resolution-independent: u0/v0 = top-left corner, u1/v1 = bottom-right corner.
+const spriteMap = [
+  { name: 'apple',      u0: 0.0,     v0: 0.0,     u1: 1.0, v1: 0.11111 }, // row 0  0–300 px
+  { name: 'cherry',     u0: 0.0,     v0: 0.11111, u1: 1.0, v1: 0.22222 }, // row 1  300–600 px
+  { name: 'seven',      u0: 0.0,     v0: 0.22222, u1: 1.0, v1: 0.33333 }, // row 2  600–900 px
+  { name: 'lemon',      u0: 0.0,     v0: 0.33333, u1: 1.0, v1: 0.44444 }, // row 3  900–1200 px
+  { name: 'bar',        u0: 0.0,     v0: 0.44444, u1: 1.0, v1: 0.55556 }, // row 4  1200–1500 px
+  { name: 'grapes',     u0: 0.0,     v0: 0.55556, u1: 1.0, v1: 0.66667 }, // row 5  1500–1800 px
+  { name: 'heart',      u0: 0.0,     v0: 0.66667, u1: 1.0, v1: 0.77778 }, // row 6  1800–2100 px
+  { name: 'bell',       u0: 0.0,     v0: 0.77778, u1: 1.0, v1: 0.88889 }, // row 7  2100–2400 px
+  { name: 'watermelon', u0: 0.0,     v0: 0.88889, u1: 1.0, v1: 1.0     }, // row 8  2400–2700 px
+];
+
+// Use 256×256 on mobile (4× less GPU memory bandwidth vs 512×512)
+function makeSymbolTex(idx) {
+  const cv = document.createElement('canvas');
+  const TEX = IS_MOBILE ? 256 : 512;
+  cv.width = cv.height = TEX;
+  const ctx = cv.getContext('2d');
+
+  _drawSymbolToCanvas(ctx, idx, TEX, TEX);
+  return new THREE.CanvasTexture(cv);
+}
+
+function _drawSymbolFallback(ctx, idx, width, height) {
+  const labels = ['🍎', '🍒', '7', '🍋', 'BAR', '🍇', '❤', '🔔', '🍉'];
+  ctx.fillStyle = '#1b103a';
+  ctx.fillRect(0, 0, width, height);
+  ctx.fillStyle = '#fff4bf';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `${Math.max(16, Math.floor(width * 0.38))}px system-ui, sans-serif`;
+  ctx.fillText(labels[idx] || '?', width / 2, height / 2);
+}
+
+function _drawSymbolToCanvas(ctx, idx, width, height) {
+  if (!_symbolsSpriteLoaded || !_symbolsSpriteImg.naturalWidth || !_symbolsSpriteImg.naturalHeight) {
+    _drawSymbolFallback(ctx, idx, width, height);
+    return;
+  }
+
+  const { u0, v0, u1, v1 } = spriteMap[idx] ?? spriteMap[spriteMap.length - 1];
+  const iw = _symbolsSpriteImg.naturalWidth;
+  const ih = _symbolsSpriteImg.naturalHeight;
+  ctx.clearRect(0, 0, width, height);
+  ctx.drawImage(
+    _symbolsSpriteImg,
+    u0 * iw, v0 * ih, (u1 - u0) * iw, (v1 - v0) * ih,  // source rect (resolution-independent)
+    0,       0,       width,           height             // destination: full output canvas
+  );
+}
+
+// Keep reel symbols aligned with backend symbolIds (0..spriteMap.length-1).
+// Backend may return id 8 (watermelon), so all spriteMap entries must be active.
+const ACTIVE_SYMBOL_COUNT = spriteMap.length;
+const ACTIVE_SYMBOL_NAMES = Array.from(
+  { length: ACTIVE_SYMBOL_COUNT },
+  (_, idx) => spriteMap[idx]?.name ?? `sym${idx}`,
+);
+
+// Reverse map: lowercase name → symbol index, built from the full spriteMap so that
+// symbols outside the 6 active reel-strip entries (e.g. heart, bell, watermelon) are
+// also resolvable when the backend returns them.
+// Aliases cover the case-insensitive backend names and singular/plural variants.
+const _symNameToIdx = (() => {
+  const nameToIndexMap = {};
+  spriteMap.forEach((s, i) => { nameToIndexMap[s.name.toLowerCase()] = i; });
+  // Backend sends "GRAPE" (singular) but spriteMap entry is "grapes" (plural)
+  if (nameToIndexMap['grapes'] !== undefined) nameToIndexMap['grape'] = nameToIndexMap['grapes'];
+  // Moon Dance treats WILD as symbol id 0 (same visual asset used by apple in sprite map)
+  if (nameToIndexMap['apple'] !== undefined) nameToIndexMap['wild'] = nameToIndexMap['apple'];
+  // Add any other known backend→sprite aliases here as needed
+  return nameToIndexMap;
+})();
+
+/** Convert a backend symbol value (string name or numeric index) to a numeric sprite index.
+ *  Returns -1 if the name is not recognised or the input is null/undefined/empty.
+ *  Accepts any casing (e.g. "LEMON", "lemon", "Lemon" all resolve to the same index). */
+function _resolveSymIdx(nameOrIdx) {
+  if (nameOrIdx == null) return -1;
+  if (typeof nameOrIdx === 'number') return nameOrIdx;
+  const key = String(nameOrIdx).trim().toLowerCase();
+  return key.length > 0 ? (_symNameToIdx[key] ?? -1) : -1;
+}
+
+const symTextures = Array.from(
+  { length: ACTIVE_SYMBOL_COUNT },
+  (_, idx) => makeSymbolTex(idx),
+);
+
+_symbolsSpriteReady.then(() => {
+  if (!_symbolsSpriteLoaded) return;
+  symTextures.forEach((tex, idx) => {
+    const ctx = tex.image.getContext('2d');
+    if (!ctx) return;
+    _drawSymbolToCanvas(ctx, idx, tex.image.width, tex.image.height);
+    tex.needsUpdate = true;
+  });
+  document.querySelectorAll('.pt-sym-img').forEach(cv => {
+    const idx = parseInt(cv.dataset.symIdx, 10);
+    _drawPaytableSymbolCanvas(cv, idx);
+  });
+});
+
+// Populate paytable canvas images from the already-rendered symbol texture canvases
+document.querySelectorAll('.pt-sym-img').forEach(cv => {
+  const idx = parseInt(cv.dataset.symIdx, 10);
+  cv.getContext('2d').drawImage(symTextures[idx].image, 0, 0, cv.width, cv.height);
+});
+
+function _drawPaytableSymbolCanvas(canvasEl, symIdx) {
+  const idx = Number(symIdx);
+  if (Number.isNaN(idx) || idx < 0 || idx >= symTextures.length) return;
+  const ctx = canvasEl.getContext('2d');
+  if (!ctx) return;
+  ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+  _drawSymbolToCanvas(ctx, idx, canvasEl.width, canvasEl.height);
+}
+
+// symIds: array of sprite indices to display (e.g. [0,1,1] = WILD+CHERRY×2)
+function _buildPaytableRow(symIds, multiplier) {
+  const row = document.createElement('div');
+  row.className = 'pt-row';
+
+  const syms = document.createElement('span');
+  syms.className = 'pt-syms';
+  symIds.forEach((sid) => {
+    const cv = document.createElement('canvas');
+    cv.className = 'pt-sym-img';
+    cv.width = 26;
+    cv.height = 26;
+    cv.dataset.symIdx = String(sid);
+    syms.appendChild(cv);
+    _drawPaytableSymbolCanvas(cv, sid);
+  });
+
+  const val = document.createElement('span');
+  val.className = 'pt-val';
+  val.textContent = String(multiplier);
+
+  row.appendChild(syms);
+  row.appendChild(val);
+  return row;
+}
+
+/** Parse one RTP entry → { symIds, multiplier } for paytable display.
+ *  Handles: X×3 | WILD+X×2 | WILD×2+X | X×2 (consolation)
+ *  Returns null when the entry cannot be parsed. */
+function _parseRtpEntry(entry) {
+  const multiplier = Number(entry?.multiplier ?? entry?.payout ?? entry?.c);
+  if (Number.isNaN(multiplier)) return null;
+
+  const rawSymbol = entry?.symbolId ?? entry?.symIdx ?? entry?.symbol?.id ?? entry?.symbol ?? entry?.a;
+  let symbolId = -1;
+  if (typeof rawSymbol === 'number') {
+    symbolId = rawSymbol;
+  } else if (rawSymbol != null) {
+    const s = String(rawSymbol).trim();
+    const parsed = Number(s);
+    symbolId = Number.isNaN(parsed) ? _resolveSymIdx(s) : parsed;
+  }
+  if (symbolId < 0 || symbolId >= spriteMap.length) return null;
+
+  const combo = String(entry?.combo ?? entry?.b ?? '');
+  let symIds;
+
+  if (/WILD×2\+/i.test(combo)) {
+    // "WILD×2+CHERRY" → [WILD, WILD, CHERRY]
+    const m = combo.match(/WILD×2\+(\w+)/i);
+    const targetId = m ? _resolveSymIdx(m[1].toLowerCase()) : -1;
+    symIds = [0, 0, targetId >= 0 ? targetId : symbolId];
+  } else if (/WILD\+/i.test(combo) && /×2/.test(combo)) {
+    // "WILD+CHERRY×2" → [WILD, CHERRY, CHERRY]
+    symIds = [0, symbolId, symbolId];
+  } else if (/×3/.test(combo)) {
+    // "CHERRY×3" → [CHERRY, CHERRY, CHERRY]
+    symIds = [symbolId, symbolId, symbolId];
+  } else if (/×2/.test(combo)) {
+    // "CHERRY×2 (安慰獎)" — consolation, 2 symbols only
+    symIds = [symbolId, symbolId];
+  } else {
+    return null;
+  }
+
+  return { symIds, multiplier };
+}
+
+let _syncingPaytableScroll = false;
+
+function _ensurePaytableScrollSync(cols) {
+  if (!cols || cols.length < 2) return;
+  const left = cols[0];
+  const right = cols[1];
+  if (!left || !right) return;
+  if (left.dataset.syncScrollBound === '1') return;
+
+  const mirrorScroll = (source, target) => {
+    if (_syncingPaytableScroll) return;
+    _syncingPaytableScroll = true;
+    target.scrollTop = source.scrollTop;
+    _syncingPaytableScroll = false;
+  };
+
+  left.addEventListener('scroll', () => mirrorScroll(left, right), { passive: true });
+  right.addEventListener('scroll', () => mirrorScroll(right, left), { passive: true });
+  left.dataset.syncScrollBound = '1';
+  right.dataset.syncScrollBound = '1';
+}
+
+function _renderPaytableRows(rows) {
+  const cols = document.querySelectorAll('#paytable .pt-col');
+  if (!cols || cols.length < 2) return 0;
+
+  _ensurePaytableScrollSync(cols);
+
+  const leftRows = [];
+  const rightRows = [];
+  // Row-major distribution keeps columns visually balanced:
+  // #1 left, #2 right, #3 left, #4 right, ...
+  rows.forEach((item, idx) => {
+    if (idx % 2 === 0) {
+      leftRows.push(item);
+    } else {
+      rightRows.push(item);
+    }
+  });
+  const perCol = [leftRows, rightRows];
+
+  cols.forEach((col, idx) => {
+    col.innerHTML = '';
+    perCol[idx].forEach((item) => {
+      col.appendChild(_buildPaytableRow(item.symIds, item.multiplier));
+    });
+    col.scrollTop = 0;
+  });
+
+  return rows.length;
+}
+
+// ===== Reel construction (vertical strip – 3 symbols visible: top / winner / bottom) =====
+// Derive geometry from the camera so reels always fill the visible frustum exactly.
+// VISIBLE_H = 2 × tan(FOV/2) × z   →   3 equal rows fill the full height
+// VISIBLE_W = VISIBLE_H × aspect   →   3 equal columns fill the full width
+const REEL_GAP = 0.06; // world-unit gap between adjacent reels
+
+function computeReelGeometry(w, h) {
+  const fovRad   = camera.fov * Math.PI / 180;
+  const visibleH = 2 * Math.tan(fovRad / 2) * camera.position.z;
+  const visibleW = visibleH * (w / h);
+  const CARD_W   = (visibleW - 2 * REEL_GAP) / 3;
+  const CARD_H   = visibleH / 3;
+  const REEL_X   = [-(CARD_W + REEL_GAP), 0, CARD_W + REEL_GAP];
+  return { CARD_W, CARD_H, REEL_X };
+}
+
+let { CARD_W, CARD_H, REEL_X } = computeReelGeometry(W, H);
+// Custom weighted reel strips — symbol index × stop count per reel.
+// Keep all backend symbolIds snap-safe by ensuring each reel contains 0..8.
+// Rare symbols: apple(0), heart(6), bell(7), watermelon(8) appear once each.
+const REEL_STRIPS = [
+  [0, 6, 7, 8, 1,1,1, 2,2,2,2, 3,3,3,3,3,3, 4,4,4,4,4,4, 5,5,5,5,5,5], // R0: apple leads
+  [5,5,5,5,5,5, 0, 6, 7, 8, 1,1,1, 2,2,2,2, 3,3,3,3,3,3, 4,4,4,4,4,4], // R1: grapes leads
+  [3,3,3,3,3,3, 4,4,4,4,4,4, 5,5,5,5,5,5, 0, 6, 7, 8, 1,1,1, 2,2,2,2], // R2: lemon leads
+];
+const N_STRIP   = REEL_STRIPS[0].length; // stops per reel (auto-derived from REEL_STRIPS)
+const N_SYMBOLS = ACTIVE_SYMBOL_COUNT;   // 9 distinct symbols (0–8)
+// Recycling clip boundary: one card beyond the top/bottom of the visible area
+let STRIP_CLIP = (Math.floor(N_STRIP / 2) + 1) * CARD_H;
+
+const reelGroups = [];
+
+REEL_X.forEach((rx, ri) => {
+  const strip = new THREE.Group();
+  strip.position.set(rx, 0, 0);
+
+  for (let i = 0; i < N_STRIP; i++) {
+    const symIdx = REEL_STRIPS[ri][i];
+    const mat = new THREE.MeshStandardMaterial({
+      map: symTextures[symIdx],
+      metalness: 0.06, roughness: 0.88,
+    });
+    const card = new THREE.Mesh(
+      new THREE.PlaneGeometry(CARD_W, CARD_H),
+      mat
+    );
+    // Center the strip: card at index Math.floor(N_STRIP/2) sits at y=0 (winner row)
+    card.position.y = (i - Math.floor(N_STRIP / 2)) * CARD_H;
+    card.position.z = 0;
+    card.userData.symIdx = symIdx;   // tracked so the reel snap logic can read it after stop
+    strip.add(card);
+  }
+
+  strip.userData = { spinning: false, speed: 0 };
+  scene.add(strip);
+  reelGroups.push(strip);
+});
+
+// ===== Game state =====
+// (balance and isSpinning are declared near the top of the module to avoid TDZ)
+
+const API_BASE     = window.__AGORA_API_BASE_URL || 'https://agoramarketapi.purrtechllc.com/api';
+const BET_LEVELS   = [100, 250, 500, 1000, 2500];
+let betIdx         = 1;                          // start at USDT 2.50 (250 units)
+const currentBet   = () => BET_LEVELS[betIdx];
+const MAX_SPIN_SPEED   = 0.32;
+const MIN_SPIN_SPEED   = 0.002; // minimum speed threshold before reel comes to rest
+const AUTO_SPIN_PRESS_DELAY = 500;  // ms long-press to activate auto-spin
+const AUTO_SPIN_INTERVAL    = 600;  // ms pause between normal auto-spin rounds
+const BIG_WIN_DISPLAY_MS    = 3200; // 2300ms fade-start + 900ms fade-out = total big-win overlay duration
+const WIN_DISPLAY_MS        = 2100; // 1200ms fade-start + 900ms fade-out = regular win overlay duration
+// Reel stop timing: three reels snap staggered, 450ms apart.
+const REEL_STOP_DELAYS_MS = [600, 1050, 1500];
+
+
+const balanceEl = document.getElementById('balance-val');
+const winEl     = document.getElementById('win-val');
+const betLabel  = document.getElementById('bet-label');
+const spinBtn   = document.getElementById('spin-btn');
+const spinStatusEl = null; // removed — bet amount is now shown in bet-label (cb-label under + button)
+
+// ── Host init callback ────────────────────────────────────────────────────────
+// Defined HERE (after balanceEl / winEl / spinBtn) so the adapter's retry loop
+// cannot call it before these DOM constants are initialised (TDZ guard).
+// flutter_adapter.js polls typeof window._game_onHostInit === 'function' every
+// 50 ms and only fires once this definition is reached.
+window._game_onHostInit = function ({ jwt, balance: hostBalance, demoMode, username, tgSafeAreaTop } = {}) {
+  if (!jwt) {
+    addLog('HOST_INIT 無 JWT，判定為未登入', 'warn');
+    showAuthError();
+    return;
+  }
+
+  if (Number.isFinite(Number(tgSafeAreaTop))) {
+    viewportManager.setHostSafeTop(Number(tgSafeAreaTop));
+  }
+  viewportManager.fit();
+
+  window.__agoraAuth    = { token: jwt };
+  window.__hostDemoMode = !!demoMode;
+
+  applyBalance(Number(hostBalance) || 0);
+
+  if (username) {
+    localStorage.setItem('first_name', username);
+    window.__agoraAuth.firstName = username;
+  }
+
+  fetchAndApplyBalance().catch(() => {});
+  startPaytableLoadOnce('HOST_INIT');
+
+  addLog(`[CORE] HOST_INIT: balance=${hostBalance} USDT demo=${demoMode}`, 'info');
+};
+
+window._game_showAuthError = showAuthError;
+
+// ===== Loading readiness gates =====
+// Spin button stays disabled (set in HTML) until the paytable has loaded.
+// The 3D model loads in the background and does not block gameplay.
+let _modelReady    = true;  // not a gate — model loads in background
+let _paytableReady = false;
+let _paytableLoadStarted = false;
+
+function _checkAndUnlockSpin() {
+  if (!_modelReady || !_paytableReady) return;
+  if (!_loaderHidden) hideLoader();
+  spinBtn.disabled = false;
+  addLog('遊戲就緒，可以開始旋轉', 'info');
+}
+
+// Auth timeout: if HOST_INIT hasn't arrived (and set a JWT) within the allowed
+// window, treat the session as unauthenticated and show the error screen.
+// Flutter self-host retries localStorage for up to 15 s on first launch, so
+// use 18 s to give the adapter enough room before giving up.
+setTimeout(function _authCheckTimeout() {
+  if (window.__agoraAuth?.token) return; // already authenticated
+  addLog('HOST_INIT 超時未到，判定為未登入', 'warn');
+  showAuthError();
+}, 18000);
+
+// Safety valve: if the paytable never signals ready within 32 s (e.g. HOST_INIT
+// was delayed or carried no JWT), unlock the game so it remains playable.
+setTimeout(function _paytableReadyFallback() {
+  if (_paytableReady) return;
+  _paytableReady = true;
+  addLog('賠率表加載超時，以默認賠率繼續', 'warn');
+  _checkAndUnlockSpin();
+}, 32000);
+const jackpotMarqueeTextEl = document.getElementById('jackpot-marquee-text');
+
+// Bet amount is shown directly as the cb-label under the + button.
+function refreshSpinStatus() {
+  if (betLabel) betLabel.textContent = (currentBet() / 100).toFixed(2);
+}
+
+let _statusToastTimer = null;
+/** Briefly show a toast message as the bet label, then restore the amount. */
+function showStatusToast(msg, colorHex, durationMs = 2200) {
+  if (!betLabel) return;
+  clearTimeout(_statusToastTimer);
+  betLabel.textContent = msg;
+  betLabel.style.color = colorHex;
+  _statusToastTimer = setTimeout(() => {
+    betLabel.style.color = '';
+    refreshSpinStatus();
+  }, durationMs);
+}
+
+function getDisplayUsername() {
+  return (
+    localStorage.getItem('first_name') ||
+    window.__agoraAuth?.firstName ||
+    '貴賓'
+  );
+}
+
+function refreshJackpotBanner() {
+  if (!jackpotMarqueeTextEl) return;
+  // Show demo/trial mode banner when host flagged insufficient funds.
+  if (window.__hostDemoMode) {
+    const username = getDisplayUsername();
+    jackpotMarqueeTextEl.textContent = `尊敬的 ${username} 當前為試玩模式　✦　充值後可以解鎖真實模式`;
+    return;
+  }
+  jackpotMarqueeTextEl.textContent = '月光舞台大獎高達500倍！';
+}
+
+function updateBalanceDisplay() {
+  balanceEl.textContent = 'USDT ' + (balance / 100).toFixed(2);
+  walletUpdateBalance(balance / 100);
+  refreshSpinStatus();
+  refreshJackpotBanner();
+}
+
+// Fetch the user's current balance from the /auth/me endpoint and apply it.
+// Called after HOST_INIT sets window.__agoraAuth.token so we always display
+// the real server-side balance (HOST_INIT balance may be zero/stale if the
+// Dart profile fetch failed).
+//
+// /auth/me response shapes supported:
+//   { userInfo: { balance: 1.23 } }          ← standard server response
+//   { data: { balance: 1.23 } }              ← legacy wrapper
+//   { balance: 1.23 }                        ← flat (Telegram exchange-jwt compat)
+async function fetchAndApplyBalance(_jwt) {
+  const usdt = await window.__gameHost?.getBalance();
+  if (usdt === null || usdt === undefined) return;
+  applyBalance(usdt);
+  window.__hostDemoMode = usdt < 0.25;
+  refreshJackpotBanner();
+  addLog(`餘額已更新: USDT ${usdt.toFixed(2)}`, 'info');
+}
+
+// Apply balance received from the host (USDT float → units ×100).
+function applyBalance(usdt) {
+  if (!Number.isFinite(usdt) || usdt < 0) {
+    addLog(`applyBalance: 無效值 ${usdt}，略過`, 'warn');
+    return;
+  }
+  balance = Math.round(usdt * 100);
+  updateBalanceDisplay();
+  addLog(`餘額已更新: USDT ${(balance / 100).toFixed(2)}`, 'info');
+}
+
+const PAYTABLE_MAX_ATTEMPTS = 3;
+const PAYTABLE_RETRY_DELAYS_MS = [1000, 2500];
+
+function startPaytableLoadOnce(reason = 'startup') {
+  if (_paytableLoadStarted) return;
+  _paytableLoadStarted = true;
+  addLog(`[RTP] start reason=${reason}`, 'info');
+  loadAndApplyPaytable().catch((e) => {
+    addLog(`賠率表啟動失敗: ${e}`, 'warn');
+  });
+}
+
+// Load paytable multipliers from backend and apply to UI.
+async function loadAndApplyPaytable(attempt = 1) {
+  let shouldRetry = false;
+  try {
+    addLog(`[RTP→] attempt=${attempt}/${PAYTABLE_MAX_ATTEMPTS} jwt=${window.__agoraAuth?.token ? '✓' : '✗'} adapter=${window.__gameHost ? '✓' : '✗'}`, 'info');
+    const rtpData = await window.__gameHost?.getRtp();
+    addLog(`[RTP←] data=${rtpData ? JSON.stringify(rtpData).slice(0, 80) : 'null'}`, 'info');
+
+    if (!rtpData) {
+      addLog('賠率表數據為空', 'warn');
+      shouldRetry = true;
+      return;
+    }
+
+    // Build entry rows from backend and keep original visual style.
+    const rows = [];
+
+    if (Array.isArray(rtpData.entries)) {
+      rtpData.entries.forEach((entry) => {
+        const parsed = _parseRtpEntry(entry);
+        if (parsed) rows.push(parsed);
+      });
+    }
+
+    // Fallback for legacy map/array paytable formats (no combo string available).
+    if (rows.length === 0) {
+      const paytable = rtpData.paytable ?? rtpData;
+      if (Array.isArray(paytable)) {
+        paytable.forEach((entry) => {
+          const symbolId = Number(entry?.symbolId ?? entry?.symIdx ?? entry?.symbol);
+          const count = Math.min(3, Math.floor(Number(entry?.count ?? entry?.matchCount)));
+          const multiplier = Number(entry?.multiplier ?? entry?.payout);
+          if (isNaN(symbolId) || isNaN(count) || isNaN(multiplier)) return;
+          if (symbolId < 0 || symbolId >= spriteMap.length) return;
+          rows.push({ symIds: Array(count).fill(symbolId), multiplier });
+        });
+      } else if (paytable && typeof paytable === 'object') {
+        Object.keys(paytable).forEach((sid) => {
+          const symbolId = Number(sid);
+          if (isNaN(symbolId) || symbolId < 0 || symbolId >= spriteMap.length) return;
+          Object.keys(paytable[sid] || {}).forEach((c) => {
+            const count = Math.min(3, Math.floor(Number(c)));
+            const multiplier = Number(paytable[sid][c]);
+            if (isNaN(count) || isNaN(multiplier)) return;
+            rows.push({ symIds: Array(count).fill(symbolId), multiplier });
+          });
+        });
+      }
+    }
+
+    // Dedup by exact symbol sequence — keeps consolation prizes separate from WILD combos.
+    const dedupMap = new Map();
+    rows.forEach((row) => {
+      const key = row.symIds.join(',');
+      const prev = dedupMap.get(key);
+      if (!prev || row.multiplier > prev.multiplier) {
+        dedupMap.set(key, row);
+      }
+    });
+    rows.length = 0;
+    dedupMap.forEach((row) => rows.push(row));
+
+    rows.sort((a, b) => b.multiplier - a.multiplier);
+    const renderedCount = _renderPaytableRows(rows);
+
+    if (renderedCount > 0) {
+      addLog(`賠率表已更新 (${renderedCount} 項，首屏最多 8 項)`, 'info');
+    } else {
+      addLog('賠率表數據格式無法解析', 'warn');
+      console.warn('[Paytable] Received data:', rtpData);
+      shouldRetry = true;
+    }
+  } catch (e) {
+    addLog(`賠率表加載失敗: ${e}`, 'warn');
+    shouldRetry = true;
+  } finally {
+    if (shouldRetry && attempt < PAYTABLE_MAX_ATTEMPTS) {
+      const delayMs = PAYTABLE_RETRY_DELAYS_MS[Math.min(
+        attempt - 1,
+        PAYTABLE_RETRY_DELAYS_MS.length - 1,
+      )];
+      addLog(`賠率表將於 ${(delayMs / 1000).toFixed(1)} 秒後重試`, 'warn');
+      setTimeout(() => {
+        loadAndApplyPaytable(attempt + 1).catch((e) => {
+          addLog(`賠率表重試排程失敗: ${e}`, 'warn');
+        });
+      }, delayMs);
+      return;
+    }
+
+    // Mark paytable ready regardless of success/error/early-return so the
+    // spin button is never permanently blocked by a failed paytable fetch.
+    _paytableReady = true;
+    _checkAndUnlockSpin();
+  }
+}
+
+updateBalanceDisplay();
+setTimeout(() => startPaytableLoadOnce('startup'), 0);
+
+// ===== Bet cycling =====
+document.getElementById('btn-bet').addEventListener('click', () => {
+  if (isSpinning) return;
+  betIdx = (betIdx + 1) % BET_LEVELS.length;
+  refreshSpinStatus();
+  // Flash the row2 badge to signal the bet change
+  if (betLabel) { betLabel.style.animation = 'none'; void betLabel.offsetWidth; betLabel.style.animation = 'betFlash .4s ease'; }
+});
+
+// ===== Function menu (≡ button) =====
+createMenuManager({
+  menuPopupEl: document.getElementById('menu-popup'),
+  menuButtonEl: document.getElementById('btn-menu'),
+  copyButtonEl: document.getElementById('menu-copy-log'),
+  clearButtonEl: document.getElementById('menu-clear-log'),
+  getLogsText: () => logManager.getLogsText(),
+  onCopySuccess: () => addLog('日誌已複製到剪貼板', 'info'),
+  onClear: () => logManager.clearLogs(),
+  promptFn: typeof window.prompt === 'function' ? window.prompt.bind(window) : null,
+});
+
+// ===== Auto-spin state =====
+let autoSpin      = false;
+let autoTimer     = null;
+let pressTimer    = null;
+const _spinRing       = document.getElementById('spin-ring');
+const _spinAutoBadge  = document.getElementById('spin-auto-badge');
+
+function _setAutoSpinUI(active) {
+  _spinRing.classList.toggle('auto-active', active);
+  _spinAutoBadge.classList.toggle('hidden', !active);
+}
+
+// Long-press spin button → toggle auto-spin
+spinBtn.addEventListener('pointerdown', () => {
+  pressTimer = setTimeout(() => {
+    autoSpin = !autoSpin;
+    if (!autoSpin) clearTimeout(autoTimer); // toggling off: cancel pending scheduled spin
+    _setAutoSpinUI(autoSpin);
+    if (autoSpin && !isSpinning) doSpin();
+  }, AUTO_SPIN_PRESS_DELAY);
+});
+['pointerup', 'pointerleave', 'pointercancel'].forEach(ev =>
+  spinBtn.addEventListener(ev, () => clearTimeout(pressTimer))
+);
+
+// ===== Spin button – normal tap =====
+spinBtn.addEventListener('click', () => { if (!autoSpin) doSpin(); });
+
+// ── Client seed generation (provably-fair) ────────────────────────────────────
+function generateClientSeed() {
+  if (typeof crypto !== 'undefined') {
+    if (crypto.randomUUID) return crypto.randomUUID();
+    const arr = new Uint8Array(16);
+    crypto.getRandomValues(arr);
+    return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
+  }
+  return Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+}
+
+// ── Sound Manager ─────────────────────────────────────────────────────────────
+const soundManager = (() => {
+  // Respect the user's previous mute preference across sessions.
+  let _muted = localStorage.getItem('_slot_muted') === '1';
+
+  function _make(src, loop) {
+    const a = new Audio(src);
+    a.loop    = !!loop;
+    a.preload = 'auto';
+    return a;
+  }
+
+  const _spinSnd = _make('../_shared/sound/mixkit-arcade-slot-machine-wheel-1933.wav', true);
+  const _winSnd  = _make('../_shared/sound/mixkit-slot-machine-win-1928.wav', false);
+  _spinSnd.volume = 0.55;
+  _winSnd.volume  = 0.85;
+
+  return {
+    isMuted: () => _muted,
+    toggleMute() {
+      _muted = !_muted;
+      localStorage.setItem('_slot_muted', _muted ? '1' : '0');
+      if (_muted) { _spinSnd.pause(); _winSnd.pause(); }
+      return _muted;
+    },
+    playSpin() {
+      if (_muted) return;
+      _spinSnd.currentTime = 0;
+      _spinSnd.play().catch(() => {});
+    },
+    stopSpin() {
+      _spinSnd.pause();
+      _spinSnd.currentTime = 0;
+    },
+    playWin() {
+      if (_muted) return;
+      _winSnd.currentTime = 0;
+      _winSnd.play().catch(() => {});
+    },
+  };
+})();
+
+// Mute toggle — ctrl-bar btn-mute button (always visible).
+const _muteBtn  = document.getElementById('btn-mute');
+const _muteDisc = document.getElementById('mute-disc');
+function _syncMuteUI(muted) {
+  _muteDisc.textContent = muted ? '🔇' : '🔊';
+  _muteBtn.classList.toggle('is-muted', muted);
+  _muteBtn.querySelector('.cb-label').textContent = muted ? '取消靜音' : '靜音';
+}
+_syncMuteUI(soundManager.isMuted());
+_muteBtn.addEventListener('click', () => _syncMuteUI(soundManager.toggleMute()));
+
+// ===== Transaction history panel =====
+const txnPanel    = document.getElementById('txn-panel');
+const txnBackdrop = document.getElementById('txn-backdrop');
+const txnList     = document.getElementById('txn-list');
+const txnLoadMore = document.getElementById('txn-load-more');
+let _txnPage      = 1;
+let _txnHasMore   = false;
+let _txnLoading   = false;
+
+const TXN_TYPE_LABELS = {
+  DEPOSIT:   '入款', WITHDRAW:  '出款', PAYMENT:   '支出',
+  RECEIVE:   '收款', REFUND:    '退款', STAKING:   '質押',
+  UNSTAKING: '解質押', INTEREST: '利息',
+};
+
+// If Flutter bridge hasn't rebuilt yet, type may still arrive as {value:'...'} object.
+function _txnTypeStr(raw) {
+  if (!raw) return '';
+  if (typeof raw === 'string') return raw;
+  // Dart enum serialized as object: {value: 'PAYMENT'} or has toString
+  return raw.value || String(raw);
+}
+
+function _txnIsInflow(type, amount) {
+  return amount > 0;
+}
+
+function _txnFormatTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** Strip technical fields (gameId=, clientRoundId=) from backend description,
+ *  and convert multiplier= to a readable × suffix. */
+function _cleanTxnDesc(raw) {
+  if (!raw) return '';
+  const parts    = raw.split(' | ');
+  let result     = parts[0].trim();
+  const multPart = parts.find(p => p.startsWith('multiplier='));
+  if (multPart) result += ' ×' + multPart.replace('multiplier=', '');
+  return result;
+}
+
+function _renderTxnRows(rows) {
+  rows.forEach(t => {
+    const amount   = t.amount ?? 0;
+    const typeKey  = _txnTypeStr(t.type);
+    const dir      = _txnIsInflow(typeKey, amount) ? 'in' : 'out';
+    const sign     = amount > 0 ? '+' : '';
+    const typeText = TXN_TYPE_LABELS[typeKey] || typeKey || '其他';
+    const desc     = _cleanTxnDesc(t.description || t.remark || '');
+    const num      = new Intl.NumberFormat('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}).format(Math.abs(amount));
+    const currency = /^[A-Z]{2,10}$/.test(t.currency || '') ? t.currency : 'USDT';
+
+    const row     = document.createElement('div');
+    row.className = 'txn-row';
+
+    const iconEl = document.createElement('div');
+    iconEl.className = `txn-icon ${dir}`;
+    iconEl.textContent = dir === 'in' ? '↑' : '↓';
+
+    const bodyEl = document.createElement('div');
+    bodyEl.className = 'txn-body';
+
+    const typeEl = document.createElement('div');
+    typeEl.className = 'txn-type';
+    typeEl.textContent = typeText;
+    bodyEl.appendChild(typeEl);
+
+    if (desc) {
+      const descEl = document.createElement('div');
+      descEl.className = 'txn-desc';
+      descEl.textContent = desc;
+      bodyEl.appendChild(descEl);
+    }
+
+    const rightEl = document.createElement('div');
+    rightEl.className = 'txn-right';
+
+    const amtEl = document.createElement('div');
+    amtEl.className = `txn-amt ${dir}`;
+    amtEl.textContent = `${sign}${num} ${currency}`;
+
+    const timeEl = document.createElement('div');
+    timeEl.className = 'txn-time';
+    timeEl.textContent = _txnFormatTime(t.createdAt);
+
+    rightEl.appendChild(amtEl);
+    rightEl.appendChild(timeEl);
+    row.appendChild(iconEl);
+    row.appendChild(bodyEl);
+    row.appendChild(rightEl);
+    txnList.appendChild(row);
+  });
+}
+
+async function _fetchTransactions(page) {
+  return window.__gameHost.getTransactions(page, 10);
+}
+
+async function _loadTxnPage(refresh) {
+  if (_txnLoading) return;
+  _txnLoading = true;
+  txnLoadMore.disabled = true;
+
+  if (refresh) {
+    _txnPage = 1;
+    txnList.innerHTML = '<div class="txn-spinner">&#9679;&#9679;&#9679;</div>';
+  }
+
+  try {
+    const data = await _fetchTransactions(_txnPage);
+    if (refresh) txnList.innerHTML = '';
+    const rows = data?.content ?? [];
+    if (rows.length === 0 && refresh) {
+      txnList.innerHTML = '<div class="txn-empty">暫無紀錄</div>';
+    } else {
+      _renderTxnRows(rows);
+      _txnPage++;
+    }
+    _txnHasMore = data?.hasMore ?? false;
+  } catch (e) {
+    if (refresh) txnList.innerHTML = `<div class="txn-empty">載入失敗: ${e.message}</div>`;
+    addLog(`帳變紀錄載入失敗: ${e.message}`, 'warn');
+  } finally {
+    _txnLoading = false;
+    txnLoadMore.disabled = !_txnHasMore;
+    txnLoadMore.textContent = _txnHasMore ? '載入更多' : '已全部載入';
+  }
+}
+
+function openTxnPanel() {
+  if (walletIsOpen()) closeWalletPanel();
+  txnPanel.style.display = 'flex';
+  txnBackdrop.classList.add('open');
+  // Force reflow so transition plays
+  txnPanel.getBoundingClientRect();
+  txnPanel.classList.add('open');
+  _loadTxnPage(true);
+}
+
+function closeTxnPanel() {
+  txnPanel.classList.remove('open');
+  txnBackdrop.classList.remove('open');
+  txnPanel.addEventListener('transitionend', () => {
+    if (!txnPanel.classList.contains('open')) txnPanel.style.display = 'none';
+  }, { once: true });
+}
+
+function _goPage(dest) {
+  document.getElementById('menu-popup').classList.remove('open');
+  if (dest === 'deposit' || dest === 'withdraw') {
+    openWalletPanel(dest);
+    return;
+  }
+  window.__gameHost?.navigate(dest);
+}
+
+document.getElementById('menu-deposit').addEventListener('click',  () => _goPage('deposit'));
+document.getElementById('menu-withdraw').addEventListener('click', () => _goPage('withdraw'));
+
+document.getElementById('menu-txn').addEventListener('click', () => {
+  // Close menu popup first
+  document.getElementById('menu-popup').classList.remove('open');
+  openTxnPanel();
+});
+document.getElementById('txn-close').addEventListener('click', closeTxnPanel);
+txnBackdrop.addEventListener('click', closeTxnPanel);
+txnLoadMore.addEventListener('click', () => _loadTxnPage(false));
+
+initWalletPanel({
+  getToken:        () => window.__agoraAuth?.token || localStorage.getItem('_flutter_game_jwt') || '',
+  getBalance:      () => window.__gameHost?.getBalance?.(),
+  onBalanceChange: (usdt) => {
+    balance = Math.round(usdt * 100);
+    window.__hostDemoMode = usdt < 0.25;
+    updateBalanceDisplay();
+  },
+  onLog:        (msg, level) => addLog(msg, level),
+  onBeforeOpen: () => closeTxnPanel(),
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (walletIsOpen()) closeWalletPanel();
+  else if (txnPanel.classList.contains('open')) closeTxnPanel();
+});
+
+// ── Paytable evaluation ──────────────────────────────────────────────────────
+// IMPORTANT: Runtime visuals come from symbols.png + spriteMap (not SVG labels)
+// Symbol index mapping currently in use:
+//   0=apple, 1=cherry, 2=seven, 3=lemon, 4=bar, 5=grapes
+// Paytable (multiplier applied to current bet):
+
+async function doSpin() {
+  if (isSpinning) return;
+  
+  // Demo mode: trust server-confirmed balance if available.
+  // __hostDemoMode may be stale (set from HOST_INIT before /auth/me completes),
+  // so override it when we already know balance > 0 from the server.
+  const isDemoMode = balance > 0 ? false : window.__hostDemoMode;
+
+  isSpinning = true;
+  spinBtn.disabled = true;
+  winEl.textContent = '—';
+
+  const _spinMode = isDemoMode ? 'DEMO' : 'REAL';
+
+  // Delegate transport to the loaded adapter (flutter_adapter.js / tg_adapter.js).
+  const _hostSpinResult = await window.__gameHost?.spin({
+    betIndex:     betIdx,
+    // Backend expects USDT amount; BET_LEVELS is stored as display units ×100.
+    betAmount:    currentBet() / 100,
+    mode:         _spinMode,
+    clientSeed:   generateClientSeed(),
+    nonce:        Date.now().toString(),
+    clientRoundId: generateClientSeed(),
+  });
+
+  // Backend must return a valid SPIN_RESULT; no client-side fallback.
+  if (!(_hostSpinResult?.symbolIds?.length || _hostSpinResult?.symbols?.length)) {
+    addLog(
+      `旋轉請求失敗：後端無回應或返回無效結果` +
+      ` | mode=${_spinMode} demo=${isDemoMode}` +
+      ` | jwt=${window.__agoraAuth?.token ? '✓' : '✗ 無JWT'}` +
+      ` | origin=${window.__gameOrigin || '未設定'}`,
+      'error'
+    );
+    winEl.textContent = '—';
+    showStatusToast('⚠ 旋轉失敗，請重試', '#ff8866');
+    isSpinning  = false;
+    spinBtn.disabled = false;
+    if (autoSpin) { autoSpin = false; _setAutoSpinUI(false); }
+    return;
+  }
+
+  // Apply symbols and host-managed balance from backend result.
+  const forcedSyms = Array.isArray(_hostSpinResult.symbols) ? _hostSpinResult.symbols : null;
+  const forcedSymbolIds = Array.isArray(_hostSpinResult.symbolIds)
+    ? _hostSpinResult.symbolIds.map(v => Number(v))
+    : (forcedSyms ? forcedSyms.map(_resolveSymIdx) : null);
+  if (forcedSymbolIds && forcedSymbolIds.some(id => id < 0 || id >= spriteMap.length)) {
+    addLog(`後端返回了範圍外的 symbolId: [${forcedSymbolIds}]，將以 0 替代`, 'warn');
+    // Clamp invalid indices to 0 (first symbol) so they never crash the renderer
+    for (let i = 0; i < forcedSymbolIds.length; i++) {
+      if (forcedSymbolIds[i] < 0 || forcedSymbolIds[i] >= spriteMap.length) forcedSymbolIds[i] = 0;
+    }
+  }
+  if (typeof _hostSpinResult.newBalance === 'number') {
+    // applyBalance() converts USDT float → internal ×100 units and updates the display.
+    applyBalance(_hostSpinResult.newBalance);
+  }
+
+  // Launch all reels with gradual acceleration (start at 10% speed, ramp up over ~20 frames)
+  reelGroups.forEach(g => { g.userData.spinning = true; g.userData.speed = MAX_SPIN_SPEED * 0.1; });
+  document.getElementById('reel-canvas-wrap').classList.add('reel-spinning');
+  soundManager.playSpin();
+
+  // Stop reels staggered — timing defined by REEL_STOP_DELAYS_MS constant.
+  const stopDelays = REEL_STOP_DELAYS_MS;
+  stopDelays.forEach((delay, i) => {
+    setTimeout(() => {
+      const strip = reelGroups[i];
+      strip.userData.spinning = false;
+      // Snap: find the card to land on the payline (y=0).
+      // Steer to the backend-determined symbol so the visual result matches the API outcome.
+      let closest = null;
+      if (forcedSymbolIds !== null) {
+        const targetIdx = Number(forcedSymbolIds[i]);
+        if (targetIdx >= 0) {
+          let minDist = Infinity;
+          strip.children.forEach(card => {
+            if (card.userData.symIdx === targetIdx) {
+              const d = Math.abs(card.position.y);
+              if (d < minDist) { minDist = d; closest = card; }
+            }
+          });
+        }
+      }
+      // Safety: if the target symbol isn't present on this reel, snap to the geometrically-closest card.
+      if (closest === null) {
+        let minDist = Infinity;
+        strip.children.forEach(card => {
+          const d = Math.abs(card.position.y);
+          if (d < minDist) { minDist = d; closest = card; }
+        });
+      }
+      const snapShift = -closest.position.y;
+      strip.children.forEach(card => { card.position.y += snapShift; });
+      strip.userData.speed = 0;
+      // Invalidate the cached maxY so the animation loop re-scans on the next spin start.
+      strip.userData.maxY = undefined;
+      // Remove motion blur when the last reel stops
+      if (i === stopDelays.length - 1) {
+        document.getElementById('reel-canvas-wrap').classList.remove('reel-spinning');
+        soundManager.stopSpin();
+      }
+    }, delay);
+  });
+
+  // Resolve spin — all 3 reel stop timeouts (600 / 1050 / 1500 ms) have fired by now.
+  setTimeout(() => {
+    isSpinning = false;
+    spinBtn.disabled = false;
+
+    const multiplier = _hostSpinResult.multiplier ?? 0;
+    const displaySymbols = (forcedSymbolIds || []).map(idx => {
+      const n = Number(idx);
+      return Number.isFinite(n)
+        ? (spriteMap[n]?.name?.toUpperCase() ?? `SYM${n}`)
+        : 'SYM?';
+    });
+    addLog(`花色: ${displaySymbols.join(' ')} → ×${multiplier}`, multiplier > 0 ? 'info' : 'warn');
+
+    if (multiplier > 0) {
+      const prize = Number(_hostSpinResult.prize ?? 0);
+      if (!prize) addLog(`後端 multiplier=${multiplier} 但 winAmount 未返回`, 'warn');
+      // Balance is managed by the host via SPIN_RESULT.newBalance; no local update needed.
+      winEl.textContent = '+USDT ' + prize.toFixed(2);
+      winEl.style.color = '#3cc864';
+      soundManager.playWin();
+
+      // Flash reel section border — remove first to restart animation if already playing
+      reelSection.classList.remove('reel-win');
+      void reelSection.offsetHeight; // force reflow so the removal takes effect before re-adding
+      reelSection.classList.add('reel-win');
+      reelSection.addEventListener('animationend', () => reelSection.classList.remove('reel-win'), { once: true });
+
+      // Play character animation based on win level
+      //   multiplier >= 10 → Big Win  (frames 1–219)
+      //   multiplier  < 10 → Small Win (frames 220–369)
+      _consecutiveMisses = 0;
+      _playCharAnim(multiplier >= 10 ? 'big' : 'small');
+
+      // Mobile haptic
+      if (navigator.vibrate) navigator.vibrate([80, 40, 160]);
+
+      // Win announcement overlay + coin rain for all wins
+      const winTitle = multiplier >= 20 ? '大獎！BIG WIN！' : multiplier >= 10 ? '好彩！NICE WIN！' : '中獎！WIN！';
+      showBigWin(prize, winTitle);
+    } else {
+      winEl.textContent = '—';
+      winEl.style.color = '';
+      // Fall animation after 2 consecutive no-wins (frames 370–420)
+      _consecutiveMisses++;
+      if (_consecutiveMisses >= 2) {
+        _consecutiveMisses = 0;
+        _playCharAnim('fall');
+      }
+    }
+
+    // Continue auto-spin: wait for any win overlay to dismiss first
+    const overlayMs = multiplier >= 20 ? BIG_WIN_DISPLAY_MS : multiplier >= 3 ? WIN_DISPLAY_MS : 0;
+    if (autoSpin) autoTimer = setTimeout(doSpin, overlayMs > 0 ? overlayMs : AUTO_SPIN_INTERVAL);
+  }, 2000);
+}
+
+// ===== Back button – cancel auto-spin =====
+/** Cancels auto-spin if it is currently active.
+ *  Returns true if auto-spin was running (and has now been cancelled),
+ *  false if nothing needed to be done.
+ */
+function cancelAutoSpin() {
+  if (!autoSpin) return false;
+  autoSpin = false;
+  _setAutoSpinUI(false);
+  clearTimeout(autoTimer);
+  addLog('自動旋轉已取消', 'info');
+  return true;
+}
+
+document.getElementById('btn-back').addEventListener('click', () => {
+  if (!cancelAutoSpin()) {
+    // __gameHost.navigate handles all branches:
+    //   Branch 1 — native Flutter bridge (goBack handler)
+    //   Branch 2 — iframe postMessage (GO_BACK)
+    //   Branch 3 — TG hosted / self-host (Telegram.WebApp.close or history.back)
+    window.__gameHost?.navigate('back');
+  }
+});
+
+// ===== Big Win display =====
+function spawnCoinRain() {
+  const coinSyms = ['sym-diamond', 'sym-star', 'sym-sparkle', 'sym-moon', 'sym-diamond'];
+  for (let i = 0; i < 22; i++) {
+    const c    = document.createElement('span');
+    const size = Math.round(16 + Math.random() * 18);
+    const id   = coinSyms[Math.floor(Math.random() * coinSyms.length)];
+    c.innerHTML = `<svg viewBox="0 0 100 100" width="${size}" height="${size}" fill="rgba(200,190,255,0.85)" aria-hidden="true"><use href="#${id}"/></svg>`;
+    c.style.cssText =
+      `position:fixed;pointer-events:none;z-index:495;display:inline-block;` +
+      `left:${Math.random() * 100}%;top:-32px;` +
+      `animation:coinFall ${1.3 + Math.random() * 1.8}s ${Math.random() * 0.9}s ease-in forwards`;
+    document.body.appendChild(c);
+    c.addEventListener('animationend', () => c.remove(), { once: true });
+  }
+}
+
+function showBigWin(amount, title = 'BIG WIN!') {
+  const bw  = document.getElementById('big-win');
+  // Guard against reentrancy: if overlay is already showing, skip to avoid
+  // orphaned setTimeout closures from concurrent calls fighting over the same element.
+  if (!bw.classList.contains('hidden')) return;
+  const bwT = document.getElementById('bw-title');
+  const bwA = document.getElementById('bw-amount');
+  bwT.textContent = title;
+  bwA.textContent = '+USDT ' + Number(amount).toFixed(2);
+  bw.classList.remove('hidden');
+  bwT.style.animation = bwA.style.animation = 'none';
+  void bw.offsetHeight; // 強制 reflow 以重置 CSS animation 狀態，使動畫可以重新播放 (reading offsetHeight triggers synchronous layout)
+  bwT.style.animation = bwA.style.animation = '';
+  spawnCoinRain();
+  // Big wins stay longer; regular wins use a shorter display time
+  const stayMs = title.includes('BIG WIN') ? 2300 : 1200;
+  setTimeout(() => {
+    bw.style.opacity = '0';
+    bw.style.transition = 'opacity 0.9s';
+    setTimeout(() => { bw.classList.add('hidden'); bw.style.opacity = ''; bw.style.transition = ''; }, 900);
+  }, stayMs);
+}
+
+// ===== Resize handler =====
+let _resizeDebounce;
+window.addEventListener('resize', () => {
+  clearTimeout(_resizeDebounce);
+  _resizeDebounce = setTimeout(() => {
+  const nW = reelSection.clientWidth;
+  const nH = 340; // canvas render height is fixed; section is 198px with overflow:hidden
+  camera.aspect = nW / nH;
+  camera.updateProjectionMatrix();
+  renderer.setSize(nW, nH);
+  // Recompute pixel ratio: viewport scale may have changed on resize.
+  renderer.setPixelRatio(calcDPR());
+  // Recompute reel geometry so cards still fill the (re-sized) frustum exactly
+  const geo = computeReelGeometry(nW, nH);
+  // Guard: only rebuild card geometries when dimensions actually changed
+  if (Math.abs(geo.CARD_W - CARD_W) < 1e-4) return;
+  CARD_W = geo.CARD_W; CARD_H = geo.CARD_H; REEL_X = geo.REEL_X;
+  STRIP_CLIP = (Math.floor(N_STRIP / 2) + 1) * CARD_H;
+  reelGroups.forEach((strip, ri) => {
+    strip.position.x = REEL_X[ri];
+    strip.children.forEach((card, i) => {
+      card.geometry.dispose();
+      card.geometry = new THREE.PlaneGeometry(CARD_W, CARD_H);
+      card.position.y = (i - Math.floor(N_STRIP / 2)) * CARD_H;
+    });
+    // Invalidate cached maxY — card positions were just reset above.
+    strip.userData.maxY = undefined;
+  });
+  // Resize character renderer to match new center-stage dimensions
+  const cW = charWrap.clientWidth  || nW;
+  const cH = charWrap.clientHeight || nH;
+  charCamera.aspect = cW / cH;
+  charCamera.updateProjectionMatrix();
+  charRenderer.setSize(cW, cH);
+  charRenderer.setPixelRatio(calcDPR());
+  }, 150);
+});
+
+// ===== Animation loop =====
+const animationLoopManager = createAnimationLoopManager({
+  renderer,
+  scene,
+  camera,
+  reelGroups,
+  fillLight,
+  maxSpinSpeed: MAX_SPIN_SPEED,
+  minSpinSpeed: MIN_SPIN_SPEED,
+  getStripClip: () => STRIP_CLIP,
+  getCardHeight: () => CARD_H,
+  isMobile: IS_MOBILE,
+  orbitLightA,
+  orbitLightB,
+  charRenderer,
+  charScene,
+  charCamera,
+  charSpot,
+  isCharAnimating: () => charAnimating,
+  getCharMixer: () => charMixer,
+});
+animationLoopManager.start();
+
+// ── Animation Debug Panel (only for usernames containing "redan") ─────────────
+(function initAnimDebugPanel() {
+  const panel    = document.getElementById('anim-debug-panel');
+  const status   = document.getElementById('adb-status');
+
+  function _isRedanUser() {
+    return false;
+  }
+
+  function _showStatus(msg, ok = true) {
+    status.textContent = msg;
+    status.style.color = ok ? '#80ee80' : '#ff8866';
+  }
+
+  /** Rebuild a subclip from input fields and return the new action */
+  function _rebuildAction(startInput, endInput, name) {
+    if (!charMixer || !window.__anim_baseClip) return null;
+    const s = Math.max(0, parseInt(startInput.value) || 0);
+    const e = Math.max(s + 1, parseInt(endInput.value) || 1);
+    startInput.value = s;
+    endInput.value   = e;
+    const clip   = THREE.AnimationUtils.subclip(window.__anim_baseClip, name, s, e, CHAR_FPS);
+    const action = charMixer.clipAction(clip);
+    action.setLoop(THREE.LoopOnce);
+    action.clampWhenFinished = false;
+    return action;
+  }
+
+  /** Apply the current input values to the live actions */
+  function applyFrames() {
+    if (!charMixer || !window.__anim_baseClip) {
+      _showStatus('模型尚未載入，無法套用', false); return;
+    }
+    [charActionBigWin, charActionSmallWin, charActionFall].forEach(a => { if (a) a.stop(); });
+
+    charActionBigWin   = _rebuildAction(
+      document.getElementById('adb-big-start'),
+      document.getElementById('adb-big-end'), 'bigWin');
+    charActionSmallWin = _rebuildAction(
+      document.getElementById('adb-sm-start'),
+      document.getElementById('adb-sm-end'), 'smallWin');
+    charActionFall     = _rebuildAction(
+      document.getElementById('adb-fall-start'),
+      document.getElementById('adb-fall-end'), 'fall');
+
+    _showStatus(`✅ 已套用：big=${document.getElementById('adb-big-start').value}-${document.getElementById('adb-big-end').value}  small=${document.getElementById('adb-sm-start').value}-${document.getElementById('adb-sm-end').value}  fall=${document.getElementById('adb-fall-start').value}-${document.getElementById('adb-fall-end').value}`);
+    addLog(`[AnimDebug] 幀設定已套用`, 'info');
+  }
+
+  function resetDefaults() {
+    document.getElementById('adb-big-start').value  = CHAR_FRAMES_BIG_WIN.start;
+    document.getElementById('adb-big-end').value    = CHAR_FRAMES_BIG_WIN.end;
+    document.getElementById('adb-sm-start').value   = CHAR_FRAMES_SMALL_WIN.start;
+    document.getElementById('adb-sm-end').value     = CHAR_FRAMES_SMALL_WIN.end;
+    document.getElementById('adb-fall-start').value = CHAR_FRAMES_FALL.start;
+    document.getElementById('adb-fall-end').value   = CHAR_FRAMES_FALL.end;
+    applyFrames();
+  }
+
+  // Play buttons
+  document.querySelectorAll('.adb-play-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const type = btn.dataset.type;
+      // Apply current inputs first so what you see is what plays
+      applyFrames();
+      _playCharAnim(type);
+      _showStatus(`▶ 正在播放：${type}`);
+      addLog(`[AnimDebug] 播放 ${type}`, 'info');
+    });
+  });
+
+  document.getElementById('adb-apply-btn').addEventListener('click', applyFrames);
+  document.getElementById('adb-reset-btn').addEventListener('click', resetDefaults);
+  document.getElementById('anim-debug-close').addEventListener('click', () => {
+    panel.style.display = 'none';
+  });
+
+  // Show panel only when user is authenticated as "redan"
+  // Re-check every time HOST_INIT fires (username may arrive after init)
+  const _origOnHostInit = window._game_onHostInit;
+  window._game_onHostInit = function (data) {
+    _origOnHostInit && _origOnHostInit(data);
+    if (_isRedanUser()) panel.style.display = 'block';
+  };
+  // Also show if already authenticated (e.g. hot-reload)
+  if (_isRedanUser()) panel.style.display = 'block';
+})();
+
+console.log('月光舞台 v3.0 已加載 – WebGL2 模式');
+addLog('月光舞台 v3.0 已加載', 'info');
+</script>
+
+</body>
+</html>

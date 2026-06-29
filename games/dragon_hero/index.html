@@ -1,0 +1,2707 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<meta http-equiv="Cache-Control" content="no-cache" />
+<title>龍域英雄 - 命運輪盤</title>
+<style>
+/* ===== Telegram Mini App CSS Variables ===== */
+:root {
+  --app-height: 100dvh;
+  --tg-viewport-height: 100vh;
+  /* Exposes iOS/Android safe-area-inset-top as a CSS variable so JS can read
+     it via getComputedStyle.  Requires viewport-fit=cover to return non-zero
+     on iPhone (status bar height ~44-59px).  0px is the safe fallback. */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+}
+
+/* ===== Reset ===== */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:100%; height:var(--app-height, 100dvh); overflow:hidden; background:#020a01; }
+
+/* ===== Game Viewport – fixed design canvas, scaled to fit ===== */
+#gv {
+  position:fixed;
+  top:0; left:0;
+  width:430px;
+  height:900px;
+  padding-top:var(--layout-safe-top, 0px);
+  transform-origin:top left;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  font-family:'PingFang SC','Microsoft YaHei','Noto Sans TC','Arial',sans-serif;
+  background:linear-gradient(180deg,#050a02 0%,#0d1806 14%,#091404 30%,#061002 52%,#040c02 72%,#030802 100%);
+}
+/* ── Ember field: floating fire-ash particles on the background ── */
+#gv::before{
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:0;
+  background-image:
+    radial-gradient(1px 1px at  7%  6%,rgba(255,160,40,.75),transparent),
+    radial-gradient(2px 2px at 18% 12%,rgba(240,120,20,.55),transparent),
+    radial-gradient(1px 1px at 32%  4%,rgba(255,200,60,.60),transparent),
+    radial-gradient(1px 1px at 47%  9%,rgba(220,140,30,.70),transparent),
+    radial-gradient(2px 2px at 61%  3%,rgba(255,100,20,.45),transparent),
+    radial-gradient(1px 1px at 75%  8%,rgba(240,160,40,.75),transparent),
+    radial-gradient(1px 1px at 89% 14%,rgba(255,180,50,.60),transparent),
+    radial-gradient(1px 1px at  4% 22%,rgba(220,120,20,.65),transparent),
+    radial-gradient(2px 2px at 23% 19%,rgba(255,80,10,.40),transparent),
+    radial-gradient(1px 1px at 55% 17%,rgba(240,160,40,.60),transparent),
+    radial-gradient(1px 1px at 82% 21%,rgba(255,200,60,.65),transparent),
+    radial-gradient(1px 1px at 12% 35%,rgba(220,140,30,.50),transparent),
+    radial-gradient(2px 2px at 38% 30%,rgba(255,120,20,.40),transparent),
+    radial-gradient(1px 1px at 68% 28%,rgba(240,160,40,.55),transparent),
+    radial-gradient(1px 1px at 93% 32%,rgba(255,180,50,.70),transparent);
+  animation:emberFloat 5s ease-in-out infinite alternate;
+}
+@keyframes emberFloat{
+  0%  {opacity:.45; transform:translateY(0)}
+  33% {opacity:.9}
+  66% {opacity:.6; transform:translateY(-3px)}
+  100%{opacity:.35; transform:translateY(0)}
+}
+
+@keyframes shimmer {
+  0%{background-position:200% 0} 100%{background-position:-200% 0}
+}
+
+/* ============================================================
+   2. PAYTABLE PANEL
+   ============================================================ */
+#paytable {
+  flex:0 0 auto;
+  margin:2px 3px;
+  background:#080e03;
+  border:2.5px solid #8a6820;
+  border-radius:8px;
+  padding:3px 14px;
+  display:flex;
+  align-items:stretch;
+  gap:4px;
+  max-height:136px;
+  overflow:hidden;
+  /* Bottom fade: hints that content is scrollable */
+  -webkit-mask-image:linear-gradient(to bottom,black 70%,transparent 100%);
+  mask-image:linear-gradient(to bottom,black 70%,transparent 100%);
+}
+.pt-col{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  gap:1px;
+  min-height:0;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  /* -webkit-overflow-scrolling:touch — deprecated, removed */
+  touch-action:pan-y;
+  scrollbar-width:none;
+  -ms-overflow-style:none;
+}
+.pt-col::-webkit-scrollbar{display:none}
+.pt-row{
+  display:flex; align-items:center; height:30px;
+  border-bottom:1px solid rgba(160,120,20,.18); gap:4px;
+}
+.pt-row:last-child{border-bottom:none}
+.pt-syms{font-size:15px; line-height:1; flex:1; color:#eee; letter-spacing:-1px}
+.pt-val{color:#f0c040; font-size:15px; font-weight:bold; text-shadow:0 0 6px rgba(240,192,64,.55); min-width:38px; text-align:right}
+.pt-syms-any{font-size:13px; color:#f0c040; letter-spacing:0}
+.pt-div{flex:0 0 1px; background:linear-gradient(180deg,transparent,#8a6820 30%,#8a6820 70%,transparent); align-self:stretch; margin:3px 0}
+/* Wild badge */
+#pt-wild{flex:0 0 68px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px}
+#wild-badge{
+  width:58px; height:58px; border-radius:50%;
+  background:radial-gradient(circle at 38% 30%,#ff8820,#cc4400 55%,#661100);
+  border:2.5px solid #f0c040;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  box-shadow:0 0 14px rgba(240,160,20,.6),0 0 28px rgba(200,100,10,.3);
+  animation:wildPulse 2s ease-in-out infinite;
+  will-change:filter;
+}
+@keyframes wildPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.5)}}
+.wi-pig{font-size:24px; line-height:1}
+/* Inline SVG icon helper – sizes via parent font-size (1em) */
+.sym-icon{display:inline-block;width:1em;height:1em;vertical-align:-0.1em;fill:currentColor;overflow:visible}
+/* Paytable canvas symbol images – populated from symTextures after JS loads */
+.pt-sym-img{display:inline-block;vertical-align:middle;border-radius:3px;margin:0 1px}
+.wi-mult{color:#f0c040; font-size:13px; font-weight:bold; text-shadow:0 0 5px #f0c040}
+#wild-label{color:#f0c040; font-size:12px; font-weight:bold; letter-spacing:2px; text-shadow:0 0 5px rgba(240,192,64,.6)}
+
+/* ============================================================
+   3. JACKPOT BANNER
+   ============================================================ */
+#jackpot-banner {
+  flex:0 0 auto;
+  background:linear-gradient(90deg,#040a01,#0a1505 25%,#121e08 50%,#0a1505 75%,#040a01);
+  border-top:2px solid #8a6820; border-bottom:2px solid #8a6820;
+  text-align:center; color:#f0c040;
+  font-size:17px; font-weight:bold;
+  padding:6px; letter-spacing:1px;
+  position:relative; overflow:hidden;
+  text-shadow:0 0 8px rgba(240,192,64,.6);
+  animation:jackpotPulse 2.6s ease-in-out infinite;
+  will-change:filter;
+}
+#jackpot-marquee-track{
+  width:100%; overflow:hidden; white-space:nowrap; position:relative; z-index:1;
+}
+#jackpot-marquee-text{
+  display:inline-block;
+  padding-left:100%;
+  animation:jackpotMarquee 18s linear infinite;
+}
+#jackpot-banner::before{
+  content:''; position:absolute; top:0; left:-80%; width:40%; height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.14),transparent);
+  animation:jSheen 3.4s linear infinite;
+  will-change:transform;
+}
+/* Use transform:translateX instead of left to avoid layout triggers.
+   left:-80% keeps element off-screen in base state; translateX(500%) = 5×own_width =
+   200% of parent → final position −80%+200%=120% of parent (off right). */
+@keyframes jSheen{0%{transform:translateX(0)}100%{transform:translateX(500%)}}
+@keyframes jackpotPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.5)}}
+@keyframes jackpotMarquee{
+  0%{transform:translateX(0)}
+  100%{transform:translateX(-100%)}
+}
+
+/* ============================================================
+   4. REEL SECTION
+   ============================================================ */
+#reel-section {
+  flex:0 0 auto;
+  height:198px;
+  margin:2px 3px;
+  position:relative;
+  background:#020a01;
+  border:3px solid #8a6820;
+  border-radius:6px;
+  overflow:hidden;
+  box-shadow:0 0 30px rgba(200,140,20,.55),0 0 60px rgba(160,100,10,.2),inset 0 0 40px rgba(0,0,0,.6);
+}
+/* Scan-line light sweep over reels */
+#reel-section::before{
+  content:''; position:absolute; inset:0; z-index:3; pointer-events:none;
+  background:linear-gradient(180deg,transparent 0%,rgba(160,130,40,.07) 48%,rgba(200,160,60,.14) 50%,rgba(160,130,40,.07) 52%,transparent 100%);
+  animation:scanSweep 4s linear infinite;
+  will-change:transform;
+}
+@keyframes scanSweep{
+  0%  {transform:translateY(-100%)}
+  100%{transform:translateY(100%)}
+}
+#reel-canvas-wrap{position:absolute; top:-71px; left:0; right:0; height:340px; z-index:1}
+#reel-canvas-wrap canvas{display:block; width:100%!important; height:100%!important}
+/* Chrome overlay */
+#reel-chrome{position:absolute; inset:0; z-index:2; pointer-events:none}
+/* Gold separator bars */
+.reel-sep{
+  position:absolute; top:0; bottom:0; width:5px;
+  background:linear-gradient(180deg,#3a2a00,#8a6820 35%,#6a5010 65%,#2a1800);
+  box-shadow:0 0 8px rgba(160,120,20,.45);
+}
+.reel-sep.s1{left:calc(33.33% - 2px)} .reel-sep.s2{left:calc(66.66% - 2px)}
+/* Payline stripe */
+#payline{
+  position:absolute; top:50%; left:0; right:0; height:2px;
+  background:rgba(200,150,20,.22); transform:translateY(-50%);
+}
+#payline::before,#payline::after{
+  content:''; position:absolute; top:50%; transform:translateY(-50%);
+  width:8px; height:8px; border-radius:50%; background:#f0c040;
+  box-shadow:0 0 6px #f0c040; animation:paylinePulse .85s ease-in-out infinite alternate;
+}
+#payline::before{left:6px} #payline::after{right:6px}
+@keyframes paylinePulse{0%{opacity:.35}100%{opacity:1}}
+/* Motion blur during fast spin – replaced with subtle opacity for mobile GPU efficiency */
+#reel-canvas-wrap.reel-spinning{opacity:.92; transition:opacity .15s}
+#reel-canvas-wrap{transition:opacity .25s}
+/* Reel section win flash */
+#reel-section.reel-win{animation:reelWinFlash .32s ease-in-out 5}
+@keyframes reelWinFlash{
+  0%,100%{border-color:#8a6820;box-shadow:0 0 22px rgba(180,130,20,.3),inset 0 0 40px rgba(0,0,0,.6)}
+  50%{border-color:#f0c040;box-shadow:0 0 55px rgba(240,192,64,.95),0 0 110px rgba(255,160,20,.55),inset 0 0 22px rgba(240,200,80,.12)}
+}
+/* Coin rain (big win) – uses CSS variable for Telegram viewport adaptation */
+@keyframes coinFall{
+  0%{transform:translateY(0) rotate(0deg);opacity:1}
+  80%{opacity:.8}
+  100%{transform:translateY(calc(var(--tg-viewport-height) * 1.1)) rotate(720deg);opacity:0}
+}
+/* Idle coin sparkles in scene area */
+.s-coin{
+  position:absolute; pointer-events:none; z-index:4;
+  animation:sCoinRise linear infinite;
+  will-change:transform, opacity;
+}
+.s-coin svg{ fill:rgba(240,192,64,0.85) }
+@keyframes sCoinRise{
+  0%{transform:translateY(0) rotate(0deg);opacity:0}
+  8%{opacity:.8}
+  88%{opacity:.5}
+  100%{transform:translateY(-90px) rotate(200deg);opacity:0}
+}
+/* Bet label change flash */
+@keyframes betFlash{0%,100%{color:#f0c040}50%{color:#fff;text-shadow:0 0 8px #fff}}
+
+/* ============================================================
+   5. SCENE AREA  (pillars + hero arch + hero character)
+   ============================================================ */
+#scene-area{
+  flex:1; position:relative; min-height:0;
+  display:flex; align-items:stretch; overflow:hidden;
+}
+/* Greek-key border top */
+#scene-top-border{
+  position:absolute; top:0; left:0; right:0; height:14px;
+  background:repeating-linear-gradient(90deg,
+    #080e03 0px,#080e03 12px,#8a6820 12px,#8a6820 14px);
+  z-index:6;
+}
+/* Dragon stone pillars */
+.pillar{
+  flex:0 0 46px;
+  background:linear-gradient(90deg,#0d0a00,#3a2800 30%,#6a4a00 50%,#3a2800 70%,#0d0a00);
+  border-right:2.5px solid #8a6820; border-left:2.5px solid #8a6820;
+  position:relative; overflow:visible;
+  display:flex; flex-direction:column; align-items:center;
+  padding-top:14px;
+}
+.pillar.right{border-left:2.5px solid #8a6820; border-right:none}
+.p-ring{width:100%; height:7px; background:linear-gradient(180deg,#f0c040 0%,#8a6820 100%); margin:8px 0}
+/* Couplet scroll on pillar */
+.couplet{
+  position:absolute; top:20px;
+  width:42px; min-height:140px;
+  background:linear-gradient(180deg,#1a0e00 0%,#2a1800 30%,#1a0c00 60%,#0c0800 100%);
+  border:2px solid #d4a020; border-radius:4px;
+  padding:6px 3px;
+  display:flex; flex-direction:column; align-items:center; justify-content:space-evenly;
+  box-shadow:0 0 14px rgba(200,140,10,.55),0 0 30px rgba(160,100,10,.25),inset 0 0 10px rgba(0,0,0,.5);
+  z-index:5;
+}
+/* Top and bottom scroll roller nubs */
+.couplet::before,.couplet::after{
+  content:''; position:absolute; left:50%; transform:translateX(-50%);
+  width:48px; height:6px;
+  background:linear-gradient(90deg,#3a2200,#c08820 40%,#f0c040 50%,#c08820 60%,#3a2200);
+  border-radius:3px; border:1px solid #8a6820;
+}
+.couplet::before{top:-4px}
+.couplet::after{bottom:-4px}
+/* Couplet characters – opacity pulse instead of text-shadow (GPU composited) */
+.c-char{
+  color:#f0c040; font-size:16px; font-weight:bold;
+  text-shadow:0 0 7px rgba(240,192,64,.85), 0 0 14px rgba(200,140,20,.5);
+  line-height:1.35;
+  animation:charShimmer 3.6s ease-in-out infinite alternate;
+  will-change:opacity;
+}
+.couplet .c-char:nth-child(2){animation-delay:.4s}
+.couplet .c-char:nth-child(3){animation-delay:.8s}
+.couplet .c-char:nth-child(4){animation-delay:1.2s}
+.couplet .c-char:nth-child(5){animation-delay:1.6s}
+@keyframes charShimmer{
+  0%  {opacity:.7}
+  100%{opacity:1}
+}
+
+/* Center stage */
+#center-stage{
+  flex:1; position:relative;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:flex-end;
+  overflow:hidden;
+}
+/* ── Stage logo spotlight ── */
+#stage-logo{
+  position:absolute; top:0; left:0; right:0;
+  height:52px; z-index:8; pointer-events:none;
+  display:flex; align-items:center; justify-content:center;
+}
+/* Two converging spotlight beams from top-left and top-right */
+#stage-logo::before,#stage-logo::after{
+  content:''; position:absolute; top:0;
+  width:0; height:0; pointer-events:none;
+  will-change:opacity, transform;
+}
+#stage-logo::before{
+  left:8%;
+  border-left:20px solid transparent;
+  border-right:20px solid transparent;
+  border-top:52px solid rgba(240,180,40,.12);
+  filter:blur(6px);
+  animation:spotLeft 4s ease-in-out infinite alternate;
+}
+#stage-logo::after{
+  right:8%;
+  border-left:20px solid transparent;
+  border-right:20px solid transparent;
+  border-top:52px solid rgba(255,140,20,.12);
+  filter:blur(6px);
+  animation:spotRight 4s ease-in-out infinite alternate;
+}
+/* Use transform instead of left/right to avoid layout triggers */
+@keyframes spotLeft{0%{opacity:.5}100%{opacity:1;transform:translateX(17px)}}
+@keyframes spotRight{0%{opacity:.5}100%{opacity:1;transform:translateX(-17px)}}
+/* Logo text container */
+#logo-text{
+  position:relative; z-index:2;
+  text-align:center; line-height:1;
+}
+#logo-title{
+  display:block;
+  font-size:22px;
+  font-weight:900; letter-spacing:4px;
+  color:#ffe8c0;
+  text-shadow:
+    0 0 8px rgba(240,192,64,1),
+    0 0 20px rgba(200,140,20,.9),
+    0 0 40px rgba(255,120,20,.6),
+    0 0 70px rgba(180,80,10,.4);
+  animation:logoGlow 2.8s ease-in-out infinite alternate;
+  will-change:opacity;
+}
+#logo-sub{
+  display:block;
+  font-size:11px;
+  letter-spacing:5px;
+  color:#a08030;
+  text-transform:uppercase;
+  margin-top:2px;
+  text-shadow:0 0 6px rgba(200,140,20,.55);
+}
+/* Horizontal shimmer bar under logo */
+#logo-bar{
+  display:block; width:100%; height:1px; margin-top:5px;
+  background:linear-gradient(90deg,transparent 0%,#8a6820 20%,#f0c040 50%,#8a6820 80%,transparent 100%);
+  background-size:200% 100%;
+  animation:shimmer 2.2s linear infinite;
+}
+/* Logo glow – opacity pulse keeps static text-shadow always visible (GPU composited) */
+@keyframes logoGlow{
+  0%{opacity:.75}
+  100%{opacity:1}
+}
+/* Stage spotlight beams – opacity only (no filter change); static blur cached by GPU */
+#center-stage::before{
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:3;
+  background:
+    conic-gradient(from 238deg at 0% 0%,    transparent 0deg, rgba(200,140,20,.07) 10deg, transparent 20deg),
+    conic-gradient(from 292deg at 100% 0%,  transparent 0deg, rgba(255,120,20,.07) 10deg, transparent 20deg);
+  filter:blur(2px);
+  animation:beamSway 6s ease-in-out infinite alternate;
+}
+@keyframes beamSway{
+  0%  {opacity:.6}
+  50% {opacity:1}
+  100%{opacity:.55}
+}
+/* Upgraded spotlight behind model for depth */
+#center-stage::after{
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:4;
+  background:radial-gradient(ellipse 70% 85% at 50% 65%, rgba(200,140,20,.18) 0%, rgba(100,60,10,.06) 55%, transparent 75%);
+  animation:stagePulse 3.5s ease-in-out infinite alternate;
+  will-change:opacity;
+}
+@keyframes stagePulse{
+  0%  {opacity:.6}
+  100%{opacity:1}
+}
+/* Hero arch – gothic pointed arch replacing moon gate */
+#hero-arch{
+  position:absolute;
+  top:50%; left:50%; transform:translate(-50%,-54%);
+  width:195px; height:225px;
+  border-radius:50% 50% 0 0 / 38% 38% 0 0;
+  border:6px solid #8a6820;
+  background:linear-gradient(165deg,#050a02,#020602);
+  box-shadow:0 0 0 3px #3a2800,0 0 28px rgba(200,140,10,.4),0 0 55px rgba(160,100,10,.2),inset 0 0 25px rgba(0,0,0,.65);
+  overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+  animation:archGlow 3s ease-in-out infinite alternate;
+  will-change:opacity;
+}
+@keyframes archGlow{
+  0%  {opacity:.7}
+  100%{opacity:1}
+}
+#hero-arch::before{
+  content:''; position:absolute; inset:10px;
+  border-radius:50% 50% 0 0 / 38% 38% 0 0;
+  border:2px solid rgba(200,150,20,.25);
+}
+/* Arch inner glow */
+#hero-arch::after{
+  content:''; position:absolute; bottom:0; left:0; right:0; height:60%;
+  background:radial-gradient(ellipse at 50% 100%, rgba(240,160,20,.1), transparent 70%);
+}
+
+/* Spine 2.5D character canvas */
+#spine-canvas{
+  position:absolute; bottom:0; left:50%; transform:translateX(-50%);
+  width:220px; height:280px;
+  z-index:5; pointer-events:none;
+  display:none; /* hidden until Spine loads */
+}
+/* SVG fallback — visible while Spine loads or if Spine fails */
+#hero-char{
+  position:absolute; bottom:0; left:50%; transform:translateX(-50%);
+  display:flex; flex-direction:column; align-items:center;
+  z-index:5;
+}
+#hero-sprite{
+  width:88px; height:120px;
+  filter:drop-shadow(0 8px 20px rgba(240,160,20,.65));
+  animation:heroBob 2.8s ease-in-out infinite;
+  will-change:transform;
+}
+#hero-shadow{
+  width:60px; height:10px;
+  background:radial-gradient(ellipse,rgba(0,0,0,.55),transparent);
+  margin-top:-8px;
+  animation:heroShadow 2.8s ease-in-out infinite;
+  will-change:transform, opacity;
+}
+@keyframes heroBob{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-6px) scale(1.02)}}
+@keyframes heroShadow{0%,100%{transform:scaleX(1); opacity:.55}50%{transform:scaleX(.82); opacity:.38}}
+
+/* Stage floor planks */
+#stage-floor{
+  position:absolute; bottom:22px; left:0; right:0; height:28px;
+  background:
+    repeating-linear-gradient(90deg,
+      rgba(120,90,10,.08) 0px, rgba(120,90,10,.08) 1px,
+      transparent 1px, transparent 60px),
+    linear-gradient(180deg,
+      rgba(60,40,10,.0) 0%,
+      rgba(120,90,10,.18) 40%,
+      rgba(160,120,20,.22) 60%,
+      rgba(80,60,10,.12) 100%);
+  z-index:6; pointer-events:none;
+}
+/* Stage footlights row */
+#stage-footlights{
+  position:absolute; bottom:4px; left:0; right:0; height:18px;
+  display:flex; align-items:center; justify-content:space-evenly;
+  padding:0 8%; z-index:7; pointer-events:none;
+}
+/* Stage footlights – opacity pulse instead of box-shadow animation (GPU composited) */
+.footlight{
+  display:block; width:10px; height:10px; border-radius:50%;
+  background:radial-gradient(circle,#fff 0%,#f0c040 40%,#c08000 80%,transparent 100%);
+  box-shadow:0 0 10px 5px rgba(200,150,20,.75), 0 0 22px 7px rgba(180,100,10,.45);
+  animation:footlightPulse 2.4s ease-in-out infinite alternate;
+  will-change:opacity;
+}
+.footlight.fl0{animation-delay:0s}
+.footlight.fl1{animation-delay:.3s}
+.footlight.fl2{animation-delay:.6s}
+.footlight.fl3{animation-delay:.9s}
+.footlight.fl4{animation-delay:1.2s}
+.footlight.fl5{animation-delay:1.5s}
+.footlight.fl6{animation-delay:1.8s}
+.footlight.fl7{animation-delay:2.1s}
+@keyframes footlightPulse{
+  0%  {opacity:.45}
+  100%{opacity:1}
+}
+
+/* ============================================================
+   6. CONTROL BAR
+   ============================================================ */
+#control-bar{
+  flex:0 0 auto;
+  background:#060a02;
+  border-top:3px solid #5a4010;
+  padding:0 10px 4px;
+  position:relative; z-index:20;
+}
+#control-bar::before{
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,transparent,#d4a020 30%,#f0c040 50%,#d4a020 70%,transparent);
+  background-size:200% 100%;
+  animation:shimmer 2.8s linear infinite;
+}
+/* Floor glow — use transform instead of width to avoid layout triggers.
+   left:50% + translateX(-50%) centers the element; scaleX replaces width animation. */
+#control-bar::after{
+  content:''; position:absolute; bottom:0; left:50%;
+  width:160px; height:30px; pointer-events:none;
+  background:radial-gradient(ellipse at 50% 100%,rgba(200,140,20,.35),transparent 70%);
+  animation:floorGlow 2.8s ease-in-out infinite alternate;
+  will-change:opacity, transform;
+}
+@keyframes floorGlow{
+  0%  {opacity:.5; transform:translateX(-50%) scaleX(.75)}
+  100%{opacity:1;  transform:translateX(-50%) scaleX(1)}
+}
+/* Button row */
+#ctrl-row1{
+  display:flex; align-items:center; justify-content:space-between;
+  height:74px; position:relative;
+}
+/* Generic control button */
+.ctrl-btn{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:3px; background:none; border:none; cursor:pointer; color:#ddd;
+  -webkit-tap-highlight-color:transparent; padding:2px; min-width:52px;
+}
+.cb-disc{
+  width:40px; height:40px; border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.12),rgba(0,0,0,.6));
+  border:2px solid #5a4010;
+  display:flex; align-items:center; justify-content:center;
+  font-size:19px; color:#f0c040;
+  transition:transform .12s,box-shadow .12s;
+}
+.ctrl-btn:active .cb-disc{transform:scale(.88)}
+.ctrl-btn:active .cb-disc{box-shadow:inset 0 2px 6px rgba(0,0,0,.7)}
+.cb-label{font-size:9px; color:#c8c8c8; letter-spacing:.4px; white-space:nowrap}
+
+/* BIG SPIN BUTTON – elevated center */
+#spin-wrap{
+  position:absolute; left:50%; transform:translateX(-50%);
+  bottom:-2px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+}
+/* Rotating gold ring – filter:brightness instead of box-shadow animation (GPU composited) */
+#spin-ring{
+  width:82px; height:82px; border-radius:50%;
+  background:conic-gradient(from 0deg,#ff6820,#f0c040,#ffbb44,#ff8820,#ff6820);
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 0 24px rgba(240,160,20,.7),0 0 50px rgba(200,100,10,.35);
+  animation:ringPulse 2.2s ease-in-out infinite alternate;
+  will-change:filter;
+}
+@keyframes ringPulse{
+  0%  {filter:brightness(1)}
+  100%{filter:brightness(1.6)}
+}
+#spin-btn{
+  width:70px; height:70px; border-radius:50%; border:none; cursor:pointer;
+  background:
+    radial-gradient(circle at 34% 27%,rgba(255,220,120,.28),transparent 52%),
+    radial-gradient(circle at center,#201008,#150800 48%,#080400);
+  box-shadow:inset 0 3px 10px rgba(255,255,255,.18),inset 0 -4px 8px rgba(0,0,0,.7),
+             0 4px 14px rgba(0,0,0,.85);
+  display:flex; align-items:center; justify-content:center;
+  font-size:28px; position:relative; overflow:hidden;
+  transition:transform .1s;
+  -webkit-tap-highlight-color:transparent;
+}
+/* Sheen sweep */
+#spin-btn::before{
+  content:''; position:absolute; top:-50%; left:-50%; width:200%; height:200%;
+  background:linear-gradient(45deg,transparent 38%,rgba(255,255,255,.22) 50%,transparent 62%);
+  animation:btnSheen 2.6s ease-in-out infinite;
+}
+@keyframes btnSheen{0%{transform:translateX(-120%) translateY(-120%)}100%{transform:translateX(70%) translateY(70%)}}
+#spin-btn:active{transform:scale(.93)}
+#spin-btn:disabled{opacity:.5; cursor:not-allowed}
+.spin-ic{position:relative; z-index:1; font-size:28px; pointer-events:none}
+/* Auto-spin active: ring shifts to warm orange */
+#spin-ring.auto-active{
+  background:conic-gradient(from 0deg,#ff8844,#ffbb44,#ffdd66,#ffbb44,#ff8844);
+  box-shadow:0 0 24px rgba(255,160,80,.85),0 0 50px rgba(255,100,40,.4);
+}
+/* Auto badge label — sits below the spin-wrap, outside the clipped button */
+#spin-auto-badge{
+  display:block; text-align:center; margin-top:2px;
+  font-size:8px; font-weight:bold; color:#ffcc66; letter-spacing:1.5px;
+  pointer-events:none; text-shadow:0 0 4px #ff8800;
+}
+/* Mute button: disc goes red-tinted when muted */
+#btn-mute.is-muted .cb-disc{ border-color:#774444; color:#ff9999; }
+
+/* Balance row */
+#ctrl-row2{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:3px 12px 2px;
+  border-top:1px solid rgba(139,96,16,.35);
+}
+.bal-item{display:flex; align-items:center; gap:5px; font-size:12px}
+.bal-item-left{justify-self:start}
+.bal-item-right{justify-self:end}
+.bal-icon{font-size:14px}
+.bal-lbl{color:#808030; font-size:10px; letter-spacing:.3px}
+.bal-val{color:#f0c040; font-weight:bold; font-size:14px; min-width:54px}
+.bal-item-left,.bal-item-right{position:relative; z-index:1}
+/* Bet amount shown as cb-label under the + button */
+#bet-label{ font-size:10px; color:#f0c040; font-weight:bold; letter-spacing:.3px }
+
+/* ============================================================
+   7. LOG PANEL
+   ============================================================ */
+#log-panel{
+  display:none; /* hidden from screen; logs are still accumulated for copy-log */
+  position:fixed; bottom:0; right:0;
+  width:min(340px,90vw); max-height:200px;
+  background:rgba(0,0,0,.92); border:2px solid #8a6820;
+  border-radius:8px 0 0 0;
+  padding:8px; font-family:monospace; font-size:10px;
+  color:#88aaff; overflow-y:auto; z-index:999;
+  transition:max-height .3s, opacity .3s;
+}
+#log-panel.collapsed{max-height:26px; overflow:hidden; opacity:.4}
+#log-panel div{margin:2px 0; border-bottom:1px solid #222}
+.log-error{color:#ff6666} .log-warn{color:#ffaa44} .log-info{color:#88aaff}
+#log-toggle{color:#d4a020; font-weight:bold; cursor:pointer; user-select:none}
+
+/* ============================================================
+   8. MENU POPUP
+   ============================================================ */
+#menu-popup{
+  display:none; position:fixed; z-index:600;
+  background:rgba(5,8,3,.97); border:1.5px solid #8a6820;
+  border-radius:10px; padding:6px 0; min-width:150px;
+  box-shadow:0 4px 24px rgba(0,0,0,.7);
+}
+#menu-popup.open{ display:block; }
+.menu-item{
+  display:block; width:100%; padding:11px 18px;
+  background:none; border:none; cursor:pointer;
+  color:#f0c040; font-size:13px; text-align:left;
+  white-space:nowrap; letter-spacing:.4px;
+}
+.menu-item:active{ background:rgba(140,100,10,.25); }
+.menu-item:focus-visible{ outline:2px solid #8a6820; outline-offset:-2px; border-radius:4px; }
+.menu-divider{
+  height:1px; margin:4px 12px;
+  background:rgba(140,100,10,.3);
+  pointer-events:none;
+}
+
+/* ============================================================
+   9. TRANSACTION HISTORY PANEL
+   ============================================================ */
+#txn-backdrop{
+  display:none; position:fixed; inset:0; z-index:700;
+  background:rgba(0,0,0,.55);
+}
+#txn-backdrop.open{ display:block; }
+#txn-panel{
+  display:none; position:fixed; left:0; right:0; bottom:0; z-index:701;
+  background:#080e03; border-top:1.5px solid #8a6820;
+  border-radius:16px 16px 0 0; flex-direction:column;
+  max-height:72vh;
+  transform:translateY(100%); transition:transform .28s cubic-bezier(.4,0,.2,1);
+}
+#txn-panel.open{ transform:translateY(0); }
+#txn-header{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 18px 10px; border-bottom:1px solid rgba(140,100,10,.3);
+  flex-shrink:0;
+}
+#txn-title{ color:#f0c040; font-size:15px; font-weight:700; letter-spacing:.5px; }
+#txn-close{
+  background:none; border:none; color:#888; font-size:18px;
+  cursor:pointer; padding:8px 12px; line-height:1;
+  margin:-8px -8px -8px 0; border-radius:8px;
+}
+#txn-close:active{ color:#f0c040; background:rgba(140,100,10,.18); }
+#txn-list{
+  overflow-y:auto; flex:1; padding:8px 0;
+  /* -webkit-overflow-scrolling:touch — deprecated, removed */
+}
+.txn-row{
+  display:flex; align-items:center; gap:10px;
+  padding:10px 18px; border-bottom:1px solid rgba(140,100,10,.12);
+}
+.txn-icon{
+  width:30px; height:30px; border-radius:7px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center; font-size:14px;
+}
+.txn-icon.in { background:rgba(60,200,100,.15); color:#3cc864; }
+.txn-icon.out{ background:rgba(255,80,80,.15);  color:#ff6464; }
+.txn-body{ flex:1; min-width:0; }
+.txn-type{ color:#f0c040; font-size:13px; font-weight:600; }
+.txn-desc{ color:#666; font-size:11px; margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.txn-right{ text-align:right; flex-shrink:0; }
+.txn-amt{ font-size:14px; font-weight:700; }
+.txn-amt.in { color:#3cc864; }
+.txn-amt.out{ color:#ff6464; }
+.txn-time{ color:#555; font-size:11px; margin-top:1px; }
+#txn-footer{
+  flex-shrink:0; padding:10px 18px 14px; border-top:1px solid rgba(96,101,216,.2);
+  display:flex; justify-content:center;
+}
+#txn-load-more{
+  background:rgba(140,100,10,.2); border:1px solid rgba(140,100,10,.5);
+  color:#f0c040; border-radius:8px; padding:7px 24px; font-size:13px;
+  cursor:pointer;
+}
+#txn-load-more:disabled{ opacity:.4; cursor:default; }
+.txn-empty{ text-align:center; color:#555; padding:32px 0; font-size:14px; }
+.txn-spinner{ text-align:center; color:#8a6820; padding:24px 0; font-size:22px; }
+
+
+/* ============================================================
+   11. BIG WIN OVERLAY
+   ============================================================ */
+#big-win{
+  position:fixed; inset:0; z-index:500; pointer-events:none;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background:radial-gradient(ellipse at center,rgba(60,30,5,.6),transparent 70%);
+}
+#bw-title{
+  font-size:clamp(56px,15vw,80px); font-weight:900; color:#f0c040;
+  text-shadow:0 0 20px #f0c040,0 0 40px #ff8820,0 0 80px #cc4400,
+              0 3px 0 #7a4000,0 6px 0 #3a1800;
+  line-height:1.1;
+  animation:bwPop .5s cubic-bezier(.175,.885,.32,1.275) both;
+}
+#bw-amount{
+  font-size:clamp(40px,11vw,58px); font-weight:bold; color:#fff;
+  text-shadow:0 0 14px #f0c040,0 0 28px #ff8820;
+  animation:bwPop .5s .2s cubic-bezier(.175,.885,.32,1.275) both;
+}
+@keyframes bwPop{
+  0%{opacity:0; transform:scale(.1) rotate(-10deg)}
+  70%{transform:scale(1.12) rotate(2deg)}
+  100%{opacity:1; transform:scale(1) rotate(0)}
+}
+.hidden{display:none!important}
+
+/* ===== Loading screen ===== */
+#game-loader{
+  position:fixed; inset:0; z-index:9999;
+  background:linear-gradient(160deg,#030802 0%,#081403 40%,#0d1e05 70%,#030802 100%);
+  display:flex; align-items:center; justify-content:center;
+  transition:opacity 0.6s ease, visibility 0.6s ease;
+}
+#game-loader.fade-out{ opacity:0; visibility:hidden; pointer-events:none; }
+/* ===== Auth error screen ===== */
+#auth-error{
+  position:fixed; inset:0; z-index:10000;
+  background:linear-gradient(160deg,#030802 0%,#081403 40%,#0d1e05 70%,#030802 100%);
+  display:flex; align-items:center; justify-content:center;
+}
+#auth-error.hidden{ display:none; }
+#ae-inner{
+  display:flex; flex-direction:column; align-items:center; gap:20px;
+  width:min(300px,85vw); text-align:center;
+}
+#ae-icon{
+  width:64px; height:64px; border-radius:50%;
+  background:rgba(255,80,80,.12);
+  border:2px solid rgba(255,100,100,.35);
+  display:flex; align-items:center; justify-content:center;
+  font-size:28px; color:#ff7070;
+}
+#ae-title{
+  font-size:clamp(18px,5vw,22px); font-weight:700;
+  letter-spacing:4px; color:#f0c040;
+}
+#ae-msg{
+  font-size:clamp(12px,3.5vw,14px); color:rgba(160,175,255,.65);
+  line-height:1.7;
+}
+#ae-btn{
+  margin-top:4px; padding:13px 44px;
+  background:linear-gradient(135deg,#8a4a00,#cc7a00);
+  color:#fff; border:none; border-radius:26px;
+  font-size:16px; font-weight:600; cursor:pointer; letter-spacing:2px;
+  box-shadow:0 4px 18px rgba(200,140,20,.4);
+}
+#ae-btn:active{ transform:scale(.95); }
+#gl-inner{
+  display:flex; flex-direction:column; align-items:center; gap:14px;
+  width:min(320px,85vw);
+}
+#gl-logo{
+  font-size:clamp(28px,7vw,40px); font-weight:900; letter-spacing:6px;
+  color:#f0c040;
+  text-shadow:0 0 18px rgba(240,192,64,.9), 0 0 40px rgba(200,140,20,.55), 0 0 70px rgba(180,100,10,.3);
+  animation:glLogoPulse 2.2s ease-in-out infinite;
+}
+@keyframes glLogoPulse{
+  0%,100%{text-shadow:0 0 18px rgba(140,160,255,.9),0 0 40px rgba(100,130,255,.55),0 0 70px rgba(80,100,255,.3)}
+  50%{text-shadow:0 0 28px rgba(180,200,255,1),0 0 60px rgba(140,170,255,.75),0 0 100px rgba(110,140,255,.45)}
+}
+#gl-sub{
+  font-size:clamp(11px,3vw,14px); letter-spacing:4px; text-transform:uppercase;
+  color:rgba(160,175,255,.55); margin-top:-8px;
+}
+#gl-spinner{
+  position:relative; width:52px; height:52px;
+  margin:6px 0;
+}
+.gl-dot{
+  position:absolute; width:10px; height:10px; border-radius:50%;
+  background:#f0c040;
+  box-shadow:0 0 8px rgba(200,160,40,.8);
+  animation:glDotOrbit 1.4s linear infinite;
+}
+.gl-dot.d0{animation-delay:0s}
+.gl-dot.d1{animation-delay:-.23s}
+.gl-dot.d2{animation-delay:-.46s}
+.gl-dot.d3{animation-delay:-.70s}
+.gl-dot.d4{animation-delay:-.93s}
+.gl-dot.d5{animation-delay:-1.16s}
+@keyframes glDotOrbit{
+  0%  {transform:rotate(0deg)   translateX(20px) scale(1);   opacity:1}
+  50% {transform:rotate(180deg) translateX(20px) scale(0.5); opacity:0.4}
+  100%{transform:rotate(360deg) translateX(20px) scale(1);   opacity:1}
+}
+#gl-bar-wrap{
+  width:100%; height:6px; background:rgba(255,255,255,.08);
+  border-radius:3px; overflow:hidden;
+  border:1px solid rgba(160,180,255,.18);
+}
+#gl-bar{
+  height:100%; width:0%; border-radius:3px;
+  background:linear-gradient(90deg,#8a6820,#d4a020,#f0c040);
+  box-shadow:0 0 8px rgba(200,160,40,.6);
+  transition:width 0.25s ease;
+}
+#gl-status{
+  font-size:clamp(11px,2.5vw,13px); color:rgba(160,175,255,.6);
+  letter-spacing:1px; min-height:18px;
+}
+</style>
+
+</head>
+<body>
+
+<!-- ========== SVG SYMBOL DEFINITIONS (reused via <use href="#…">) ========== -->
+<svg id="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" style="display:none;position:absolute">
+  <defs>
+    <!-- Game symbol 0: Moon / WILD – crescent (two-arc outline) -->
+    <symbol id="sym-moon" viewBox="0 0 100 100">
+      <path d="M 50 8 A 42 42 0 0 0 50 92 A 45 45 0 0 1 50 8 Z"/>
+    </symbol>
+    <!-- Game symbol 1: Dancer – head + flared dress + two arms -->
+    <symbol id="sym-dancer" viewBox="0 0 100 100">
+      <path d="M 50 3 A 9 9 0 0 1 50 21 A 9 9 0 0 1 50 3 Z M 40 22 L 12 80 L 50 68 L 88 80 L 60 22 Z M 40 28 C 26 18 12 22 8 36 C 14 30 26 26 40 32 Z M 60 28 C 74 18 88 22 92 36 C 86 30 74 26 60 32 Z"/>
+    </symbol>
+    <!-- Game symbol 2: Star – classic 5-pointed star -->
+    <symbol id="sym-star" viewBox="0 0 100 100">
+      <path d="M 50 5 L 60.6 35.4 L 92.8 36.1 L 67.1 55.6 L 76.5 86.4 L 50 68 L 23.5 86.4 L 32.9 55.6 L 7.2 36.1 L 39.4 35.4 Z"/>
+    </symbol>
+    <!-- Game symbol 3: Note – eighth note (oval head + stem + flag) -->
+    <symbol id="sym-note" viewBox="0 0 100 100">
+      <path d="M 26 72 A 14 10 0 1 0 54 72 A 14 10 0 1 0 26 72 Z M 52 22 L 56 22 L 56 72 L 52 72 Z M 56 22 L 84 14 L 84 34 L 56 42 Z"/>
+    </symbol>
+    <!-- Game symbol 4: Diamond – 4-pointed star -->
+    <symbol id="sym-diamond" viewBox="0 0 100 100">
+      <path d="M 50 5 L 59 41 L 95 50 L 59 59 L 50 95 L 41 59 L 5 50 L 41 41 Z"/>
+    </symbol>
+    <!-- Game symbol 5: Sparkle – 8-pointed star -->
+    <symbol id="sym-sparkle" viewBox="0 0 100 100">
+      <path d="M 50 6 L 57 34 L 81 19 L 66 44 L 94 50 L 66 57 L 81 81 L 57 66 L 50 94 L 44 66 L 19 81 L 34 57 L 6 50 L 34 44 L 19 19 L 44 34 Z"/>
+    </symbol>
+    <!-- UI: right-pointing chevron (log toggle) -->
+    <symbol id="icon-chevron" viewBox="0 0 100 100">
+      <path d="M 30 15 L 72 50 L 30 85 L 20 74 L 52 50 L 20 26 Z"/>
+    </symbol>
+    <!-- UI: plus / copy -->
+    <symbol id="icon-plus" viewBox="0 0 100 100">
+      <path d="M 43 5 L 57 5 L 57 43 L 95 43 L 95 57 L 57 57 L 57 95 L 43 95 L 43 57 L 5 57 L 5 43 L 43 43 Z"/>
+    </symbol>
+    <!-- UI: X / close / clear -->
+    <symbol id="icon-close" viewBox="0 0 100 100">
+      <path d="M 16 5 L 50 39 L 84 5 L 95 16 L 61 50 L 95 84 L 84 95 L 50 61 L 16 95 L 5 84 L 39 50 L 5 16 Z"/>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- ========== GAME VIEWPORT ========== -->
+<div id="gv">
+
+  <!-- 2. Paytable -->
+  <div id="paytable">
+    <div class="pt-col">
+      <div class="pt-row">
+        <span class="pt-syms"><canvas class="pt-sym-img" data-sym-idx="0" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="0" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="0" width="26" height="26"></canvas></span><span class="pt-val">500</span>
+      </div>
+      <div class="pt-row">
+        <span class="pt-syms"><canvas class="pt-sym-img" data-sym-idx="0" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="0" width="26" height="26"></canvas></span><span class="pt-val">10</span>
+      </div>
+      <div class="pt-row">
+        <span class="pt-syms"><canvas class="pt-sym-img" data-sym-idx="1" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="1" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="1" width="26" height="26"></canvas></span><span class="pt-val">20</span>
+      </div>
+      <div class="pt-row">
+        <span class="pt-syms"><canvas class="pt-sym-img" data-sym-idx="2" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="2" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="2" width="26" height="26"></canvas></span><span class="pt-val">15</span>
+      </div>
+    </div>
+    <div class="pt-div"></div>
+    <div id="pt-wild">
+      <div id="wild-badge">
+        <span class="wi-pig"><canvas class="pt-sym-img" data-sym-idx="0" width="42" height="42"></canvas></span>
+      </div>
+      <span id="wild-label">百搭</span>
+    </div>
+    <div class="pt-div"></div>
+    <div class="pt-col">
+      <div class="pt-row">
+        <span class="pt-syms"><canvas class="pt-sym-img" data-sym-idx="3" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="3" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="3" width="26" height="26"></canvas></span><span class="pt-val">10</span>
+      </div>
+      <div class="pt-row">
+        <span class="pt-syms"><canvas class="pt-sym-img" data-sym-idx="4" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="4" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="4" width="26" height="26"></canvas></span><span class="pt-val">8</span>
+      </div>
+      <div class="pt-row">
+        <span class="pt-syms"><canvas class="pt-sym-img" data-sym-idx="5" width="26" height="26"></canvas><canvas class="pt-sym-img" data-sym-idx="5" width="26" height="26"></canvas></span><span class="pt-val">3</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Jackpot banner -->
+  <div id="jackpot-banner">
+    <div id="jackpot-marquee-track">
+      <span id="jackpot-marquee-text">龍域英雄 · 最高獎勵 ×20 · 每次旋轉都有機會！· 龍符文替代任意符號 ·</span>
+    </div>
+  </div>
+
+  <!-- 4. Reel section (Three.js WebGL2) -->
+  <div id="reel-section">
+    <div id="reel-canvas-wrap"></div>
+    <div id="reel-chrome">
+      <div class="reel-sep s1"></div>
+      <div class="reel-sep s2"></div>
+      <div id="payline"></div>
+    </div>
+  </div>
+
+  <!-- 5. Scene area -->
+  <div id="scene-area">
+    <div id="scene-top-border"></div>
+    <!-- Left pillar -->
+    <div class="pillar left">
+      <div class="p-ring"></div>
+      <div class="p-ring"></div>
+      <div class="couplet">
+        <span class="c-char">龍</span><span class="c-char">域</span>
+        <span class="c-char">英</span><span class="c-char">雄</span>
+      </div>
+    </div>
+    <!-- Center -->
+    <div id="center-stage">
+      <!-- Spotlight LOGO at top of stage -->
+      <div id="stage-logo">
+        <div id="logo-text">
+          <span id="logo-title">龍域英雄</span>
+          <span id="logo-sub">Dragon Realm Hero</span>
+          <span id="logo-bar"></span>
+        </div>
+      </div>
+      <!-- Gothic hero arch (replaces moon gate) -->
+      <div id="hero-arch"></div>
+      <!-- Spine 2.5D character canvas — rendered by spine-canvas runtime -->
+      <canvas id="spine-canvas" width="220" height="280"></canvas>
+      <!-- SVG fallback: visible while Spine loads, or if assets are missing -->
+      <div id="hero-char">
+        <div id="hero-sprite">
+          <svg viewBox="0 0 80 120" width="88" height="120" xmlns="http://www.w3.org/2000/svg">
+            <!-- Cape -->
+            <path d="M22 52 Q8 75 10 112 Q18 102 24 90 Q30 102 28 112 Q24 82 26 54" fill="#991010" opacity="0.85"/>
+            <!-- Legs -->
+            <rect x="29" y="86" width="10" height="30" rx="4" fill="#4a3010"/>
+            <rect x="41" y="86" width="10" height="30" rx="4" fill="#4a3010"/>
+            <!-- Boots -->
+            <ellipse cx="34" cy="116" rx="8" ry="4" fill="#2a1800"/>
+            <ellipse cx="46" cy="116" rx="8" ry="4" fill="#2a1800"/>
+            <!-- Body armor -->
+            <rect x="23" y="50" width="34" height="38" rx="6" fill="#5a4015"/>
+            <rect x="26" y="53" width="28" height="32" rx="5" fill="#7a5820"/>
+            <!-- Chest emblem -->
+            <path d="M40 60 L46 68 L40 76 L34 68 Z" fill="#f0c040"/>
+            <!-- Left arm + shield -->
+            <rect x="10" y="50" width="12" height="28" rx="5" fill="#5a4015"/>
+            <path d="M3 44 L18 44 L18 74 L10 80 L2 74 Z" fill="#6a3010" stroke="#f0c040" stroke-width="1.5"/>
+            <circle cx="10" cy="62" r="5" fill="none" stroke="#f0c040" stroke-width="1.5"/>
+            <!-- Right arm -->
+            <rect x="58" y="48" width="12" height="28" rx="5" fill="#5a4015"/>
+            <!-- Sword blade -->
+            <rect x="65" y="8" width="5" height="50" rx="2" fill="#c8d4e0"/>
+            <rect x="66" y="10" width="2" height="46" rx="1" fill="#eef2f6"/>
+            <!-- Crossguard -->
+            <rect x="59" y="53" width="18" height="5" rx="2" fill="#f0c040"/>
+            <!-- Grip + pommel -->
+            <rect x="64" y="58" width="7" height="14" rx="3" fill="#8a4020"/>
+            <ellipse cx="67" cy="74" rx="5" ry="4" fill="#f0c040"/>
+            <!-- Neck -->
+            <rect x="33" y="42" width="14" height="12" rx="4" fill="#7a6030"/>
+            <!-- Head -->
+            <circle cx="40" cy="31" r="14" fill="#c8a060"/>
+            <!-- Helmet -->
+            <path d="M26 31 Q27 12 40 10 Q53 12 54 31" fill="#4a3010"/>
+            <rect x="25" y="27" width="30" height="9" rx="3" fill="#5a4015"/>
+            <!-- Plume -->
+            <path d="M37 10 Q40 0 43 10" fill="#cc1500" stroke="#ff3020" stroke-width="1.5"/>
+            <!-- Visor -->
+            <rect x="29" y="28" width="22" height="9" rx="3" fill="#1a0c04"/>
+            <!-- Glowing eyes -->
+            <circle cx="35" cy="32" r="2.5" fill="#f0c040"/>
+            <circle cx="45" cy="32" r="2.5" fill="#f0c040"/>
+            <circle cx="35" cy="32" r="4" fill="rgba(240,192,64,.2)"/>
+            <circle cx="45" cy="32" r="4" fill="rgba(240,192,64,.2)"/>
+          </svg>
+        </div>
+        <div id="hero-shadow"></div>
+      </div>
+      <!-- Idle ember sparkles -->
+      <span class="s-coin" style="left:18%;bottom:28%;animation-duration:3.2s;animation-delay:0s"><svg class="sym-icon" width="15" height="15"><use href="#sym-diamond"/></svg></span>
+      <span class="s-coin" style="left:72%;bottom:20%;animation-duration:4.1s;animation-delay:1.3s"><svg class="sym-icon" width="13" height="13"><use href="#sym-star"/></svg></span>
+      <span class="s-coin" style="left:38%;bottom:14%;animation-duration:3.7s;animation-delay:0.6s"><svg class="sym-icon" width="12" height="12"><use href="#sym-sparkle"/></svg></span>
+      <span class="s-coin" style="left:55%;bottom:32%;animation-duration:4.8s;animation-delay:2.0s"><svg class="sym-icon" width="14" height="14"><use href="#sym-diamond"/></svg></span>
+      <span class="s-coin" style="left:80%;bottom:40%;animation-duration:3.5s;animation-delay:0.9s"><svg class="sym-icon" width="11" height="11"><use href="#sym-star"/></svg></span>
+    </div>
+    <!-- Right pillar -->
+    <div class="pillar right">
+      <div class="p-ring"></div>
+      <div class="p-ring"></div>
+      <div class="couplet">
+        <span class="c-char">命</span><span class="c-char">運</span>
+        <span class="c-char">輪</span><span class="c-char">轉</span>
+      </div>
+    </div>
+    <div id="stage-floor"></div>
+    <div id="stage-footlights">
+      <span class="footlight fl0"></span>
+      <span class="footlight fl1"></span>
+      <span class="footlight fl2"></span>
+      <span class="footlight fl3"></span>
+      <span class="footlight fl4"></span>
+      <span class="footlight fl5"></span>
+      <span class="footlight fl6"></span>
+      <span class="footlight fl7"></span>
+    </div>
+  </div>
+
+  <!-- 6. Control bar -->
+  <div id="control-bar">
+    <div id="ctrl-row1">
+      <button class="ctrl-btn" id="btn-back" aria-label="返回">
+        <div class="cb-disc">⬅️</div>
+        <span class="cb-label">返回</span>
+      </button>
+      <button class="ctrl-btn" id="btn-mute" aria-label="靜音">
+        <div class="cb-disc" id="mute-disc">🔊</div>
+        <span class="cb-label">靜音</span>
+      </button>
+
+      <div id="spin-wrap">
+        <div id="spin-ring">
+          <button id="spin-btn" disabled aria-label="旋轉">
+            <span class="spin-ic">▶</span>
+          </button>
+        </div>
+        <span id="spin-auto-badge" class="hidden">AUTO</span>
+      </div>
+      <button class="ctrl-btn" id="btn-bet" aria-label="加注">
+        <div class="cb-disc"><svg class="sym-icon" style="width:0.9em;height:0.9em"><use href="#icon-plus"/></svg></div>
+        <span class="cb-label" id="bet-label">加注</span>
+      </button>
+      <button class="ctrl-btn" id="btn-menu" aria-label="菜單">
+        <div class="cb-disc">≡</div>
+        <span class="cb-label">菜單</span>
+      </button>
+    </div>
+    <div id="ctrl-row2">
+      <div class="bal-item bal-item-left">
+        <span class="bal-icon"><svg class="sym-icon"><use href="#sym-diamond"/></svg></span>
+        <span class="bal-lbl">餘額</span>
+        <span class="bal-val" id="balance-val">—</span>
+      </div>
+      <div class="bal-item bal-item-right">
+        <span class="bal-icon"><svg class="sym-icon"><use href="#sym-star"/></svg></span>
+        <span class="bal-lbl">贏獎</span>
+        <span class="bal-val" id="win-val">—</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- #gv -->
+
+<!-- Log panel (hidden from screen; accumulates logs for copy-log feature) -->
+<div id="log-panel">
+  <div id="log-toggle"><svg class="sym-icon" style="width:0.8em;height:0.8em"><use href="#icon-chevron"/></svg> 日誌 (點擊收起)</div>
+</div>
+
+
+<!-- Function menu popup (opened by ≡ btn-menu) -->
+<div id="menu-popup">
+  <button class="menu-item" id="menu-deposit">💰 充值</button>
+  <button class="menu-item" id="menu-withdraw">💸 提款</button>
+  <div class="menu-divider"></div>
+  <button class="menu-item" id="menu-txn">💳 帳變紀錄</button>
+  <div class="menu-divider"></div>
+  <button class="menu-item" id="menu-copy-log">📋 複製日誌</button>
+  <button class="menu-item" id="menu-clear-log">🗑️ 清除日誌</button>
+</div>
+
+<!-- Transaction history panel -->
+<div id="txn-backdrop"></div>
+<div id="txn-panel">
+  <div id="txn-header">
+    <span id="txn-title">帳變紀錄</span>
+    <button id="txn-close">&#10005;</button>
+  </div>
+  <div id="txn-list"></div>
+  <div id="txn-footer">
+    <button id="txn-load-more">載入更多</button>
+  </div>
+</div>
+
+<!-- Wallet panel injected by wallet_panel.js -->
+
+<!-- Loading screen overlay -->
+<div id="game-loader">
+  <div id="gl-inner">
+    <div id="gl-logo">龍域英雄</div>
+    <div id="gl-sub">Dragon Realm Hero</div>
+    <div id="gl-spinner">
+      <span class="gl-dot d0"></span>
+      <span class="gl-dot d1"></span>
+      <span class="gl-dot d2"></span>
+      <span class="gl-dot d3"></span>
+      <span class="gl-dot d4"></span>
+      <span class="gl-dot d5"></span>
+    </div>
+    <div id="gl-bar-wrap"><div id="gl-bar"></div></div>
+    <div id="gl-status">載入中...</div>
+  </div>
+</div>
+
+<!-- Auth error screen — shown when JWT is absent or login check fails -->
+<div id="auth-error" class="hidden">
+  <div id="ae-inner">
+    <div id="ae-icon">&#128274;</div>
+    <div id="ae-title">尚未登入</div>
+    <div id="ae-msg">請先登入後再進行遊戲</div>
+    <button id="ae-btn" onclick="window.history.back(); window.parent.postMessage({type:'NAV_BACK'}, location.origin);">返回</button>
+  </div>
+</div>
+
+<!-- Big win overlay -->
+<div id="big-win" class="hidden">
+  <div id="bw-title">大獎！</div>
+  <div id="bw-amount">+USDT 0</div>
+</div>
+
+<!-- Guard: redirect direct browser access to the Telegram Mini App entry point.
+     Exceptions:
+       ?hosted=1  — loaded by the TG Mini App host page (web/tg/slot/index.html)
+       ?flutter=1 — loaded by the Flutter app's SlotGamePage WebView
+       _flutterNative — injected at document-start by Flutter native InAppWebView -->
+<script>
+(function () {
+  var p = new URLSearchParams(window.location.search);
+  if (p.get('hosted') !== '1' && p.get('flutter') !== '1' && !window._flutterNative) {
+    window.location.replace('/tg/slot/');
+  }
+})();
+</script>
+
+<!--
+  Host adapter — must load before the game module so window.__gameHost is
+  available when the module initialises.
+  • flutter_adapter.js  →  Flutter Native + Flutter Web iframe + Standalone PWA
+-->
+<script src="../_runtime/flutter_adapter.js?v=1.0.1807"></script>
+<!-- Spine canvas runtime (IIFE build) — must load before the game module.
+     The esm.sh ESM bundle is incomplete (AssetManager.Downloader broken);
+     the unpkg IIFE build is the official tested distribution. -->
+<script src="https://unpkg.com/@esotericsoftware/spine-canvas@4.2/dist/iife/spine-canvas.js"></script>
+
+<script type="module">
+import * as THREE from 'https://esm.sh/three@0.160.0';
+// Spine 2.5D runtime — loaded as IIFE above; access via window.spine
+const spine = window.spine;
+import { createViewportManager } from '../_runtime/viewport_manager.js';
+import { createLogManager } from '../_runtime/log_manager.js';
+import { createMenuManager } from '../_runtime/menu_manager.js';
+import { createAnimationLoopManager } from '../_runtime/animation_loop_manager.js';
+import { initWalletPanel, openWalletPanel, closeWalletPanel, walletIsOpen, walletUpdateBalance } from '../_runtime/wallet_panel.js';
+
+// ── Early game-state declarations ────────────────────────────────────────────
+// Declared here (before any event listeners or IIFEs) so that `applyBalance()`
+// — which is a hoisted function declaration — never hits a TDZ error even if
+// HOST_INIT fires before the Three.js setup block at the bottom of the module
+// has been reached during execution.
+let balance    = 0; // USDT × 100 units; updated by applyBalance() on HOST_INIT / SPIN_RESULT
+let isSpinning = false;
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ===== Loading screen =====
+const gameLoader   = document.getElementById('game-loader');
+const glBar        = document.getElementById('gl-bar');
+const glStatus     = document.getElementById('gl-status');
+let   _loaderHidden = false;
+
+function setLoadProgress(pct, msg) {
+  // Clamp progress bar to 0-100% to prevent visual overflow
+  const clampedPct = Math.max(0, Math.min(pct, 100));
+  glBar.style.width = clampedPct + '%';
+  if (msg) glStatus.textContent = msg;
+}
+
+function hideLoader() {
+  if (_loaderHidden) return;
+  _loaderHidden = true;
+  setLoadProgress(100, '載入完成！');
+  setTimeout(() => gameLoader.classList.add('fade-out'), 300);
+}
+
+// Show a full-screen auth error overlay and permanently lock the spin button.
+// Called when HOST_INIT arrives with no JWT, or when the auth timeout fires.
+let _authErrorShown = false;
+function showAuthError() {
+  if (_authErrorShown) return;
+  _authErrorShown = true;
+  // Force-hide the loader so the error screen appears cleanly.
+  _loaderHidden = true;
+  gameLoader.classList.add('fade-out');
+  document.getElementById('auth-error').classList.remove('hidden');
+  addLog('未登入狀態，顯示登入錯誤畫面', 'warn');
+}
+
+setLoadProgress(5, '初始化引擎...');
+
+// ===== Host Bridge (Telegram Mini App host ↔ game iframe protocol) =====
+// Opened exclusively via web/tg/slot/index.html with query param ?hosted=1.
+// The host page handles Telegram initData exchange and balance checks; this
+// game page only renders visuals and communicates back via postMessage.
+//
+// Message protocol (all messages carry a `type` string field):
+//   Host → Game:  HOST_INIT  { jwt, balance (USDT), demoMode, username }
+//                 HOST_LOG { level, message, ts }
+//                 SPIN_RESULT { symbols[3], multiplier, winAmount (USDT), newBalance (USDT), mode }
+//                 SPIN_ERROR  { message }
+//                 RTP_RESULT { data }
+//                 RTP_ERROR { message }
+//   Game → Host:  GAME_READY {}
+//                 SPIN_REQUEST { betIndex, betAmount, mode: 'REAL'|'DEMO' }
+//                 RTP_REQUEST {}
+//                 GO_BACK {}
+
+// Strict origin for postMessage — must match both directions.
+
+// ===== Log system =====
+const logPanel = document.getElementById('log-panel');
+const logToggle = document.getElementById('log-toggle');
+const logManager = createLogManager({
+  logPanelEl: logPanel,
+  logToggleEl: logToggle,
+  maxLogs: 200,
+  storageKey: 'slot_game_log',
+  icons: { error: '✗', warn: '!', info: '·' },
+});
+const addLog = logManager.addLog;
+logManager.patchConsole();
+
+// ===== Uniform viewport scaling =====
+// #gv is a fixed 430x900 design canvas. Scale it as one unit to fit the screen.
+let gvScale = Math.min(window.innerWidth / 430, window.innerHeight / 900);
+const _isHostedMode = new URLSearchParams(window.location.search).get('hosted') === '1';
+const ENABLE_VV_FIX_LOG = false;
+const viewportManager = createViewportManager({
+  gvEl: document.getElementById('gv'),
+  hostedMode: _isHostedMode,
+  enableVvFixLog: ENABLE_VV_FIX_LOG,
+  onScaleChange: (scale) => { gvScale = scale; },
+  onLog: (msg, type) => addLog(msg, type),
+});
+
+window.__vvDebugContext = viewportManager.createDebugContext(
+  () => ({
+    hosted:  _isHostedMode,
+    adapter: window.__gameHost ? 'loaded' : 'none',
+  }),
+  () => viewportManager.getRenderedLayout(),
+);
+
+viewportManager.init();
+
+// ===== Mobile performance detection =====
+// Lower rendering quality on mobile to avoid GPU/CPU overload (laggy scrolling)
+// Feature-detect touch/coarse-pointer devices instead of UA sniffing (UA can be spoofed).
+const IS_MOBILE = window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 768;
+// DPR cap: multiply device DPR by the CSS viewport scale so the canvas buffer resolution
+// always matches the physical screen resolution of the reel area.  Cap at 2.5 to limit
+// GPU memory on very-high-DPI devices while still rendering crisply.
+const DPR_CAP = 2.5;
+// Compute effective pixel ratio: devicePixelRatio × gvScale ensures the canvas buffer
+// has enough pixels to cover the physical display area after the CSS scale() transform.
+function calcDPR() { return Math.min(window.devicePixelRatio * gvScale, DPR_CAP); }
+
+// ===== WebGL2 renderer (WebGPU removed for broad iOS/Android compatibility) =====
+// Using THREE.WebGLRenderer ensures the game works on iOS 10.1+ WKWebView and
+// older Android WebView without requiring importmaps or top-level await.
+// Top-level await (needed for dynamic WebGPU import) is only available in
+// iOS 15+ modules, so removing it makes the module load on iOS 12–14 as well.
+
+// ===== Three.js scene setup (reel section only) =====
+const reelSection = document.getElementById('reel-section');
+const W = reelSection.clientWidth;
+// Canvas renders at 340px (bleeds 71px above/below the 198px section, clipped by overflow:hidden)
+// Section: 42.5px (top edge row) + 113px (winner row) + 42.5px (bottom edge row) = 198px
+const H = 340;
+
+setLoadProgress(10, '建立場景...');
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x010a02);
+
+const camera = new THREE.PerspectiveCamera(38, W / H, 0.1, 60);
+camera.position.set(0, 0, 6.8);
+camera.lookAt(0, 0, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: !IS_MOBILE, alpha: false });
+renderer.setSize(W, H);
+renderer.setPixelRatio(calcDPR());
+// ACES filmic tone mapping is expensive on mobile — use linear for better throughput
+renderer.toneMapping = IS_MOBILE ? THREE.LinearToneMapping : THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.35;
+document.getElementById('reel-canvas-wrap').appendChild(renderer.domElement);
+setLoadProgress(20, '初始化渲染器...');
+
+// ===== Lighting =====
+scene.add(new THREE.AmbientLight(0xd4c890, 0.7));
+const keyLight = new THREE.DirectionalLight(0xffe8a0, 2.2);
+keyLight.position.set(4, 8, 8);
+scene.add(keyLight);
+const rimLight = new THREE.DirectionalLight(0xff4400, 1.6);
+rimLight.position.set(-5, 3, -3);
+scene.add(rimLight);
+const fillLight = new THREE.PointLight(0xcc8800, 1.4, 22);
+fillLight.position.set(0, 2, 6);
+scene.add(fillLight);
+// Two colored orbiting point lights for ember/flame feel
+// Skip on mobile — dynamic point lights require per-fragment shader computation every frame
+const orbitLightA = new THREE.PointLight(0xff6600, 1.8, 18); // ember orange
+const orbitLightB = new THREE.PointLight(0x40cc00, 1.6, 16); // forest green
+if (!IS_MOBILE) {
+  scene.add(orbitLightA);
+  scene.add(orbitLightB);
+}
+
+// ===== Spine 2.5D character =====
+// Runtime: @esotericsoftware/spine-canvas@4.2 (IIFE via unpkg, loaded as window.spine)
+//
+// Required assets in ./assets/hero/:
+//   hero.atlas   — TextureAtlas descriptor
+//   hero.skel    — binary skeleton (or hero.json for JSON export)
+//   hero.png     — atlas texture sheet
+//
+// Animation names — MUST match your Spine project's animation track names:
+// 目前使用 Spine 官方範例 hero（佔位用）
+// 可用動畫：idle, walk, run, attack, crouch, jump, fall
+// 替換成正式角色後，將下方名稱改成你的 Spine 專案動畫名稱
+const SPINE_ANIM = {
+  idle:  'idle',      // 待機循環
+  spin:  'walk',      // 轉輪中：走路循環
+  small: 'attack',    // 小贏：攻擊動作
+  big:   'jump',      // 大贏：跳躍動作
+  fall:  'fall',      // 未中：落地反應
+};
+
+// ── 二次動畫：乳搖彈簧物理 ────────────────────────────────────────────────────
+// 原理：每幀在骨骼動畫 apply() 之後、updateWorldTransform() 之前，
+//       對指定骨骼疊加阻尼彈簧位移，讓骨骼在動作慣性下自然晃動。
+//
+// 調整說明：
+//   name      — 骨骼名稱，必須與 Spine 專案一致（在 Spine 編輯器的 Tree 面板確認）
+//   stiffness — 彈簧硬度（建議 150–400）：越大 → 彈回越快、頻率越高
+//   damping   — 阻尼係數（建議 6–20）：越大 → 越快收斂、越不晃
+//   gravity   — 靜態重力偏移（度）：給骨骼一個向下的基礎傾角，模擬重量感
+const JIGGLE_BONES = [
+  { name: 'breast_L', stiffness: 260, damping: 9, gravity: 28 },
+  { name: 'breast_R', stiffness: 260, damping: 9, gravity: 28 },
+];
+
+// 執行時狀態（載入後填入）
+let _jiggleBones = [];  // [{ bone, stiffness, damping, gravity, vel, disp }]
+
+/** 骨骼載入後呼叫一次，解析骨骼參考並初始化物理狀態。 */
+function _initJigglePhysics() {
+  _jiggleBones = JIGGLE_BONES.flatMap(cfg => {
+    const bone = _skeleton.findBone(cfg.name);
+    if (!bone) {
+      console.warn(`[乳搖物理] 找不到骨骼 "${cfg.name}"，請確認 Spine 專案的骨骼名稱`);
+      return [];
+    }
+    return [{ bone, stiffness: cfg.stiffness, damping: cfg.damping, gravity: cfg.gravity, vel: 0, disp: 0 }];
+  });
+}
+
+/**
+ * 每幀更新彈簧物理，在 animState.apply() 之後、updateWorldTransform() 之前呼叫。
+ * 公式：阻尼彈簧 = -k·x - c·ẋ + gravity
+ *   x  = 骨骼旋轉位移量（度）
+ *   ẋ  = 旋轉速度（度/秒）
+ *   k  = stiffness（彈簧係數）
+ *   c  = damping（阻尼係數）
+ */
+function _updateJigglePhysics(dt) {
+  _jiggleBones.forEach(p => {
+    const accel = -p.stiffness * p.disp - p.damping * p.vel + p.gravity;
+    p.vel  += accel * dt;
+    p.disp += p.vel  * dt;
+    p.bone.rotation += p.disp;   // 疊加在動畫姿勢上
+  });
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Canvas element for Spine 2D rendering (declared here; DOM access after parse)
+const _spineCanvas = document.getElementById('spine-canvas');
+const _spineCtx    = _spineCanvas?.getContext('2d');
+const _heroFallback = document.getElementById('hero-char'); // SVG fallback
+
+let _skeleton   = null;
+let _animState  = null;
+let _spineRenderer = null;
+let _spineReady = false;
+let _lastSpineTime = 0;
+let _consecutiveMisses = 0;
+
+/**
+ * Load Spine assets and start the 2D render loop.
+ * Falls back to the inline SVG warrior on any error.
+ *
+ * Tune SPINE_SCALE to fit your skeleton's native size into the 220×280 canvas.
+ * A value of 0.4 works for a skeleton exported at ~550 px height.
+ */
+// hero 範例骨骼原生高度約 250 world units，
+// 畫布 280px → scale ≈ 1.0；正式角色依實際尺寸調整
+const SPINE_SCALE = 1.0;
+
+async function _loadSpineCharacter() {
+  try {
+    const base = './assets/hero/';
+
+    // Use plain fetch() instead of AssetManager to avoid the broken Downloader
+    // in the spine-canvas IIFE build (constructor arg order mismatch causes
+    // "this.downloader.downloadText is not a function" at runtime).
+
+    // 1. Fetch atlas descriptor (text)
+    const atlasResp = await fetch(base + 'hero.atlas');
+    if (!atlasResp.ok) throw new Error(`atlas fetch ${atlasResp.status}`);
+    const atlasText = await atlasResp.text();
+
+    // 2. Fetch skeleton binary
+    const skelResp = await fetch(base + 'hero.skel');
+    if (!skelResp.ok) throw new Error(`skel fetch ${skelResp.status}`);
+    const skelBuf = await skelResp.arrayBuffer();
+
+    // 3. Load atlas pages as HTMLImageElement(s) — hero example is single-page
+    const pageNames = [...atlasText.matchAll(/^(\S+\.png)$/mg)].map(m => m[1]);
+    const pageImages = await Promise.all(pageNames.map(name => new Promise((res, rej) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload  = () => res({ name, img });
+      img.onerror = () => rej(new Error(`texture load failed: ${name}`));
+      img.src = base + name;
+    })));
+
+    // Build name → CanvasTexture map for multi-page atlases
+    const pageMap = {};
+    pageImages.forEach(({ name, img }) => { pageMap[name] = new spine.CanvasTexture(img); });
+
+    // 4. Build TextureAtlas — callback receives page filename, returns CanvasTexture
+    const atlas = new spine.TextureAtlas(atlasText, (path) => {
+      const key = path.split('/').pop(); // strip any leading path
+      return pageMap[key] ?? Object.values(pageMap)[0];
+    });
+
+    // 5. Build skeleton from binary data
+    const loader   = new spine.AtlasAttachmentLoader(atlas);
+    const binary   = new spine.SkeletonBinary(loader);
+    binary.scale   = SPINE_SCALE;
+    const skelData = binary.readSkeletonData(new Uint8Array(skelBuf));
+
+    _skeleton = new spine.Skeleton(skelData);
+    _skeleton.setToSetupPose();
+    _skeleton.updateWorldTransform(spine.Physics?.update ?? spine.Physics);
+
+    const animData  = new spine.AnimationStateData(skelData);
+    animData.defaultMix = 0.2;
+    _animState = new spine.AnimationState(animData);
+    _animState.setAnimation(0, SPINE_ANIM.idle, true);
+
+    _spineRenderer = new spine.SkeletonRenderer(_spineCtx);
+    _spineRenderer.debugRendering = false;
+
+    // 初始化乳搖彈簧物理（在骨骼建立後才能 findBone）
+    _initJigglePhysics();
+
+    // Show Spine canvas; hide SVG fallback
+    _spineCanvas.style.display = 'block';
+    if (_heroFallback) _heroFallback.style.display = 'none';
+
+    _spineReady = true;
+    _lastSpineTime = performance.now();
+    requestAnimationFrame(_spineFrame);
+    addLog('Spine 角色載入完成', 'info');
+  } catch (err) {
+    console.warn('Spine 載入失敗 — SVG 替代啟用:', err.message || err);
+    addLog(`Spine 載入失敗: ${err.message || err}`, 'warn');
+    // SVG fallback stays visible; game remains fully playable
+  }
+}
+
+/** Spine render loop — runs independently of the Three.js reel loop. */
+function _spineFrame(now) {
+  if (!_spineReady) return;
+  requestAnimationFrame(_spineFrame);
+
+  const dt = Math.min((now - _lastSpineTime) / 1000, 0.05);
+  _lastSpineTime = now;
+
+  _spineCtx.clearRect(0, 0, _spineCanvas.width, _spineCanvas.height);
+  _animState.update(dt);
+  _animState.apply(_skeleton);
+  _updateJigglePhysics(dt);  // ← 在 apply() 之後、updateWorldTransform() 之前疊加物理位移
+  _skeleton.updateWorldTransform(spine.Physics?.update ?? spine.Physics);
+
+  // Spine world: y-up; canvas: y-down.
+  // Translate origin to bottom-centre of canvas, then flip y.
+  _spineCtx.save();
+  _spineCtx.translate(_spineCanvas.width / 2, _spineCanvas.height);
+  _spineCtx.scale(1, -1);
+  _spineRenderer.draw(_skeleton);
+  _spineCtx.restore();
+}
+
+/**
+ * Trigger a Spine animation by event type.
+ *   'idle'  → loop idle (used to exit spin pose)
+ *   'spin'  → loop ready/anticipation pose
+ *   'big'   → win_big  once, then back to idle
+ *   'small' → win_small once, then back to idle
+ *   'fall'  → fall once, then back to idle
+ */
+function _playCharAnim(type) {
+  if (!_spineReady) return;
+  const name  = SPINE_ANIM[type] ?? SPINE_ANIM.idle;
+  const loops = (type === 'idle' || type === 'spin');
+  _animState.setAnimation(0, name, loops);
+  if (!loops) _animState.addAnimation(0, SPINE_ANIM.idle, true, 0);
+}
+
+setLoadProgress(100, '遊戲就緒');
+// Start loading Spine assets in parallel with the symbol texture below.
+_loadSpineCharacter();
+
+// ===== Symbol texture factory =====
+
+// ===== Pre-load symbols sprite sheet (symbols.png) =====
+// The sprite sheet is a 1×9 vertical strip (9 symbols stacked top-to-bottom, 307×2700 px total).
+// UV coordinates in spriteMap are resolution-independent.
+const _symbolsSpriteImg = await new Promise((resolve, reject) => {
+  const img = new Image();
+  img.onload  = () => resolve(img);
+  img.onerror = () => reject(new Error('symbols.png failed to load (src: ./symbols.png)'));
+  img.src = './symbols.png';
+});
+
+// Named sprite map – UV coordinates (0–1) for each cell in the 1×9 vertical strip.
+// Sheet: 9 symbols stacked top-to-bottom, each 307×300 px (total 307×2700 px).
+// Resolution-independent: u0/v0 = top-left corner, u1/v1 = bottom-right corner.
+const spriteMap = [
+  { name: 'apple',      u0: 0.0,     v0: 0.0,     u1: 1.0, v1: 0.11111 }, // row 0  0–300 px
+  { name: 'cherry',     u0: 0.0,     v0: 0.11111, u1: 1.0, v1: 0.22222 }, // row 1  300–600 px
+  { name: 'seven',      u0: 0.0,     v0: 0.22222, u1: 1.0, v1: 0.33333 }, // row 2  600–900 px
+  { name: 'lemon',      u0: 0.0,     v0: 0.33333, u1: 1.0, v1: 0.44444 }, // row 3  900–1200 px
+  { name: 'bar',        u0: 0.0,     v0: 0.44444, u1: 1.0, v1: 0.55556 }, // row 4  1200–1500 px
+  { name: 'grapes',     u0: 0.0,     v0: 0.55556, u1: 1.0, v1: 0.66667 }, // row 5  1500–1800 px
+  { name: 'heart',      u0: 0.0,     v0: 0.66667, u1: 1.0, v1: 0.77778 }, // row 6  1800–2100 px
+  { name: 'bell',       u0: 0.0,     v0: 0.77778, u1: 1.0, v1: 0.88889 }, // row 7  2100–2400 px
+  { name: 'watermelon', u0: 0.0,     v0: 0.88889, u1: 1.0, v1: 1.0     }, // row 8  2400–2700 px
+];
+
+// Use 256×256 on mobile (4× less GPU memory bandwidth vs 512×512)
+function makeSymbolTex(idx) {
+  const cv = document.createElement('canvas');
+  const TEX = IS_MOBILE ? 256 : 512;
+  cv.width = cv.height = TEX;
+  const ctx = cv.getContext('2d');
+
+  // ── Sprite-sheet path: compute pixel rect from UV offsets × natural image size ──
+  const { u0, v0, u1, v1 } = spriteMap[idx] ?? spriteMap[spriteMap.length - 1];
+  const iw = _symbolsSpriteImg.naturalWidth;
+  const ih = _symbolsSpriteImg.naturalHeight;
+  ctx.drawImage(
+    _symbolsSpriteImg,
+    u0 * iw, v0 * ih, (u1 - u0) * iw, (v1 - v0) * ih,  // source rect (resolution-independent)
+    0,       0,       TEX,             TEX               // destination: full output canvas
+  );
+  return new THREE.CanvasTexture(cv);
+}
+
+// Keep reel symbols aligned with backend symbolIds (0..spriteMap.length-1).
+// Backend may return id 8 (watermelon), so all spriteMap entries must be active.
+const ACTIVE_SYMBOL_COUNT = spriteMap.length;
+const ACTIVE_SYMBOL_NAMES = Array.from(
+  { length: ACTIVE_SYMBOL_COUNT },
+  (_, idx) => spriteMap[idx]?.name ?? `sym${idx}`,
+);
+
+// Reverse map: lowercase name → symbol index, built from the full spriteMap so that
+// symbols outside the 6 active reel-strip entries (e.g. heart, bell, watermelon) are
+// also resolvable when the backend returns them.
+// Aliases cover the case-insensitive backend names and singular/plural variants.
+const _symNameToIdx = (() => {
+  const nameToIndexMap = {};
+  spriteMap.forEach((s, i) => { nameToIndexMap[s.name.toLowerCase()] = i; });
+  // Backend sends "GRAPE" (singular) but spriteMap entry is "grapes" (plural)
+  if (nameToIndexMap['grapes'] !== undefined) nameToIndexMap['grape'] = nameToIndexMap['grapes'];
+  // Dragon Hero treats WILD/DRAGON as symbol id 0
+  if (nameToIndexMap['apple'] !== undefined) {
+    nameToIndexMap['wild']   = nameToIndexMap['apple'];
+    nameToIndexMap['dragon'] = nameToIndexMap['apple'];
+  }
+  // Add any other known backend→sprite aliases here as needed
+  return nameToIndexMap;
+})();
+
+/** Convert a backend symbol value (string name or numeric index) to a numeric sprite index.
+ *  Returns -1 if the name is not recognised or the input is null/undefined/empty.
+ *  Accepts any casing (e.g. "LEMON", "lemon", "Lemon" all resolve to the same index). */
+function _resolveSymIdx(nameOrIdx) {
+  if (nameOrIdx == null) return -1;
+  if (typeof nameOrIdx === 'number') return nameOrIdx;
+  const key = String(nameOrIdx).trim().toLowerCase();
+  return key.length > 0 ? (_symNameToIdx[key] ?? -1) : -1;
+}
+
+const symTextures = Array.from(
+  { length: ACTIVE_SYMBOL_COUNT },
+  (_, idx) => makeSymbolTex(idx),
+);
+
+// Populate paytable canvas images from the already-rendered symbol texture canvases
+document.querySelectorAll('.pt-sym-img').forEach(cv => {
+  const idx = parseInt(cv.dataset.symIdx, 10);
+  cv.getContext('2d').drawImage(symTextures[idx].image, 0, 0, cv.width, cv.height);
+});
+
+function _drawPaytableSymbolCanvas(canvasEl, symIdx) {
+  const idx = Number(symIdx);
+  if (Number.isNaN(idx) || idx < 0 || idx >= symTextures.length) return;
+  const ctx = canvasEl.getContext('2d');
+  if (!ctx) return;
+  ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+  ctx.drawImage(symTextures[idx].image, 0, 0, canvasEl.width, canvasEl.height);
+}
+
+// symIds: array of sprite indices to display (e.g. [0,1,1] = WILD+CHERRY×2)
+function _buildPaytableRow(symIds, multiplier) {
+  const row = document.createElement('div');
+  row.className = 'pt-row';
+
+  const syms = document.createElement('span');
+  syms.className = 'pt-syms';
+  symIds.forEach((sid) => {
+    const cv = document.createElement('canvas');
+    cv.className = 'pt-sym-img';
+    cv.width = 26;
+    cv.height = 26;
+    cv.dataset.symIdx = String(sid);
+    syms.appendChild(cv);
+    _drawPaytableSymbolCanvas(cv, sid);
+  });
+
+  const val = document.createElement('span');
+  val.className = 'pt-val';
+  val.textContent = String(multiplier);
+
+  row.appendChild(syms);
+  row.appendChild(val);
+  return row;
+}
+
+/** Parse one RTP entry → { symIds, multiplier } for paytable display.
+ *  Handles: X×3 | WILD+X×2 | WILD×2+X | X×2 (consolation)
+ *  Returns null when the entry cannot be parsed. */
+function _parseRtpEntry(entry) {
+  const multiplier = Number(entry?.multiplier ?? entry?.payout ?? entry?.c);
+  if (Number.isNaN(multiplier)) return null;
+
+  const rawSymbol = entry?.symbolId ?? entry?.symIdx ?? entry?.symbol?.id ?? entry?.symbol ?? entry?.a;
+  let symbolId = -1;
+  if (typeof rawSymbol === 'number') {
+    symbolId = rawSymbol;
+  } else if (rawSymbol != null) {
+    const s = String(rawSymbol).trim();
+    const parsed = Number(s);
+    symbolId = Number.isNaN(parsed) ? _resolveSymIdx(s) : parsed;
+  }
+  if (symbolId < 0 || symbolId >= spriteMap.length) return null;
+
+  const combo = String(entry?.combo ?? entry?.b ?? '');
+  let symIds;
+
+  if (/WILD×2\+/i.test(combo)) {
+    // "WILD×2+CHERRY" → [WILD, WILD, CHERRY]
+    const m = combo.match(/WILD×2\+(\w+)/i);
+    const targetId = m ? _resolveSymIdx(m[1].toLowerCase()) : -1;
+    symIds = [0, 0, targetId >= 0 ? targetId : symbolId];
+  } else if (/WILD\+/i.test(combo) && /×2/.test(combo)) {
+    // "WILD+CHERRY×2" → [WILD, CHERRY, CHERRY]
+    symIds = [0, symbolId, symbolId];
+  } else if (/×3/.test(combo)) {
+    // "CHERRY×3" → [CHERRY, CHERRY, CHERRY]
+    symIds = [symbolId, symbolId, symbolId];
+  } else if (/×2/.test(combo)) {
+    // "CHERRY×2 (安慰獎)" — consolation, 2 symbols only
+    symIds = [symbolId, symbolId];
+  } else {
+    return null;
+  }
+
+  return { symIds, multiplier };
+}
+
+let _syncingPaytableScroll = false;
+
+function _ensurePaytableScrollSync(cols) {
+  if (!cols || cols.length < 2) return;
+  const left = cols[0];
+  const right = cols[1];
+  if (!left || !right) return;
+  if (left.dataset.syncScrollBound === '1') return;
+
+  const mirrorScroll = (source, target) => {
+    if (_syncingPaytableScroll) return;
+    _syncingPaytableScroll = true;
+    target.scrollTop = source.scrollTop;
+    _syncingPaytableScroll = false;
+  };
+
+  left.addEventListener('scroll', () => mirrorScroll(left, right), { passive: true });
+  right.addEventListener('scroll', () => mirrorScroll(right, left), { passive: true });
+  left.dataset.syncScrollBound = '1';
+  right.dataset.syncScrollBound = '1';
+}
+
+function _renderPaytableRows(rows) {
+  const cols = document.querySelectorAll('#paytable .pt-col');
+  if (!cols || cols.length < 2) return 0;
+
+  _ensurePaytableScrollSync(cols);
+
+  const leftRows = [];
+  const rightRows = [];
+  // Row-major distribution keeps columns visually balanced:
+  // #1 left, #2 right, #3 left, #4 right, ...
+  rows.forEach((item, idx) => {
+    if (idx % 2 === 0) {
+      leftRows.push(item);
+    } else {
+      rightRows.push(item);
+    }
+  });
+  const perCol = [leftRows, rightRows];
+
+  cols.forEach((col, idx) => {
+    col.innerHTML = '';
+    perCol[idx].forEach((item) => {
+      col.appendChild(_buildPaytableRow(item.symIds, item.multiplier));
+    });
+    col.scrollTop = 0;
+  });
+
+  return rows.length;
+}
+
+// ===== Reel construction (vertical strip – 3 symbols visible: top / winner / bottom) =====
+// Derive geometry from the camera so reels always fill the visible frustum exactly.
+// VISIBLE_H = 2 × tan(FOV/2) × z   →   3 equal rows fill the full height
+// VISIBLE_W = VISIBLE_H × aspect   →   3 equal columns fill the full width
+const REEL_GAP = 0.06; // world-unit gap between adjacent reels
+
+function computeReelGeometry(w, h) {
+  const fovRad   = camera.fov * Math.PI / 180;
+  const visibleH = 2 * Math.tan(fovRad / 2) * camera.position.z;
+  const visibleW = visibleH * (w / h);
+  const CARD_W   = (visibleW - 2 * REEL_GAP) / 3;
+  const CARD_H   = visibleH / 3;
+  const REEL_X   = [-(CARD_W + REEL_GAP), 0, CARD_W + REEL_GAP];
+  return { CARD_W, CARD_H, REEL_X };
+}
+
+let { CARD_W, CARD_H, REEL_X } = computeReelGeometry(W, H);
+// Custom weighted reel strips — symbol index × stop count per reel.
+// Keep all backend symbolIds snap-safe by ensuring each reel contains 0..8.
+// Rare symbols: apple(0), heart(6), bell(7), watermelon(8) appear once each.
+const REEL_STRIPS = [
+  [0, 6, 7, 8, 1,1,1, 2,2,2,2, 3,3,3,3,3,3, 4,4,4,4,4,4, 5,5,5,5,5,5], // R0: apple leads
+  [5,5,5,5,5,5, 0, 6, 7, 8, 1,1,1, 2,2,2,2, 3,3,3,3,3,3, 4,4,4,4,4,4], // R1: grapes leads
+  [3,3,3,3,3,3, 4,4,4,4,4,4, 5,5,5,5,5,5, 0, 6, 7, 8, 1,1,1, 2,2,2,2], // R2: lemon leads
+];
+const N_STRIP   = REEL_STRIPS[0].length; // stops per reel (auto-derived from REEL_STRIPS)
+const N_SYMBOLS = ACTIVE_SYMBOL_COUNT;   // 9 distinct symbols (0–8)
+// Recycling clip boundary: one card beyond the top/bottom of the visible area
+let STRIP_CLIP = (Math.floor(N_STRIP / 2) + 1) * CARD_H;
+
+const reelGroups = [];
+
+REEL_X.forEach((rx, ri) => {
+  const strip = new THREE.Group();
+  strip.position.set(rx, 0, 0);
+
+  for (let i = 0; i < N_STRIP; i++) {
+    const symIdx = REEL_STRIPS[ri][i];
+    const mat = new THREE.MeshStandardMaterial({
+      map: symTextures[symIdx],
+      metalness: 0.06, roughness: 0.88,
+    });
+    const card = new THREE.Mesh(
+      new THREE.PlaneGeometry(CARD_W, CARD_H),
+      mat
+    );
+    // Center the strip: card at index Math.floor(N_STRIP/2) sits at y=0 (winner row)
+    card.position.y = (i - Math.floor(N_STRIP / 2)) * CARD_H;
+    card.position.z = 0;
+    card.userData.symIdx = symIdx;   // tracked so the reel snap logic can read it after stop
+    strip.add(card);
+  }
+
+  strip.userData = { spinning: false, speed: 0 };
+  scene.add(strip);
+  reelGroups.push(strip);
+});
+
+// ===== Game state =====
+// (balance and isSpinning are declared near the top of the module to avoid TDZ)
+
+const API_BASE     = window.__AGORA_API_BASE_URL || 'https://agoramarketapi.purrtechllc.com/api';
+const BET_LEVELS   = [100, 250, 500, 1000, 2500];
+let betIdx         = 1;                          // start at USDT 2.50 (250 units)
+const currentBet   = () => BET_LEVELS[betIdx];
+const MAX_SPIN_SPEED   = 0.32;
+const MIN_SPIN_SPEED   = 0.002; // minimum speed threshold before reel comes to rest
+const AUTO_SPIN_PRESS_DELAY = 500;  // ms long-press to activate auto-spin
+const AUTO_SPIN_INTERVAL    = 600;  // ms pause between normal auto-spin rounds
+const BIG_WIN_DISPLAY_MS    = 3200; // 2300ms fade-start + 900ms fade-out = total big-win overlay duration
+const WIN_DISPLAY_MS        = 2100; // 1200ms fade-start + 900ms fade-out = regular win overlay duration
+// Reel stop timing: three reels snap staggered, 450ms apart.
+const REEL_STOP_DELAYS_MS = [600, 1050, 1500];
+
+
+const balanceEl = document.getElementById('balance-val');
+const winEl     = document.getElementById('win-val');
+const betLabel  = document.getElementById('bet-label');
+const spinBtn   = document.getElementById('spin-btn');
+const spinStatusEl = null; // removed — bet amount is now shown in bet-label (cb-label under + button)
+
+// ── Host init callback ────────────────────────────────────────────────────────
+// Defined HERE (after balanceEl / winEl / spinBtn) so the adapter's retry loop
+// cannot call it before these DOM constants are initialised (TDZ guard).
+// flutter_adapter.js polls typeof window._game_onHostInit === 'function' every
+// 50 ms and only fires once this definition is reached.
+window._game_onHostInit = function ({ jwt, balance: hostBalance, demoMode, username, tgSafeAreaTop } = {}) {
+  if (!jwt) {
+    addLog('HOST_INIT 無 JWT，判定為未登入', 'warn');
+    showAuthError();
+    return;
+  }
+
+  if (Number.isFinite(Number(tgSafeAreaTop))) {
+    viewportManager.setHostSafeTop(Number(tgSafeAreaTop));
+  }
+  viewportManager.fit();
+
+  window.__agoraAuth    = { token: jwt };
+  window.__hostDemoMode = !!demoMode;
+
+  applyBalance(Number(hostBalance) || 0);
+
+  if (username) {
+    localStorage.setItem('first_name', username);
+    window.__agoraAuth.firstName = username;
+  }
+
+  fetchAndApplyBalance().catch(() => {});
+  loadAndApplyPaytable().catch(() => {});
+
+  addLog(`[CORE] HOST_INIT: balance=${hostBalance} USDT demo=${demoMode}`, 'info');
+};
+
+window._game_showAuthError = showAuthError;
+
+// ===== Loading readiness gates =====
+// Spin button stays disabled (set in HTML) until the paytable has loaded.
+// The 3D model loads in the background and does not block gameplay.
+let _modelReady    = true;  // not a gate — model loads in background
+let _paytableReady = false;
+
+function _checkAndUnlockSpin() {
+  if (!_modelReady || !_paytableReady) return;
+  if (!_loaderHidden) hideLoader();
+  spinBtn.disabled = false;
+  addLog('遊戲就緒，可以開始旋轉', 'info');
+}
+
+// Auth timeout: if HOST_INIT hasn't arrived (and set a JWT) within the allowed
+// window, treat the session as unauthenticated and show the error screen.
+// Flutter self-host retries localStorage for up to 15 s on first launch, so
+// use 18 s to give the adapter enough room before giving up.
+setTimeout(function _authCheckTimeout() {
+  if (window.__agoraAuth?.token) return; // already authenticated
+  addLog('HOST_INIT 超時未到，判定為未登入', 'warn');
+  showAuthError();
+}, 18000);
+
+// Safety valve: if the paytable never signals ready within 12 s (e.g. HOST_INIT
+// was delayed or carried no JWT), unlock the game so it remains playable.
+setTimeout(function _paytableReadyFallback() {
+  if (_paytableReady) return;
+  _paytableReady = true;
+  addLog('賠率表加載超時，以默認賠率繼續', 'warn');
+  _checkAndUnlockSpin();
+}, 12000);
+const jackpotMarqueeTextEl = document.getElementById('jackpot-marquee-text');
+
+// Bet amount is shown directly as the cb-label under the + button.
+function refreshSpinStatus() {
+  if (betLabel) betLabel.textContent = (currentBet() / 100).toFixed(2);
+}
+
+let _statusToastTimer = null;
+/** Briefly show a toast message as the bet label, then restore the amount. */
+function showStatusToast(msg, colorHex, durationMs = 2200) {
+  if (!betLabel) return;
+  clearTimeout(_statusToastTimer);
+  betLabel.textContent = msg;
+  betLabel.style.color = colorHex;
+  _statusToastTimer = setTimeout(() => {
+    betLabel.style.color = '';
+    refreshSpinStatus();
+  }, durationMs);
+}
+
+function getDisplayUsername() {
+  return (
+    localStorage.getItem('first_name') ||
+    window.__agoraAuth?.firstName ||
+    '貴賓'
+  );
+}
+
+function refreshJackpotBanner() {
+  if (!jackpotMarqueeTextEl) return;
+  // Show demo/trial mode banner when host flagged insufficient funds.
+  if (window.__hostDemoMode) {
+    const username = getDisplayUsername();
+    jackpotMarqueeTextEl.textContent = `尊敬的 ${username} 當前為試玩模式　✦　充值後可以解鎖真實模式`;
+    return;
+  }
+  jackpotMarqueeTextEl.textContent = '龍域英雄大獎高達500倍！';
+}
+
+function updateBalanceDisplay() {
+  balanceEl.textContent = 'USDT ' + (balance / 100).toFixed(2);
+  walletUpdateBalance(balance / 100);
+  refreshSpinStatus();
+  refreshJackpotBanner();
+}
+
+// Fetch the user's current balance from the /auth/me endpoint and apply it.
+// Called after HOST_INIT sets window.__agoraAuth.token so we always display
+// the real server-side balance (HOST_INIT balance may be zero/stale if the
+// Dart profile fetch failed).
+//
+// /auth/me response shapes supported:
+//   { userInfo: { balance: 1.23 } }          ← standard server response
+//   { data: { balance: 1.23 } }              ← legacy wrapper
+//   { balance: 1.23 }                        ← flat (Telegram exchange-jwt compat)
+async function fetchAndApplyBalance(_jwt) {
+  const usdt = await window.__gameHost?.getBalance();
+  if (usdt === null || usdt === undefined) return;
+  applyBalance(usdt);
+  window.__hostDemoMode = usdt < 0.25;
+  refreshJackpotBanner();
+  addLog(`餘額已更新: USDT ${usdt.toFixed(2)}`, 'info');
+}
+
+// Apply balance received from the host (USDT float → units ×100).
+function applyBalance(usdt) {
+  if (!Number.isFinite(usdt) || usdt < 0) {
+    addLog(`applyBalance: 無效值 ${usdt}，略過`, 'warn');
+    return;
+  }
+  balance = Math.round(usdt * 100);
+  updateBalanceDisplay();
+  addLog(`餘額已更新: USDT ${(balance / 100).toFixed(2)}`, 'info');
+}
+
+// Load paytable multipliers from backend and apply to UI.
+async function loadAndApplyPaytable() {
+  try {
+    addLog(`[RTP→] jwt=${window.__agoraAuth?.token ? '✓' : '✗'} adapter=${window.__gameHost ? '✓' : '✗'}`, 'info');
+    const rtpData = await window.__gameHost?.getRtp();
+    addLog(`[RTP←] data=${rtpData ? JSON.stringify(rtpData).slice(0, 80) : 'null'}`, 'info');
+
+    if (!rtpData) {
+      addLog('賠率表數據為空', 'warn');
+      return;
+    }
+
+    // Build entry rows from backend and keep original visual style.
+    const rows = [];
+
+    if (Array.isArray(rtpData.entries)) {
+      rtpData.entries.forEach((entry) => {
+        const parsed = _parseRtpEntry(entry);
+        if (parsed) rows.push(parsed);
+      });
+    }
+
+    // Fallback for legacy map/array paytable formats (no combo string available).
+    if (rows.length === 0) {
+      const paytable = rtpData.paytable ?? rtpData;
+      if (Array.isArray(paytable)) {
+        paytable.forEach((entry) => {
+          const symbolId = Number(entry?.symbolId ?? entry?.symIdx ?? entry?.symbol);
+          const count = Math.min(3, Math.floor(Number(entry?.count ?? entry?.matchCount)));
+          const multiplier = Number(entry?.multiplier ?? entry?.payout);
+          if (isNaN(symbolId) || isNaN(count) || isNaN(multiplier)) return;
+          if (symbolId < 0 || symbolId >= spriteMap.length) return;
+          rows.push({ symIds: Array(count).fill(symbolId), multiplier });
+        });
+      } else if (paytable && typeof paytable === 'object') {
+        Object.keys(paytable).forEach((sid) => {
+          const symbolId = Number(sid);
+          if (isNaN(symbolId) || symbolId < 0 || symbolId >= spriteMap.length) return;
+          Object.keys(paytable[sid] || {}).forEach((c) => {
+            const count = Math.min(3, Math.floor(Number(c)));
+            const multiplier = Number(paytable[sid][c]);
+            if (isNaN(count) || isNaN(multiplier)) return;
+            rows.push({ symIds: Array(count).fill(symbolId), multiplier });
+          });
+        });
+      }
+    }
+
+    // Dedup by exact symbol sequence — keeps consolation prizes separate from WILD combos.
+    const dedupMap = new Map();
+    rows.forEach((row) => {
+      const key = row.symIds.join(',');
+      const prev = dedupMap.get(key);
+      if (!prev || row.multiplier > prev.multiplier) {
+        dedupMap.set(key, row);
+      }
+    });
+    rows.length = 0;
+    dedupMap.forEach((row) => rows.push(row));
+
+    rows.sort((a, b) => b.multiplier - a.multiplier);
+    const renderedCount = _renderPaytableRows(rows);
+
+    if (renderedCount > 0) {
+      addLog(`賠率表已更新 (${renderedCount} 項，首屏最多 8 項)`, 'info');
+    } else {
+      addLog('賠率表數據格式無法解析', 'warn');
+      console.warn('[Paytable] Received data:', rtpData);
+    }
+  } catch (e) {
+    addLog(`賠率表加載失敗: ${e}`, 'warn');
+  } finally {
+    // Mark paytable ready regardless of success/error/early-return so the
+    // spin button is never permanently blocked by a failed paytable fetch.
+    _paytableReady = true;
+    _checkAndUnlockSpin();
+  }
+}
+
+updateBalanceDisplay();
+
+// ===== Bet cycling =====
+document.getElementById('btn-bet').addEventListener('click', () => {
+  if (isSpinning) return;
+  betIdx = (betIdx + 1) % BET_LEVELS.length;
+  refreshSpinStatus();
+  // Flash the row2 badge to signal the bet change
+  if (betLabel) { betLabel.style.animation = 'none'; void betLabel.offsetWidth; betLabel.style.animation = 'betFlash .4s ease'; }
+});
+
+// ===== Function menu (≡ button) =====
+createMenuManager({
+  menuPopupEl: document.getElementById('menu-popup'),
+  menuButtonEl: document.getElementById('btn-menu'),
+  copyButtonEl: document.getElementById('menu-copy-log'),
+  clearButtonEl: document.getElementById('menu-clear-log'),
+  getLogsText: () => logManager.getLogsText(),
+  onCopySuccess: () => addLog('日誌已複製到剪貼板', 'info'),
+  onClear: () => logManager.clearLogs(),
+  promptFn: typeof window.prompt === 'function' ? window.prompt.bind(window) : null,
+});
+
+// ===== Auto-spin state =====
+let autoSpin      = false;
+let autoTimer     = null;
+let pressTimer    = null;
+const _spinRing       = document.getElementById('spin-ring');
+const _spinAutoBadge  = document.getElementById('spin-auto-badge');
+
+function _setAutoSpinUI(active) {
+  _spinRing.classList.toggle('auto-active', active);
+  _spinAutoBadge.classList.toggle('hidden', !active);
+}
+
+// Long-press spin button → toggle auto-spin
+spinBtn.addEventListener('pointerdown', () => {
+  pressTimer = setTimeout(() => {
+    autoSpin = !autoSpin;
+    if (!autoSpin) clearTimeout(autoTimer); // toggling off: cancel pending scheduled spin
+    _setAutoSpinUI(autoSpin);
+    if (autoSpin && !isSpinning) doSpin();
+  }, AUTO_SPIN_PRESS_DELAY);
+});
+['pointerup', 'pointerleave', 'pointercancel'].forEach(ev =>
+  spinBtn.addEventListener(ev, () => clearTimeout(pressTimer))
+);
+
+// ===== Spin button – normal tap =====
+spinBtn.addEventListener('click', () => { if (!autoSpin) doSpin(); });
+
+// ── Client seed generation (provably-fair) ────────────────────────────────────
+function generateClientSeed() {
+  if (typeof crypto !== 'undefined') {
+    if (crypto.randomUUID) return crypto.randomUUID();
+    const arr = new Uint8Array(16);
+    crypto.getRandomValues(arr);
+    return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
+  }
+  return Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+}
+
+// ── Sound Manager ─────────────────────────────────────────────────────────────
+const soundManager = (() => {
+  // Respect the user's previous mute preference across sessions.
+  let _muted = localStorage.getItem('_slot_muted') === '1';
+
+  function _make(src, loop) {
+    const a = new Audio(src);
+    a.loop    = !!loop;
+    a.preload = 'auto';
+    return a;
+  }
+
+  const _spinSnd = _make('../_shared/sound/mixkit-arcade-slot-machine-wheel-1933.wav', true);
+  const _winSnd  = _make('../_shared/sound/mixkit-slot-machine-win-1928.wav', false);
+  _spinSnd.volume = 0.55;
+  _winSnd.volume  = 0.85;
+
+  return {
+    isMuted: () => _muted,
+    toggleMute() {
+      _muted = !_muted;
+      localStorage.setItem('_slot_muted', _muted ? '1' : '0');
+      if (_muted) { _spinSnd.pause(); _winSnd.pause(); }
+      return _muted;
+    },
+    playSpin() {
+      if (_muted) return;
+      _spinSnd.currentTime = 0;
+      _spinSnd.play().catch(() => {});
+    },
+    stopSpin() {
+      _spinSnd.pause();
+      _spinSnd.currentTime = 0;
+    },
+    playWin() {
+      if (_muted) return;
+      _winSnd.currentTime = 0;
+      _winSnd.play().catch(() => {});
+    },
+  };
+})();
+
+// Mute toggle — ctrl-bar btn-mute button (always visible).
+const _muteBtn  = document.getElementById('btn-mute');
+const _muteDisc = document.getElementById('mute-disc');
+function _syncMuteUI(muted) {
+  _muteDisc.textContent = muted ? '🔇' : '🔊';
+  _muteBtn.classList.toggle('is-muted', muted);
+  _muteBtn.querySelector('.cb-label').textContent = muted ? '取消靜音' : '靜音';
+}
+_syncMuteUI(soundManager.isMuted());
+_muteBtn.addEventListener('click', () => _syncMuteUI(soundManager.toggleMute()));
+
+// ===== Transaction history panel =====
+const txnPanel    = document.getElementById('txn-panel');
+const txnBackdrop = document.getElementById('txn-backdrop');
+const txnList     = document.getElementById('txn-list');
+const txnLoadMore = document.getElementById('txn-load-more');
+let _txnPage      = 1;
+let _txnHasMore   = false;
+let _txnLoading   = false;
+
+const TXN_TYPE_LABELS = {
+  DEPOSIT:   '入款', WITHDRAW:  '出款', PAYMENT:   '支出',
+  RECEIVE:   '收款', REFUND:    '退款', STAKING:   '質押',
+  UNSTAKING: '解質押', INTEREST: '利息',
+};
+
+// If Flutter bridge hasn't rebuilt yet, type may still arrive as {value:'...'} object.
+function _txnTypeStr(raw) {
+  if (!raw) return '';
+  if (typeof raw === 'string') return raw;
+  // Dart enum serialized as object: {value: 'PAYMENT'} or has toString
+  return raw.value || String(raw);
+}
+
+function _txnIsInflow(type, amount) {
+  return amount > 0;
+}
+
+function _txnFormatTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** Strip technical fields (gameId=, clientRoundId=) from backend description,
+ *  and convert multiplier= to a readable × suffix. */
+function _cleanTxnDesc(raw) {
+  if (!raw) return '';
+  const parts    = raw.split(' | ');
+  let result     = parts[0].trim();
+  const multPart = parts.find(p => p.startsWith('multiplier='));
+  if (multPart) result += ' ×' + multPart.replace('multiplier=', '');
+  return result;
+}
+
+function _renderTxnRows(rows) {
+  rows.forEach(t => {
+    const amount   = t.amount ?? 0;
+    const typeKey  = _txnTypeStr(t.type);
+    const dir      = _txnIsInflow(typeKey, amount) ? 'in' : 'out';
+    const sign     = amount > 0 ? '+' : '';
+    const typeText = TXN_TYPE_LABELS[typeKey] || typeKey || '其他';
+    const desc     = _cleanTxnDesc(t.description || t.remark || '');
+    const num      = new Intl.NumberFormat('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}).format(Math.abs(amount));
+    const currency = /^[A-Z]{2,10}$/.test(t.currency || '') ? t.currency : 'USDT';
+
+    const row     = document.createElement('div');
+    row.className = 'txn-row';
+
+    const iconEl = document.createElement('div');
+    iconEl.className = `txn-icon ${dir}`;
+    iconEl.textContent = dir === 'in' ? '↑' : '↓';
+
+    const bodyEl = document.createElement('div');
+    bodyEl.className = 'txn-body';
+
+    const typeEl = document.createElement('div');
+    typeEl.className = 'txn-type';
+    typeEl.textContent = typeText;
+    bodyEl.appendChild(typeEl);
+
+    if (desc) {
+      const descEl = document.createElement('div');
+      descEl.className = 'txn-desc';
+      descEl.textContent = desc;
+      bodyEl.appendChild(descEl);
+    }
+
+    const rightEl = document.createElement('div');
+    rightEl.className = 'txn-right';
+
+    const amtEl = document.createElement('div');
+    amtEl.className = `txn-amt ${dir}`;
+    amtEl.textContent = `${sign}${num} ${currency}`;
+
+    const timeEl = document.createElement('div');
+    timeEl.className = 'txn-time';
+    timeEl.textContent = _txnFormatTime(t.createdAt);
+
+    rightEl.appendChild(amtEl);
+    rightEl.appendChild(timeEl);
+    row.appendChild(iconEl);
+    row.appendChild(bodyEl);
+    row.appendChild(rightEl);
+    txnList.appendChild(row);
+  });
+}
+
+async function _fetchTransactions(page) {
+  return window.__gameHost.getTransactions(page, 10);
+}
+
+async function _loadTxnPage(refresh) {
+  if (_txnLoading) return;
+  _txnLoading = true;
+  txnLoadMore.disabled = true;
+
+  if (refresh) {
+    _txnPage = 1;
+    txnList.innerHTML = '<div class="txn-spinner">&#9679;&#9679;&#9679;</div>';
+  }
+
+  try {
+    const data = await _fetchTransactions(_txnPage);
+    if (refresh) txnList.innerHTML = '';
+    const rows = data?.content ?? [];
+    if (rows.length === 0 && refresh) {
+      txnList.innerHTML = '<div class="txn-empty">暫無紀錄</div>';
+    } else {
+      _renderTxnRows(rows);
+      _txnPage++;
+    }
+    _txnHasMore = data?.hasMore ?? false;
+  } catch (e) {
+    if (refresh) txnList.innerHTML = `<div class="txn-empty">載入失敗: ${e.message}</div>`;
+    addLog(`帳變紀錄載入失敗: ${e.message}`, 'warn');
+  } finally {
+    _txnLoading = false;
+    txnLoadMore.disabled = !_txnHasMore;
+    txnLoadMore.textContent = _txnHasMore ? '載入更多' : '已全部載入';
+  }
+}
+
+function openTxnPanel() {
+  if (walletIsOpen()) closeWalletPanel();
+  txnPanel.style.display = 'flex';
+  txnBackdrop.classList.add('open');
+  // Force reflow so transition plays
+  txnPanel.getBoundingClientRect();
+  txnPanel.classList.add('open');
+  _loadTxnPage(true);
+}
+
+function closeTxnPanel() {
+  txnPanel.classList.remove('open');
+  txnBackdrop.classList.remove('open');
+  txnPanel.addEventListener('transitionend', () => {
+    if (!txnPanel.classList.contains('open')) txnPanel.style.display = 'none';
+  }, { once: true });
+}
+
+function _goPage(dest) {
+  document.getElementById('menu-popup').classList.remove('open');
+  if (dest === 'deposit' || dest === 'withdraw') {
+    openWalletPanel(dest);
+    return;
+  }
+  window.__gameHost?.navigate(dest);
+}
+
+document.getElementById('menu-deposit').addEventListener('click',  () => _goPage('deposit'));
+document.getElementById('menu-withdraw').addEventListener('click', () => _goPage('withdraw'));
+
+document.getElementById('menu-txn').addEventListener('click', () => {
+  // Close menu popup first
+  document.getElementById('menu-popup').classList.remove('open');
+  openTxnPanel();
+});
+document.getElementById('txn-close').addEventListener('click', closeTxnPanel);
+txnBackdrop.addEventListener('click', closeTxnPanel);
+txnLoadMore.addEventListener('click', () => _loadTxnPage(false));
+
+initWalletPanel({
+  getToken:        () => window.__agoraAuth?.token || localStorage.getItem('_flutter_game_jwt') || '',
+  getBalance:      () => window.__gameHost?.getBalance?.(),
+  onBalanceChange: (usdt) => {
+    balance = Math.round(usdt * 100);
+    window.__hostDemoMode = usdt < 0.25;
+    updateBalanceDisplay();
+  },
+  onLog:        (msg, level) => addLog(msg, level),
+  onBeforeOpen: () => closeTxnPanel(),
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (walletIsOpen()) closeWalletPanel();
+  else if (txnPanel.classList.contains('open')) closeTxnPanel();
+});
+
+// ── Paytable evaluation ──────────────────────────────────────────────────────
+// IMPORTANT: Runtime visuals come from symbols.png + spriteMap (not SVG labels)
+// Symbol index mapping currently in use:
+//   0=apple, 1=cherry, 2=seven, 3=lemon, 4=bar, 5=grapes
+// Paytable (multiplier applied to current bet):
+
+async function doSpin() {
+  if (isSpinning) return;
+  
+  // Demo mode: trust server-confirmed balance if available.
+  // __hostDemoMode may be stale (set from HOST_INIT before /auth/me completes),
+  // so override it when we already know balance > 0 from the server.
+  const isDemoMode = balance > 0 ? false : window.__hostDemoMode;
+
+  isSpinning = true;
+  spinBtn.disabled = true;
+  winEl.textContent = '—';
+
+  const _spinMode = isDemoMode ? 'DEMO' : 'REAL';
+
+  // Delegate transport to the loaded adapter (flutter_adapter.js / tg_adapter.js).
+  const _hostSpinResult = await window.__gameHost?.spin({
+    betIndex:     betIdx,
+    // Backend expects USDT amount; BET_LEVELS is stored as display units ×100.
+    betAmount:    currentBet() / 100,
+    mode:         _spinMode,
+    clientSeed:   generateClientSeed(),
+    nonce:        Date.now().toString(),
+    clientRoundId: generateClientSeed(),
+  });
+
+  // Backend must return a valid SPIN_RESULT; no client-side fallback.
+  if (!(_hostSpinResult?.symbolIds?.length || _hostSpinResult?.symbols?.length)) {
+    addLog(
+      `旋轉請求失敗：後端無回應或返回無效結果` +
+      ` | mode=${_spinMode} demo=${isDemoMode}` +
+      ` | jwt=${window.__agoraAuth?.token ? '✓' : '✗ 無JWT'}` +
+      ` | origin=${window.__gameOrigin || '未設定'}`,
+      'error'
+    );
+    winEl.textContent = '—';
+    showStatusToast('⚠ 旋轉失敗，請重試', '#ff8866');
+    isSpinning  = false;
+    spinBtn.disabled = false;
+    if (autoSpin) { autoSpin = false; _setAutoSpinUI(false); }
+    return;
+  }
+
+  // Apply symbols and host-managed balance from backend result.
+  const forcedSyms = Array.isArray(_hostSpinResult.symbols) ? _hostSpinResult.symbols : null;
+  const forcedSymbolIds = Array.isArray(_hostSpinResult.symbolIds)
+    ? _hostSpinResult.symbolIds.map(v => Number(v))
+    : (forcedSyms ? forcedSyms.map(_resolveSymIdx) : null);
+  if (forcedSymbolIds && forcedSymbolIds.some(id => id < 0 || id >= spriteMap.length)) {
+    addLog(`後端返回了範圍外的 symbolId: [${forcedSymbolIds}]，將以 0 替代`, 'warn');
+    // Clamp invalid indices to 0 (first symbol) so they never crash the renderer
+    for (let i = 0; i < forcedSymbolIds.length; i++) {
+      if (forcedSymbolIds[i] < 0 || forcedSymbolIds[i] >= spriteMap.length) forcedSymbolIds[i] = 0;
+    }
+  }
+  if (typeof _hostSpinResult.newBalance === 'number') {
+    // applyBalance() converts USDT float → internal ×100 units and updates the display.
+    applyBalance(_hostSpinResult.newBalance);
+  }
+
+  // Launch all reels with gradual acceleration (start at 10% speed, ramp up over ~20 frames)
+  reelGroups.forEach(g => { g.userData.spinning = true; g.userData.speed = MAX_SPIN_SPEED * 0.1; });
+  document.getElementById('reel-canvas-wrap').classList.add('reel-spinning');
+  _playCharAnim('spin');
+  soundManager.playSpin();
+
+  // Stop reels staggered — timing defined by REEL_STOP_DELAYS_MS constant.
+  const stopDelays = REEL_STOP_DELAYS_MS;
+  stopDelays.forEach((delay, i) => {
+    setTimeout(() => {
+      const strip = reelGroups[i];
+      strip.userData.spinning = false;
+      // Snap: find the card to land on the payline (y=0).
+      // Steer to the backend-determined symbol so the visual result matches the API outcome.
+      let closest = null;
+      if (forcedSymbolIds !== null) {
+        const targetIdx = Number(forcedSymbolIds[i]);
+        if (targetIdx >= 0) {
+          let minDist = Infinity;
+          strip.children.forEach(card => {
+            if (card.userData.symIdx === targetIdx) {
+              const d = Math.abs(card.position.y);
+              if (d < minDist) { minDist = d; closest = card; }
+            }
+          });
+        }
+      }
+      // Safety: if the target symbol isn't present on this reel, snap to the geometrically-closest card.
+      if (closest === null) {
+        let minDist = Infinity;
+        strip.children.forEach(card => {
+          const d = Math.abs(card.position.y);
+          if (d < minDist) { minDist = d; closest = card; }
+        });
+      }
+      const snapShift = -closest.position.y;
+      strip.children.forEach(card => { card.position.y += snapShift; });
+      strip.userData.speed = 0;
+      // Invalidate the cached maxY so the animation loop re-scans on the next spin start.
+      strip.userData.maxY = undefined;
+      // Remove motion blur when the last reel stops
+      if (i === stopDelays.length - 1) {
+        document.getElementById('reel-canvas-wrap').classList.remove('reel-spinning');
+        soundManager.stopSpin();
+      }
+    }, delay);
+  });
+
+  // Resolve spin — all 3 reel stop timeouts (600 / 1050 / 1500 ms) have fired by now.
+  setTimeout(() => {
+    isSpinning = false;
+    spinBtn.disabled = false;
+    _playCharAnim('idle'); // exit spin pose; win/fall calls below will override if needed
+
+    const multiplier = _hostSpinResult.multiplier ?? 0;
+    const displaySymbols = (forcedSymbolIds || []).map(idx => {
+      const n = Number(idx);
+      return Number.isFinite(n)
+        ? (spriteMap[n]?.name?.toUpperCase() ?? `SYM${n}`)
+        : 'SYM?';
+    });
+    addLog(`花色: ${displaySymbols.join(' ')} → ×${multiplier}`, multiplier > 0 ? 'info' : 'warn');
+
+    if (multiplier > 0) {
+      const prize = Number(_hostSpinResult.prize ?? 0);
+      if (!prize) addLog(`後端 multiplier=${multiplier} 但 winAmount 未返回`, 'warn');
+      // Balance is managed by the host via SPIN_RESULT.newBalance; no local update needed.
+      winEl.textContent = '+USDT ' + prize.toFixed(2);
+      winEl.style.color = '#3cc864';
+      soundManager.playWin();
+
+      // Flash reel section border — remove first to restart animation if already playing
+      reelSection.classList.remove('reel-win');
+      void reelSection.offsetHeight; // force reflow so the removal takes effect before re-adding
+      reelSection.classList.add('reel-win');
+      reelSection.addEventListener('animationend', () => reelSection.classList.remove('reel-win'), { once: true });
+
+      // Play character animation based on win level
+      //   multiplier >= 10 → Big Win  (frames 1–219)
+      //   multiplier  < 10 → Small Win (frames 220–369)
+      _consecutiveMisses = 0;
+      _playCharAnim(multiplier >= 10 ? 'big' : 'small');
+
+      // Mobile haptic
+      if (navigator.vibrate) navigator.vibrate([80, 40, 160]);
+
+      // Win announcement overlay + coin rain for all wins
+      const winTitle = multiplier >= 20 ? '史詩大獎！EPIC WIN！' : multiplier >= 10 ? '英雄中獎！HERO WIN！' : '中獎！WIN！';
+      showBigWin(prize, winTitle);
+    } else {
+      winEl.textContent = '—';
+      winEl.style.color = '';
+      // Fall animation after 2 consecutive no-wins (frames 370–420)
+      _consecutiveMisses++;
+      if (_consecutiveMisses >= 2) {
+        _consecutiveMisses = 0;
+        _playCharAnim('fall');
+      }
+    }
+
+    // Continue auto-spin: wait for any win overlay to dismiss first
+    const overlayMs = multiplier >= 20 ? BIG_WIN_DISPLAY_MS : multiplier >= 3 ? WIN_DISPLAY_MS : 0;
+    if (autoSpin) autoTimer = setTimeout(doSpin, overlayMs > 0 ? overlayMs : AUTO_SPIN_INTERVAL);
+  }, 2000);
+}
+
+// ===== Back button – cancel auto-spin =====
+/** Cancels auto-spin if it is currently active.
+ *  Returns true if auto-spin was running (and has now been cancelled),
+ *  false if nothing needed to be done.
+ */
+function cancelAutoSpin() {
+  if (!autoSpin) return false;
+  autoSpin = false;
+  _setAutoSpinUI(false);
+  clearTimeout(autoTimer);
+  addLog('自動旋轉已取消', 'info');
+  return true;
+}
+
+document.getElementById('btn-back').addEventListener('click', () => {
+  if (!cancelAutoSpin()) {
+    // __gameHost.navigate handles all branches:
+    //   Branch 1 — native Flutter bridge (goBack handler)
+    //   Branch 2 — iframe postMessage (GO_BACK)
+    //   Branch 3 — TG hosted / self-host (Telegram.WebApp.close or history.back)
+    window.__gameHost?.navigate('back');
+  }
+});
+
+// ===== Big Win display =====
+function spawnCoinRain() {
+  const coinSyms = ['sym-diamond', 'sym-star', 'sym-sparkle', 'sym-moon', 'sym-diamond'];
+  for (let i = 0; i < 22; i++) {
+    const c    = document.createElement('span');
+    const size = Math.round(16 + Math.random() * 18);
+    const id   = coinSyms[Math.floor(Math.random() * coinSyms.length)];
+    c.innerHTML = `<svg viewBox="0 0 100 100" width="${size}" height="${size}" fill="rgba(200,190,255,0.85)" aria-hidden="true"><use href="#${id}"/></svg>`;
+    c.style.cssText =
+      `position:fixed;pointer-events:none;z-index:495;display:inline-block;` +
+      `left:${Math.random() * 100}%;top:-32px;` +
+      `animation:coinFall ${1.3 + Math.random() * 1.8}s ${Math.random() * 0.9}s ease-in forwards`;
+    document.body.appendChild(c);
+    c.addEventListener('animationend', () => c.remove(), { once: true });
+  }
+}
+
+function showBigWin(amount, title = 'BIG WIN!') {
+  const bw  = document.getElementById('big-win');
+  // Guard against reentrancy: if overlay is already showing, skip to avoid
+  // orphaned setTimeout closures from concurrent calls fighting over the same element.
+  if (!bw.classList.contains('hidden')) return;
+  const bwT = document.getElementById('bw-title');
+  const bwA = document.getElementById('bw-amount');
+  bwT.textContent = title;
+  bwA.textContent = '+USDT ' + Number(amount).toFixed(2);
+  bw.classList.remove('hidden');
+  bwT.style.animation = bwA.style.animation = 'none';
+  void bw.offsetHeight; // 強制 reflow 以重置 CSS animation 狀態，使動畫可以重新播放 (reading offsetHeight triggers synchronous layout)
+  bwT.style.animation = bwA.style.animation = '';
+  spawnCoinRain();
+  // Big wins stay longer; regular wins use a shorter display time
+  const stayMs = title.includes('BIG WIN') ? 2300 : 1200;
+  setTimeout(() => {
+    bw.style.opacity = '0';
+    bw.style.transition = 'opacity 0.9s';
+    setTimeout(() => { bw.classList.add('hidden'); bw.style.opacity = ''; bw.style.transition = ''; }, 900);
+  }, stayMs);
+}
+
+// ===== Resize handler =====
+let _resizeDebounce;
+window.addEventListener('resize', () => {
+  clearTimeout(_resizeDebounce);
+  _resizeDebounce = setTimeout(() => {
+  const nW = reelSection.clientWidth;
+  const nH = 340; // canvas render height is fixed; section is 198px with overflow:hidden
+  camera.aspect = nW / nH;
+  camera.updateProjectionMatrix();
+  renderer.setSize(nW, nH);
+  // Recompute pixel ratio: viewport scale may have changed on resize.
+  renderer.setPixelRatio(calcDPR());
+  // Recompute reel geometry so cards still fill the (re-sized) frustum exactly
+  const geo = computeReelGeometry(nW, nH);
+  // Guard: only rebuild card geometries when dimensions actually changed
+  if (Math.abs(geo.CARD_W - CARD_W) < 1e-4) return;
+  CARD_W = geo.CARD_W; CARD_H = geo.CARD_H; REEL_X = geo.REEL_X;
+  STRIP_CLIP = (Math.floor(N_STRIP / 2) + 1) * CARD_H;
+  reelGroups.forEach((strip, ri) => {
+    strip.position.x = REEL_X[ri];
+    strip.children.forEach((card, i) => {
+      card.geometry.dispose();
+      card.geometry = new THREE.PlaneGeometry(CARD_W, CARD_H);
+      card.position.y = (i - Math.floor(N_STRIP / 2)) * CARD_H;
+    });
+    // Invalidate cached maxY — card positions were just reset above.
+    strip.userData.maxY = undefined;
+  });
+  }, 150);
+});
+
+// ===== Animation loop =====
+const animationLoopManager = createAnimationLoopManager({
+  renderer,
+  scene,
+  camera,
+  reelGroups,
+  fillLight,
+  maxSpinSpeed: MAX_SPIN_SPEED,
+  minSpinSpeed: MIN_SPIN_SPEED,
+  getStripClip: () => STRIP_CLIP,
+  getCardHeight: () => CARD_H,
+  isMobile: IS_MOBILE,
+  orbitLightA,
+  orbitLightB,
+});
+animationLoopManager.start();
+
+
+console.log('龍域英雄 v1.0 已加載 – WebGL2 模式');
+addLog('龍域英雄 v1.0 已加載', 'info');
+</script>
+
+</body>
+</html>

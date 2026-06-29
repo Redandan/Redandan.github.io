@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agora 社群商城</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.03); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+        @keyframes glow {
+            0% { filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.4)); }
+            50% { filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.7)); }
+            100% { filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.4)); }
+        }
+
+        .coin-spin {
+            animation: spin 6s ease-in-out infinite;
+            transition: transform 0.3s ease;
+        }
+        .coin-spin:hover {
+            transform: scale(1.1);
+        }
+        .medal-pulse {
+            animation: pulse 2s ease-in-out infinite;
+            transition: transform 0.3s ease, filter 0.3s ease;
+        }
+        .medal-pulse:hover {
+            transform: scale(1.1);
+            filter: brightness(1.1);
+        }
+        .glow-effect {
+            animation: glow 3s ease-in-out infinite;
+        }
+        .section-header {
+            color: #3B82F6; /* 亮藍色標題 */
+        }
+        .tier-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .tier-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+    <script>
+        const translations = {
+            zh: {
+                title: 'Agora 社群商城',
+                subtitle: '去中心化 C2C 交易平台，安全、高效、自由交易',
+                whatIs: '什麼是 Agora 社群商城？',
+                description: 'Agora 是一個基於區塊鏈的 C2C 交易平台，透過 USDT 交易並結合冷錢包技術，確保交易安全。買家、賣家與外送員能夠在這裡自由交易，無需依賴傳統金融機構。真愛、真貨交易外送員能這裡自由出沒，無需依賴傳統機構。',
+                coinUsage: 'Agora 幣的用途',
+                feeDiscount: '可用於折抵高達 80% OFF 平台手續費',
+                creditGuarantee: '質押 Agora 幣可獲得 信用擔保，提升交易信任度',
+                marketReport: '質押解鎖 市場搜尋報告，掌握熱門趨勢',
+                memberPrivilege: '會員等級專屬特權，如 更低手續費、流量曝光',
+                memberTiers: '會員等級與特權',
+                bronze: '銅級會員',
+                silver: '銀級會員',
+                gold: '金級會員',
+                bronzeFeatures: ['基本搜尋報告', '額外 5% 手續費折扣', '優先流量推薦'],
+                silverFeatures: ['進階市場數據', '額外 10% 手續費折扣', '首頁推薦曝光'],
+                goldFeatures: ['完整競爭分析', '0% 交易手續費', 'DAO 高級治理權限'],
+                joinTitle: '加入 Agora，開啟去中心化交易新時代',
+                contactUs: '有興趣投資或瞭解更多？歡迎聯繫我們！',
+                contactButton: '聯絡我們',
+                backToApp: '回到應用',
+                footer: '© 2025 Agora 社群商城. All Rights Reserved.'
+            },
+            en: {
+                title: 'Agora Community Marketplace',
+                subtitle: 'C2C Trading Platform - Secure, Efficient, Free Trading',
+                whatIs: 'What is Agora Community Marketplace?',
+                description: 'Agora is a blockchain-based C2C trading platform that ensures transaction security through USDT trading and cold wallet technology. Buyers, sellers, and delivery personnel can trade freely here without relying on traditional financial institutions.',
+                coinUsage: 'Agora Coin Usage',
+                feeDiscount: 'Can be used to offset up to 80% OFF platform fees',
+                creditGuarantee: 'Stake Agora coins to obtain credit guarantee and enhance transaction trust',
+                marketReport: 'Unlock market search reports through staking to grasp popular trends',
+                memberPrivilege: 'Exclusive membership privileges such as lower fees and traffic exposure',
+                memberTiers: 'Membership Tiers & Privileges',
+                bronze: 'Bronze Member',
+                silver: 'Silver Member',
+                gold: 'Gold Member',
+                bronzeFeatures: ['Basic Search Reports', 'Additional 5% Fee Discount', 'Priority Traffic Recommendation'],
+                silverFeatures: ['Advanced Market Data', 'Additional 10% Fee Discount', 'Homepage Featured Exposure'],
+                goldFeatures: ['Complete Competition Analysis', '0% Transaction Fee', 'DAO Advanced Governance Rights'],
+                joinTitle: 'Join Agora, Start a New Era of Decentralized Trading',
+                contactUs: 'Interested in investing or learning more? Contact us!',
+                contactButton: 'Contact Us',
+                backToApp: 'Back to App',
+                footer: '© 2025 Agora Community Marketplace. All Rights Reserved.'
+            }
+        };
+
+        function setLanguage(lang) {
+            document.documentElement.lang = lang;
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    if (Array.isArray(translations[lang][key])) {
+                        element.innerHTML = translations[lang][key].map(item => `<li>${item}</li>`).join('');
+                    } else {
+                        element.textContent = translations[lang][key];
+                    }
+                }
+            });
+        }
+
+        function goBack() {
+            // 嘗試使用瀏覽器的歷史記錄返回
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                // 如果沒有歷史記錄，導航到主頁
+                window.location.href = '/';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setLanguage('zh');
+        });
+    </script>
+</head>
+<body class="bg-[#1F2937] text-gray-300 font-sans">
+    <!-- Navigation Controls -->
+    <div class="fixed top-4 z-50 flex gap-2">
+        <!-- Back Button -->
+        <button onclick="goBack()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center">
+            <i class="fas fa-arrow-left mr-2"></i>
+            <span data-i18n="backToApp">回到應用</span>
+        </button>
+        <!-- Language Switcher -->
+        <div class="flex">
+            <button onclick="setLanguage('zh')" class="bg-blue-500 text-white px-3 py-1 rounded-l hover:bg-blue-600">中文</button>
+            <button onclick="setLanguage('en')" class="bg-blue-500 text-white px-3 py-1 rounded-r hover:bg-blue-600">EN</button>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-[#1A2C5A] text-white py-8 text-center shadow-lg">
+        <h1 class="text-4xl font-bold" data-i18n="title"></h1>
+        <p class="text-lg mt-2" data-i18n="subtitle"></p>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="max-w-5xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
+        <!-- Agora Introduction -->
+        <section class="mb-16 bg-[#374151] rounded-lg p-6 shadow-md">
+            <h2 class="text-3xl font-bold mb-6 section-header" data-i18n="whatIs"></h2>
+            <p class="text-lg leading-relaxed text-gray-300" data-i18n="description"></p>
+        </section>
+        
+        <!-- Agora Coin Usage -->
+        <section class="mb-16 bg-[#374151] rounded-lg p-6 shadow-md">
+            <h2 class="text-3xl font-bold mb-6 section-header" data-i18n="coinUsage"></h2>
+           
+            <ul class="list-none space-y-3">
+                <li class="flex items-start">
+                    <i class="fas fa-fire text-orange-400 mr-3 mt-1"></i>
+                    <span class="text-lg text-gray-300" data-i18n="feeDiscount"></span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fas fa-lock text-blue-400 mr-3 mt-1"></i>
+                    <span class="text-lg text-gray-300" data-i18n="creditGuarantee"></span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fas fa-chart-line text-green-400 mr-3 mt-1"></i>
+                    <span class="text-lg text-gray-300" data-i18n="marketReport"></span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fas fa-bolt text-yellow-400 mr-3 mt-1"></i>
+                    <span class="text-lg text-gray-300" data-i18n="memberPrivilege"></span>
+                </li>
+            </ul>
+        </section>
+        
+        <!-- Membership Tiers -->
+        <section class="mb-16">
+            <h2 class="text-3xl font-bold mb-6 section-header" data-i18n="memberTiers"></h2>
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- Bronze -->
+                <div class="tier-card bg-[#374151] p-6 rounded-lg shadow-md text-center">
+                    <div id="bronze-icon" class="text-5xl mb-4 glow-effect">
+                        <i class="fas fa-medal text-[#CD7F32] medal-pulse"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-white" data-i18n="bronze"></h3>
+                    <ul class="list-disc pl-4 text-left text-gray-300 space-y-2" data-i18n="bronzeFeatures"></ul>
+                </div>
+                <!-- Silver -->
+                <div class="tier-card bg-[#374151] p-6 rounded-lg shadow-md text-center">
+                    <div id="silver-icon" class="text-5xl mb-4 glow-effect">
+                        <i class="fas fa-medal text-[#C0C0C0] medal-pulse"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-white" data-i18n="silver"></h3>
+                    <ul class="list-disc pl-4 text-left text-gray-300 space-y-2" data-i18n="silverFeatures"></ul>
+                </div>
+                <!-- Gold -->
+                <div class="tier-card bg-[#374151] p-6 rounded-lg shadow-md text-center">
+                    <div id="gold-icon" class="text-5xl mb-4 glow-effect">
+                        <i class="fas fa-medal text-[#FFD700] medal-pulse"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-white" data-i18n="gold"></h3>
+                    <ul class="list-disc pl-4 text-left text-gray-300 space-y-2" data-i18n="goldFeatures"></ul>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Contact Us -->
+        <section class="text-center">
+            <h2 class="text-3xl font-bold mb-4 section-header" data-i18n="joinTitle"></h2>
+            <p class="text-lg leading-relaxed text-gray-300 mb-6" data-i18n="contactUs"></p>
+            <a href="mailto:contact@agoramarket.com" class="inline-block bg-[#3B82F6] text-white py-3 px-8 rounded-lg shadow-lg hover:bg-[#60A5FA] transition-colors" data-i18n="contactButton"></a>
+        </section>
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-[#1A2C5A] text-white text-center py-6">
+        <p data-i18n="footer"></p>
+    </footer>
+</body>
+</html>
