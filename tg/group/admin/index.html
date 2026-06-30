@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>TG 群主管理</title>
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      min-height: 100%;
+      background: #0a0d13;
+      color: #e5ecff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+    .panel {
+      width: min(88vw, 420px);
+      padding: 22px;
+      border: 1px solid #2f3a5f;
+      border-radius: 14px;
+      background: #111827;
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+      text-align: center;
+    }
+    .icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 14px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: #1d2a44;
+      color: #9ec0ff;
+      font-size: 26px;
+      font-weight: 700;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 20px;
+      line-height: 1.25;
+    }
+    p {
+      margin: 0;
+      color: #aebbf2;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <main class="panel">
+    <div class="icon">TG</div>
+    <h1>TG 群主管理</h1>
+    <p id="status">正在驗證 Telegram 身分...</p>
+  </main>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    (function () {
+      var API_BASE = 'https://agoramarketapi.purrtechllc.com/api';
+      var TARGET_PATH = '/tg/group/admin';
+      var statusEl = document.getElementById('status');
+
+      function setStatus(text) {
+        if (statusEl) statusEl.textContent = text;
+      }
+
+      var tg = window.Telegram && window.Telegram.WebApp;
+      if (!tg) {
+        setStatus('請在 Telegram 中開啟此頁。');
+        return;
+      }
+
+      tg.ready();
+      tg.expand();
+      if (typeof tg.disableVerticalSwipes === 'function') {
+        tg.disableVerticalSwipes();
+      }
+
+      var initData = String(tg.initData || '').trim();
+      if (!initData) {
+        setStatus('無法取得 Telegram 身分資訊。');
+        return;
+      }
+
+      (async function () {
+        try {
+          setStatus('正在驗證 Telegram 身分...');
+          var resp = await fetch(API_BASE + '/auth/telegram-webapp/exchange-jwt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ initData: initData }),
+          });
+          if (!resp.ok) {
+            var text = '';
+            try { text = await resp.text(); } catch (_) {}
+            console.error('[tg/group/admin] auth failed:', resp.status, text);
+            setStatus('登入失敗 (' + resp.status + ')');
+            return;
+          }
+
+          var json = await resp.json();
+          var body = json.data != null ? json.data : json;
+          var jwt = String(body.jwt || body.token || body.accessToken || '').trim();
+          if (!jwt) {
+            setStatus('登入失敗（無 token）');
+            return;
+          }
+
+          var userInfo = body.userInfo || body || {};
+          var userId = String(userInfo.id || userInfo.userId || body.userId || '');
+          var userRole = String(userInfo.role || body.role || 'USER').toUpperCase();
+
+          localStorage.setItem('_tg_store_jwt', jwt);
+          localStorage.setItem('_tg_store_uid', userId);
+          localStorage.setItem('_tg_store_role', userRole);
+          localStorage.setItem('_tg_store_target_path', TARGET_PATH);
+          localStorage.removeItem('_tg_store_ref');
+
+          setStatus('正在進入群主管理...');
+          window.location.replace('/#' + TARGET_PATH);
+        } catch (err) {
+          console.error('[tg/group/admin] error:', err);
+          setStatus('載入錯誤，請重試。');
+        }
+      })();
+    })();
+  </script>
+</body>
+</html>
