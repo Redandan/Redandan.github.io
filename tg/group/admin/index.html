@@ -87,6 +87,15 @@
         return;
       }
 
+      function resolveTargetPath() {
+        var startParam = String(tg.initDataUnsafe && tg.initDataUnsafe.start_param || '').trim();
+        if (startParam.indexOf('partner_invite_') === 0) {
+          var token = startParam.substring('partner_invite_'.length);
+          if (token) return TARGET_PATH + '?invite=' + encodeURIComponent(token);
+        }
+        return TARGET_PATH;
+      }
+
       (async function () {
         try {
           setStatus('正在驗證 Telegram 身分...');
@@ -118,11 +127,12 @@
           localStorage.setItem('_tg_store_jwt', jwt);
           localStorage.setItem('_tg_store_uid', userId);
           localStorage.setItem('_tg_store_role', userRole);
-          localStorage.setItem('_tg_store_target_path', TARGET_PATH);
+          var targetPath = resolveTargetPath();
+          localStorage.setItem('_tg_store_target_path', targetPath);
           localStorage.removeItem('_tg_store_ref');
 
           setStatus('正在進入群主管理...');
-          window.location.replace('/#' + TARGET_PATH);
+          window.location.replace('/#' + targetPath);
         } catch (err) {
           console.error('[tg/group/admin] error:', err);
           setStatus('載入錯誤，請重試。');
