@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <!-- ?? HTML ?辣?楨摮??- ?剜?蝺拙?隞乩噶 Service Worker ?? -->
+    <!-- 針對 HTML 文件的緩存控制 - 短期緩存以便 Service Worker 處理 -->
     <meta http-equiv="Cache-Control" content="max-age=300, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <!-- ??楨摮?霅?-->
-    <meta name="cache-version" content="1.0.1836">
+    <!-- 版本化緩存標識 -->
+    <meta name="cache-version" content="1.0.1837">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -23,7 +23,7 @@
   <meta name="keywords" content="marketplace, shopping, trading, agora">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
-  <meta name="version" content="1.0.1836+1836">
+  <meta name="version" content="1.0.1837+1837">
 
   <!-- Fix 1: Removed vh-based viewport logic - conflicts with visualViewport root model -->
   
@@ -165,7 +165,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market</title>
-  <link rel="manifest" href="manifest.json?v=1.0.1836">
+  <link rel="manifest" href="manifest.json?v=1.0.1837">
   
   <!-- PWA ?????????????????? -->
   <meta name="application-name" content="Agora Market">
@@ -173,7 +173,7 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ???????????????????????????????????????????? -->
-  <link rel="preload" href="flutter_bootstrap.1.0.1836.js" as="script">
+  <link rel="preload" href="flutter_bootstrap.1.0.1837.js" as="script">
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -1221,7 +1221,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.1.0.1836.js";
+        script.src = "flutter_bootstrap.1.0.1837.js";
         script.async = true;
         document.body.appendChild(script);
       }
