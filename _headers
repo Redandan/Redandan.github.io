@@ -1,0 +1,66 @@
+# HTTP Cache-Control intent for AgoraMarket Flutter web build。
+#
+# Format: Netlify / Cloudflare Pages `_headers` file syntax. Currently NOT
+# served by the GitHub Pages production target(GH Pages 不支援 custom
+# headers,僅以 default `cache-control: max-age=600` 對所有 static 資源
+# 統一回應)。本檔留作 intent doc — 若未來遷 Cloudflare Pages / Netlify /
+# 自架 CDN 直接生效。
+#
+# nginx production target(`agoramarket.purrtechllc.com`)應對應的 cache
+# config 由 server-side `/etc/nginx/sites-available/agoramarket` 維護,
+# 詳 `docs/runbooks/nginx-cache-config.md`。
+#
+# 設計原則:
+#   - HTML 短期 cache,讓 SW 能把 shell 接管
+#   - Content-addressed files(deferred chunks)→ immutable, 1 year
+#   - main.dart.js 短期(SW 走 stale-while-revalidate,不需 server 強制 refresh)
+#   - Static assets 中期(SW 走 cache-first,server miss 時用)
+#
+# See: #167 service worker epic + docs/audits/canvaskit-lazy-load-audit.md
+
+# === HTML pages — 短期,SW 接管 shell 後不依賴此 ===
+/
+  Cache-Control: public, max-age=300, must-revalidate
+/index.html
+  Cache-Control: public, max-age=300, must-revalidate
+
+# === Manifest / SW registration ===
+/manifest.json
+  Cache-Control: public, max-age=600
+/flutter_service_worker.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+# === Bootstrap + entry ===
+/flutter_bootstrap.js
+  Cache-Control: public, max-age=600
+/flutter.js
+  Cache-Control: public, max-age=600
+
+# === main.dart.js — short cache, SW handles staleness via SWR ===
+/main.dart.js
+  Cache-Control: public, max-age=300, must-revalidate
+
+# === Deferred chunks — content addressed, immutable per build ===
+# Pattern: main.dart.js_<hash>.part.js — filename changes when content changes,
+# 安全 cache 一年。
+/main.dart.js_*.part.js
+  Cache-Control: public, max-age=31536000, immutable
+
+# === Static assets — long cache(asset hash 通常嵌在路徑)===
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+/icons/*
+  Cache-Control: public, max-age=31536000, immutable
+/splash/*
+  Cache-Control: public, max-age=86400
+
+# === Fonts ===
+/assets/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+*.ttf
+  Cache-Control: public, max-age=31536000, immutable
+*.otf
+  Cache-Control: public, max-age=31536000, immutable
+
+# === API responses (cross-origin, browser handles) — listed for completeness ===
+# /api/* — 由 backend Spring Boot Cache-Control header 控制

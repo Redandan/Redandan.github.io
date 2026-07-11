@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>AgoraMarket</title>
+  <style>
+    html, body {
+      margin: 0; width: 100%; min-height: 100%;
+      background: #0a0a0a;
+      display: flex; align-items: center; justify-content: center;
+      box-sizing: border-box;
+    }
+    p { color: #c0ccff; font-family: Arial, sans-serif; font-size: 14px; }
+    .probe-panel {
+      width: min(92vw, 760px);
+      max-height: 90vh;
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid #2f3a5f;
+      border-radius: 8px;
+      background: #101624;
+      color: #e5ecff;
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+      font-family: Arial, sans-serif;
+    }
+    .probe-panel h1 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .probe-panel p {
+      margin: 0 0 14px;
+      color: #aebbf2;
+      line-height: 1.45;
+    }
+    .probe-panel pre {
+      margin: 0;
+      padding: 12px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border-radius: 6px;
+      background: #07101f;
+      color: #e8f0ff;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .probe-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .probe-actions button {
+      min-height: 38px;
+      border: 0;
+      border-radius: 6px;
+      padding: 0 14px;
+      background: #4068ff;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .probe-actions button.secondary {
+      background: #27324d;
+    }
+  </style>
+</head>
+<body>
+  <p id="status">載入中...</p>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="./tg_store_routing.js"></script>
+  <script>
+    (function () {
+      var API_BASE = 'https://agoramarketapi.purrtechllc.com/api';
+      var statusEl = document.getElementById('status');
+      function setStatus(t) { if (statusEl) statusEl.textContent = t; }
+      function parseQuery(value) {
+        var out = {};
+        if (!value) return out;
+        var search = String(value);
+        if (search.charAt(0) === '?') search = search.slice(1);
+        if (!search) return out;
+        var params = new URLSearchParams(search);
+        params.forEach(function (paramValue, key) {
+          out[key] = paramValue;
+        });
+        return out;
+      }
+      function readInitDataSummary(initData) {
+        var params = parseQuery(initData);
+        return {
+          present: Boolean(initData),
+          hasHash: Boolean(params.hash),
+          hasUser: Boolean(params.user),
+          hasAuthDate: Boolean(params.auth_date),
+        };
+      }
+      function buildProbeEvidence(routeTarget, tg, authBody, authResult) {
+        var locationParams = parseQuery(window.location.search);
+        return {
+          capturedAt: new Date().toISOString(),
+          source: 'tg-store-ref-probe',
+          location: {
+            searchKeys: Object.keys(locationParams).sort(),
+            startapp: locationParams.startapp || '',
+            tgWebAppStartParam: locationParams.tgWebAppStartParam || '',
+          },
+          telegramRuntime: {
+            hasWebApp: Boolean(tg),
+            initDataUnsafeStartParam: String((tg.initDataUnsafe || {}).start_param || ''),
+            initDataSummary: readInitDataSummary(String(tg.initData || '')),
+          },
+          resolvedRoute: {
+            route: routeTarget.route,
+            ref: routeTarget.ref,
+            referrerGroupId: routeTarget.referrerGroupId,
+            targetPath: routeTarget.targetPath,
+            hashTarget: routeTarget.hashTarget,
+          },
+          authRequest: {
+            endpoint: '/api/auth/telegram-webapp/exchange-jwt',
+            initData: '<redacted>',
+            sentReferrerGroupId: Object.prototype.hasOwnProperty.call(authBody, 'referrerGroupId'),
+            referrerGroupId: authBody.referrerGroupId == null ? null : authBody.referrerGroupId,
+          },
+          authResponse: authResult,
+        };
+      }
+      function showProbeEvidence(evidence, continueFn) {
+        if (statusEl) statusEl.style.display = 'none';
+        var panel = document.createElement('main');
+        panel.className = 'probe-panel';
+        var title = document.createElement('h1');
+        title.textContent = 'TG Referrer Probe';
+        var note = document.createElement('p');
+        note.textContent = 'Sanitized runtime evidence. initData, JWT, bot tokens, and API keys are redacted.';
+        var pre = document.createElement('pre');
+        pre.textContent = JSON.stringify(evidence, null, 2);
+        var actions = document.createElement('div');
+        actions.className = 'probe-actions';
+        var copy = document.createElement('button');
+        copy.textContent = 'Copy Evidence';
+        copy.onclick = async function () {
+          try {
+            await navigator.clipboard.writeText(pre.textContent);
+            copy.textContent = 'Copied';
+          } catch (_) {
+            copy.textContent = 'Copy Failed';
+          }
+        };
+        actions.appendChild(copy);
+        if (typeof continueFn === 'function') {
+          var next = document.createElement('button');
+          next.className = 'secondary';
+          next.textContent = 'Continue';
+          next.onclick = continueFn;
+          actions.appendChild(next);
+        }
+        panel.appendChild(title);
+        panel.appendChild(note);
+        panel.appendChild(pre);
+        panel.appendChild(actions);
+        document.body.innerHTML = '';
+        document.body.appendChild(panel);
+      }
+
+      var tg = window.Telegram && window.Telegram.WebApp;
+      if (!tg) { setStatus('請在 Telegram 中開啟'); return; }
+      tg.ready();
+      tg.expand();
+      if (typeof tg.disableVerticalSwipes === 'function') {
+        tg.disableVerticalSwipes();
+      }
+
+      var initData = String(tg.initData || '').trim();
+      if (!initData) { setStatus('無法取得 Telegram 身分資訊'); return; }
+
+      (async function () {
+        try {
+          var routeTarget = window.TgStoreRouting.resolveTarget({
+            search: window.location.search,
+            initDataUnsafe: tg.initDataUnsafe || {},
+          });
+
+          setStatus('驗證身分中...');
+          var authBody = { initData: initData };
+          if (routeTarget.referrerGroupId !== null) {
+            authBody.referrerGroupId = routeTarget.referrerGroupId;
+          }
+          var authResult = { status: null, ok: false };
+          var resp = await fetch(API_BASE + '/auth/telegram-webapp/exchange-jwt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(authBody),
+          });
+          authResult.status = resp.status;
+          authResult.ok = resp.ok;
+          if (!resp.ok) {
+            console.error('[tg/store] auth failed: endpoint=exchange-jwt status=' + resp.status);
+            if (routeTarget.probe) {
+              showProbeEvidence(buildProbeEvidence(routeTarget, tg, authBody, authResult), null);
+              return;
+            }
+            setStatus('登入失敗 (' + resp.status + ')');
+            return;
+          }
+
+          var json = await resp.json();
+          var body = json.data != null ? json.data : json;
+          var jwt = String(body.jwt || body.token || body.accessToken || '').trim();
+          if (!jwt) { setStatus('登入失敗（無 token）'); return; }
+
+          var userInfo = body.userInfo || body || {};
+          var userId = String(userInfo.id || userInfo.userId || body.userId || '');
+          var userRole = String(userInfo.role || body.role || 'USER').toUpperCase();
+          authResult.tokenReceived = Boolean(jwt);
+          authResult.responseUserIdPresent = Boolean(userId);
+          authResult.role = userRole || 'USER';
+
+          // 儲存至 localStorage，Flutter 啟動時讀取
+          localStorage.setItem('_tg_store_jwt',  jwt);
+          localStorage.setItem('_tg_store_uid',  userId);
+          localStorage.setItem('_tg_store_role', userRole);
+          localStorage.setItem('_tg_store_target_path', routeTarget.targetPath);
+          if (routeTarget.ref) {
+            localStorage.setItem('_tg_store_ref', routeTarget.ref);
+          } else {
+            localStorage.removeItem('_tg_store_ref');
+          }
+
+          setStatus('進入商城中...');
+          if (routeTarget.probe) {
+            showProbeEvidence(
+              buildProbeEvidence(routeTarget, tg, authBody, authResult),
+              function () { window.location.replace(routeTarget.hashTarget); }
+            );
+            return;
+          }
+          window.location.replace(routeTarget.hashTarget);
+        } catch (err) {
+          console.error('[tg/store] error: errorType=' + ((err && err.name) || 'UnknownError'));
+          setStatus('載入錯誤，請重試');
+        }
+      })();
+    })();
+  </script>
+</body>
+</html>
