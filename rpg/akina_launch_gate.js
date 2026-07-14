@@ -21,7 +21,17 @@
 
   function parseTimestamp(value) {
     if (typeof value !== 'string' || value.trim() === '') return NaN;
-    return Date.parse(value);
+    var timestamp = value.trim();
+    // The API serializes UTC LocalDateTime values without an offset. Browsers
+    // otherwise interpret those values in the device time zone.
+    if (
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,9})?)?$/.test(
+        timestamp,
+      )
+    ) {
+      timestamp += 'Z';
+    }
+    return Date.parse(timestamp);
   }
 
   function validateExchangeResponse(value, nowMs) {
