@@ -6,7 +6,7 @@
     "display": "standalone",
     "background_color": "#2196F3",
     "theme_color": "#2196F3",
-    "description": "Agora Market - Your Trading Community",
+    "description": "台灣與泰國生活用品線上市集，支援網頁與 Telegram Mini App。",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "categories": ["shopping", "marketplace"],

@@ -560,6 +560,26 @@
             return localStorage.getItem('agora_source_host') || window.location.origin;
         }
 
+        // Registration may be entered from a protected buyer action. Only
+        // preserve same-origin application paths; never redirect to a supplied
+        // host after credentials have been created.
+        function getSafeReturnTo() {
+            const rawTarget = new URLSearchParams(window.location.search).get('returnTo');
+            if (!rawTarget || !rawTarget.startsWith('/') || rawTarget.startsWith('//')) {
+                return '/';
+            }
+
+            try {
+                const target = new URL(rawTarget, window.location.origin);
+                if (target.origin !== window.location.origin || target.pathname === '/login') {
+                    return '/';
+                }
+                return target.pathname + target.search + target.hash;
+            } catch (_) {
+                return '/';
+            }
+        }
+
         // 初始化 Turnstile
         function initTurnstile() {
             const checkTurnstile = setInterval(() => {
@@ -1065,8 +1085,9 @@
                         const sourceHost = getSourceHost();
                         console.log('🔍 [DEBUG] 來源 host:', sourceHost);
                         
-                        // 跳轉到 Flutter 應用的根路徑，讓 Flutter 處理路由
-                        const targetUrl = sourceHost + '/';
+                        // Restore the protected buyer action when registration
+                        // was entered with a validated local return target.
+                        const targetUrl = sourceHost + getSafeReturnTo();
                         console.log('🚀 [INFO] 跳轉目標 URL:', targetUrl);
                         
                         // 添加短暫延遲，確保所有操作完成
