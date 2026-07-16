@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- 版本化緩存標識 -->
-    <meta name="cache-version" content="1.0.1904">
+    <meta name="cache-version" content="1.0.1905">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -24,8 +24,8 @@
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://agoramarket.purrtechllc.com/">
-  <meta name="version" content="1.0.1904+1904">
-  <meta name="source-commit" content="85e4b5efc609bcd76e3ddc9e309453693e80159b">
+  <meta name="version" content="1.0.1905+1905">
+  <meta name="source-commit" content="03e739f4d6d957b191fdca23313cafbdb0b10483">
 
   <!-- Fix 1: Removed vh-based viewport logic - conflicts with visualViewport root model -->
   
@@ -129,44 +129,6 @@
       color: #fff;
       cursor: pointer;
     }
-    #official-mirror-banner {
-      position: fixed;
-      top: max(8px, env(safe-area-inset-top));
-      left: 12px;
-      right: 12px;
-      z-index: 10001;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 10px 12px;
-      border-radius: 10px;
-      background: rgba(29, 78, 216, 0.96);
-      color: #fff;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 14px;
-      line-height: 1.4;
-      text-align: center;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.35);
-    }
-    #official-mirror-banner a {
-      color: #fff;
-      font-weight: 700;
-      text-decoration: underline;
-      white-space: nowrap;
-    }
-    #official-mirror-banner button {
-      min-width: 44px;
-      min-height: 44px;
-      padding: 0;
-      flex: 0 0 auto;
-      border: 0;
-      background: transparent;
-      color: #fff;
-      font-size: 20px;
-      line-height: 1;
-      cursor: pointer;
-    }
   </style>
 
   <!-- Cross-Origin Isolation Headers for SharedArrayBuffers -->
@@ -208,7 +170,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market｜台灣與泰國生活用品線上市集</title>
-  <link rel="manifest" href="manifest.json?v=1.0.1904">
+  <link rel="manifest" href="manifest.json?v=1.0.1905">
   
   <!-- PWA ?????????????????? -->
   <meta name="application-name" content="Agora Market">
@@ -216,7 +178,7 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ???????????????????????????????????????????? -->
-  <link rel="preload" href="flutter_bootstrap.1.0.1904.js" as="script">
+  <link rel="preload" href="flutter_bootstrap.1.0.1905.js" as="script">
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -363,7 +325,7 @@
       text-align: center;
     }
 
-    #loading-screen > a[href="/products"] {
+    #startup-product-search-link {
       color: var(--startup-text);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       font-size: 14px;
@@ -405,32 +367,34 @@
 
     /* Patch 1: Removed all position: fixed from .flutter-ready rules */
   </style>
+  <noscript>
+    <style>
+      html, body { height: auto; min-height: 100%; overflow: auto; }
+      #loading-screen, #flutter-root { display: none; }
+      #noscript-marketplace { box-sizing: border-box; max-width: 52rem; margin: 0 auto; padding: 3rem 1.25rem; color: #182230; background: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; }
+      #noscript-marketplace h1 { margin: 0 0 1rem; font-size: clamp(2rem, 6vw, 3.25rem); line-height: 1.15; }
+      #noscript-marketplace nav { display: flex; flex-wrap: wrap; gap: .75rem; margin: 1.5rem 0; }
+      #noscript-marketplace a { display: inline-block; padding: .7rem 1rem; border-radius: .6rem; background: #0057b8; color: #fff; font-weight: 700; text-decoration: none; }
+    </style>
+  </noscript>
 </head>
 <body>
-  <aside id="official-mirror-banner" aria-label="AgoraMarket 正式商城入口">
-    <span>AgoraMarket 正式商城已上線</span>
-    <a href="https://agoramarket.purrtechllc.com/?utm_source=github_pages&amp;utm_medium=legacy_mirror&amp;utm_campaign=official_marketplace">前往正式商城</a>
-    <button type="button" aria-label="關閉正式商城提示">&times;</button>
-  </aside>
-  <script>
-    (function () {
-      if (window.location.hostname !== 'redandan.github.io') return;
-      var banner = document.getElementById('official-mirror-banner');
-      if (!banner) return;
-      banner.style.display = 'flex';
-      var dismiss = banner.querySelector('button');
-      if (dismiss) {
-        dismiss.addEventListener('click', function () {
-          banner.style.display = 'none';
-        });
-      }
-    })();
-  </script>
+  <noscript>
+    <main id="noscript-marketplace">
+      <h1>Agora Market 線上市集</h1>
+      <p>免登入即可瀏覽台灣與泰國生活用品、居家用品、食品與精選代購商品。</p>
+      <nav aria-label="Agora Market 商品入口">
+        <a href="https://agoramarket.purrtechllc.com/products?utm_source=noscript&amp;utm_medium=web&amp;utm_campaign=marketplace_catalog">瀏覽公開商品目錄</a>
+        <a href="https://agoramarket.purrtechllc.com/search?utm_source=noscript&amp;utm_medium=web&amp;utm_campaign=marketplace_landing">啟用 JavaScript 後搜尋商品</a>
+      </nav>
+      <p>目前瀏覽器未啟用 JavaScript。你仍可瀏覽公開商品目錄；若要搜尋、登入、加入購物車或完成購買，請啟用 JavaScript。</p>
+    </main>
+  </noscript>
 
   <!-- Loading screen lives outside #flutter-root so iOS PWA viewport transforms cannot move it. -->
   <div id="loading-screen">
     <div class="loading-text" id="loading-text">&#36617;&#20837;&#20013;...</div>
-    <a href="/products">瀏覽商品</a>
+    <a id="startup-product-search-link" href="https://agoramarket.purrtechllc.com/search?utm_source=homepage&amp;utm_medium=loading_screen&amp;utm_campaign=marketplace_entry">瀏覽商品</a>
   </div>
 
   <!-- Patch 2: Flutter root container for iOS 17+ touch fix -->
@@ -1308,6 +1272,29 @@
   </script>
 
   <script src="passkey_helper.js"></script>
+  <script id="public-route-bridge">
+    (function () {
+      'use strict';
+      if (window.location.hash) return;
+
+      var routeQuery = null;
+      if (window.location.pathname === '/search') {
+        routeQuery = window.location.search || '';
+      } else if (window.location.pathname === '/index.html') {
+        try {
+          var savedPath = sessionStorage.getItem('_404_redirect_path') || '';
+          var savedUrl = new URL(savedPath, window.location.origin);
+          if (savedUrl.pathname === '/search' && !savedUrl.hash) {
+            routeQuery = savedUrl.search || '';
+            sessionStorage.removeItem('_404_redirect_path');
+          }
+        } catch (_) {}
+      }
+
+      if (routeQuery === null) return;
+      window.history.replaceState(null, '', '/' + routeQuery + '#/search');
+    })();
+  </script>
   <script>
     (function() {
       var versionMeta = document.querySelector('meta[name="version"]');
@@ -1316,7 +1303,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.1.0.1904.js";
+        script.src = "flutter_bootstrap.1.0.1905.js";
         script.async = true;
         document.body.appendChild(script);
       }

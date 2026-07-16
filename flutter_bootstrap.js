@@ -33,7 +33,7 @@ addEventListener("message", eventListener);
 if (!window._flutter) {
   window._flutter = {};
 }
-_flutter.buildConfig = {"engineRevision":"425cfb54d01a9472b3e81d9e76fd63a4a44cfbcb","builds":[{"compileTarget":"dart2js","renderer":"canvaskit","mainJsPath":"main.dart.1.0.1904.js"},{}]};
+_flutter.buildConfig = {"engineRevision":"425cfb54d01a9472b3e81d9e76fd63a4a44cfbcb","builds":[{"compileTarget":"dart2js","renderer":"canvaskit","mainJsPath":"main.dart.1.0.1905.js"},{}]};
 
 _flutter.loader.load({
   config: {
@@ -42,6 +42,6 @@ _flutter.loader.load({
     canvasKitVariant: "full"
   },
   serviceWorkerSettings: {
-    serviceWorkerVersion: "3626730623" /* Flutter's service worker is deprecated and will be removed in a future Flutter release. */
+    serviceWorkerVersion: "1887079522" /* Flutter's service worker is deprecated and will be removed in a future Flutter release. */
   }
 });
