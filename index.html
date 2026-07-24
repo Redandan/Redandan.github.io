@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <!-- 針對 HTML 文件的緩存控制 - 短期緩存以便 Service Worker 處理 -->
+    <!-- ?? HTML ?辣?楨摮??- ?剜?蝺拙?隞乩噶 Service Worker ?? -->
     <meta http-equiv="Cache-Control" content="max-age=300, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <!-- 版本化緩存標識 -->
-    <meta name="cache-version" content="1.0.1905">
+    <!-- ??楨摮?霅?-->
+    <meta name="cache-version" content="1.0.1906">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -19,13 +19,81 @@
   <!-- Permissions Policy -->
   <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(self), notifications=(self), payment=(), publickey-credentials-get=(self), publickey-credentials-create=(self)">
   
-  <meta name="description" content="Agora Market 線上市集，提供台灣與泰國生活用品、居家用品及精選商品。免登入即可瀏覽商品，支援網頁與 Telegram Mini App。">
-  <meta name="keywords" content="Agora Market,線上市集,台灣購物,泰國購物,生活用品,居家用品,Telegram Mini App">
+  <meta name="description" content="Agora Market ?綜垢????????????????賹?????蹓??啣??蹓??蹓????蹇??擗??啾??湔???????皜⊿?蹓? Telegram Mini App??>
+  <meta name="keywords" content="Agora Market,?綜垢?????,??遜???????????賹????,?????,Telegram Mini App">
   <meta name="author" content="Agora Market">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://agoramarket.purrtechllc.com/">
-  <meta name="version" content="1.0.1905+1905">
-  <meta name="source-commit" content="03e739f4d6d957b191fdca23313cafbdb0b10483">
+  <link rel="alternate" hreflang="zh-Hant" href="https://agoramarket.purrtechllc.com/">
+  <link rel="alternate" hreflang="th" href="https://agoramarket.purrtechllc.com/marketplace-th.html">
+  <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
+  <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
+  <link rel="alternate" type="application/atom+xml" title="Agora Market ??????? href="https://agoramarket.purrtechllc.com/feed.xml">
+  <meta name="version" content="1.0.1906+1906">
+  <meta name="source-commit" content="7f3f7dadc77de679aa3ca17e1e6bd3c87eb4098b">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    // Request the largest available Telegram Mini App viewport before Flutter
+    // starts. iOS can lock the first layout pass to a half-height sheet if this
+    // waits until the Dart bundle is loaded.
+    (function () {
+      'use strict';
+
+      function hasTelegramVersion(webApp, version) {
+        try {
+          return typeof webApp.isVersionAtLeast === 'function' &&
+            webApp.isVersionAtLeast(version) === true;
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function isMobileTelegramWebApp(webApp) {
+        try {
+          var platform = String(webApp && webApp.platform || '').toLowerCase();
+          if (platform === 'ios' || platform === 'android' || platform === 'android_x') {
+            return true;
+          }
+          if (platform === 'tdesktop' || platform === 'weba' || platform === 'webk' ||
+              platform === 'macos' || platform === 'windows' || platform === 'linux') {
+            return false;
+          }
+        } catch (_) {}
+        try {
+          var ua = String(navigator.userAgent || '');
+          if (/Android|iPhone|iPad|iPod|Mobile/i.test(ua)) return true;
+        } catch (_) {}
+        try {
+          return window.matchMedia &&
+            window.matchMedia('(pointer: coarse) and (max-width: 900px)').matches;
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function requestViewport(reason) {
+        try {
+          var webApp = window.Telegram && window.Telegram.WebApp;
+          if (!webApp) return;
+          if (typeof webApp.ready === 'function') webApp.ready();
+          if (typeof webApp.expand === 'function') webApp.expand();
+          if (typeof webApp.disableVerticalSwipes === 'function') {
+            webApp.disableVerticalSwipes();
+          }
+          if (isMobileTelegramWebApp(webApp) &&
+              hasTelegramVersion(webApp, '8.0') &&
+              typeof webApp.requestFullscreen === 'function') {
+            webApp.requestFullscreen();
+          }
+          window.__agoraTelegramViewportRequested = reason;
+        } catch (_) {}
+      }
+
+      requestViewport('index-startup');
+      setTimeout(function () { requestViewport('index-retry-250ms'); }, 250);
+      setTimeout(function () { requestViewport('index-retry-900ms'); }, 900);
+    })();
+  </script>
 
   <!-- Fix 1: Removed vh-based viewport logic - conflicts with visualViewport root model -->
   
@@ -169,8 +237,8 @@
   <link rel="icon" type="image/x-icon" href="icons/new_favicon/favicon.ico">
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
-  <title>Agora Market｜台灣與泰國生活用品線上市集</title>
-  <link rel="manifest" href="manifest.json?v=1.0.1905">
+  <title>Agora Market?高???????賹?????綜垢?????</title>
+  <link rel="manifest" href="manifest.json?v=1.0.1906">
   
   <!-- PWA ?????????????????? -->
   <meta name="application-name" content="Agora Market">
@@ -178,7 +246,7 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ???????????????????????????????????????????? -->
-  <link rel="preload" href="flutter_bootstrap.1.0.1905.js" as="script">
+  <link rel="preload" href="flutter_bootstrap.1.0.1906.js" as="script">
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -190,8 +258,8 @@
   <link rel="dns-prefetch" href="https://www.gstatic.com">
   
   <!-- SEO ?????????????Open Graph - ???????PNG -->
-  <meta property="og:title" content="Agora Market｜台灣與泰國生活用品線上市集">
-  <meta property="og:description" content="免登入瀏覽台灣與泰國生活用品、居家用品及精選商品，支援網頁與 Telegram Mini App。">
+  <meta property="og:title" content="Agora Market?高???????賹?????綜垢?????">
+  <meta property="og:description" content="??貝?鈭汕?湔???遜??芷????????蹓嗽蹓??啣??蹓??蹓??????皜⊿?蹓? Telegram Mini App??>
   <meta property="og:image" content="https://agoramarket.purrtechllc.com/icons/new_favicon/web-app-manifest-512x512.png">
   <meta property="og:image:secure_url" content="https://agoramarket.purrtechllc.com/icons/new_favicon/web-app-manifest-512x512.png">
   <meta property="og:image:alt" content="Agora Market">
@@ -202,8 +270,8 @@
   
   <!-- Twitter Card - ???????PNG -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Agora Market｜台灣與泰國生活用品線上市集">
-  <meta name="twitter:description" content="免登入瀏覽台灣與泰國生活用品、居家用品及精選商品。">
+  <meta name="twitter:title" content="Agora Market?高???????賹?????綜垢?????">
+  <meta name="twitter:description" content="??貝?鈭汕?湔???遜??芷????????蹓嗽蹓??啣??蹓??蹓?????>
   <meta name="twitter:image" content="https://agoramarket.purrtechllc.com/icons/new_favicon/web-app-manifest-512x512.png">
   <meta name="twitter:image:src" content="https://agoramarket.purrtechllc.com/icons/new_favicon/web-app-manifest-512x512.png">
 
@@ -213,7 +281,7 @@
       "@type": "WebSite",
       "name": "Agora Market",
       "url": "https://agoramarket.purrtechllc.com/",
-      "description": "台灣與泰國生活用品線上市集，支援網頁與 Telegram Mini App。",
+      "description": "??遜??芷????????蹓???????????祈???Telegram Mini App??,
       "inLanguage": ["zh-TW", "th", "en"]
     }
   </script>
@@ -325,7 +393,15 @@
       text-align: center;
     }
 
-    #startup-product-search-link {
+    .startup-marketplace-links {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    #startup-product-search-link,
+    #startup-product-catalog-link {
       color: var(--startup-text);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       font-size: 14px;
@@ -373,28 +449,52 @@
       #loading-screen, #flutter-root { display: none; }
       #noscript-marketplace { box-sizing: border-box; max-width: 52rem; margin: 0 auto; padding: 3rem 1.25rem; color: #182230; background: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; }
       #noscript-marketplace h1 { margin: 0 0 1rem; font-size: clamp(2rem, 6vw, 3.25rem); line-height: 1.15; }
+      #noscript-marketplace h2 { margin: 2rem 0 .5rem; font-size: 1.25rem; }
       #noscript-marketplace nav { display: flex; flex-wrap: wrap; gap: .75rem; margin: 1.5rem 0; }
       #noscript-marketplace a { display: inline-block; padding: .7rem 1rem; border-radius: .6rem; background: #0057b8; color: #fff; font-weight: 700; text-decoration: none; }
+      #noscript-marketplace .category-link { background: #eaf2ff; color: #003f88; }
     </style>
   </noscript>
 </head>
 <body>
   <noscript>
     <main id="noscript-marketplace">
-      <h1>Agora Market 線上市集</h1>
-      <p>免登入即可瀏覽台灣與泰國生活用品、居家用品、食品與精選代購商品。</p>
-      <nav aria-label="Agora Market 商品入口">
-        <a href="https://agoramarket.purrtechllc.com/products?utm_source=noscript&amp;utm_medium=web&amp;utm_campaign=marketplace_catalog">瀏覽公開商品目錄</a>
-        <a href="https://agoramarket.purrtechllc.com/search?utm_source=noscript&amp;utm_medium=web&amp;utm_campaign=marketplace_landing">啟用 JavaScript 後搜尋商品</a>
+      <h1>Agora Market ?綜垢?????</h1>
+      <p>??貝?鈭???湔???遜??芷????????蹓嗽蹓??啣??蹓嗽蹓??蹓??蹓????????/p>
+      <nav aria-label="Agora Market ????鈭">
+        <a href="https://agoramarket.purrtechllc.com/products?utm_source=noscript&amp;utm_medium=web&amp;utm_campaign=marketplace_catalog">??湔??蟡?????獢?</a>
+        <a href="https://agoramarket.purrtechllc.com/categories.html" hreflang="zh-Hant" lang="zh-Hant">????????瘙?/a>
+        <a href="https://agoramarket.purrtechllc.com/categories-th.html" hreflang="th" lang="th">?????????敺??????寥?憳???拚?謕?????/a>
+        <a href="https://agoramarket.purrtechllc.com/categories-en.html" hreflang="en" lang="en">Product category guide</a>
+        <a href="https://agoramarket.purrtechllc.com/marketplace-th.html" hreflang="th" lang="th">?????????謕?????????????/a>
+        <a href="https://agoramarket.purrtechllc.com/marketplace-en.html" hreflang="en" lang="en">English marketplace</a>
+        <a href="https://agoramarket.purrtechllc.com/search?utm_source=noscript&amp;utm_medium=web&amp;utm_campaign=marketplace_landing">?賹? JavaScript ?綽??????/a>
+        <a href="https://agoramarket.purrtechllc.com/official.html">?謚恃? AgoraMarket</a>
+        <a href="https://agoramarket.purrtechllc.com/official-th.html" hreflang="th">AgoraMarket ???⊿???????/a>
+        <a href="https://agoramarket.purrtechllc.com/official-en.html" hreflang="en">AgoraMarket in English</a>
+        <a href="https://agoramarket.purrtechllc.com/spend-usdt-costco-taiwan.html">??USDT ??Costco Taiwan ???</a>
+        <a href="https://agoramarket.purrtechllc.com/telegram-shop-with-usdt.html">Telegram USDT ????????</a>
       </nav>
-      <p>目前瀏覽器未啟用 JavaScript。你仍可瀏覽公開商品目錄；若要搜尋、登入、加入購物車或完成購買，請啟用 JavaScript。</p>
+      <h2>?璇???????</h2>
+      <nav aria-label="Agora Market ?璇???????">
+        <a class="category-link" href="https://agoramarket.purrtechllc.com/products/categories/electronics">3C ?擗?</a>
+        <a class="category-link" href="https://agoramarket.purrtechllc.com/products/categories/clothing">???/a>
+        <a class="category-link" href="https://agoramarket.purrtechllc.com/products/categories/beauty">?ｆ???踐??</a>
+        <a class="category-link" href="https://agoramarket.purrtechllc.com/products/categories/health-care">?鈭???舫◢</a>
+        <a class="category-link" href="https://agoramarket.purrtechllc.com/products/categories/furniture-decor">?啣????/a>
+        <a class="category-link" href="https://agoramarket.purrtechllc.com/products/categories/pet-supplies">??????</a>
+      </nav>
+      <p>?獢???湔???踐秤?賹? JavaScript?蹇??????湔??蟡?????獢????蹓????蹓踐貝?銋蹓??鈭仿?????謘????????ｇ????JavaScript??/p>
     </main>
   </noscript>
 
   <!-- Loading screen lives outside #flutter-root so iOS PWA viewport transforms cannot move it. -->
   <div id="loading-screen">
     <div class="loading-text" id="loading-text">&#36617;&#20837;&#20013;...</div>
-    <a id="startup-product-search-link" href="https://agoramarket.purrtechllc.com/search?utm_source=homepage&amp;utm_medium=loading_screen&amp;utm_campaign=marketplace_entry">瀏覽商品</a>
+    <nav class="startup-marketplace-links" aria-label="Agora Market ????鈭">
+      <a id="startup-product-catalog-link" href="https://agoramarket.purrtechllc.com/products">??湔?????獢?</a>
+      <a id="startup-product-search-link" href="https://agoramarket.purrtechllc.com/search">?謚????</a>
+    </nav>
   </div>
 
   <!-- Patch 2: Flutter root container for iOS 17+ touch fix -->
@@ -1272,6 +1372,257 @@
   </script>
 
   <script src="passkey_helper.js"></script>
+  <script id="marketplace-landing-observation">
+    (function () {
+      'use strict';
+
+      if (window.location.protocol !== 'https:' ||
+          window.location.hostname !== 'agoramarket.purrtechllc.com') {
+        return;
+      }
+
+      var storageKey = 'agora_marketplace_landing_observed_v1';
+      var pendingPrefix = 'pending:';
+      var pendingLeaseMs = 30000;
+      try {
+        var observationState = window.sessionStorage.getItem(storageKey);
+        if (observationState === 'recorded') return;
+        if (observationState && observationState.indexOf(pendingPrefix) === 0) {
+          var pendingAt = Number(observationState.slice(pendingPrefix.length));
+          var pendingAgeMs = Date.now() - pendingAt;
+          if (window.isFinite(pendingAt) && pendingAgeMs >= 0 && pendingAgeMs < pendingLeaseMs) {
+            return;
+          }
+        }
+        window.sessionStorage.setItem(storageKey, pendingPrefix + Date.now());
+      } catch (_) {}
+
+      var endpoint = 'https://agoramarketapi.purrtechllc.com/api/public/traffic/visit';
+      var ownedEntryPresets = [
+        'official_page|web|marketplace_entry',
+        'official_th_page|web|marketplace_entry',
+        'official_en_page|web|marketplace_entry',
+        'noscript|web|marketplace_catalog',
+        'noscript|web|marketplace_landing',
+        'category_guide|organic|marketplace_catalog',
+        'category_guide|organic|marketplace_search',
+        'category_guide_th|organic|marketplace_catalog',
+        'category_guide_th|organic|marketplace_search',
+        'category_guide_en|organic|marketplace_catalog',
+        'category_guide_en|organic|marketplace_search',
+        'marketplace_th|organic|marketplace_catalog',
+        'marketplace_th|organic|marketplace_search',
+        'marketplace_en|organic|marketplace_catalog',
+        'marketplace_en|organic|marketplace_search',
+        'telegram|bot|bot_menu',
+        'telegram|bot|bot_profile',
+        'telegram|bot|product_search',
+        'telegram|community|catalog_discovery'
+      ];
+
+      function ownedEntryQuery() {
+        if (!window.URLSearchParams) return '';
+        try {
+          var params = new URLSearchParams(window.location.search);
+          var keys = ['utm_source', 'utm_medium', 'utm_campaign'];
+          if (keys.some(function (key) { return params.getAll(key).length !== 1; })) {
+            return '';
+          }
+          var values = keys.map(function (key) { return params.get(key); });
+          if (ownedEntryPresets.indexOf(values.join('|')) < 0) return '';
+          var safe = new URLSearchParams();
+          keys.forEach(function (key, index) { safe.set(key, values[index]); });
+          return '?' + safe.toString();
+        } catch (_) {
+          return '';
+        }
+      }
+
+      endpoint += ownedEntryQuery();
+
+      function readSignal(reader) {
+        try { return reader(); } catch (_) { return null; }
+      }
+
+      function boundedString(value, maxLength) {
+        if (typeof value !== 'string') return null;
+        var cleaned = value.replace(/[\u0000-\u001f\u007f]/g, ' ').trim();
+        if (!cleaned) return null;
+        return cleaned.length <= maxLength ? cleaned : cleaned.slice(0, maxLength);
+      }
+
+      function boundedNumber(value, maxValue) {
+        if (value === null || typeof value === 'undefined' || value === '') return null;
+        var number = Number(value);
+        if (!window.isFinite(number) || number < 0 || number > maxValue) return null;
+        return number;
+      }
+
+      function boundedLanguages(value) {
+        if (!Array.isArray(value)) return [];
+        return value.slice(0, 8)
+          .map(function (item) { return boundedString(item, 64); })
+          .filter(function (item) { return item !== null; });
+      }
+
+      function deviceProfile() {
+        var timezone = null;
+        var screenProfile = {
+          width: null,
+          height: null,
+          colorDepth: null,
+          pixelRatio: null,
+          devicePixelRatio: null
+        };
+        try {
+          if (window.Intl && window.Intl.DateTimeFormat) {
+            timezone = boundedString(
+              new Intl.DateTimeFormat().resolvedOptions().timeZone,
+              128
+            );
+          }
+        } catch (_) {}
+        try {
+          if (window.screen) {
+            screenProfile.width = boundedNumber(window.screen.width, 100000);
+            screenProfile.height = boundedNumber(window.screen.height, 100000);
+            screenProfile.colorDepth = boundedNumber(window.screen.colorDepth, 256);
+          }
+          screenProfile.pixelRatio = boundedNumber(window.devicePixelRatio, 100);
+          screenProfile.devicePixelRatio = screenProfile.pixelRatio;
+        } catch (_) {}
+        return {
+          v: 1,
+          platform: boundedString(readSignal(function () { return navigator.platform; }), 128),
+          language: boundedString(readSignal(function () { return navigator.language; }), 64),
+          languages: boundedLanguages(readSignal(function () { return navigator.languages; })),
+          hardwareConcurrency: boundedNumber(
+            readSignal(function () { return navigator.hardwareConcurrency; }),
+            1024
+          ),
+          deviceMemory: boundedNumber(
+            readSignal(function () { return navigator.deviceMemory; }),
+            16384
+          ),
+          maxTouchPoints: boundedNumber(
+            readSignal(function () { return navigator.maxTouchPoints; }),
+            1024
+          ),
+          timezone: timezone,
+          timeZone: timezone,
+          screen: screenProfile
+        };
+      }
+
+      function profileHeader(profile) {
+        if (!window.TextEncoder || !window.btoa) return null;
+        try {
+          var bytes = new TextEncoder().encode(JSON.stringify(profile));
+          var binary = '';
+          for (var i = 0; i < bytes.length; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          var encoded = window.btoa(binary)
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=+$/, '');
+          return encoded.length <= 2048 ? encoded : null;
+        } catch (_) {
+          return null;
+        }
+      }
+
+      async function deviceFingerprint(profile) {
+        if (!window.crypto || !window.crypto.subtle || !window.TextEncoder) {
+          return null;
+        }
+        var material = JSON.stringify({
+          userAgent: boundedString(
+            readSignal(function () { return navigator.userAgent; }),
+            2048
+          ) || '',
+          profile: profile
+        });
+        try {
+          var digest = await window.crypto.subtle.digest(
+            'SHA-256',
+            new TextEncoder().encode(material)
+          );
+          return Array.from(new Uint8Array(digest))
+            .map(function (value) {
+              var hex = value.toString(16);
+              return hex.length === 1 ? '0' + hex : hex;
+            })
+            .join('');
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function postObservation(headers) {
+        if (!window.fetch) {
+          if (!window.XMLHttpRequest) {
+            return Promise.reject(new Error('landing observation transport unavailable'));
+          }
+          return new Promise(function (resolve, reject) {
+            var request = new XMLHttpRequest();
+            request.open('POST', endpoint, true);
+            request.withCredentials = false;
+            request.onload = function () {
+              if (request.status >= 200 && request.status < 300) {
+                resolve();
+              } else {
+                reject(new Error('landing observation rejected'));
+              }
+            };
+            request.onerror = function () {
+              reject(new Error('landing observation failed'));
+            };
+            Object.keys(headers || {}).forEach(function (name) {
+              request.setRequestHeader(name, headers[name]);
+            });
+            request.send();
+          });
+        }
+        return window.fetch(endpoint, {
+          method: 'POST',
+          mode: 'cors',
+          credentials: 'omit',
+          cache: 'no-store',
+          keepalive: true,
+          referrerPolicy: 'strict-origin-when-cross-origin',
+          headers: headers || {}
+        }).then(function (response) {
+          if (!response.ok) throw new Error('landing observation rejected');
+        });
+      }
+
+      var profile = deviceProfile();
+      deviceFingerprint(profile)
+        .then(function (fingerprint) {
+          var headers = {};
+          var encodedProfile = profileHeader(profile);
+          if (encodedProfile) {
+            headers['X-Agora-Device-Profile'] = encodedProfile;
+          }
+          if (fingerprint) {
+            headers['X-Agora-Device-Fingerprint'] = fingerprint;
+          }
+          if (Object.keys(headers).length === 0) {
+            return postObservation();
+          }
+          return postObservation(headers).catch(function () {
+            return postObservation();
+          });
+        })
+        .then(function () {
+          try { window.sessionStorage.setItem(storageKey, 'recorded'); } catch (_) {}
+        })
+        .catch(function () {
+          try { window.sessionStorage.removeItem(storageKey); } catch (_) {}
+        });
+    })();
+  </script>
   <script id="public-route-bridge">
     (function () {
       'use strict';
@@ -1303,7 +1654,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.1.0.1905.js";
+        script.src = "flutter_bootstrap.1.0.1906.js";
         script.async = true;
         document.body.appendChild(script);
       }

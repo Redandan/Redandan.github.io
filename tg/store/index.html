@@ -75,6 +75,8 @@
   <script>
     (function () {
       var API_BASE = 'https://agoramarketapi.purrtechllc.com/api';
+      var USDT_TELEMETRY_ENDPOINT =
+        API_BASE + '/public/traffic/usdt-landing/events';
       var statusEl = document.getElementById('status');
       function setStatus(t) { if (statusEl) statusEl.textContent = t; }
       function parseQuery(value) {
@@ -88,6 +90,48 @@
           out[key] = paramValue;
         });
         return out;
+      }
+      function eventId() {
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+          return window.crypto.randomUUID();
+        }
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (token) {
+          var random = Math.floor(Math.random() * 16);
+          var value = token === 'x' ? random : (random & 0x3) | 0x8;
+          return value.toString(16);
+        });
+      }
+      function postStartappReceived(event, attempt) {
+        return fetch(USDT_TELEMETRY_ENDPOINT, {
+          method: 'POST',
+          mode: 'cors',
+          credentials: 'omit',
+          cache: 'no-store',
+          keepalive: true,
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(event),
+        }).then(function (response) {
+          if (!response.ok) throw new Error('telemetry status ' + response.status);
+          return response.json();
+        }).catch(function () {
+          if (attempt >= 1) return null;
+          return new Promise(function (resolve) {
+            setTimeout(function () {
+              resolve(postStartappReceived(event, attempt + 1));
+            }, 250);
+          });
+        });
+      }
+      function recordStartappReceived(routeTarget) {
+        if (!routeTarget || routeTarget.probe) return Promise.resolve(null);
+        var event = window.TgStoreRouting.buildStartappReceivedEvent(
+          routeTarget,
+          eventId()
+        );
+        return event ? postStartappReceived(event, 0) : Promise.resolve(null);
       }
       function readInitDataSummary(initData) {
         var params = parseQuery(initData);
@@ -129,6 +173,71 @@
           authResponse: authResult,
         };
       }
+      function hasTelegramVersion(webApp, version) {
+        try {
+          return typeof webApp.isVersionAtLeast === 'function' &&
+            webApp.isVersionAtLeast(version) === true;
+        } catch (_) {
+          return false;
+        }
+      }
+      function isMobileTelegramWebApp(webApp) {
+        try {
+          var platform = String(webApp && webApp.platform || '').toLowerCase();
+          if (platform === 'ios' || platform === 'android' || platform === 'android_x') {
+            return true;
+          }
+          if (platform === 'tdesktop' || platform === 'weba' || platform === 'webk' ||
+              platform === 'macos' || platform === 'windows' || platform === 'linux') {
+            return false;
+          }
+        } catch (_) {}
+        try {
+          var ua = String(navigator.userAgent || '');
+          if (/Android|iPhone|iPad|iPod|Mobile/i.test(ua)) return true;
+        } catch (_) {}
+        try {
+          return window.matchMedia &&
+            window.matchMedia('(pointer: coarse) and (max-width: 900px)').matches;
+        } catch (_) {
+          return false;
+        }
+      }
+      function requestTelegramViewport(webApp, reason) {
+        try {
+          if (!webApp) return;
+          if (typeof webApp.ready === 'function') webApp.ready();
+          if (typeof webApp.expand === 'function') webApp.expand();
+          if (typeof webApp.disableVerticalSwipes === 'function') {
+            webApp.disableVerticalSwipes();
+          }
+          if (isMobileTelegramWebApp(webApp) &&
+              hasTelegramVersion(webApp, '8.0') &&
+              typeof webApp.requestFullscreen === 'function') {
+            webApp.requestFullscreen();
+          }
+          window.__agoraTelegramViewportRequested = reason;
+        } catch (_) {}
+      }
+      function readTelegramThemeMode(webApp) {
+        try {
+          var colorScheme = String(webApp && webApp.colorScheme || '').trim().toLowerCase();
+          if (colorScheme === 'dark' || colorScheme === 'light') return colorScheme;
+        } catch (_) {}
+        try {
+          var params = (webApp && webApp.themeParams) || {};
+          var bg = String(params.bg_color || params.secondary_bg_color || '').trim().toLowerCase();
+          if (bg && /^#?[0-9a-f]{6}$/.test(bg)) {
+            var hex = bg.charAt(0) === '#' ? bg.slice(1) : bg;
+            var r = parseInt(hex.slice(0, 2), 16);
+            var g = parseInt(hex.slice(2, 4), 16);
+            var b = parseInt(hex.slice(4, 6), 16);
+            var luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+            return luminance < 0.5 ? 'dark' : 'light';
+          }
+        } catch (_) {}
+        return '';
+      }
       function showProbeEvidence(evidence, continueFn) {
         if (statusEl) statusEl.style.display = 'none';
         var panel = document.createElement('main');
@@ -169,11 +278,9 @@
 
       var tg = window.Telegram && window.Telegram.WebApp;
       if (!tg) { setStatus('請在 Telegram 中開啟'); return; }
-      tg.ready();
-      tg.expand();
-      if (typeof tg.disableVerticalSwipes === 'function') {
-        tg.disableVerticalSwipes();
-      }
+      requestTelegramViewport(tg, 'tg-store-startup');
+      setTimeout(function () { requestTelegramViewport(tg, 'tg-store-retry-250ms'); }, 250);
+      setTimeout(function () { requestTelegramViewport(tg, 'tg-store-retry-900ms'); }, 900);
 
       var initData = String(tg.initData || '').trim();
       if (!initData) { setStatus('無法取得 Telegram 身分資訊'); return; }
@@ -225,6 +332,12 @@
           localStorage.setItem('_tg_store_uid',  userId);
           localStorage.setItem('_tg_store_role', userRole);
           localStorage.setItem('_tg_store_target_path', routeTarget.targetPath);
+          var themeMode = readTelegramThemeMode(tg);
+          if (themeMode) {
+            localStorage.setItem('_tg_store_theme', themeMode);
+          } else {
+            localStorage.removeItem('_tg_store_theme');
+          }
           if (routeTarget.ref) {
             localStorage.setItem('_tg_store_ref', routeTarget.ref);
           } else {
@@ -232,6 +345,7 @@
           }
 
           setStatus('進入商城中...');
+          var startappTelemetry = recordStartappReceived(routeTarget);
           if (routeTarget.probe) {
             showProbeEvidence(
               buildProbeEvidence(routeTarget, tg, authBody, authResult),
@@ -239,6 +353,10 @@
             );
             return;
           }
+          await Promise.race([
+            startappTelemetry,
+            new Promise(function (resolve) { setTimeout(resolve, 300); }),
+          ]);
           window.location.replace(routeTarget.hashTarget);
         } catch (err) {
           console.error('[tg/store] error: errorType=' + ((err && err.name) || 'UnknownError'));

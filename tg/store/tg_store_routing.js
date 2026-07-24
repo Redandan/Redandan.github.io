@@ -23,6 +23,13 @@
       inStock: 'true',
     },
   };
+  var storefrontRoutes = {
+    usdt_shop: '/home',
+  };
+  var landingRoutePrefixes = {
+    usdt_costco_: 'USDT_COSTCO_TW',
+    usdt_telegram_: 'USDT_TELEGRAM_SHOP',
+  };
 
   function firstNonEmpty(values) {
     for (var i = 0; i < values.length; i += 1) {
@@ -104,6 +111,52 @@
     return { route: value.slice('probe_'.length), probe: true };
   }
 
+  function splitLandingRoute(route) {
+    var value = firstNonEmpty([route]);
+    var prefixes = Object.keys(landingRoutePrefixes);
+    for (var i = 0; i < prefixes.length; i += 1) {
+      var prefix = prefixes[i];
+      if (value.indexOf(prefix) === 0 && value.length > prefix.length) {
+        return {
+          route: value.slice(prefix.length),
+          landingPageId: landingRoutePrefixes[prefix],
+        };
+      }
+    }
+    return { route: value, landingPageId: null };
+  }
+
+  function buildStartappReceivedEvent(target, eventId) {
+    if (!target || !target.landingPageId || !eventId) return null;
+    var route = normalizeRoute(target.route);
+    var startapp = null;
+    var productId = null;
+    if (route === 'usdt_shop') {
+      startapp = 'USDT_SHOP';
+    } else if (route.indexOf('product_') === 0) {
+      var productValue = route.slice('product_'.length);
+      if (!/^\d+$/.test(productValue)) return null;
+      startapp = 'PRODUCT';
+      productId = Number(productValue);
+    } else if (route === 'catalog_costco_tw_household') {
+      startapp = 'CATALOG_COSTCO_TW_HOUSEHOLD';
+    } else if (route === 'catalog_costco_tw_pet') {
+      startapp = 'CATALOG_COSTCO_TW_PET';
+    } else if (route === 'catalog_makro_th_household') {
+      startapp = 'CATALOG_MAKRO_TH_HOUSEHOLD';
+    } else {
+      return null;
+    }
+    var event = {
+      eventId: eventId,
+      page: target.landingPageId,
+      event: 'USDT_STARTAPP_RECEIVED',
+      startapp: startapp,
+    };
+    if (productId != null) event.productId = productId;
+    return event;
+  }
+
   function appendQuery(path, query) {
     var keys = Object.keys(query).filter(function (key) {
       return query[key] != null && String(query[key]).trim() !== '';
@@ -131,9 +184,21 @@
       return sellerId ? appendQuery('/store/' + encodeURIComponent(sellerId), query) : '/home';
     }
 
+    if (normalized.indexOf('support_') === 0) {
+      var token = normalized.slice('support_'.length).trim();
+      return token
+        ? appendQuery('/support/workbench', { token: token })
+        : '/home';
+    }
+
     var catalog = catalogRoutes[normalized];
     if (catalog) {
       return appendQuery('/home', Object.assign({}, catalog, query));
+    }
+
+    var storefrontPath = storefrontRoutes[normalized];
+    if (storefrontPath) {
+      return appendQuery(storefrontPath, query);
     }
 
     return '/home';
@@ -152,7 +217,8 @@
     var embedded = splitEmbeddedRoute(startParam);
     var params = Object.assign({}, urlParams, embedded.params);
     var probe = splitProbePrefix(firstNonEmpty([embedded.route, startParam]));
-    var route = normalizeRoute(probe.route);
+    var landingRoute = splitLandingRoute(probe.route);
+    var route = normalizeRoute(landingRoute.route);
 
     if (!route && params.type === 'product' && params.id) {
       route = 'product_' + params.id;
@@ -164,7 +230,7 @@
     var targetPath = targetPathForRoute(route, ref);
     var referrerGroupId = /^-?\d+$/.test(ref) ? parseInt(ref, 10) : null;
 
-    return {
+    var target = {
       route: route,
       ref: ref,
       referrerGroupId: referrerGroupId,
@@ -172,12 +238,19 @@
       hashTarget: '/#' + targetPath,
       probe: probe.probe,
     };
+    if (landingRoute.landingPageId) {
+      target.landingPageId = landingRoute.landingPageId;
+    }
+    return target;
   }
 
   return {
     catalogRoutes: catalogRoutes,
+    storefrontRoutes: storefrontRoutes,
     splitEmbeddedRoute: splitEmbeddedRoute,
     splitProbePrefix: splitProbePrefix,
+    splitLandingRoute: splitLandingRoute,
+    buildStartappReceivedEvent: buildStartappReceivedEvent,
     targetPathForRoute: targetPathForRoute,
     resolveTarget: resolveTarget,
   };

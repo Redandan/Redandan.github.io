@@ -1,231 +1,206 @@
-<!DOCTYPE html>
-<html lang="zh">
+<!doctype html>
+<html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agora 社群商城</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        @keyframes spin {
-            0% { transform: rotate(0deg) scale(1); }
-            50% { transform: rotate(180deg) scale(1.03); }
-            100% { transform: rotate(360deg) scale(1); }
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <title>關於 AgoraMarket｜台灣與泰國生活用品線上市集</title>
+  <meta name="description" content="認識 AgoraMarket：免登入瀏覽台灣與泰國生活用品、公開商品資訊，並可透過網頁或官方 Telegram Bot 進入商城。">
+  <link rel="canonical" href="https://agoramarket.purrtechllc.com/official.html">
+  <link rel="alternate" hreflang="zh-Hant" href="https://agoramarket.purrtechllc.com/official.html">
+  <link rel="alternate" hreflang="th" href="https://agoramarket.purrtechllc.com/official-th.html">
+  <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/official-en.html">
+  <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/official.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="AgoraMarket">
+  <meta property="og:locale" content="zh_TW">
+  <meta property="og:title" content="關於 AgoraMarket｜生活用品線上市集">
+  <meta property="og:description" content="免登入瀏覽台灣與泰國生活用品，從網頁或官方 Telegram Bot 進入商城。">
+  <meta property="og:url" content="https://agoramarket.purrtechllc.com/official.html">
+  <meta property="og:image" content="https://agoramarket.purrtechllc.com/icons/new_favicon/web-app-manifest-512x512.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="關於 AgoraMarket｜生活用品線上市集">
+  <meta name="twitter:description" content="免登入瀏覽台灣與泰國生活用品，從網頁或官方 Telegram Bot 進入商城。">
+  <meta name="twitter:image" content="https://agoramarket.purrtechllc.com/icons/new_favicon/web-app-manifest-512x512.png">
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://agoramarket.purrtechllc.com/#organization",
+          "name": "AgoraMarket",
+          "url": "https://agoramarket.purrtechllc.com/",
+          "logo": "https://agoramarket.purrtechllc.com/icons/new_favicon/web-app-manifest-512x512.png",
+          "sameAs": ["https://t.me/agora_login_bot"]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://agoramarket.purrtechllc.com/#website",
+          "name": "AgoraMarket",
+          "url": "https://agoramarket.purrtechllc.com/",
+          "publisher": {"@id": "https://agoramarket.purrtechllc.com/#organization"},
+          "inLanguage": ["zh-Hant", "th", "en"]
+        },
+        {
+          "@type": "AboutPage",
+          "@id": "https://agoramarket.purrtechllc.com/official.html#webpage",
+          "name": "關於 AgoraMarket",
+          "url": "https://agoramarket.purrtechllc.com/official.html",
+          "description": "AgoraMarket 是提供台灣與泰國生活用品公開瀏覽入口的線上市集。",
+          "isPartOf": {"@id": "https://agoramarket.purrtechllc.com/#website"},
+          "about": {"@id": "https://agoramarket.purrtechllc.com/#organization"},
+          "inLanguage": "zh-Hant"
         }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.03); }
-            100% { transform: scale(1); }
-        }
-        @keyframes glow {
-            0% { filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.4)); }
-            50% { filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.7)); }
-            100% { filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.4)); }
-        }
-
-        .coin-spin {
-            animation: spin 6s ease-in-out infinite;
-            transition: transform 0.3s ease;
-        }
-        .coin-spin:hover {
-            transform: scale(1.1);
-        }
-        .medal-pulse {
-            animation: pulse 2s ease-in-out infinite;
-            transition: transform 0.3s ease, filter 0.3s ease;
-        }
-        .medal-pulse:hover {
-            transform: scale(1.1);
-            filter: brightness(1.1);
-        }
-        .glow-effect {
-            animation: glow 3s ease-in-out infinite;
-        }
-        .section-header {
-            color: #3B82F6; /* 亮藍色標題 */
-        }
-        .tier-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .tier-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-        }
-    </style>
-    <script>
-        const translations = {
-            zh: {
-                title: 'Agora 社群商城',
-                subtitle: '去中心化 C2C 交易平台，安全、高效、自由交易',
-                whatIs: '什麼是 Agora 社群商城？',
-                description: 'Agora 是一個基於區塊鏈的 C2C 交易平台，透過 USDT 交易並結合冷錢包技術，確保交易安全。買家、賣家與外送員能夠在這裡自由交易，無需依賴傳統金融機構。真愛、真貨交易外送員能這裡自由出沒，無需依賴傳統機構。',
-                coinUsage: 'Agora 幣的用途',
-                feeDiscount: '可用於折抵高達 80% OFF 平台手續費',
-                creditGuarantee: '質押 Agora 幣可獲得 信用擔保，提升交易信任度',
-                marketReport: '質押解鎖 市場搜尋報告，掌握熱門趨勢',
-                memberPrivilege: '會員等級專屬特權，如 更低手續費、流量曝光',
-                memberTiers: '會員等級與特權',
-                bronze: '銅級會員',
-                silver: '銀級會員',
-                gold: '金級會員',
-                bronzeFeatures: ['基本搜尋報告', '額外 5% 手續費折扣', '優先流量推薦'],
-                silverFeatures: ['進階市場數據', '額外 10% 手續費折扣', '首頁推薦曝光'],
-                goldFeatures: ['完整競爭分析', '0% 交易手續費', 'DAO 高級治理權限'],
-                joinTitle: '加入 Agora，開啟去中心化交易新時代',
-                contactUs: '有興趣投資或瞭解更多？歡迎聯繫我們！',
-                contactButton: '聯絡我們',
-                backToApp: '回到應用',
-                footer: '© 2025 Agora 社群商城. All Rights Reserved.'
-            },
-            en: {
-                title: 'Agora Community Marketplace',
-                subtitle: 'C2C Trading Platform - Secure, Efficient, Free Trading',
-                whatIs: 'What is Agora Community Marketplace?',
-                description: 'Agora is a blockchain-based C2C trading platform that ensures transaction security through USDT trading and cold wallet technology. Buyers, sellers, and delivery personnel can trade freely here without relying on traditional financial institutions.',
-                coinUsage: 'Agora Coin Usage',
-                feeDiscount: 'Can be used to offset up to 80% OFF platform fees',
-                creditGuarantee: 'Stake Agora coins to obtain credit guarantee and enhance transaction trust',
-                marketReport: 'Unlock market search reports through staking to grasp popular trends',
-                memberPrivilege: 'Exclusive membership privileges such as lower fees and traffic exposure',
-                memberTiers: 'Membership Tiers & Privileges',
-                bronze: 'Bronze Member',
-                silver: 'Silver Member',
-                gold: 'Gold Member',
-                bronzeFeatures: ['Basic Search Reports', 'Additional 5% Fee Discount', 'Priority Traffic Recommendation'],
-                silverFeatures: ['Advanced Market Data', 'Additional 10% Fee Discount', 'Homepage Featured Exposure'],
-                goldFeatures: ['Complete Competition Analysis', '0% Transaction Fee', 'DAO Advanced Governance Rights'],
-                joinTitle: 'Join Agora, Start a New Era of Decentralized Trading',
-                contactUs: 'Interested in investing or learning more? Contact us!',
-                contactButton: 'Contact Us',
-                backToApp: 'Back to App',
-                footer: '© 2025 Agora Community Marketplace. All Rights Reserved.'
-            }
-        };
-
-        function setLanguage(lang) {
-            document.documentElement.lang = lang;
-            document.querySelectorAll('[data-i18n]').forEach(element => {
-                const key = element.getAttribute('data-i18n');
-                if (translations[lang][key]) {
-                    if (Array.isArray(translations[lang][key])) {
-                        element.innerHTML = translations[lang][key].map(item => `<li>${item}</li>`).join('');
-                    } else {
-                        element.textContent = translations[lang][key];
-                    }
-                }
-            });
-        }
-
-        function goBack() {
-            // 嘗試使用瀏覽器的歷史記錄返回
-            if (window.history.length > 1) {
-                window.history.back();
-            } else {
-                // 如果沒有歷史記錄，導航到主頁
-                window.location.href = '/';
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            setLanguage('zh');
-        });
-    </script>
+      ]
+    }
+  </script>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172033;
+      --muted: #536176;
+      --brand: #174ea6;
+      --brand-dark: #0f3b82;
+      --surface: #ffffff;
+      --soft: #eef4ff;
+      --line: #d7e0ed;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #f6f8fc;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.65;
+    }
+    a { color: var(--brand); }
+    a:focus-visible { outline: 3px solid #f5a623; outline-offset: 3px; }
+    .shell { width: min(70rem, calc(100% - 2rem)); margin: 0 auto; }
+    header { background: var(--surface); border-bottom: 1px solid var(--line); }
+    .topbar { min-height: 4.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .brand { color: var(--ink); font-size: 1.2rem; font-weight: 800; text-decoration: none; }
+    .topnav { display: flex; flex-wrap: wrap; gap: .75rem 1rem; }
+    .topnav a { font-weight: 700; text-decoration: none; }
+    .language-nav { display: flex; flex-wrap: wrap; gap: .45rem .8rem; margin-top: .45rem; font-size: .92rem; }
+    .language-nav a { text-decoration: none; }
+    .hero { padding: clamp(3.5rem, 9vw, 7rem) 0; background: linear-gradient(135deg, #eaf2ff 0%, #f7faff 58%, #edf8f2 100%); }
+    .eyebrow { margin: 0 0 .65rem; color: var(--brand); font-weight: 800; letter-spacing: .04em; }
+    h1 { max-width: 16ch; margin: 0; font-size: clamp(2.25rem, 6vw, 4.5rem); line-height: 1.08; }
+    .lead { max-width: 44rem; margin: 1.25rem 0 0; color: var(--muted); font-size: clamp(1.05rem, 2vw, 1.25rem); }
+    .actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.75rem; }
+    .button { display: inline-block; padding: .8rem 1.1rem; border: 1px solid var(--brand); border-radius: .65rem; font-weight: 800; text-decoration: none; }
+    .button.primary { color: #fff; background: var(--brand); }
+    .button.primary:hover { background: var(--brand-dark); }
+    main section { padding: 3.5rem 0; }
+    h2 { margin: 0 0 .75rem; font-size: clamp(1.65rem, 3vw, 2.3rem); }
+    .section-intro { max-width: 44rem; margin: 0 0 1.5rem; color: var(--muted); }
+    .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+    .card { padding: 1.4rem; border: 1px solid var(--line); border-radius: .8rem; background: var(--surface); }
+    .card h3 { margin: 0 0 .45rem; }
+    .card p { margin: 0; color: var(--muted); }
+    .steps { margin: 1.5rem 0 0; padding-left: 1.5rem; }
+    .steps li { margin: .65rem 0; padding-left: .3rem; }
+    .official-links { background: var(--soft); }
+    .link-list { display: grid; gap: .75rem; padding: 0; list-style: none; }
+    .link-list a { display: inline-block; font-weight: 800; overflow-wrap: anywhere; }
+    footer { padding: 2rem 0; color: var(--muted); background: var(--surface); border-top: 1px solid var(--line); }
+    footer p { margin: 0; }
+    @media (max-width: 760px) {
+      .topbar { align-items: flex-start; flex-direction: column; padding: 1rem 0; }
+      .cards { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
-<body class="bg-[#1F2937] text-gray-300 font-sans">
-    <!-- Navigation Controls -->
-    <div class="fixed top-4 z-50 flex gap-2">
-        <!-- Back Button -->
-        <button onclick="goBack()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center">
-            <i class="fas fa-arrow-left mr-2"></i>
-            <span data-i18n="backToApp">回到應用</span>
-        </button>
-        <!-- Language Switcher -->
-        <div class="flex">
-            <button onclick="setLanguage('zh')" class="bg-blue-500 text-white px-3 py-1 rounded-l hover:bg-blue-600">中文</button>
-            <button onclick="setLanguage('en')" class="bg-blue-500 text-white px-3 py-1 rounded-r hover:bg-blue-600">EN</button>
-        </div>
+<body>
+  <header>
+    <div class="shell topbar">
+      <a class="brand" href="https://agoramarket.purrtechllc.com/">AgoraMarket</a>
+      <div>
+        <nav class="topnav" aria-label="主要導覽">
+          <a href="https://agoramarket.purrtechllc.com/products?utm_source=official_page&amp;utm_medium=web&amp;utm_campaign=marketplace_entry">商品目錄</a>
+          <a href="https://agoramarket.purrtechllc.com/categories.html">商品分類</a>
+          <a href="https://agoramarket.purrtechllc.com/spend-usdt-costco-taiwan.html">USDT 買 Costco</a>
+          <a href="https://agoramarket.purrtechllc.com/telegram-shop-with-usdt.html">Telegram USDT 商城</a>
+          <a href="https://agoramarket.purrtechllc.com/search?utm_source=official_page&amp;utm_medium=web&amp;utm_campaign=marketplace_entry">搜尋商品</a>
+          <a href="https://t.me/agora_login_bot/store">Telegram 商城</a>
+        </nav>
+        <nav class="language-nav" aria-label="語言選擇">
+          <strong lang="zh-Hant">繁體中文</strong>
+          <a href="https://agoramarket.purrtechllc.com/official-th.html" hreflang="th" lang="th">ไทย</a>
+          <a href="https://agoramarket.purrtechllc.com/official-en.html" hreflang="en" lang="en">English</a>
+        </nav>
+      </div>
     </div>
+  </header>
 
-    <!-- Header -->
-    <header class="bg-[#1A2C5A] text-white py-8 text-center shadow-lg">
-        <h1 class="text-4xl font-bold" data-i18n="title"></h1>
-        <p class="text-lg mt-2" data-i18n="subtitle"></p>
-    </header>
-    
-    <!-- Main Content -->
-    <main class="max-w-5xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
-        <!-- Agora Introduction -->
-        <section class="mb-16 bg-[#374151] rounded-lg p-6 shadow-md">
-            <h2 class="text-3xl font-bold mb-6 section-header" data-i18n="whatIs"></h2>
-            <p class="text-lg leading-relaxed text-gray-300" data-i18n="description"></p>
-        </section>
-        
-        <!-- Agora Coin Usage -->
-        <section class="mb-16 bg-[#374151] rounded-lg p-6 shadow-md">
-            <h2 class="text-3xl font-bold mb-6 section-header" data-i18n="coinUsage"></h2>
-           
-            <ul class="list-none space-y-3">
-                <li class="flex items-start">
-                    <i class="fas fa-fire text-orange-400 mr-3 mt-1"></i>
-                    <span class="text-lg text-gray-300" data-i18n="feeDiscount"></span>
-                </li>
-                <li class="flex items-start">
-                    <i class="fas fa-lock text-blue-400 mr-3 mt-1"></i>
-                    <span class="text-lg text-gray-300" data-i18n="creditGuarantee"></span>
-                </li>
-                <li class="flex items-start">
-                    <i class="fas fa-chart-line text-green-400 mr-3 mt-1"></i>
-                    <span class="text-lg text-gray-300" data-i18n="marketReport"></span>
-                </li>
-                <li class="flex items-start">
-                    <i class="fas fa-bolt text-yellow-400 mr-3 mt-1"></i>
-                    <span class="text-lg text-gray-300" data-i18n="memberPrivilege"></span>
-                </li>
-            </ul>
-        </section>
-        
-        <!-- Membership Tiers -->
-        <section class="mb-16">
-            <h2 class="text-3xl font-bold mb-6 section-header" data-i18n="memberTiers"></h2>
-            <div class="grid md:grid-cols-3 gap-6">
-                <!-- Bronze -->
-                <div class="tier-card bg-[#374151] p-6 rounded-lg shadow-md text-center">
-                    <div id="bronze-icon" class="text-5xl mb-4 glow-effect">
-                        <i class="fas fa-medal text-[#CD7F32] medal-pulse"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3 text-white" data-i18n="bronze"></h3>
-                    <ul class="list-disc pl-4 text-left text-gray-300 space-y-2" data-i18n="bronzeFeatures"></ul>
-                </div>
-                <!-- Silver -->
-                <div class="tier-card bg-[#374151] p-6 rounded-lg shadow-md text-center">
-                    <div id="silver-icon" class="text-5xl mb-4 glow-effect">
-                        <i class="fas fa-medal text-[#C0C0C0] medal-pulse"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3 text-white" data-i18n="silver"></h3>
-                    <ul class="list-disc pl-4 text-left text-gray-300 space-y-2" data-i18n="silverFeatures"></ul>
-                </div>
-                <!-- Gold -->
-                <div class="tier-card bg-[#374151] p-6 rounded-lg shadow-md text-center">
-                    <div id="gold-icon" class="text-5xl mb-4 glow-effect">
-                        <i class="fas fa-medal text-[#FFD700] medal-pulse"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3 text-white" data-i18n="gold"></h3>
-                    <ul class="list-disc pl-4 text-left text-gray-300 space-y-2" data-i18n="goldFeatures"></ul>
-                </div>
-            </div>
-        </section>
-        
-        <!-- Contact Us -->
-        <section class="text-center">
-            <h2 class="text-3xl font-bold mb-4 section-header" data-i18n="joinTitle"></h2>
-            <p class="text-lg leading-relaxed text-gray-300 mb-6" data-i18n="contactUs"></p>
-            <a href="mailto:contact@agoramarket.com" class="inline-block bg-[#3B82F6] text-white py-3 px-8 rounded-lg shadow-lg hover:bg-[#60A5FA] transition-colors" data-i18n="contactButton"></a>
-        </section>
-    </main>
-    
-    <!-- Footer -->
-    <footer class="bg-[#1A2C5A] text-white text-center py-6">
-        <p data-i18n="footer"></p>
-    </footer>
+  <main>
+    <section class="hero">
+      <div class="shell">
+        <p class="eyebrow">AgoraMarket 官方入口</p>
+        <h1>台灣與泰國生活用品線上市集</h1>
+        <p class="lead">免登入即可先看目前可購買的商品、圖片與價格。需要搜尋、登入或管理訂單時，再進入完整網頁商城或官方 Telegram Bot。</p>
+        <div class="actions">
+          <a class="button primary" href="https://agoramarket.purrtechllc.com/products?utm_source=official_page&amp;utm_medium=web&amp;utm_campaign=marketplace_entry">瀏覽公開商品</a>
+          <a class="button" href="https://agoramarket.purrtechllc.com/categories.html">瀏覽商品分類</a>
+          <a class="button" href="https://agoramarket.purrtechllc.com/search?utm_source=official_page&amp;utm_medium=web&amp;utm_campaign=marketplace_entry">搜尋商品</a>
+          <a class="button" href="https://t.me/agora_login_bot/store">開啟 Telegram 商城</a>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="shell">
+        <h2>平台提供什麼</h2>
+        <p class="section-intro">AgoraMarket 將公開商品發現與登入後功能分開，訪客可先確認商品內容，再決定是否使用完整服務。</p>
+        <div class="cards">
+          <article class="card">
+            <h3>免登入瀏覽</h3>
+            <p>公開商品目錄提供目前上架商品的名稱、圖片與價格。</p>
+          </article>
+          <article class="card">
+            <h3>商品資訊可分享</h3>
+            <p>每項公開商品都有固定網址，方便從搜尋結果或分享連結進入。</p>
+          </article>
+          <article class="card">
+            <h3>網頁與 Telegram</h3>
+            <p>可使用一般瀏覽器，也可從官方 Telegram Bot 開啟商城。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="shell">
+        <h2>如何開始</h2>
+        <ol class="steps">
+          <li>先從公開商品目錄或搜尋入口查看商品。</li>
+          <li>選擇商品，確認頁面顯示的內容與價格。</li>
+          <li>需要購物車、訂單或帳戶功能時，再登入完整商城。</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="official-links">
+      <div class="shell">
+        <h2>請認明官方網址</h2>
+        <p class="section-intro">本頁只列出目前可驗證的公開入口；商品價格與平台規則以實際頁面顯示為準。</p>
+        <ul class="link-list">
+          <li><a href="https://agoramarket.purrtechllc.com/">https://agoramarket.purrtechllc.com/</a></li>
+          <li><a href="https://agoramarket.purrtechllc.com/products?utm_source=official_page&amp;utm_medium=web&amp;utm_campaign=marketplace_entry">公開商品目錄</a></li>
+          <li><a href="https://agoramarket.purrtechllc.com/categories.html">13 類商品導覽</a></li>
+          <li><a href="https://agoramarket.purrtechllc.com/spend-usdt-costco-taiwan.html">用 USDT 買 Costco Taiwan 商品</a></li>
+          <li><a href="https://agoramarket.purrtechllc.com/telegram-shop-with-usdt.html">在 Telegram 用 USDT 買實體商品</a></li>
+          <li><a href="https://t.me/agora_login_bot/store">官方 Telegram 商城：@agora_login_bot</a></li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell">
+      <p>© 2026 AgoraMarket</p>
+    </div>
+  </footer>
 </body>
 </html>
