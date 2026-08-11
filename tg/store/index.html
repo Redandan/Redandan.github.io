@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="agora-frontend-sha" content="4af716e1ba1d3dfd2d400d8829e25939fff68f47" />
   <title>AgoraMarket</title>
   <style>
     html, body {
@@ -71,14 +72,46 @@
   <p id="status">載入中...</p>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="./tg_store_routing.js"></script>
+  <script src="./tg_store_routing.4af716e1ba1d.js"></script>
   <script>
     (function () {
       var API_BASE = 'https://agoramarketapi.purrtechllc.com/api';
       var USDT_TELEMETRY_ENDPOINT =
         API_BASE + '/public/traffic/usdt-landing/events';
       var statusEl = document.getElementById('status');
+      var startupStage = 'bootstrap';
+      var frontendSha = (function () {
+        try {
+          var meta = document.querySelector('meta[name="agora-frontend-sha"]');
+          var value = String((meta && meta.content) || '').trim();
+          return /^[0-9a-f]{40}$/i.test(value) ? value.toLowerCase() : 'local';
+        } catch (_) {
+          return 'local';
+        }
+      })();
       function setStatus(t) { if (statusEl) statusEl.textContent = t; }
+      function safeErrorName(err) {
+        try {
+          var name = String((err && err.name) || 'UnknownError');
+          return /^[A-Za-z][A-Za-z0-9_.-]{0,63}$/.test(name)
+            ? name
+            : 'UnknownError';
+        } catch (_) {
+          return 'UnknownError';
+        }
+      }
+      function logStageError(level, stage, err) {
+        try {
+          var message = '[tg/store] stage=' + stage +
+            ' errorType=' + safeErrorName(err) +
+            ' frontendSha=' + frontendSha;
+          if (level === 'warn') {
+            console.warn(message);
+          } else {
+            console.error(message);
+          }
+        } catch (_) {}
+      }
       function parseQuery(value) {
         var out = {};
         if (!value) return out;
@@ -102,22 +135,27 @@
         });
       }
       function postStartappReceived(event, attempt) {
-        return fetch(USDT_TELEMETRY_ENDPOINT, {
-          method: 'POST',
-          mode: 'cors',
-          credentials: 'omit',
-          cache: 'no-store',
-          keepalive: true,
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(event),
+        return Promise.resolve().then(function () {
+          return fetch(USDT_TELEMETRY_ENDPOINT, {
+            method: 'POST',
+            mode: 'cors',
+            credentials: 'omit',
+            cache: 'no-store',
+            keepalive: true,
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(event),
+          });
         }).then(function (response) {
           if (!response.ok) throw new Error('telemetry status ' + response.status);
           return response.json();
-        }).catch(function () {
-          if (attempt >= 1) return null;
+        }).catch(function (err) {
+          if (attempt >= 1) {
+            logStageError('warn', 'startapp_telemetry', err);
+            return null;
+          }
           return new Promise(function (resolve) {
             setTimeout(function () {
               resolve(postStartappReceived(event, attempt + 1));
@@ -127,11 +165,27 @@
       }
       function recordStartappReceived(routeTarget) {
         if (!routeTarget || routeTarget.probe) return Promise.resolve(null);
-        var event = window.TgStoreRouting.buildStartappReceivedEvent(
-          routeTarget,
-          eventId()
-        );
-        return event ? postStartappReceived(event, 0) : Promise.resolve(null);
+        try {
+          var routing = window.TgStoreRouting;
+          if (!routing || typeof routing.buildStartappReceivedEvent !== 'function') {
+            logStageError('warn', 'startapp_event_builder', {
+              name: 'LegacyRoutingApiError',
+            });
+            return Promise.resolve(null);
+          }
+          var event = routing.buildStartappReceivedEvent(
+            routeTarget,
+            eventId()
+          );
+          if (!event) return Promise.resolve(null);
+          return Promise.resolve(postStartappReceived(event, 0)).catch(function (err) {
+            logStageError('warn', 'startapp_telemetry', err);
+            return null;
+          });
+        } catch (err) {
+          logStageError('warn', 'startapp_event_builder', err);
+          return Promise.resolve(null);
+        }
       }
       function readInitDataSummary(initData) {
         var params = parseQuery(initData);
@@ -202,6 +256,91 @@
         } catch (_) {
           return false;
         }
+      }
+      function isTelegramDesktopWebApp(webApp) {
+        try {
+          var platform = String(webApp && webApp.platform || '').toLowerCase();
+          if (platform === 'tdesktop' || platform === 'windows') return true;
+          if (platform) return false;
+        } catch (_) {}
+        try {
+          var ua = String(navigator.userAgent || '');
+          return /TelegramDesktop/i.test(ua) ||
+            (/Windows NT/i.test(ua) && /Edg\//i.test(ua));
+        } catch (_) {
+          return false;
+        }
+      }
+      function persistHostSession(routeTarget, jwt, userId, userRole, themeMode) {
+        try {
+          localStorage.setItem('_tg_store_jwt', jwt);
+          localStorage.setItem('_tg_store_uid', userId);
+          localStorage.setItem('_tg_store_role', userRole);
+          localStorage.setItem('_tg_store_target_path', routeTarget.targetPath);
+          if (themeMode) {
+            localStorage.setItem('_tg_store_theme', themeMode);
+          } else {
+            localStorage.removeItem('_tg_store_theme');
+          }
+          if (routeTarget.ref) {
+            localStorage.setItem('_tg_store_ref', routeTarget.ref);
+          } else {
+            localStorage.removeItem('_tg_store_ref');
+          }
+          return true;
+        } catch (err) {
+          // Telegram Desktop may temporarily deny or reset origin storage.
+          // The Flutter shell can still authenticate directly with initData,
+          // so storage is an optimization and must never block storefront entry.
+          logStageError('warn', 'session_storage', err);
+          return false;
+        }
+      }
+      async function resetTelegramDesktopRuntimeCache(webApp) {
+        if (!isTelegramDesktopWebApp(webApp)) return;
+
+        try {
+          if (navigator.serviceWorker &&
+              typeof navigator.serviceWorker.getRegistrations === 'function') {
+            var registrations = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(registrations.map(function (registration) {
+              return registration.unregister();
+            }));
+          }
+        } catch (err) {
+          logStageError('warn', 'desktop_service_worker_reset', err);
+        }
+
+        try {
+          if (window.caches && typeof window.caches.keys === 'function') {
+            var cacheNames = await window.caches.keys();
+            await Promise.all(cacheNames
+              .filter(function (cacheName) { return /^agora-/i.test(cacheName); })
+              .map(function (cacheName) { return window.caches.delete(cacheName); }));
+          }
+        } catch (err) {
+          logStageError('warn', 'desktop_cache_reset', err);
+        }
+      }
+      function redirectToStore(hashTarget) {
+        try {
+          window.location.replace(hashTarget);
+          return;
+        } catch (err) {
+          logStageError('warn', 'store_redirect_replace', err);
+        }
+
+        try {
+          window.location.assign(hashTarget);
+          return;
+        } catch (err) {
+          logStageError('warn', 'store_redirect_assign', err);
+        }
+
+        // Last same-origin fallback for embedded WebViews that reject direct
+        // location navigation but still allow history mutation + reload.
+        window.history.replaceState(null, '', hashTarget);
+        window.location.reload();
       }
       function requestTelegramViewport(webApp, reason) {
         try {
@@ -287,12 +426,14 @@
 
       (async function () {
         try {
+          startupStage = 'route_resolution';
           var routeTarget = window.TgStoreRouting.resolveTarget({
             search: window.location.search,
             initDataUnsafe: tg.initDataUnsafe || {},
           });
 
           setStatus('驗證身分中...');
+          startupStage = 'auth_exchange';
           var authBody = { initData: initData };
           if (routeTarget.referrerGroupId !== null) {
             authBody.referrerGroupId = routeTarget.referrerGroupId;
@@ -315,6 +456,7 @@
             return;
           }
 
+          startupStage = 'auth_response';
           var json = await resp.json();
           var body = json.data != null ? json.data : json;
           var jwt = String(body.jwt || body.token || body.accessToken || '').trim();
@@ -327,40 +469,39 @@
           authResult.responseUserIdPresent = Boolean(userId);
           authResult.role = userRole || 'USER';
 
-          // 儲存至 localStorage，Flutter 啟動時讀取
-          localStorage.setItem('_tg_store_jwt',  jwt);
-          localStorage.setItem('_tg_store_uid',  userId);
-          localStorage.setItem('_tg_store_role', userRole);
-          localStorage.setItem('_tg_store_target_path', routeTarget.targetPath);
+          // 預植 JWT 可避免 Flutter 再換一次 token；若 WebView storage
+          // 不可用，Flutter 仍會以 Telegram initData 自動登入。
+          startupStage = 'session_storage';
           var themeMode = readTelegramThemeMode(tg);
-          if (themeMode) {
-            localStorage.setItem('_tg_store_theme', themeMode);
-          } else {
-            localStorage.removeItem('_tg_store_theme');
-          }
-          if (routeTarget.ref) {
-            localStorage.setItem('_tg_store_ref', routeTarget.ref);
-          } else {
-            localStorage.removeItem('_tg_store_ref');
-          }
+          authResult.hostStoragePersisted = persistHostSession(
+            routeTarget,
+            jwt,
+            userId,
+            userRole,
+            themeMode
+          );
 
           setStatus('進入商城中...');
+          startupStage = 'optional_startapp_telemetry';
           var startappTelemetry = recordStartappReceived(routeTarget);
           if (routeTarget.probe) {
             showProbeEvidence(
               buildProbeEvidence(routeTarget, tg, authBody, authResult),
-              function () { window.location.replace(routeTarget.hashTarget); }
+              function () { redirectToStore(routeTarget.hashTarget); }
             );
             return;
           }
+          startupStage = 'desktop_runtime_reset';
+          await resetTelegramDesktopRuntimeCache(tg);
+          startupStage = 'store_redirect';
           await Promise.race([
             startappTelemetry,
             new Promise(function (resolve) { setTimeout(resolve, 300); }),
           ]);
-          window.location.replace(routeTarget.hashTarget);
+          redirectToStore(routeTarget.hashTarget);
         } catch (err) {
-          console.error('[tg/store] error: errorType=' + ((err && err.name) || 'UnknownError'));
-          setStatus('載入錯誤，請重試');
+          logStageError('error', startupStage, err);
+          setStatus('載入錯誤（' + startupStage + '），請重試');
         }
       })();
     })();

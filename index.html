@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <!-- ?? HTML ?辣?楨摮??- ?剜?蝺拙?隞乩噶 Service Worker ?? -->
+    <!-- 針對 HTML 文件的緩存控制 - 短期緩存以便 Service Worker 處理 -->
     <meta http-equiv="Cache-Control" content="max-age=300, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <!-- ??楨摮?霅?-->
-    <meta name="cache-version" content="1.0.1907">
+    <!-- 版本化緩存標識 -->
+    <meta name="cache-version" content="1.0.1908">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -29,8 +29,8 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.1907+1907">
-  <meta name="source-commit" content="e367e0f6e0f15563cd8875e4d7e3e621e42cc3b7">
+  <meta name="version" content="1.0.1908+1908">
+  <meta name="source-commit" content="4af716e1ba1d3dfd2d400d8829e25939fff68f47">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     // Request the largest available Telegram Mini App viewport before Flutter
@@ -238,7 +238,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market｜台灣與泰國生活用品線上市集</title>
-  <link rel="manifest" href="manifest.json?v=1.0.1907">
+  <link rel="manifest" href="manifest.json?v=1.0.1908">
   
   <!-- PWA ?????????????????? -->
   <meta name="application-name" content="Agora Market">
@@ -246,7 +246,7 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ???????????????????????????????????????????? -->
-  <link rel="preload" href="flutter_bootstrap.1.0.1907.js" as="script">
+  <link rel="preload" href="flutter_bootstrap.1.0.1908.js" as="script">
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="dns-prefetch" href="https://fonts.googleapis.com">
@@ -346,6 +346,17 @@
     #flutter-root flt-scene-host {
       width: 100% !important;
       height: 100% !important;
+    }
+
+    /*
+     * Telegram iOS fullscreen draws native controls above the web view. The
+     * bridge below sizes this host to Telegram's stable, safe content area so
+     * Flutter receives the correct viewport instead of painting underneath
+     * the status bar, close button, or home indicator.
+     */
+    html.agora-telegram-ios-mini-app #flutter-root {
+      box-sizing: border-box;
+      transform: none !important;
     }
 
     #loading-screen {
@@ -500,6 +511,152 @@
   <!-- Patch 2: Flutter root container for iOS 17+ touch fix -->
   <div id="flutter-root">
   </div>
+
+  <script id="telegram-ios-viewport-bridge">
+    (function () {
+      'use strict';
+
+      if (window.__AGORA_TELEGRAM_IOS_VIEWPORT_SYNC_INSTALLED) return;
+
+      var webApp = window.Telegram && window.Telegram.WebApp;
+      var initData = String(webApp && webApp.initData || '').trim();
+      var platform = String(webApp && webApp.platform || '').toLowerCase();
+      var ua = String(navigator.userAgent || '');
+      var isIOS = platform === 'ios' || /iPad|iPhone|iPod/.test(ua) ||
+        (/Macintosh/.test(ua) && Number(navigator.maxTouchPoints || 0) > 1);
+      if (!webApp || !initData || !isIOS) return;
+
+      var root = document.getElementById('flutter-root');
+      if (!root) return;
+
+      window.__AGORA_TELEGRAM_IOS_VIEWPORT_SYNC_INSTALLED = true;
+      document.documentElement.classList.add('agora-telegram-ios-mini-app');
+
+      var rafPending = false;
+      var queuedReason = 'startup';
+      var observer = null;
+      var publishingResize = false;
+
+      function nonNegativeNumber(value) {
+        var parsed = Number(value);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+      }
+
+      function readInset(source, side) {
+        return nonNegativeNumber(source && source[side]);
+      }
+
+      function stableViewportHeight() {
+        return nonNegativeNumber(webApp.viewportStableHeight) ||
+          nonNegativeNumber(webApp.viewportHeight) ||
+          nonNegativeNumber(window.innerHeight) || 1;
+      }
+
+      function moveFlutterViewIntoRoot() {
+        var flutterView = document.querySelector('flutter-view');
+        if (!flutterView) return false;
+        if (flutterView.parentElement !== root) {
+          root.appendChild(flutterView);
+        }
+        if (observer) {
+          try { observer.disconnect(); } catch (_) {}
+          observer = null;
+        }
+        return true;
+      }
+
+      function publishResize() {
+        publishingResize = true;
+        try { window.dispatchEvent(new Event('resize')); } catch (_) {}
+        publishingResize = false;
+      }
+
+      function syncNow() {
+        rafPending = false;
+
+        var safe = webApp.safeAreaInset || {};
+        var contentSafe = webApp.contentSafeAreaInset || {};
+        var top = readInset(safe, 'top') + readInset(contentSafe, 'top');
+        var bottom = readInset(safe, 'bottom') + readInset(contentSafe, 'bottom');
+        var left = readInset(safe, 'left') + readInset(contentSafe, 'left');
+        var right = readInset(safe, 'right') + readInset(contentSafe, 'right');
+        var viewportHeight = stableViewportHeight();
+        var viewportWidth = nonNegativeNumber(window.innerWidth) || 1;
+        var rootHeight = Math.max(1, viewportHeight - top - bottom);
+        var rootWidth = Math.max(1, viewportWidth - left - right);
+
+        root.style.top = top + 'px';
+        root.style.left = left + 'px';
+        root.style.width = rootWidth + 'px';
+        root.style.height = rootHeight + 'px';
+        root.style.transform = 'none';
+
+        moveFlutterViewIntoRoot();
+        try { root.getBoundingClientRect(); } catch (_) {}
+
+        window.__AGORA_TELEGRAM_VIEWPORT_STATUS = {
+          reason: queuedReason,
+          viewportHeight: viewportHeight,
+          viewportWidth: viewportWidth,
+          top: top,
+          right: right,
+          bottom: bottom,
+          left: left,
+          rootHeight: rootHeight,
+          rootWidth: rootWidth,
+          updatedAt: new Date().toISOString()
+        };
+
+        publishResize();
+        setTimeout(publishResize, 80);
+      }
+
+      function queueSync(reason) {
+        queuedReason = reason || 'event';
+        if (rafPending) return;
+        rafPending = true;
+        (window.requestAnimationFrame || function (callback) {
+          return setTimeout(callback, 16);
+        })(syncNow);
+      }
+
+      function subscribe(eventName, handler) {
+        try {
+          if (typeof webApp.onEvent === 'function') {
+            webApp.onEvent(eventName, handler);
+          }
+        } catch (_) {}
+      }
+
+      subscribe('viewportChanged', function (event) {
+        if (!event || event.isStateStable !== false) {
+          queueSync('viewportChanged');
+        }
+      });
+      subscribe('safeAreaChanged', function () { queueSync('safeAreaChanged'); });
+      subscribe('contentSafeAreaChanged', function () { queueSync('contentSafeAreaChanged'); });
+      subscribe('fullscreenChanged', function () { queueSync('fullscreenChanged'); });
+      subscribe('activated', function () { queueSync('activated'); });
+
+      window.addEventListener('resize', function () {
+        if (!publishingResize) queueSync('window-resize');
+      }, { passive: true });
+      window.addEventListener('orientationchange', function () { queueSync('orientationchange'); }, { passive: true });
+      window.addEventListener('pageshow', function () { queueSync('pageshow'); }, { passive: true });
+      document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) queueSync('visibilitychange');
+      });
+
+      if (window.MutationObserver && document.body) {
+        observer = new MutationObserver(function () { queueSync('flutter-view-mounted'); });
+        observer.observe(document.body, { childList: true, subtree: true });
+      }
+
+      queueSync('startup');
+      setTimeout(function () { queueSync('startup-250ms'); }, 250);
+      setTimeout(function () { queueSync('startup-900ms'); }, 900);
+    })();
+  </script>
 
   <script>
     (function () {
@@ -1654,7 +1811,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.1.0.1907.js";
+        script.src = "flutter_bootstrap.1.0.1908.js";
         script.async = true;
         document.body.appendChild(script);
       }
