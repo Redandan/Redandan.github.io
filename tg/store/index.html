@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="agora-frontend-sha" content="21350220a79abad5e5135a89c8824694a3e483b1" />
+  <meta name="agora-frontend-sha" content="7cacbd4eacae4d0e2fa2b1752d11ddd656101758" />
   <title>AgoraMarket</title>
   <style>
     html, body {
@@ -69,10 +69,10 @@
   </style>
 </head>
 <body>
-  <p id="status">載入中...</p>
+  <p id="status">AgoraMarket</p>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="./tg_store_routing.21350220a79a.js"></script>
+  <script src="./tg_store_routing.7cacbd4eacae.js"></script>
   <script>
     (function () {
       var API_BASE = 'https://agoramarketapi.purrtechllc.com/api';
@@ -80,6 +80,7 @@
         API_BASE + '/public/traffic/usdt-landing/events';
       var statusEl = document.getElementById('status');
       var startupStage = 'bootstrap';
+      var englishDemoEntry = false;
       var frontendSha = (function () {
         try {
           var meta = document.querySelector('meta[name="agora-frontend-sha"]');
@@ -90,6 +91,9 @@
         }
       })();
       function setStatus(t) { if (statusEl) statusEl.textContent = t; }
+      function localizedStatus(zhHant, english) {
+        return englishDemoEntry ? english : zhHant;
+      }
       function safeErrorName(err) {
         try {
           var name = String((err && err.name) || 'UnknownError');
@@ -416,13 +420,18 @@
       }
 
       var tg = window.Telegram && window.Telegram.WebApp;
-      if (!tg) { setStatus('請在 Telegram 中開啟'); return; }
+      if (!tg) { setStatus('隢 Telegram 銝剝???); return; }
+      englishDemoEntry = String((tg.initDataUnsafe || {}).start_param || '') === 'marketplace_demo_en';
+      document.documentElement.lang = englishDemoEntry ? 'en' : 'zh-Hant';
       requestTelegramViewport(tg, 'tg-store-startup');
       setTimeout(function () { requestTelegramViewport(tg, 'tg-store-retry-250ms'); }, 250);
       setTimeout(function () { requestTelegramViewport(tg, 'tg-store-retry-900ms'); }, 900);
 
       var initData = String(tg.initData || '').trim();
-      if (!initData) { setStatus('無法取得 Telegram 身分資訊'); return; }
+      if (!initData) {
+        setStatus(localizedStatus('?⊥??? Telegram 頨怠?鞈?', 'Unable to read Telegram identity'));
+        return;
+      }
 
       (async function () {
         try {
@@ -431,8 +440,10 @@
             search: window.location.search,
             initDataUnsafe: tg.initDataUnsafe || {},
           });
+          englishDemoEntry = routeTarget.route === 'marketplace_demo_en';
+          document.documentElement.lang = englishDemoEntry ? 'en' : 'zh-Hant';
 
-          setStatus('驗證身分中...');
+          setStatus(localizedStatus('撽?頨怠?銝?..', 'Verifying your identity...'));
           startupStage = 'auth_exchange';
           var authBody = { initData: initData };
           if (routeTarget.referrerGroupId !== null) {
@@ -452,7 +463,7 @@
               showProbeEvidence(buildProbeEvidence(routeTarget, tg, authBody, authResult), null);
               return;
             }
-            setStatus('登入失敗 (' + resp.status + ')');
+            setStatus(localizedStatus('?餃憭望?', 'Sign-in failed') + ' (' + resp.status + ')');
             return;
           }
 
@@ -460,7 +471,10 @@
           var json = await resp.json();
           var body = json.data != null ? json.data : json;
           var jwt = String(body.jwt || body.token || body.accessToken || '').trim();
-          if (!jwt) { setStatus('登入失敗（無 token）'); return; }
+          if (!jwt) {
+            setStatus(localizedStatus('?餃憭望?嚗 token嚗?, 'Sign-in failed (missing token)'));
+            return;
+          }
 
           var userInfo = body.userInfo || body || {};
           var userId = String(userInfo.id || userInfo.userId || body.userId || '');
@@ -469,8 +483,8 @@
           authResult.responseUserIdPresent = Boolean(userId);
           authResult.role = userRole || 'USER';
 
-          // 預植 JWT 可避免 Flutter 再換一次 token；若 WebView storage
-          // 不可用，Flutter 仍會以 Telegram initData 自動登入。
+          // ?? JWT ?舫??Flutter ??銝甈?token嚗 WebView storage
+          // 銝?剁?Flutter 隞?隞?Telegram initData ?芸??餃??
           startupStage = 'session_storage';
           var themeMode = readTelegramThemeMode(tg);
           authResult.hostStoragePersisted = persistHostSession(
@@ -481,7 +495,7 @@
             themeMode
           );
 
-          setStatus('進入商城中...');
+          setStatus(localizedStatus('?脣??銝?..', 'Opening the buyer store...'));
           startupStage = 'optional_startapp_telemetry';
           var startappTelemetry = recordStartappReceived(routeTarget);
           if (routeTarget.probe) {
@@ -501,7 +515,10 @@
           redirectToStore(routeTarget.hashTarget);
         } catch (err) {
           logStageError('error', startupStage, err);
-          setStatus('載入錯誤（' + startupStage + '），請重試');
+          setStatus(localizedStatus(
+            '頛?航炊嚗? + startupStage + '嚗?隢?閰?,
+            'Loading failed (' + startupStage + '). Please try again.'
+          ));
         }
       })();
     })();

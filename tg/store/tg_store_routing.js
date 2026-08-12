@@ -26,6 +26,10 @@
   var storefrontRoutes = {
     usdt_shop: '/home',
   };
+  var localizedMarketplaceDemoRoutes = {
+    marketplace_demo_en: 'en-US',
+    marketplace_demo_zh: 'zh-TW',
+  };
   var landingRoutePrefixes = {
     usdt_costco_: 'USDT_COSTCO_TW',
     usdt_telegram_: 'USDT_TELEGRAM_SHOP',
@@ -174,6 +178,14 @@
     var query = {};
     if (ref) query.ref = ref;
 
+    var demoLanguage = localizedMarketplaceDemoRoutes[normalized];
+    if (demoLanguage) {
+      return appendQuery('/home', Object.assign({
+        marketplaceDemo: 'true',
+        lang: demoLanguage,
+      }, query));
+    }
+
     if (normalized === 'marketplace_demo' && !ref) {
       return appendQuery('/home', { marketplaceDemo: 'true' });
     }
@@ -255,6 +267,7 @@
   return {
     catalogRoutes: catalogRoutes,
     storefrontRoutes: storefrontRoutes,
+    localizedMarketplaceDemoRoutes: localizedMarketplaceDemoRoutes,
     splitEmbeddedRoute: splitEmbeddedRoute,
     splitProbePrefix: splitProbePrefix,
     splitLandingRoute: splitLandingRoute,
