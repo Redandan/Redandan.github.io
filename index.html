@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- 版本化緩存標識 -->
-    <meta name="cache-version" content="1.0.1909">
+    <meta name="cache-version" content="1.0.1910">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -29,8 +29,8 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.1909+1909">
-  <meta name="source-commit" content="b5caf099e077a6a96b3b43ca994c125569c4fc48">
+  <meta name="version" content="1.0.1910+1910">
+  <meta name="source-commit" content="21350220a79abad5e5135a89c8824694a3e483b1">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     // Request the largest available Telegram Mini App viewport before Flutter
@@ -212,9 +212,6 @@
   <meta name="theme-color" content="#1A1A1A" media="(prefers-color-scheme: dark)">
   <meta name="theme-color" content="#2196F3" media="(prefers-color-scheme: light)">
 
-  <!-- Material Icons Font for Web -->
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-
   <!-- iOS meta tags & icons -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <!-- ???????black-translucent ????????????????????????????????????????????????? -->
@@ -238,7 +235,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market｜台灣與泰國生活用品線上市集</title>
-  <link rel="manifest" href="manifest.json?v=1.0.1909">
+  <link rel="manifest" href="manifest.json?v=1.0.1910">
   
   <!-- PWA ?????????????????? -->
   <meta name="application-name" content="Agora Market">
@@ -246,16 +243,13 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ???????????????????????????????????????????? -->
-  <link rel="preload" href="flutter_bootstrap.1.0.1909.js" as="script">
+  <link rel="preload" href="flutter_bootstrap.1.0.1910.js" as="script">
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
-  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
   <!-- API server preconnect ?????? DNS+TLS handshake???????????API ??????100-200ms -->
   <link rel="preconnect" href="https://agoramarketapi.purrtechllc.com" crossorigin>
   <link rel="dns-prefetch" href="https://agoramarketapi.purrtechllc.com">
-  <!-- canvaskit CDN fallback?????main ????????????????????? Flutter ??fallback ??gstatic??->
-  <link rel="dns-prefetch" href="https://www.gstatic.com">
+  <!-- Preconnect to the CanvasKit CDN used by Flutter Web. -->
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   
   <!-- SEO ?????????????Open Graph - ???????PNG -->
   <meta property="og:title" content="Agora Market｜台灣與泰國生活用品線上市集">
@@ -404,6 +398,28 @@
       text-align: center;
     }
 
+    .loading-brand {
+      color: var(--startup-text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+
+    .loading-spinner {
+      width: 28px;
+      height: 28px;
+      margin: 12px 0 4px;
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      border-top-color: var(--startup-text);
+      border-radius: 50%;
+      animation: agora-startup-spin 0.9s linear infinite;
+    }
+
+    @keyframes agora-startup-spin {
+      to { transform: rotate(360deg); }
+    }
+
     .startup-marketplace-links {
       display: flex;
       flex-wrap: wrap;
@@ -501,7 +517,9 @@
 
   <!-- Loading screen lives outside #flutter-root so iOS PWA viewport transforms cannot move it. -->
   <div id="loading-screen">
-    <div class="loading-text" id="loading-text">&#36617;&#20837;&#20013;...</div>
+    <div class="loading-brand">AgoraMarket</div>
+    <div class="loading-spinner" aria-hidden="true"></div>
+    <div class="loading-text" id="loading-text">&#27491;&#22312;&#28310;&#20633;&#21830;&#22478;...</div>
     <nav class="startup-marketplace-links" aria-label="Agora Market 商品入口">
       <a id="startup-product-catalog-link" href="https://agoramarket.purrtechllc.com/products">瀏覽商品目錄</a>
       <a id="startup-product-search-link" href="https://agoramarket.purrtechllc.com/search">搜尋商品</a>
@@ -743,94 +761,54 @@
     })();
   </script>
   
-  <!-- ????????????????? Flutter ???????????????????????????????????????????? -->
+  <!-- Keep the stable HTML startup screen until Flutter has painted. -->
   <script>
     (function() {
       'use strict';
-      
-      // ??????Flutter ??????????????
-      function checkFlutterReady() {
-        // ??????Flutter ???????????????????????????????
-        const hasFlutterElements = document.querySelector('flt-scene-host') !== null ||
-                                  document.querySelector('flt-glass-pane') !== null ||
-                                  document.querySelector('canvas') !== null;
-        
-        // ??????body ???????????flutter-ready ?????????????????????
-        const isAlreadyReady = document.body && document.body.classList.contains('flutter-ready');
-        
-        if (hasFlutterElements || isAlreadyReady) {
-          console.log('[LOADING_SCREEN] Flutter already ready, hiding loading screen immediately (skipping animation)');
-          
-          // ????????????????????????????????
-          if (document.body) {
-            document.body.classList.add('flutter-ready', 'immediate');
-          }
-          
-          // ???? Flutter ??????
-          const flutterElements = document.querySelectorAll('flt-scene-host, flt-glass-pane, canvas');
-          flutterElements.forEach(function(element) {
-            element.style.opacity = '1';
-            element.style.visibility = 'visible';
-            element.style.display = 'block';
-          });
-          
-          return true;
+
+      function isMarketplaceDemoStartup() {
+        try {
+          var current = new URL(window.location.href);
+          if (current.searchParams.get('marketplaceDemo') === 'true') return true;
+
+          var fragment = current.hash.replace(/^#/, '');
+          var queryStart = fragment.indexOf('?');
+          if (queryStart < 0) return false;
+          return new URLSearchParams(fragment.slice(queryStart + 1))
+            .get('marketplaceDemo') === 'true';
+        } catch (_) {
+          return false;
         }
-        
-        return false;
       }
-      
-      // ??????????????????????DOM ?????????????????
-      // ???????requestAnimationFrame ???????????????????????Flutter ????????????????????????
-      function scheduleCheck() {
-        if (window.requestAnimationFrame) {
+
+      function revealFlutter(reason) {
+        if (!document.body || document.body.classList.contains('flutter-ready')) return;
+        document.body.classList.add('flutter-ready', 'immediate');
+        console.log('[LOADING_SCREEN] Flutter revealed: ' + reason);
+      }
+
+      // A render target can exist before Flutter has painted text or fetched the
+      // first product page. Only the framework's first-frame signal is a safe
+      // readiness boundary for normal routes. The sales demo waits for its
+      // product page to explicitly report content readiness from Dart.
+      window.addEventListener('flutter-first-frame', function() {
+        if (isMarketplaceDemoStartup()) return;
+        requestAnimationFrame(function() {
           requestAnimationFrame(function() {
-            requestAnimationFrame(checkFlutterReady);
+            revealFlutter('first-frame');
           });
-        } else {
-          setTimeout(checkFlutterReady, 50);
-        }
-      }
-      
-      if (document.readyState === 'loading') {
-        // DOM ???????????????????DOMContentLoaded
-        document.addEventListener('DOMContentLoaded', scheduleCheck);
-      } else {
-        // DOM ?????????????????????
-        scheduleCheck();
-      }
-      
-      // ??????load ???????????????????????????????
-      window.addEventListener('load', function() {
-        setTimeout(checkFlutterReady, 100);
+        });
       }, { once: true });
 
+      // Fail open so a backend or route failure cannot trap the user forever.
       setTimeout(function() {
-        if (checkFlutterReady()) return;
+        if (document.body && document.body.classList.contains('flutter-ready')) return;
         var loadingText = document.getElementById('loading-text');
         if (loadingText) {
           loadingText.textContent = '\u8f09\u5165\u6642\u9593\u8f03\u9577\uff0c\u8acb\u6aa2\u67e5\u7db2\u8def\u6216\u91cd\u65b0\u6574\u7406\u3002';
         }
+        revealFlutter('startup-timeout');
       }, 8000);
-      
-      // ???????????? Flutter ??????????????????MutationObserver??
-      if (document.body) {
-        const observer = new MutationObserver(function(mutations) {
-          if (checkFlutterReady()) {
-            observer.disconnect(); // ???????????????
-          }
-        });
-        
-        observer.observe(document.body, {
-          childList: true,
-          subtree: true
-        });
-        
-        // 5 ???????????????????????????????????????
-        setTimeout(function() {
-          observer.disconnect();
-        }, 5000);
-      }
     })();
   </script>
   
@@ -1811,7 +1789,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.1.0.1909.js";
+        script.src = "flutter_bootstrap.1.0.1910.js";
         script.async = true;
         document.body.appendChild(script);
       }
