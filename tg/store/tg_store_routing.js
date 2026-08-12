@@ -174,6 +174,14 @@
     var query = {};
     if (ref) query.ref = ref;
 
+    if (normalized === 'marketplace_demo' && !ref) {
+      return appendQuery('/home', { marketplaceDemo: 'true' });
+    }
+
+    if (normalized === 'marketplace_demo') {
+      return appendQuery('/home', query);
+    }
+
     if (normalized.indexOf('product_') === 0) {
       var productId = normalized.slice('product_'.length).trim();
       return productId ? appendQuery('/products/' + encodeURIComponent(productId), query) : '/home';
