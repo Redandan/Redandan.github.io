@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ??楨摮?霅?-->
-    <meta name="cache-version" content="1.0.1915">
+    <meta name="cache-version" content="1.0.1916">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -29,8 +29,8 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market ??????? href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.1915+1915">
-  <meta name="source-commit" content="7494cfa8cfc85a737defdf8ff4ab1eeb8b53018a">
+  <meta name="version" content="1.0.1916+1916">
+  <meta name="source-commit" content="501b334edf95a81a1214ff7ffbdebedcd259aef7">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     // Request the largest available Telegram Mini App viewport before Flutter
@@ -235,7 +235,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market?高???????賹?????綜垢?????</title>
-  <link rel="manifest" href="manifest.json?v=1.0.1915">
+  <link rel="manifest" href="manifest.json?v=1.0.1916">
   
   <!-- PWA ?????????????????? -->
   <meta name="application-name" content="Agora Market">
@@ -243,7 +243,7 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ???????????????????????????????????????????? -->
-  <link rel="preload" href="flutter_bootstrap.1.0.1915.js" as="script">
+  <link rel="preload" href="flutter_bootstrap.1.0.1916.js" as="script">
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
   <!-- API server preconnect ?????? DNS+TLS handshake???????????API ??????100-200ms -->
   <link rel="preconnect" href="https://agoramarketapi.purrtechllc.com" crossorigin>
@@ -525,6 +525,69 @@
       <a id="startup-product-search-link" href="https://agoramarket.purrtechllc.com/search">?謚????</a>
     </nav>
   </div>
+  <script>
+    (function localizeStartupShell() {
+      'use strict';
+
+      function entryLanguage() {
+        try {
+          var current = new URL(window.location.href);
+          var requested = current.searchParams.get('lang');
+          if (!requested) {
+            var fragment = current.hash.replace(/^#/, '');
+            var queryStart = fragment.indexOf('?');
+            if (queryStart >= 0) {
+              requested = new URLSearchParams(fragment.slice(queryStart + 1)).get('lang');
+            }
+          }
+          return String(requested || '').trim().replace(/_/g, '-').toLowerCase();
+        } catch (_) {
+          return '';
+        }
+      }
+
+      var language = entryLanguage();
+      var locale = language === 'en' || language === 'en-us'
+        ? 'en'
+        : language === 'th' || language === 'th-th'
+          ? 'th'
+          : 'zh-Hant';
+      var copy = {
+        'zh-Hant': {
+          loading: '??謓剔?謘????...',
+          catalog: '??湔?????獢?',
+          search: '?謚????',
+          navigation: 'Agora Market ????鈭',
+          timeout: '???蹇???勗????潘撓貔?唳??謖???啾???
+        },
+        en: {
+          loading: 'Preparing the marketplace...',
+          catalog: 'Browse product catalog',
+          search: 'Search products',
+          navigation: 'Agora Market product links',
+          timeout: 'This is taking longer than expected. Check your connection or refresh.'
+        },
+        th: {
+          loading: '?撰???銝?????阡??質?馱?阡?????????..',
+          catalog: '???蹓?????????蹓嗉?秤??????,
+          search: '??????阡???秤??????,
+          navigation: '???拚?????菟?瘥??????Agora Market',
+          timeout: '??????????????撰?琿??????????????????阡??????謍怨??秤???????????????阡?????Ｚ???滂?阡??餉?????
+        }
+      }[locale];
+
+      document.documentElement.lang = locale;
+      window.__agoraStartupCopy = copy;
+      var loadingText = document.getElementById('loading-text');
+      var catalogLink = document.getElementById('startup-product-catalog-link');
+      var searchLink = document.getElementById('startup-product-search-link');
+      var navigation = document.querySelector('.startup-marketplace-links');
+      if (loadingText) loadingText.textContent = copy.loading;
+      if (catalogLink) catalogLink.textContent = copy.catalog;
+      if (searchLink) searchLink.textContent = copy.search;
+      if (navigation) navigation.setAttribute('aria-label', copy.navigation);
+    })();
+  </script>
 
   <!-- Patch 2: Flutter root container for iOS 17+ touch fix -->
   <div id="flutter-root">
@@ -805,7 +868,9 @@
         if (document.body && document.body.classList.contains('flutter-ready')) return;
         var loadingText = document.getElementById('loading-text');
         if (loadingText) {
-          loadingText.textContent = '\u8f09\u5165\u6642\u9593\u8f03\u9577\uff0c\u8acb\u6aa2\u67e5\u7db2\u8def\u6216\u91cd\u65b0\u6574\u7406\u3002';
+          var startupCopy = window.__agoraStartupCopy || {};
+          loadingText.textContent = startupCopy.timeout ||
+            '\u8f09\u5165\u6642\u9593\u8f03\u9577\uff0c\u8acb\u6aa2\u67e5\u7db2\u8def\u6216\u91cd\u65b0\u6574\u7406\u3002';
         }
         revealFlutter('startup-timeout');
       }, 8000);
@@ -1789,7 +1854,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.1.0.1915.js";
+        script.src = "flutter_bootstrap.1.0.1916.js";
         script.async = true;
         document.body.appendChild(script);
       }

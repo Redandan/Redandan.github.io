@@ -6,11 +6,11 @@
     "display": "standalone",
     "background_color": "#2196F3",
     "theme_color": "#2196F3",
-    "description": "台灣與泰國生活用品線上市集，支援網頁與 Telegram Mini App。",
+    "description": "AgoraMarket online marketplace for web, PWA, and Telegram Mini App shopping.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "categories": ["shopping", "marketplace"],
-    "lang": "zh-TW",
+    "lang": "en",
     "dir": "ltr",
     "icons": [
         {
@@ -47,10 +47,10 @@
     "screenshots": [],
     "shortcuts": [
         {
-            "name": "我的訂單",
-            "short_name": "訂單",
-            "description": "快速查看我的訂單",
-            "url": "/orders",
+            "name": "My orders",
+            "short_name": "Orders",
+            "description": "View my orders",
+            "url": "/#/orders",
             "icons": [
                 {
                     "src": "icons/new_favicon/web-app-manifest-192x192.png",
@@ -60,10 +60,10 @@
             ]
         },
         {
-            "name": "購物車",
-            "short_name": "購物車",
-            "description": "查看購物車中的商品",
-            "url": "/cart",
+            "name": "Shopping cart",
+            "short_name": "Cart",
+            "description": "View products in the shopping cart",
+            "url": "/#/cart",
             "icons": [
                 {
                     "src": "icons/new_favicon/web-app-manifest-192x192.png",
@@ -73,10 +73,10 @@
             ]
         },
         {
-            "name": "我的收藏",
-            "short_name": "收藏",
-            "description": "查看收藏的商品",
-            "url": "/favorites",
+            "name": "My favorites",
+            "short_name": "Favorites",
+            "description": "View favorite products",
+            "url": "/#/favorites",
             "icons": [
                 {
                     "src": "icons/new_favicon/web-app-manifest-192x192.png",

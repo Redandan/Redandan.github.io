@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="agora-frontend-sha" content="7494cfa8cfc85a737defdf8ff4ab1eeb8b53018a" />
+  <meta name="agora-frontend-sha" content="501b334edf95a81a1214ff7ffbdebedcd259aef7" />
   <title>AgoraMarket</title>
   <style>
     html, body {
@@ -72,7 +72,7 @@
   <p id="status">AgoraMarket</p>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="./tg_store_routing.7494cfa8cfc8.js"></script>
+  <script src="./tg_store_routing.501b334edf95.js"></script>
   <script>
     (function () {
       var API_BASE = 'https://agoramarketapi.purrtechllc.com/api';
@@ -80,7 +80,7 @@
         API_BASE + '/public/traffic/usdt-landing/events';
       var statusEl = document.getElementById('status');
       var startupStage = 'bootstrap';
-      var englishDemoEntry = false;
+      var demoLocale = 'zh-Hant';
       var frontendSha = (function () {
         try {
           var meta = document.querySelector('meta[name="agora-frontend-sha"]');
@@ -91,8 +91,20 @@
         }
       })();
       function setStatus(t) { if (statusEl) statusEl.textContent = t; }
-      function localizedStatus(zhHant, english) {
-        return englishDemoEntry ? english : zhHant;
+      function localeForDemoRoute(route) {
+        var normalized = String(route || '').trim().toLowerCase();
+        if (normalized === 'marketplace_demo_en') return 'en';
+        if (normalized === 'marketplace_demo_th') return 'th';
+        return 'zh-Hant';
+      }
+      function useDemoLocale(route) {
+        demoLocale = localeForDemoRoute(route);
+        document.documentElement.lang = demoLocale;
+      }
+      function localizedStatus(zhHant, english, thai) {
+        if (demoLocale === 'en') return english;
+        if (demoLocale === 'th') return thai;
+        return zhHant;
       }
       function safeErrorName(err) {
         try {
@@ -419,17 +431,34 @@
         document.body.appendChild(panel);
       }
 
+      var locationParams = parseQuery(window.location.search);
       var tg = window.Telegram && window.Telegram.WebApp;
-      if (!tg) { setStatus('隢 Telegram 銝剝???); return; }
-      englishDemoEntry = String((tg.initDataUnsafe || {}).start_param || '') === 'marketplace_demo_en';
-      document.documentElement.lang = englishDemoEntry ? 'en' : 'zh-Hant';
+      var initialRoute = String(
+        (tg && (tg.initDataUnsafe || {}).start_param) ||
+        locationParams.startapp ||
+        locationParams.start ||
+        ''
+      );
+      useDemoLocale(initialRoute);
+      if (!tg) {
+        setStatus(localizedStatus(
+          '隢 Telegram 銝剝???,
+          'Please open this in Telegram',
+          '鉆?鉊??鉆鉊葩鉊葦鉊?鉊耜?鉊菽?鉆? Telegram'
+        ));
+        return;
+      }
       requestTelegramViewport(tg, 'tg-store-startup');
       setTimeout(function () { requestTelegramViewport(tg, 'tg-store-retry-250ms'); }, 250);
       setTimeout(function () { requestTelegramViewport(tg, 'tg-store-retry-900ms'); }, 900);
 
       var initData = String(tg.initData || '').trim();
       if (!initData) {
-        setStatus(localizedStatus('?⊥??? Telegram 頨怠?鞈?', 'Unable to read Telegram identity'));
+        setStatus(localizedStatus(
+          '?⊥??? Telegram 頨怠?鞈?',
+          'Unable to read Telegram identity',
+          '鉆腹鉆葵鉊耜腹鉊耜腦鉊葉鉆葡鉊?鉆葉鉊﹤號鉊丞?鉊?萼鉊董鉊萵鉊?Telegram 鉆?鉆?
+        ));
         return;
       }
 
@@ -440,10 +469,13 @@
             search: window.location.search,
             initDataUnsafe: tg.initDataUnsafe || {},
           });
-          englishDemoEntry = routeTarget.route === 'marketplace_demo_en';
-          document.documentElement.lang = englishDemoEntry ? 'en' : 'zh-Hant';
+          useDemoLocale(routeTarget.route);
 
-          setStatus(localizedStatus('撽?頨怠?銝?..', 'Verifying your identity...'));
+          setStatus(localizedStatus(
+            '撽?頨怠?銝?..',
+            'Verifying your identity...',
+            '鉊董鉊丞萵鉊腺鉊獅?鉊Ｒ萵鉊?鉊晤葷鉊?...'
+          ));
           startupStage = 'auth_exchange';
           var authBody = { initData: initData };
           if (routeTarget.referrerGroupId !== null) {
@@ -463,7 +495,11 @@
               showProbeEvidence(buildProbeEvidence(routeTarget, tg, authBody, authResult), null);
               return;
             }
-            setStatus(localizedStatus('?餃憭望?', 'Sign-in failed') + ' (' + resp.status + ')');
+            setStatus(localizedStatus(
+              '?餃憭望?',
+              'Sign-in failed',
+              '鉆鉊?鉊耜葵鉊嫩?鉊?萼鉊?鉆腹鉆葵鉊喪?鉊??鉊?
+            ) + ' (' + resp.status + ')');
             return;
           }
 
@@ -472,7 +508,11 @@
           var body = json.data != null ? json.data : json;
           var jwt = String(body.jwt || body.token || body.accessToken || '').trim();
           if (!jwt) {
-            setStatus(localizedStatus('?餃憭望?嚗 token嚗?, 'Sign-in failed (missing token)'));
+            setStatus(localizedStatus(
+              '?餃憭望?嚗 token嚗?,
+              'Sign-in failed (missing token)',
+              '鉆鉊?鉊耜葵鉊嫩?鉊?萼鉊?鉆腹鉆葵鉊喪?鉊??鉊?(鉆腹鉆腹鉊菽?鉊?鉊?)'
+            ));
             return;
           }
 
@@ -495,7 +535,11 @@
             themeMode
           );
 
-          setStatus(localizedStatus('?脣??銝?..', 'Opening the buyer store...'));
+          setStatus(localizedStatus(
+            '?脣??銝?..',
+            'Opening the buyer store...',
+            '鉊董鉊丞萵鉊?鉊葩鉊腦鉆葡鉊?鉆葡鉊芹董鉊徇腦鉊晤?鉊號鉆?鉊獅?鉊?..'
+          ));
           startupStage = 'optional_startapp_telemetry';
           var startappTelemetry = recordStartappReceived(routeTarget);
           if (routeTarget.probe) {
@@ -517,7 +561,8 @@
           logStageError('error', startupStage, err);
           setStatus(localizedStatus(
             '頛?航炊嚗? + startupStage + '嚗?隢?閰?,
-            'Loading failed (' + startupStage + '). Please try again.'
+            'Loading failed (' + startupStage + '). Please try again.',
+            '鉆葦鉊丞?鉆腹鉆葵鉊喪?鉊??鉊?(' + startupStage + ') 鉆?鉊??鉊丞葉鉊葉鉊菽?鉊腦鉊晤?鉊?
           ));
         }
       })();

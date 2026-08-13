@@ -29,6 +29,7 @@
   var localizedMarketplaceDemoRoutes = {
     marketplace_demo_en: 'en-US',
     marketplace_demo_zh: 'zh-TW',
+    marketplace_demo_th: 'th-TH',
   };
   var landingRoutePrefixes = {
     usdt_costco_: 'USDT_COSTCO_TW',
