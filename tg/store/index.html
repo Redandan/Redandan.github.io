@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="agora-frontend-sha" content="501b334edf95a81a1214ff7ffbdebedcd259aef7" />
+  <meta name="agora-frontend-sha" content="3c1c9eb7cd7e912d7e3e77bb8167c387b051b5a5" />
   <title>AgoraMarket</title>
   <style>
     html, body {
@@ -72,7 +72,8 @@
   <p id="status">AgoraMarket</p>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="./tg_store_routing.501b334edf95.js"></script>
+  <script src="../../storefront_readiness.js"></script>
+  <script src="./tg_store_routing.3c1c9eb7cd7e.js"></script>
   <script>
     (function () {
       var API_BASE = 'https://agoramarketapi.purrtechllc.com/api';
@@ -276,14 +277,54 @@
       function isTelegramDesktopWebApp(webApp) {
         try {
           var platform = String(webApp && webApp.platform || '').toLowerCase();
-          if (platform === 'tdesktop' || platform === 'windows') return true;
-          if (platform) return false;
+          if (platform === 'tdesktop' || platform === 'windows' ||
+              platform === 'macos' || platform === 'linux') return true;
+          if (platform === 'ios' || platform === 'android' ||
+              platform === 'android_x' || platform === 'weba' ||
+              platform === 'webk') return false;
         } catch (_) {}
         try {
           var ua = String(navigator.userAgent || '');
           return /TelegramDesktop/i.test(ua) ||
             (/Windows NT/i.test(ua) && /Edg\//i.test(ua));
         } catch (_) {
+          return false;
+        }
+      }
+      function persistTelegramEntryContext(webApp) {
+        try {
+          var platform = String(webApp && webApp.platform || '').trim().toLowerCase();
+          var visualViewport = window.visualViewport;
+          var serializedContext = JSON.stringify({
+            desktop: isTelegramDesktopWebApp(webApp),
+            platform: platform,
+            visualViewportWidth: Number(
+              visualViewport && visualViewport.width || 0
+            ),
+            visualViewportHeight: Number(
+              visualViewport && visualViewport.height || 0
+            ),
+            viewportStableHeight: Number(
+              webApp && (webApp.viewportStableHeight || webApp.viewportHeight) || 0
+            ),
+            expiresAt: Date.now() + (12 * 60 * 60 * 1000)
+          });
+          var persisted = false;
+          try {
+            sessionStorage.setItem('_tg_store_entry_context', serializedContext);
+            persisted = true;
+          } catch (err) {
+            logStageError('warn', 'entry_context_session_storage', err);
+          }
+          try {
+            localStorage.setItem('_tg_store_entry_context', serializedContext);
+            persisted = true;
+          } catch (err) {
+            logStageError('warn', 'entry_context_local_storage', err);
+          }
+          return persisted;
+        } catch (err) {
+          logStageError('warn', 'entry_context_storage', err);
           return false;
         }
       }
@@ -362,11 +403,15 @@
         try {
           if (!webApp) return;
           if (typeof webApp.ready === 'function') webApp.ready();
-          if (typeof webApp.expand === 'function') webApp.expand();
-          if (typeof webApp.disableVerticalSwipes === 'function') {
+          var isMobileWebApp = isMobileTelegramWebApp(webApp);
+          if (isMobileWebApp && typeof webApp.expand === 'function') {
+            webApp.expand();
+          }
+          if (hasTelegramVersion(webApp, '7.7') &&
+              typeof webApp.disableVerticalSwipes === 'function') {
             webApp.disableVerticalSwipes();
           }
-          if (isMobileTelegramWebApp(webApp) &&
+          if (isMobileWebApp &&
               hasTelegramVersion(webApp, '8.0') &&
               typeof webApp.requestFullscreen === 'function') {
             webApp.requestFullscreen();
@@ -527,6 +572,7 @@
           // 銝?剁?Flutter 隞?隞?Telegram initData ?芸??餃??
           startupStage = 'session_storage';
           var themeMode = readTelegramThemeMode(tg);
+          authResult.entryContextPersisted = persistTelegramEntryContext(tg);
           authResult.hostStoragePersisted = persistHostSession(
             routeTarget,
             jwt,
@@ -542,6 +588,20 @@
           ));
           startupStage = 'optional_startapp_telemetry';
           var startappTelemetry = recordStartappReceived(routeTarget);
+          var storefrontTelemetry = Promise.resolve(null);
+          try {
+            var readiness = window.AgoraStorefrontReadiness;
+            if (readiness && typeof readiness.beginLaunch === 'function' &&
+                typeof readiness.recordAttempt === 'function') {
+              var launchContext = readiness.beginLaunch(window, {
+                probe: routeTarget.probe,
+                targetPath: routeTarget.targetPath,
+              });
+              storefrontTelemetry = readiness.recordAttempt(window, launchContext);
+            }
+          } catch (err) {
+            logStageError('warn', 'storefront_readiness_telemetry', err);
+          }
           if (routeTarget.probe) {
             showProbeEvidence(
               buildProbeEvidence(routeTarget, tg, authBody, authResult),
@@ -553,7 +613,7 @@
           await resetTelegramDesktopRuntimeCache(tg);
           startupStage = 'store_redirect';
           await Promise.race([
-            startappTelemetry,
+            Promise.all([startappTelemetry, storefrontTelemetry]),
             new Promise(function (resolve) { setTimeout(resolve, 300); }),
           ]);
           redirectToStore(routeTarget.hashTarget);

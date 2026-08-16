@@ -182,13 +182,8 @@
     var demoLanguage = localizedMarketplaceDemoRoutes[normalized];
     if (demoLanguage) {
       return appendQuery('/home', Object.assign({
-        marketplaceDemo: 'true',
         lang: demoLanguage,
       }, query));
-    }
-
-    if (normalized === 'marketplace_demo' && !ref) {
-      return appendQuery('/home', { marketplaceDemo: 'true' });
     }
 
     if (normalized === 'marketplace_demo') {

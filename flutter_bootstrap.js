@@ -33,15 +33,20 @@ addEventListener("message", eventListener);
 if (!window._flutter) {
   window._flutter = {};
 }
-_flutter.buildConfig = {"engineRevision":"425cfb54d01a9472b3e81d9e76fd63a4a44cfbcb","builds":[{"compileTarget":"dart2js","renderer":"canvaskit","mainJsPath":"main.dart.1.0.1916.js"},{}]};
+_flutter.buildConfig = {"engineRevision":"425cfb54d01a9472b3e81d9e76fd63a4a44cfbcb","builds":[{"compileTarget":"dart2js","renderer":"canvaskit","mainJsPath":"main.dart.1.0.1917.js"},{}]};
+
+
+// Start Flutter inside the viewport host that index.html sizes for Telegram.
+// Without hostElement, Flutter reads the outer WebView2 surface before the
+// generated flutter-view is moved into #flutter-root, so its MediaQuery keeps
+// the clipped desktop width even though the DOM container is narrower.
+const flutterHost = document.getElementById('flutter-root');
 
 _flutter.loader.load({
   config: {
     useLocalCanvasKit: true,
     canvasKitBaseUrl: "canvaskit/",
-    canvasKitVariant: "full"
+    canvasKitVariant: "full",
+    ...(flutterHost ? { hostElement: flutterHost } : {}),
   },
-  serviceWorkerSettings: {
-    serviceWorkerVersion: "515041773" /* Flutter's service worker is deprecated and will be removed in a future Flutter release. */
-  }
 });

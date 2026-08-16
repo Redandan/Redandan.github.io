@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- ??楨摮?霅?-->
-    <meta name="cache-version" content="1.0.1916">
+    <meta name="cache-version" content="1.0.1917">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -29,8 +29,8 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market ??????? href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.1916+1916">
-  <meta name="source-commit" content="501b334edf95a81a1214ff7ffbdebedcd259aef7">
+  <meta name="version" content="1.0.1917+1917">
+  <meta name="source-commit" content="3c1c9eb7cd7e912d7e3e77bb8167c387b051b5a5">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     // Request the largest available Telegram Mini App viewport before Flutter
@@ -71,16 +71,199 @@
         }
       }
 
+      function readActiveTelegramDesktopEntryContext() {
+        var stores = [];
+        try { stores.push(sessionStorage); } catch (_) {}
+        try { stores.push(localStorage); } catch (_) {}
+        for (var i = 0; i < stores.length; i += 1) {
+          try {
+            var rawContext = stores[i].getItem('_tg_store_entry_context');
+            if (!rawContext) continue;
+            var context = JSON.parse(rawContext);
+            var expiresAt = Number(context && context.expiresAt || 0);
+            if (expiresAt <= Date.now()) {
+              stores[i].removeItem('_tg_store_entry_context');
+              continue;
+            }
+            if (context && context.desktop === true) return context;
+          } catch (_) {
+            try { stores[i].removeItem('_tg_store_entry_context'); } catch (_) {}
+          }
+        }
+        return null;
+      }
+
+      function isDesktopTelegramWebApp(webApp) {
+        try {
+          var platform = String(webApp && webApp.platform || '').toLowerCase();
+          if (platform === 'tdesktop' || platform === 'windows' ||
+              platform === 'macos' || platform === 'linux') return true;
+        } catch (_) {}
+        return readActiveTelegramDesktopEntryContext() != null;
+      }
+
+      function validViewportLength(value) {
+        var number = Number(value || 0);
+        return Number.isFinite(number) && number > 0 && number <= 10000
+          ? number
+          : 0;
+      }
+
+      function smallestViewportLength(first, second) {
+        if (first > 0 && second > 0) return Math.min(first, second);
+        return first || second || 0;
+      }
+
+      function isNativeWindowsTelegram(webApp) {
+        try {
+          var platform = String(webApp && webApp.platform || '').toLowerCase();
+          var ua = String(navigator.userAgent || '');
+          return (platform === 'tdesktop' || platform === 'windows') &&
+            /Windows NT/i.test(ua);
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function telegramWindowsWebView2Bounds(webApp, width, height) {
+        if (!isNativeWindowsTelegram(webApp)) return null;
+        var dpr = validViewportLength(window.devicePixelRatio);
+        var availableHeight = validViewportLength(
+          window.screen && window.screen.availHeight
+        );
+        var isHighDpiWindowsWebView = dpr > 1 && availableHeight > 0;
+        var hasScaledWidth = width > 768;
+        var hasScaledHeight = height > 900;
+        if (!isHighDpiWindowsWebView || (!hasScaledWidth && !hasScaledHeight)) {
+          return null;
+        }
+
+        // Telegram Desktop 7.0.9 / WebView2 151 can expose its scaled outer
+        // surface (1098x1235 at 175% DPI) while the embedded pane is only about
+        // 675x730. Either axis can be wrong independently: Telegram can report
+        // the correct 675px width together with a stale 1142px height. Cap only
+        // the scaled axis so the compact bottom navigation remains visible.
+        return {
+          width: hasScaledWidth ? Math.min(width, 675) : width,
+          height: hasScaledHeight ? Math.min(height, 720) : height
+        };
+      }
+
+      function resolveTelegramDesktopVisibleBounds(webApp, entryContext) {
+        var visualViewport = window.visualViewport;
+        var useLocalOrigin = isNativeWindowsTelegram(webApp);
+        var liveVisualWidth = validViewportLength(
+          visualViewport && visualViewport.width
+        );
+        var liveVisualHeight = validViewportLength(
+          visualViewport && visualViewport.height
+        );
+        var liveStableHeight = validViewportLength(
+          webApp && webApp.viewportStableHeight
+        );
+
+        var width = liveVisualWidth || validViewportLength(
+          entryContext && entryContext.visualViewportWidth
+        );
+        var height = smallestViewportLength(
+          liveVisualHeight,
+          liveStableHeight
+        ) || validViewportLength(
+          entryContext && entryContext.visualViewportHeight
+        ) || validViewportLength(
+          entryContext && entryContext.viewportStableHeight
+        );
+        var windowsBounds = telegramWindowsWebView2Bounds(
+          webApp,
+          width,
+          height
+        );
+        if (windowsBounds) {
+          width = windowsBounds.width;
+          height = windowsBounds.height;
+        }
+
+        return {
+          width: width,
+          height: height,
+          // Telegram Desktop on Windows can expose the native panel's
+          // screen-space origin through VisualViewport. Reapplying that value
+          // inside the WebView shifts Flutter a second time and can move half
+          // of the storefront beyond the right edge. The document origin is
+          // already local to the embedded pane, so keep it at (0, 0).
+          left: useLocalOrigin ? 0 : validViewportLength(
+            visualViewport && visualViewport.offsetLeft
+          ),
+          top: useLocalOrigin ? 0 : validViewportLength(
+            visualViewport && visualViewport.offsetTop
+          )
+        };
+      }
+
+      function setViewportProperty(name, value) {
+        if (value > 0) {
+          document.documentElement.style.setProperty(name, value + 'px');
+        } else {
+          document.documentElement.style.removeProperty(name);
+        }
+      }
+
+      function syncTelegramDesktopViewportClass(webApp) {
+        var isDesktopWebApp = isDesktopTelegramWebApp(webApp);
+        var entryContext = readActiveTelegramDesktopEntryContext();
+        var visibleBounds = resolveTelegramDesktopVisibleBounds(
+          webApp,
+          entryContext
+        );
+        document.documentElement.classList.toggle(
+          'agora-telegram-desktop-mini-app',
+          isDesktopWebApp
+        );
+        if (isDesktopWebApp) {
+          setViewportProperty(
+            '--agora-telegram-desktop-visible-width',
+            visibleBounds.width
+          );
+          setViewportProperty(
+            '--agora-telegram-desktop-visible-height',
+            visibleBounds.height
+          );
+          setViewportProperty(
+            '--agora-telegram-desktop-visible-left',
+            visibleBounds.left
+          );
+          setViewportProperty(
+            '--agora-telegram-desktop-visible-top',
+            visibleBounds.top
+          );
+        } else {
+          [
+            '--agora-telegram-desktop-visible-width',
+            '--agora-telegram-desktop-visible-height',
+            '--agora-telegram-desktop-visible-left',
+            '--agora-telegram-desktop-visible-top'
+          ].forEach(function (name) {
+            document.documentElement.style.removeProperty(name);
+          });
+        }
+        window.__agoraTelegramDesktopViewportConstrained = isDesktopWebApp;
+      }
+
       function requestViewport(reason) {
         try {
           var webApp = window.Telegram && window.Telegram.WebApp;
           if (!webApp) return;
+          syncTelegramDesktopViewportClass(webApp);
           if (typeof webApp.ready === 'function') webApp.ready();
-          if (typeof webApp.expand === 'function') webApp.expand();
-          if (typeof webApp.disableVerticalSwipes === 'function') {
+          var isMobileWebApp = isMobileTelegramWebApp(webApp);
+          if (isMobileWebApp && typeof webApp.expand === 'function') {
+            webApp.expand();
+          }
+          if (hasTelegramVersion(webApp, '7.7') &&
+              typeof webApp.disableVerticalSwipes === 'function') {
             webApp.disableVerticalSwipes();
           }
-          if (isMobileTelegramWebApp(webApp) &&
+          if (isMobileWebApp &&
               hasTelegramVersion(webApp, '8.0') &&
               typeof webApp.requestFullscreen === 'function') {
             webApp.requestFullscreen();
@@ -92,6 +275,31 @@
       requestViewport('index-startup');
       setTimeout(function () { requestViewport('index-retry-250ms'); }, 250);
       setTimeout(function () { requestViewport('index-retry-900ms'); }, 900);
+
+      try {
+        if (window.visualViewport &&
+            typeof window.visualViewport.addEventListener === 'function') {
+          window.visualViewport.addEventListener('resize', function () {
+            requestViewport('visual-viewport-resize');
+          });
+          window.visualViewport.addEventListener('scroll', function () {
+            requestViewport('visual-viewport-scroll');
+          });
+        }
+        window.addEventListener('resize', function () {
+          requestViewport('window-resize');
+        });
+        var liveWebApp = window.Telegram && window.Telegram.WebApp;
+        if (liveWebApp && typeof liveWebApp.onEvent === 'function') {
+          liveWebApp.onEvent('viewportChanged', function (event) {
+            if (event && event.isStateStable === false) return;
+            requestViewport('telegram-stable-viewport');
+          });
+          liveWebApp.onEvent('activated', function () {
+            requestViewport('telegram-activated');
+          });
+        }
+      } catch (_) {}
     })();
   </script>
 
@@ -235,7 +443,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market?高???????賹?????綜垢?????</title>
-  <link rel="manifest" href="manifest.json?v=1.0.1916">
+  <link rel="manifest" href="manifest.json?v=1.0.1917">
   
   <!-- PWA ?????????????????? -->
   <meta name="application-name" content="Agora Market">
@@ -243,7 +451,7 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- ???????????????????????????????????????????? -->
-  <link rel="preload" href="flutter_bootstrap.1.0.1916.js" as="script">
+  <link rel="preload" href="flutter_bootstrap.1.0.1917.js" as="script">
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
   <!-- API server preconnect ?????? DNS+TLS handshake???????????API ??????100-200ms -->
   <link rel="preconnect" href="https://agoramarketapi.purrtechllc.com" crossorigin>
@@ -340,6 +548,30 @@
     #flutter-root flt-scene-host {
       width: 100% !important;
       height: 100% !important;
+    }
+
+    /* Telegram Desktop: follow the live visible viewport, not the native
+     * WebView's outer bounds. This keeps both edges and bottom navigation
+     * inside the pane while preserving the normal responsive breakpoints. */
+    html.agora-telegram-desktop-mini-app #flutter-root {
+      left: var(--agora-telegram-desktop-visible-left, 0px) !important;
+      top: var(--agora-telegram-desktop-visible-top, 0px) !important;
+      width: var(--agora-telegram-desktop-visible-width, 100%) !important;
+      height: var(--agora-telegram-desktop-visible-height, 100%) !important;
+      max-width: none !important;
+      max-height: none !important;
+      right: auto !important;
+      bottom: auto !important;
+      box-sizing: border-box;
+    }
+
+    html.agora-telegram-desktop-mini-app flutter-view,
+    html.agora-telegram-desktop-mini-app flt-glass-pane,
+    html.agora-telegram-desktop-mini-app flt-scene-host {
+      width: 100% !important;
+      height: 100% !important;
+      max-width: none !important;
+      max-height: none !important;
     }
 
     /*
@@ -788,9 +1020,22 @@
             'startupReveal=' + (window.__AGORA_STARTUP_REVEAL_REASON || 'unset'),
             'standalone=' + isStandalone(),
             'inner=' + window.innerWidth + 'x' + window.innerHeight,
+            'outer=' + window.outerWidth + 'x' + window.outerHeight,
             'screen=' + window.screen.width + 'x' + window.screen.height,
+            'screenAvail=' + window.screen.availWidth + 'x' +
+              window.screen.availHeight +
+              '@(' + window.screen.availLeft + ',' + window.screen.availTop + ')',
+            'client=' + document.documentElement.clientWidth + 'x' +
+              document.documentElement.clientHeight,
             'dpr=' + window.devicePixelRatio
           ];
+          try {
+            var webApp = window.Telegram && window.Telegram.WebApp;
+            parts.push('tg=' + (webApp && webApp.platform || 'none') +
+              ' viewport=' + (webApp && webApp.viewportWidth || 0) + 'x' +
+              (webApp && webApp.viewportHeight || 0) +
+              ' stableHeight=' + (webApp && webApp.viewportStableHeight || 0));
+          } catch (_) {}
           if (vv) {
             parts.push('vv=' + vv.width + 'x' + vv.height +
               ' offset=(' + vv.offsetLeft + ',' + vv.offsetTop + ')' +
@@ -1572,6 +1817,7 @@
   </script>
 
   <script src="passkey_helper.js"></script>
+  <script src="storefront_readiness.js"></script>
   <script id="marketplace-landing-observation">
     (function () {
       'use strict';
@@ -1854,7 +2100,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.1.0.1916.js";
+        script.src = "flutter_bootstrap.1.0.1917.js";
         script.async = true;
         document.body.appendChild(script);
       }
