@@ -4,10 +4,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow, noarchive">
-    <meta name="agora-pages-role" content="legacy-redirect">
-    <meta name="agora-target-release" content="e60adb5af0c1ca63eeb27468734a5f6516572dcb">
-    <meta http-equiv="refresh" content="2;url=https://agoramarket.purrtechllc.com/">
-    <title>正在前往新版 AgoraMarket</title>
+    <meta name="agora-pages-role" content="test-entry">
+    <meta name="agora-target-release" content="8930c5a3f64bcced945f6d5d6f8f869d7f291eb6">
+    <meta name="agora-target-backend" content="ccb547fa62d18e4ea89414a8e094d0f8ba1ef041">
+    <meta http-equiv="refresh" content="2;url=https://agoramarket-test.141-148-142-175.sslip.io/">
+    <title>正在進入 AgoraMarket V2 測試站</title>
     <style>
       :root { color-scheme: light; font-family: Inter, system-ui, sans-serif; }
       body { min-height: 100vh; margin: 0; display: grid; place-items: center; background: #f4f7fb; color: #172033; }
@@ -19,14 +20,14 @@
   </head>
   <body>
     <main>
-      <h1>AgoraMarket 已更新</h1>
-      <p>這個舊版測試入口已停用，正在帶你前往目前的 V2 網站。</p>
-      <a id="continue" href="https://agoramarket.purrtechllc.com/">立即進入新版</a>
+      <h1>正在進入 V2 隔離測試站</h1>
+      <p>這是 AgoraMarket 的測試入口；測試帳號與測試資料和正式環境分開。</p>
+      <a id="continue" href="https://agoramarket-test.141-148-142-175.sslip.io/">立即進入測試站</a>
     </main>
     <script>
       (() => {
-        const legacyPath = location.pathname === "/index.html" ? "/" : location.pathname;
-        const destination = new URL(legacyPath + location.search + location.hash, "https://agoramarket.purrtechllc.com");
+        const entryPath = location.pathname === "/index.html" ? "/" : location.pathname;
+        const destination = new URL(entryPath + location.search + location.hash, "https://agoramarket-test.141-148-142-175.sslip.io");
         document.querySelector("#continue").href = destination.href;
 
         const cleanup = async () => {

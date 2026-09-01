@@ -3,7 +3,7 @@
 const destinationFor = (url) => {
   const source = new URL(url);
   const path = source.pathname === "/index.html" ? "/" : source.pathname;
-  return new URL(path + source.search + source.hash, "https://agoramarket.purrtechllc.com").href;
+  return new URL(path + source.search + source.hash, "https://agoramarket-test.141-148-142-175.sslip.io").href;
 };
 
 self.addEventListener("install", () => self.skipWaiting());
