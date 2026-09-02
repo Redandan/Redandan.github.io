@@ -40,7 +40,7 @@
         };
 
         Promise.race([
-          cleanup(),
+          cleanup().catch(() => undefined),
           new Promise((resolve) => setTimeout(resolve, 1200)),
         ]).finally(() => location.replace(destination.href));
       })();
