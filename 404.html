@@ -5,16 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow, noarchive">
     <meta name="agora-pages-role" content="test-entry">
-    <meta name="agora-target-release" content="8930c5a3f64bcced945f6d5d6f8f869d7f291eb6">
     <meta http-equiv="refresh" content="2;url=https://agoramarket-test.141-148-142-175.sslip.io/">
     <title>前往 AgoraMarket V2 測試站</title>
   </head>
   <body>
     <p><a id="continue" href="https://agoramarket-test.141-148-142-175.sslip.io/">前往 AgoraMarket V2 測試站</a></p>
     <script>
-      const destination = new URL(location.pathname + location.search + location.hash, "https://agoramarket-test.141-148-142-175.sslip.io");
-      document.querySelector("#continue").href = destination.href;
-      location.replace(destination.href);
+      (() => {
+        const entryPath = ["/404.html", "/index.html"].includes(location.pathname) ? "/" : location.pathname;
+        const destination = new URL(entryPath + location.search + location.hash, "https://agoramarket-test.141-148-142-175.sslip.io");
+        document.querySelector("#continue").href = destination.href;
+
+        const cleanup = async () => {
+          if ("serviceWorker" in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            await Promise.allSettled(registrations.map((registration) => registration.unregister()));
+          }
+          if ("caches" in window) {
+            const names = await caches.keys();
+            await Promise.allSettled(names.map((name) => caches.delete(name)));
+          }
+        };
+
+        Promise.race([
+          cleanup().catch(() => undefined),
+          new Promise((resolve) => setTimeout(resolve, 1200)),
+        ]).finally(() => location.replace(destination.href));
+      })();
     </script>
   </body>
 </html>
