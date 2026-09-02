@@ -12,7 +12,8 @@
     <p><a id="continue" href="https://agoramarket-test.141-148-142-175.sslip.io/">前往 AgoraMarket V2 測試站</a></p>
     <script>
       (() => {
-        const destination = new URL(location.pathname + location.search + location.hash, "https://agoramarket-test.141-148-142-175.sslip.io");
+        const entryPath = ["/404.html", "/index.html"].includes(location.pathname) ? "/" : location.pathname;
+        const destination = new URL(entryPath + location.search + location.hash, "https://agoramarket-test.141-148-142-175.sslip.io");
         document.querySelector("#continue").href = destination.href;
 
         const cleanup = async () => {
