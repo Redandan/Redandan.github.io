@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="agora-frontend-sha" content="e60adb5af0c1ca63eeb27468734a5f6516572dcb" />
+  <meta name="agora-frontend-sha" content="a708d4721d476551abb454752bfd92a7794d2950" />
   <title>AgoraMarket</title>
   <style>
     html, body {
@@ -105,7 +105,7 @@
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="../../storefront_readiness.js"></script>
-  <script src="./tg_store_routing.e60adb5af0c1.js"></script>
+  <script src="./tg_store_routing.a708d4721d47.js"></script>
   <script>
     (function () {
       var API_BASE = 'https://agoramarketapi.purrtechllc.com/api';
@@ -156,17 +156,17 @@
         if (!recoveryActionsEl) return;
         if (retryButtonEl) {
           retryButtonEl.textContent = localizedStatus(
-            '重新嘗試',
+            '??岫',
             'Try again',
-            'ลองอีกครั้ง'
+            '鉊丞葉鉊葉鉊菽?鉊腦鉊晤?鉊?
           );
           retryButtonEl.onclick = function () { window.location.reload(); };
         }
         if (returnBotButtonEl) {
           returnBotButtonEl.textContent = localizedStatus(
-            '返回 Bot',
+            '餈? Bot',
             'Return to bot',
-            'กลับไปที่บอต'
+            '鉊艇鉊晤?鉆?鉊葭鉆?鉊冢?'
           );
           returnBotButtonEl.onclick = function () {
             try {
@@ -186,9 +186,9 @@
         }
         if (errorCodeEl) {
           errorCodeEl.textContent = localizedStatus(
-            '錯誤編號：',
+            '?航炊蝺刻?嚗?,
             'Error code: ',
-            'รหัสข้อผิดพลาด: '
+            '鉊?葦鉊晤葵鉊?鉊冢?鉊毯?鉊艇鉊耜?: '
           ) + safeErrorCode(code);
         }
         recoveryActionsEl.hidden = false;
@@ -608,9 +608,9 @@
       useDemoLocale(initialRoute);
       if (!tg) {
         setStatus(localizedStatus(
-          '請在 Telegram 中開啟',
+          '隢 Telegram 銝剝???,
           'Please open this in Telegram',
-          'โปรดเปิดหน้านี้ใน Telegram'
+          '鉆?鉊??鉆鉊葩鉊葦鉊?鉊耜?鉊菽?鉆? Telegram'
         ));
         showRecoveryActions('TG_RUNTIME_MISSING');
         return;
@@ -622,9 +622,9 @@
       var initData = String(tg.initData || '').trim();
       if (!initData) {
         setStatus(localizedStatus(
-          '無法取得 Telegram 身分資訊',
+          '?⊥??? Telegram 頨怠?鞈?',
           'Unable to read Telegram identity',
-          'ไม่สามารถอ่านข้อมูลประจำตัว Telegram ได้'
+          '鉆腹鉆葵鉊耜腹鉊耜腦鉊葉鉆葡鉊?鉆葉鉊﹤號鉊丞?鉊?萼鉊董鉊萵鉊?Telegram 鉆?鉆?
         ));
         showRecoveryActions('TG_INIT_DATA_MISSING');
         return;
@@ -673,9 +673,9 @@
           }
 
           setStatus(localizedStatus(
-            '驗證身分中...',
+            '撽?頨怠?銝?..',
             'Verifying your identity...',
-            'กำลังยืนยันตัวตน...'
+            '鉊董鉊丞萵鉊腺鉊獅?鉊Ｒ萵鉊?鉊晤葷鉊?...'
           ));
           startupStage = 'auth_exchange';
           var authBody = { initData: initData };
@@ -712,9 +712,9 @@
               return;
             }
             setStatus(localizedStatus(
-              '登入失敗',
+              '?餃憭望?',
               'Sign-in failed',
-              'เข้าสู่ระบบไม่สำเร็จ'
+              '鉆鉊?鉊耜葵鉊嫩?鉊?萼鉊?鉆腹鉆葵鉊喪?鉊??鉊?
             ) + ' (' + resp.status + ')');
             showRecoveryActions('TG_AUTH_HTTP_' + resp.status);
             return;
@@ -741,9 +741,9 @@
               );
             }
             setStatus(localizedStatus(
-              '登入失敗（無 token）',
+              '?餃憭望?嚗 token嚗?,
               'Sign-in failed (missing token)',
-              'เข้าสู่ระบบไม่สำเร็จ (ไม่มีโทเคน)'
+              '鉆鉊?鉊耜葵鉊嫩?鉊?萼鉊?鉆腹鉆葵鉊喪?鉊??鉊?(鉆腹鉆腹鉊菽?鉊?鉊?)'
             ));
             showRecoveryActions('TG_AUTH_TOKEN_MISSING');
             return;
@@ -756,8 +756,8 @@
           authResult.responseUserIdPresent = Boolean(userId);
           authResult.role = userRole || 'USER';
 
-          // 預植 JWT 可避免 Flutter 再換一次 token；若 WebView storage
-          // 不可用，Flutter 仍會以 Telegram initData 自動登入。
+          // ?? JWT ?舫??Flutter ??銝甈?token嚗 WebView storage
+          // 銝?剁?Flutter 隞?隞?Telegram initData ?芸??餃??
           startupStage = 'session_storage';
           var themeMode = readTelegramThemeMode(tg);
           authResult.entryContextPersisted = persistTelegramEntryContext(tg);
@@ -787,9 +787,9 @@
           }
 
           setStatus(localizedStatus(
-            '進入商城中...',
+            '?脣??銝?..',
             'Opening the buyer store...',
-            'กำลังเปิดร้านค้าสำหรับผู้ซื้อ...'
+            '鉊董鉊丞萵鉊?鉊葩鉊腦鉆葡鉊?鉆葡鉊芹董鉊徇腦鉊晤?鉊號鉆?鉊獅?鉊?..'
           ));
           startupStage = 'optional_startapp_telemetry';
           var startappTelemetry = recordStartappReceived(routeTarget);
@@ -836,9 +836,9 @@
           }
           logStageError('error', startupStage, err);
           setStatus(localizedStatus(
-            '載入錯誤（' + startupStage + '），請重試',
+            '頛?航炊嚗? + startupStage + '嚗?隢?閰?,
             'Loading failed (' + startupStage + '). Please try again.',
-            'โหลดไม่สำเร็จ (' + startupStage + ') โปรดลองอีกครั้ง'
+            '鉆葦鉊丞?鉆腹鉆葵鉊喪?鉊??鉊?(' + startupStage + ') 鉆?鉊??鉊丞葉鉊葉鉊菽?鉊腦鉊晤?鉊?
           ));
           showRecoveryActions('TG_STARTUP_' + startupStage);
         }
