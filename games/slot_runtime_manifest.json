@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "runtimeScripts": [
+    "../_runtime/flutter_adapter.js"
+  ],
+  "games": [
+    {
+      "id": "moon_dance",
+      "html": "moon_dance/index.html",
+      "smoke": {
+        "rtpGameId": "moon_dance",
+        "browserPath": "moon_dance/index.html?flutter=1"
+      }
+    },
+    {
+      "id": "dragon_hero",
+      "html": "dragon_hero/index.html"
+    }
+  ]
+}

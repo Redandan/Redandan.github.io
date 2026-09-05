@@ -1,49 +1,3304 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="robots" content="noindex, nofollow, noarchive">
-    <meta name="agora-pages-role" content="test-entry">
-    <meta http-equiv="refresh" content="2;url=https://agoramarket-test.141-148-142-175.sslip.io/">
-    <title>正在進入 AgoraMarket V2 測試站</title>
-    <style>
-      :root { color-scheme: light; font-family: Inter, system-ui, sans-serif; }
-      body { min-height: 100vh; margin: 0; display: grid; place-items: center; background: #f4f7fb; color: #172033; }
-      main { width: min(34rem, calc(100% - 2rem)); padding: 2rem; box-sizing: border-box; border: 1px solid #dfe6f1; border-radius: 1.25rem; background: #fff; box-shadow: 0 1rem 3rem rgb(33 52 87 / 10%); text-align: center; }
-      h1 { margin: 0 0 .75rem; font-size: clamp(1.45rem, 5vw, 2rem); }
-      p { margin: 0 0 1.25rem; color: #536078; line-height: 1.65; }
-      a { display: inline-block; padding: .8rem 1.15rem; border-radius: .8rem; background: #2457d6; color: #fff; font-weight: 700; text-decoration: none; }
-    </style>
-  </head>
-  <body>
-    <main>
-      <h1>正在進入 V2 隔離測試站</h1>
-      <p>這是 AgoraMarket 的測試入口；測試帳號與測試資料和正式環境分開。</p>
-      <a id="continue" href="https://agoramarket-test.141-148-142-175.sslip.io/">立即進入測試站</a>
-    </main>
-    <script>
-      (() => {
-        const entryPath = location.pathname === "/index.html" ? "/" : location.pathname;
-        const destination = new URL(entryPath + location.search + location.hash, "https://agoramarket-test.141-148-142-175.sslip.io");
-        document.querySelector("#continue").href = destination.href;
+<head>
+    <!-- 針對 HTML 文件的緩存控制 - 短期緩存以便 Service Worker 處理 -->
+    <meta http-equiv="Cache-Control" content="max-age=300, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <!-- 版本化緩存標識 -->
+    <meta name="cache-version" content="1.0.1902">
+  <base href="/">
 
-        const cleanup = async () => {
-          if ("serviceWorker" in navigator) {
-            const registrations = await navigator.serviceWorker.getRegistrations();
-            await Promise.allSettled(registrations.map((registration) => registration.unregister()));
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <!-- ???????????????????????????????????????????HTML -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  
+  <!-- Permissions Policy -->
+  <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(self), notifications=(self), payment=(), publickey-credentials-get=(self), publickey-credentials-create=(self)">
+  
+  <meta name="description" content="Agora Market 線上市集，提供台灣與泰國生活用品、居家用品及精選商品。免登入即可瀏覽商品，支援網頁與 Telegram Mini App。">
+  <meta name="keywords" content="Agora Market,線上市集,台灣購物,泰國購物,生活用品,居家用品,Telegram Mini App">
+  <meta name="author" content="Agora Market">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://agoramarket.purrtechllc.com/">
+  <link rel="alternate" hreflang="zh-Hant" href="https://agoramarket.purrtechllc.com/">
+  <link rel="alternate" hreflang="th" href="https://agoramarket.purrtechllc.com/marketplace-th.html">
+  <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
+  <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
+  <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
+  <meta name="version" content="1.0.1902+1902">
+  <meta name="source-commit" content="e60adb5af0c1ca63eeb27468734a5f6516572dcb">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    // Request the largest available Telegram Mini App viewport before Flutter
+    // starts. iOS can lock the first layout pass to a half-height sheet if this
+    // waits until the Dart bundle is loaded.
+    (function () {
+      'use strict';
+
+      function hasTelegramVersion(webApp, version) {
+        try {
+          return typeof webApp.isVersionAtLeast === 'function' &&
+            webApp.isVersionAtLeast(version) === true;
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function isMobileTelegramWebApp(webApp) {
+        try {
+          var platform = String(webApp && webApp.platform || '').toLowerCase();
+          if (platform === 'ios' || platform === 'android' || platform === 'android_x') {
+            return true;
           }
-          if ("caches" in window) {
-            const names = await caches.keys();
-            await Promise.allSettled(names.map((name) => caches.delete(name)));
+          if (platform === 'tdesktop' || platform === 'weba' || platform === 'webk' ||
+              platform === 'macos' || platform === 'windows' || platform === 'linux') {
+            return false;
           }
+        } catch (_) {}
+        try {
+          var ua = String(navigator.userAgent || '');
+          if (/Android|iPhone|iPad|iPod|Mobile/i.test(ua)) return true;
+        } catch (_) {}
+        try {
+          return window.matchMedia &&
+            window.matchMedia('(pointer: coarse) and (max-width: 900px)').matches;
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function readActiveTelegramDesktopEntryContext() {
+        var stores = [];
+        try { stores.push(sessionStorage); } catch (_) {}
+        try { stores.push(localStorage); } catch (_) {}
+        for (var i = 0; i < stores.length; i += 1) {
+          try {
+            var rawContext = stores[i].getItem('_tg_store_entry_context');
+            if (!rawContext) continue;
+            var context = JSON.parse(rawContext);
+            var expiresAt = Number(context && context.expiresAt || 0);
+            if (expiresAt <= Date.now()) {
+              stores[i].removeItem('_tg_store_entry_context');
+              continue;
+            }
+            if (context && context.desktop === true) return context;
+          } catch (_) {
+            try { stores[i].removeItem('_tg_store_entry_context'); } catch (_) {}
+          }
+        }
+        return null;
+      }
+
+      function isDesktopTelegramWebApp(webApp) {
+        try {
+          var platform = String(webApp && webApp.platform || '').toLowerCase();
+          if (platform === 'tdesktop' || platform === 'windows' ||
+              platform === 'macos' || platform === 'linux') return true;
+        } catch (_) {}
+        return readActiveTelegramDesktopEntryContext() != null;
+      }
+
+      function validViewportLength(value) {
+        var number = Number(value || 0);
+        return Number.isFinite(number) && number > 0 && number <= 10000
+          ? number
+          : 0;
+      }
+
+      function smallestViewportLength(first, second) {
+        if (first > 0 && second > 0) return Math.min(first, second);
+        return first || second || 0;
+      }
+
+      function isNativeWindowsTelegram(webApp) {
+        try {
+          var platform = String(webApp && webApp.platform || '').toLowerCase();
+          var ua = String(navigator.userAgent || '');
+          return (platform === 'tdesktop' || platform === 'windows') &&
+            /Windows NT/i.test(ua);
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function telegramWindowsWebView2Bounds(webApp, width, height) {
+        if (!isNativeWindowsTelegram(webApp)) return null;
+        var dpr = validViewportLength(window.devicePixelRatio);
+        var availableHeight = validViewportLength(
+          window.screen && window.screen.availHeight
+        );
+        var isHighDpiWindowsWebView = dpr > 1 && availableHeight > 0;
+        var hasScaledWidth = width > 768;
+        var hasScaledHeight = height > 900;
+        if (!isHighDpiWindowsWebView || (!hasScaledWidth && !hasScaledHeight)) {
+          return null;
+        }
+
+        // Telegram Desktop 7.0.9 / WebView2 151 can expose its scaled outer
+        // surface (1098x1235 at 175% DPI) while the embedded pane is only about
+        // 675x730. Either axis can be wrong independently: Telegram can report
+        // the correct 675px width together with a stale 1142px height. Cap only
+        // the scaled axis so the compact bottom navigation remains visible.
+        return {
+          width: hasScaledWidth ? Math.min(width, 675) : width,
+          height: hasScaledHeight ? Math.min(height, 720) : height
+        };
+      }
+
+      function resolveTelegramDesktopVisibleBounds(webApp, entryContext) {
+        var visualViewport = window.visualViewport;
+        var useLocalOrigin = isNativeWindowsTelegram(webApp);
+        var liveVisualWidth = validViewportLength(
+          visualViewport && visualViewport.width
+        );
+        var liveVisualHeight = validViewportLength(
+          visualViewport && visualViewport.height
+        );
+        var liveStableHeight = validViewportLength(
+          webApp && webApp.viewportStableHeight
+        );
+
+        var width = liveVisualWidth || validViewportLength(
+          entryContext && entryContext.visualViewportWidth
+        );
+        var height = smallestViewportLength(
+          liveVisualHeight,
+          liveStableHeight
+        ) || validViewportLength(
+          entryContext && entryContext.visualViewportHeight
+        ) || validViewportLength(
+          entryContext && entryContext.viewportStableHeight
+        );
+        var windowsBounds = telegramWindowsWebView2Bounds(
+          webApp,
+          width,
+          height
+        );
+        if (windowsBounds) {
+          width = windowsBounds.width;
+          height = windowsBounds.height;
+        }
+
+        return {
+          width: width,
+          height: height,
+          // Telegram Desktop on Windows can expose the native panel's
+          // screen-space origin through VisualViewport. Reapplying that value
+          // inside the WebView shifts Flutter a second time and can move half
+          // of the storefront beyond the right edge. The document origin is
+          // already local to the embedded pane, so keep it at (0, 0).
+          left: useLocalOrigin ? 0 : validViewportLength(
+            visualViewport && visualViewport.offsetLeft
+          ),
+          top: useLocalOrigin ? 0 : validViewportLength(
+            visualViewport && visualViewport.offsetTop
+          )
+        };
+      }
+
+      function setViewportProperty(name, value) {
+        if (value > 0) {
+          document.documentElement.style.setProperty(name, value + 'px');
+        } else {
+          document.documentElement.style.removeProperty(name);
+        }
+      }
+
+      function syncTelegramDesktopViewportClass(webApp) {
+        var isDesktopWebApp = isDesktopTelegramWebApp(webApp);
+        var entryContext = readActiveTelegramDesktopEntryContext();
+        var visibleBounds = resolveTelegramDesktopVisibleBounds(
+          webApp,
+          entryContext
+        );
+        document.documentElement.classList.toggle(
+          'agora-telegram-desktop-mini-app',
+          isDesktopWebApp
+        );
+        if (isDesktopWebApp) {
+          setViewportProperty(
+            '--agora-telegram-desktop-visible-width',
+            visibleBounds.width
+          );
+          setViewportProperty(
+            '--agora-telegram-desktop-visible-height',
+            visibleBounds.height
+          );
+          setViewportProperty(
+            '--agora-telegram-desktop-visible-left',
+            visibleBounds.left
+          );
+          setViewportProperty(
+            '--agora-telegram-desktop-visible-top',
+            visibleBounds.top
+          );
+        } else {
+          [
+            '--agora-telegram-desktop-visible-width',
+            '--agora-telegram-desktop-visible-height',
+            '--agora-telegram-desktop-visible-left',
+            '--agora-telegram-desktop-visible-top'
+          ].forEach(function (name) {
+            document.documentElement.style.removeProperty(name);
+          });
+        }
+        window.__agoraTelegramDesktopViewportConstrained = isDesktopWebApp;
+      }
+
+      function requestViewport(reason) {
+        try {
+          var webApp = window.Telegram && window.Telegram.WebApp;
+          if (!webApp) return;
+          syncTelegramDesktopViewportClass(webApp);
+          if (typeof webApp.ready === 'function') webApp.ready();
+          var isMobileWebApp = isMobileTelegramWebApp(webApp);
+          if (isMobileWebApp && typeof webApp.expand === 'function') {
+            webApp.expand();
+          }
+          if (hasTelegramVersion(webApp, '7.7') &&
+              typeof webApp.disableVerticalSwipes === 'function') {
+            webApp.disableVerticalSwipes();
+          }
+          if (isMobileWebApp &&
+              hasTelegramVersion(webApp, '8.0') &&
+              typeof webApp.requestFullscreen === 'function') {
+            webApp.requestFullscreen();
+          }
+          window.__agoraTelegramViewportRequested = reason;
+        } catch (_) {}
+      }
+
+      requestViewport('index-startup');
+      setTimeout(function () { requestViewport('index-retry-250ms'); }, 250);
+      setTimeout(function () { requestViewport('index-retry-900ms'); }, 900);
+
+      try {
+        if (window.visualViewport &&
+            typeof window.visualViewport.addEventListener === 'function') {
+          window.visualViewport.addEventListener('resize', function () {
+            requestViewport('visual-viewport-resize');
+          });
+          window.visualViewport.addEventListener('scroll', function () {
+            requestViewport('visual-viewport-scroll');
+          });
+        }
+        window.addEventListener('resize', function () {
+          requestViewport('window-resize');
+        });
+        var liveWebApp = window.Telegram && window.Telegram.WebApp;
+        if (liveWebApp && typeof liveWebApp.onEvent === 'function') {
+          liveWebApp.onEvent('viewportChanged', function (event) {
+            if (event && event.isStateStable === false) return;
+            requestViewport('telegram-stable-viewport');
+          });
+          liveWebApp.onEvent('activated', function () {
+            requestViewport('telegram-activated');
+          });
+        }
+      } catch (_) {}
+    })();
+  </script>
+
+  <!-- Fix 1: Removed vh-based viewport logic - conflicts with visualViewport root model -->
+  
+  <script>
+    // Early global error diagnostics to capture exact source of prod-only failures
+    (function(){
+      if (window.__errorHooksInstalled) return; window.__errorHooksInstalled = true;
+      window.addEventListener('error', function(event){
+        try {
+          var error = event && event.error;
+          console.error('[FATAL_ERROR]', {
+            errorName: error && error.name || 'Error',
+            messagePresent: !!(event && event.message),
+            stackPresent: !!(error && error.stack),
+            sourcePresent: !!(event && event.filename)
+          });
+        } catch(_) {}
+      });
+      window.addEventListener('unhandledrejection', function(event){
+        try {
+          var reason = event && event.reason;
+          console.error('[UNHANDLED_REJECTION]', {
+            reasonType: reason && reason.constructor && reason.constructor.name || typeof reason,
+            messagePresent: !!(reason && reason.message),
+            stackPresent: !!(reason && reason.stack)
+          });
+        } catch(_) {}
+      });
+      console.log('[DIAG] index.html diagnostics installed, version meta:', (document.querySelector('meta[name="version"]')||{}).content);
+    })();
+
+  </script>
+  
+  <script>
+    (function () {
+      'use strict';
+
+      function isIOSStandaloneStartup() {
+        try {
+          var ua = navigator.userAgent || '';
+          var maxTouchPoints = Number(navigator.maxTouchPoints || 0);
+          var isIOS = /iPad|iPhone|iPod/.test(ua) ||
+            (/Macintosh/.test(ua) && maxTouchPoints > 1);
+          if (!isIOS) return false;
+          return window.matchMedia('(display-mode: standalone)').matches ||
+            window.matchMedia('(display-mode: fullscreen)').matches ||
+            window.matchMedia('(display-mode: minimal-ui)').matches ||
+            window.navigator.standalone === true;
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function revealStartupLoading(reason) {
+        var root = document.documentElement;
+        if (!root) return;
+        root.classList.add('agora-startup-layout-ready');
+        root.classList.remove('agora-startup-layout-pending');
+        window.__AGORA_STARTUP_REVEAL_REASON = reason || 'ready';
+      }
+
+      window.__AGORA_REVEAL_STARTUP_LOADING = revealStartupLoading;
+
+      if (isIOSStandaloneStartup()) {
+        document.documentElement.classList.add(
+          'agora-ios-standalone-startup',
+          'agora-startup-layout-pending'
+        );
+        window.__AGORA_STARTUP_REVEAL_REASON = 'pending';
+        setTimeout(function () {
+          revealStartupLoading('fallback-timeout');
+        }, 1800);
+      } else {
+        revealStartupLoading('not-ios-standalone');
+      }
+    })();
+  </script>
+
+
+  <style>
+    #update-banner {
+      position: fixed;
+      left: 16px;
+      right: 16px;
+      bottom: 16px;
+      z-index: 10000;
+      display: none;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: rgba(0,0,0,0.85);
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    }
+    #update-banner button {
+      margin-left: 12px;
+      padding: 6px 10px;
+      border: 0;
+      border-radius: 6px;
+      background: #6A4C93;
+      color: #fff;
+      cursor: pointer;
+    }
+  </style>
+
+  <!-- Cross-Origin Isolation Headers for SharedArrayBuffers -->
+  
+
+  <!-- Viewport meta tags for proper mobile scaling -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  
+  <!-- theme-color: ?????????????????????????????????????????????????media query ???????????????????? -->
+  <meta name="theme-color" content="#1A1A1A">
+  <!-- ??????????????????????????????????????-->
+  <meta name="theme-color" content="#1A1A1A" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#2196F3" media="(prefers-color-scheme: light)">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <!-- ???????black-translucent ????????????????????????????????????????????????? -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Agora Market">
+  
+  <!-- iOS icon -->
+  <link rel="apple-touch-icon" href="icons/new_favicon/apple-touch-icon.png">
+
+  <!-- iOS splash screens -->
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3)" href="splash/iPhone_16_Pro_portrait_blank_v4.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)" href="splash/iPhone_14_Pro_Max_portrait_blank_v4.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)" href="splash/iPhone_14_Pro_portrait_blank_v4.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)" href="splash/iPhone_14_Plus_portrait_blank_v4.png">
+  <link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)" href="splash/iPhone_14_portrait_blank_v4.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="icons/new_favicon/favicon.svg">
+  <link rel="icon" type="image/png" sizes="96x96" href="icons/new_favicon/favicon-96x96.png">
+  <link rel="icon" type="image/x-icon" href="icons/new_favicon/favicon.ico">
+  <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
+
+  <title>Agora Market｜台灣與泰國生活用品線上市集</title>
+  <link rel="manifest" href="manifest.json?v=1.0.1902">
+  
+  <!-- PWA ?????????????????? -->
+  <meta name="application-name" content="Agora Market">
+  <meta name="msapplication-TileColor" content="#2196F3">
+  <meta name="msapplication-tap-highlight" content="no">
+  
+  <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
+  <link rel="preload" href="flutter_bootstrap.1.0.1902.js" as="script">
+  <link rel="preload" href="main.dart.js?v=1.0.1902" as="script" fetchpriority="high">
+  <link rel="preload" href="canvaskit/canvaskit.js" as="script">
+  <link rel="preload" href="canvaskit/canvaskit.wasm" as="fetch" type="application/wasm" crossorigin>
+  <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
+  <!-- API server preconnect ?????? DNS+TLS handshake???????????API ??????100-200ms -->
+  <link rel="preconnect" href="https://agoramarketapi.purrtechllc.com" crossorigin>
+  <link rel="dns-prefetch" href="https://agoramarketapi.purrtechllc.com">
+  
+  <!-- SEO ?????????????Open Graph - ???????PNG -->
+  <meta property="og:title" content="Agora Market｜台灣與泰國生活用品線上市集">
+  <meta property="og:description" content="免登入瀏覽台灣與泰國生活用品、居家用品及精選商品，支援網頁與 Telegram Mini App。">
+  <meta property="og:image" content="https://agoramarket.purrtechllc.com/icons/new_favicon/web-app-manifest-512x512.png">
+  <meta property="og:image:secure_url" content="https://agoramarket.purrtechllc.com/icons/new_favicon/web-app-manifest-512x512.png">
+  <meta property="og:image:alt" content="Agora Market">
+  <meta property="og:url" content="https://agoramarket.purrtechllc.com/">
+  <meta property="og:site_name" content="Agora Market">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="zh_TW">
+  
+  <!-- Twitter Card - ???????PNG -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Agora Market｜台灣與泰國生活用品線上市集">
+  <meta name="twitter:description" content="免登入瀏覽台灣與泰國生活用品、居家用品及精選商品。">
+  <meta name="twitter:image" content="https://agoramarket.purrtechllc.com/icons/new_favicon/web-app-manifest-512x512.png">
+  <meta name="twitter:image:src" content="https://agoramarket.purrtechllc.com/icons/new_favicon/web-app-manifest-512x512.png">
+
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Agora Market",
+      "url": "https://agoramarket.purrtechllc.com/",
+      "description": "台灣與泰國生活用品線上市集，支援網頁與 Telegram Mini App。",
+      "inLanguage": ["zh-TW", "th", "en"]
+    }
+  </script>
+  
+  <style>
+    :root {
+      --startup-canvas: #0b0d12;
+      --startup-text: #ffffff;
+      --startup-muted-border: rgba(255, 255, 255, 0.72);
+      --startup-muted-track: rgba(255, 255, 255, 0.2);
+      --startup-muted-background: rgba(255, 255, 255, 0.08);
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --startup-canvas: #f6f8fb;
+        --startup-text: #182234;
+        --startup-muted-border: rgba(24, 34, 52, 0.5);
+        --startup-muted-track: rgba(24, 34, 52, 0.18);
+        --startup-muted-background: rgba(24, 34, 52, 0.06);
+      }
+    }
+
+    /* Patch 1: Removed all position: fixed - root cause of iOS 17 touch offset */
+    
+    /* Patch 3: Apple official viewport CSS */
+    html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      -webkit-text-size-adjust: 100%;
+      background: var(--startup-canvas);
+      overscroll-behavior: none;
+      touch-action: manipulation;
+    }
+
+    /* Final iOS 17 fix: body relative (Apple-approved, viewport handled by #flutter-root) */
+    body {
+      position: relative;
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      -webkit-text-size-adjust: 100%;
+      background: var(--startup-canvas);
+      overscroll-behavior: none;
+      touch-action: manipulation;
+    }
+
+    #flutter-root {
+      /* iOS 17+ PWA: avoid position: fixed (WebKit visualViewport desync trigger) */
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      will-change: transform;
+      transform-origin: 0 0;
+      overflow: hidden;
+      /* iOS standalone overrides width/height from the visualViewport sync script. */
+    }
+
+    #flutter-root flutter-view,
+    #flutter-root flt-glass-pane,
+    #flutter-root flt-scene-host {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    /* Telegram Desktop: follow the live visible viewport, not the native
+     * WebView's outer bounds. This keeps both edges and bottom navigation
+     * inside the pane while preserving the normal responsive breakpoints. */
+    html.agora-telegram-desktop-mini-app #flutter-root {
+      left: var(--agora-telegram-desktop-visible-left, 0px) !important;
+      top: var(--agora-telegram-desktop-visible-top, 0px) !important;
+      width: var(--agora-telegram-desktop-visible-width, 100%) !important;
+      height: var(--agora-telegram-desktop-visible-height, 100%) !important;
+      max-width: none !important;
+      max-height: none !important;
+      right: auto !important;
+      bottom: auto !important;
+      box-sizing: border-box;
+    }
+
+    html.agora-telegram-desktop-mini-app flutter-view,
+    html.agora-telegram-desktop-mini-app flt-glass-pane,
+    html.agora-telegram-desktop-mini-app flt-scene-host {
+      width: 100% !important;
+      height: 100% !important;
+      max-width: none !important;
+      max-height: none !important;
+    }
+
+    /*
+     * Telegram iOS fullscreen draws native controls above the web view. The
+     * bridge below sizes this host to Telegram's stable, safe content area so
+     * Flutter receives the correct viewport instead of painting underneath
+     * the status bar, close button, or home indicator.
+     */
+    html.agora-telegram-ios-mini-app #flutter-root {
+      box-sizing: border-box;
+      transform: none !important;
+    }
+
+    #loading-screen {
+      /*
+       * Startup-only overlay. Keep it outside the transformed Flutter root and
+       * avoid position: fixed because iOS standalone PWA can offset fixed
+       * elements during the launch viewport transition.
+       */
+      position: absolute;
+      inset: 0;
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      background: var(--startup-canvas);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      pointer-events: auto;
+      color: var(--startup-text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      overflow: hidden;
+    }
+
+    html.agora-ios-standalone-startup:not(.agora-startup-layout-ready) body.flutter-ready #loading-screen,
+    html.agora-ios-standalone-startup:not(.agora-startup-layout-ready) body.flutter-ready.immediate #loading-screen {
+      display: flex !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform: none !important;
+      transition: none !important;
+      pointer-events: auto !important;
+    }
+
+    .loading-text {
+      color: var(--startup-text);
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.4;
+      letter-spacing: 0;
+      text-align: center;
+    }
+
+    .loading-progress-shell {
+      box-sizing: border-box;
+      width: min(280px, calc(100vw - 48px));
+      margin: 10px 0 14px;
+      padding: 0 env(safe-area-inset-right, 0) 0 env(safe-area-inset-left, 0);
+    }
+
+    .loading-progress-meta {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 22px;
+      margin-bottom: 8px;
+    }
+
+    .loading-progress-value {
+      flex: 0 0 auto;
+      color: var(--startup-text);
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+      opacity: 0.76;
+    }
+
+    .loading-progress {
+      position: relative;
+      height: 6px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: var(--startup-muted-track);
+    }
+
+    .loading-progress-fill {
+      width: 8%;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--startup-text);
+      transform-origin: left center;
+      transition: width 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .loading-brand {
+      color: var(--startup-text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+
+    .loading-spinner {
+      width: 28px;
+      height: 28px;
+      margin: 12px 0 4px;
+      border: 3px solid var(--startup-muted-track);
+      border-top-color: var(--startup-text);
+      border-radius: 50%;
+      animation: agora-startup-spin 0.9s linear infinite;
+    }
+
+    @keyframes agora-startup-spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .loading-spinner {
+        animation-duration: 1.8s;
+      }
+
+      .loading-progress-fill {
+        transition: none;
+      }
+    }
+
+    .startup-marketplace-links {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    #startup-product-search-link,
+    #startup-product-catalog-link {
+      color: var(--startup-text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      line-height: 1.4;
+      text-underline-offset: 3px;
+    }
+
+    #startup-retry-button {
+      display: none;
+      margin-top: 8px;
+      padding: 10px 18px;
+      border: 1px solid var(--startup-muted-border);
+      border-radius: 999px;
+      color: var(--startup-text);
+      background: var(--startup-muted-background);
+      font: 600 14px/1.2 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      cursor: pointer;
+    }
+
+    #startup-retry-button.is-visible {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .flutter-ready #loading-screen {
+      opacity: 0;
+      visibility: hidden;
+      transform: scale(0.95);
+      transition: opacity 0.8s ease-out, visibility 0.8s ease-out, transform 0.8s ease-out;
+      pointer-events: none;
+    }
+    
+    /* ???????????????????????????????????????????????*/
+    .flutter-ready.immediate #loading-screen {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      display: none !important;
+      transition: none !important;
+      pointer-events: none !important;
+    }
+    
+    .flutter-ready flt-scene-host,
+    .flutter-ready flt-glass-pane,
+    .flutter-ready canvas {
+      opacity: 1 !important;
+      visibility: visible !important;
+      display: block !important;
+    }
+    
+    .flutter-ready body {
+      background: var(--startup-canvas);
+      padding: 0 !important;
+      /* DO NOT use position: fixed - causes touch offset on iOS 17+ */
+      overflow: hidden;
+    }
+
+    /* Patch 1: Removed all position: fixed from .flutter-ready rules */
+  </style>
+  <noscript>
+    <style>
+      html, body { height: auto; min-height: 100%; overflow: auto; }
+      #loading-screen, #flutter-root { display: none; }
+      #noscript-marketplace { box-sizing: border-box; max-width: 52rem; margin: 0 auto; padding: 3rem 1.25rem; color: #182230; background: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; }
+      #noscript-marketplace h1 { margin: 0 0 1rem; font-size: clamp(2rem, 6vw, 3.25rem); line-height: 1.15; }
+      #noscript-marketplace h2 { margin: 2rem 0 .5rem; font-size: 1.25rem; }
+      #noscript-marketplace nav { display: flex; flex-wrap: wrap; gap: .75rem; margin: 1.5rem 0; }
+      #noscript-marketplace a { display: inline-block; padding: .7rem 1rem; border-radius: .6rem; background: #0057b8; color: #fff; font-weight: 700; text-decoration: none; }
+      #noscript-marketplace .category-link { background: #eaf2ff; color: #003f88; }
+    </style>
+  </noscript>
+</head>
+<body>
+  <noscript>
+    <main id="noscript-marketplace">
+      <h1>Agora Market 線上市集</h1>
+      <p>免登入即可瀏覽台灣與泰國生活用品、居家用品、食品與精選代購商品。</p>
+      <nav aria-label="Agora Market 商品入口">
+        <a href="https://agoramarket.purrtechllc.com/products?utm_source=noscript&amp;utm_medium=web&amp;utm_campaign=marketplace_catalog">瀏覽公開商品目錄</a>
+        <a href="https://agoramarket.purrtechllc.com/categories.html" hreflang="zh-Hant" lang="zh-Hant">商品分類導覽</a>
+        <a href="https://agoramarket.purrtechllc.com/categories-th.html" hreflang="th" lang="th">คู่มือหมวดหมู่สินค้า</a>
+        <a href="https://agoramarket.purrtechllc.com/categories-en.html" hreflang="en" lang="en">Product category guide</a>
+        <a href="https://agoramarket.purrtechllc.com/marketplace-th.html" hreflang="th" lang="th">ตลาดออนไลน์ภาษาไทย</a>
+        <a href="https://agoramarket.purrtechllc.com/marketplace-en.html" hreflang="en" lang="en">English marketplace</a>
+        <a href="https://agoramarket.purrtechllc.com/search?utm_source=noscript&amp;utm_medium=web&amp;utm_campaign=marketplace_landing">啟用 JavaScript 後搜尋商品</a>
+        <a href="https://agoramarket.purrtechllc.com/official.html">關於 AgoraMarket</a>
+        <a href="https://agoramarket.purrtechllc.com/official-th.html" hreflang="th">AgoraMarket ภาษาไทย</a>
+        <a href="https://agoramarket.purrtechllc.com/official-en.html" hreflang="en">AgoraMarket in English</a>
+        <a href="https://agoramarket.purrtechllc.com/spend-usdt-costco-taiwan.html">用 USDT 買 Costco Taiwan 商品</a>
+        <a href="https://agoramarket.purrtechllc.com/telegram-shop-with-usdt.html">Telegram USDT 實體商品商城</a>
+      </nav>
+      <h2>熱門商品分類</h2>
+      <nav aria-label="Agora Market 熱門商品分類">
+        <a class="category-link" href="https://agoramarket.purrtechllc.com/products/categories/electronics">3C 電子</a>
+        <a class="category-link" href="https://agoramarket.purrtechllc.com/products/categories/clothing">服飾</a>
+        <a class="category-link" href="https://agoramarket.purrtechllc.com/products/categories/beauty">美妝保養</a>
+        <a class="category-link" href="https://agoramarket.purrtechllc.com/products/categories/health-care">健康照護</a>
+        <a class="category-link" href="https://agoramarket.purrtechllc.com/products/categories/furniture-decor">家具家飾</a>
+        <a class="category-link" href="https://agoramarket.purrtechllc.com/products/categories/pet-supplies">寵物用品</a>
+      </nav>
+      <p>目前瀏覽器未啟用 JavaScript。你仍可瀏覽公開商品目錄；若要搜尋、登入、加入購物車或完成購買，請啟用 JavaScript。</p>
+    </main>
+  </noscript>
+
+  <!-- Loading screen lives outside #flutter-root so iOS PWA viewport transforms cannot move it. -->
+  <div id="loading-screen">
+    <div class="loading-brand">AgoraMarket</div>
+    <div class="loading-spinner" aria-hidden="true"></div>
+    <div class="loading-progress-shell">
+      <div class="loading-progress-meta">
+        <div class="loading-text" id="loading-text" role="status" aria-live="polite">&#27491;&#22312;&#28310;&#20633;&#21830;&#22478;...</div>
+        <div class="loading-progress-value" id="loading-progress-value" aria-hidden="true">8%</div>
+      </div>
+      <div class="loading-progress" id="loading-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="8">
+        <div class="loading-progress-fill" id="loading-progress-fill"></div>
+      </div>
+    </div>
+    <nav class="startup-marketplace-links" aria-label="Agora Market 商品入口">
+      <a id="startup-product-catalog-link" href="https://agoramarket.purrtechllc.com/products">瀏覽商品目錄</a>
+      <a id="startup-product-search-link" href="https://agoramarket.purrtechllc.com/search">搜尋商品</a>
+    </nav>
+    <button id="startup-retry-button" type="button" hidden>重新整理</button>
+  </div>
+  <script>
+    (function localizeStartupShell() {
+      'use strict';
+
+      function entryLanguage() {
+        try {
+          var current = new URL(window.location.href);
+          var requested = current.searchParams.get('lang');
+          if (!requested) {
+            var fragment = current.hash.replace(/^#/, '');
+            var queryStart = fragment.indexOf('?');
+            if (queryStart >= 0) {
+              requested = new URLSearchParams(fragment.slice(queryStart + 1)).get('lang');
+            }
+          }
+          return String(requested || '').trim().replace(/_/g, '-').toLowerCase();
+        } catch (_) {
+          return '';
+        }
+      }
+
+      var language = entryLanguage();
+      var locale = language === 'en' || language === 'en-us'
+        ? 'en'
+        : language === 'th' || language === 'th-th'
+          ? 'th'
+          : 'zh-Hant';
+      var copy = {
+        'zh-Hant': {
+          loading: '正在準備商城...',
+          progressLabel: '商城載入進度',
+          starting: '啟動商城...',
+          downloading: '下載商城程式...',
+          initializing: '初始化商城...',
+          catalogLoading: '載入商品資料...',
+          ready: '商城已準備完成',
+          loadError: '商城程式載入失敗，請重新整理。',
+          catalog: '瀏覽商品目錄',
+          search: '搜尋商品',
+          navigation: 'Agora Market 商品入口',
+          timeout: '載入時間較長，商城仍在準備中。您可以繼續等待或重新整理。',
+          retry: '重新整理'
+        },
+        en: {
+          loading: 'Preparing the marketplace...',
+          progressLabel: 'Marketplace loading progress',
+          starting: 'Starting the marketplace...',
+          downloading: 'Downloading the marketplace...',
+          initializing: 'Initializing the marketplace...',
+          catalogLoading: 'Loading product data...',
+          ready: 'Marketplace ready',
+          loadError: 'The marketplace failed to load. Please refresh.',
+          catalog: 'Browse product catalog',
+          search: 'Search products',
+          navigation: 'Agora Market product links',
+          timeout: 'The marketplace is still preparing. You can keep waiting or refresh.',
+          retry: 'Refresh'
+        },
+        th: {
+          loading: 'กำลังเตรียมร้านค้า...',
+          progressLabel: 'ความคืบหน้าการโหลดร้านค้า',
+          starting: 'กำลังเริ่มร้านค้า...',
+          downloading: 'กำลังดาวน์โหลดร้านค้า...',
+          initializing: 'กำลังเริ่มต้นระบบร้านค้า...',
+          catalogLoading: 'กำลังโหลดข้อมูลสินค้า...',
+          ready: 'ร้านค้าพร้อมใช้งาน',
+          loadError: 'โหลดร้านค้าไม่สำเร็จ โปรดรีเฟรชหน้า',
+          catalog: 'ดูแคตตาล็อกสินค้า',
+          search: 'ค้นหาสินค้า',
+          navigation: 'ลิงก์สินค้า Agora Market',
+          timeout: 'ร้านค้ายังอยู่ระหว่างเตรียมข้อมูล คุณสามารถรอต่อหรือรีเฟรชหน้าได้',
+          retry: 'รีเฟรช'
+        }
+      }[locale];
+
+      document.documentElement.lang = locale;
+      window.__agoraStartupCopy = copy;
+      var loadingText = document.getElementById('loading-text');
+      var loadingScreen = document.getElementById('loading-screen');
+      var progress = document.getElementById('loading-progress');
+      var progressFill = document.getElementById('loading-progress-fill');
+      var progressValue = document.getElementById('loading-progress-value');
+      var catalogLink = document.getElementById('startup-product-catalog-link');
+      var searchLink = document.getElementById('startup-product-search-link');
+      var retryButton = document.getElementById('startup-retry-button');
+      var navigation = document.querySelector('.startup-marketplace-links');
+      if (loadingScreen) loadingScreen.setAttribute('aria-busy', 'true');
+      if (loadingText) loadingText.textContent = copy.loading;
+      if (progress) progress.setAttribute('aria-label', copy.progressLabel);
+      if (catalogLink) catalogLink.textContent = copy.catalog;
+      if (searchLink) searchLink.textContent = copy.search;
+      if (retryButton) {
+        retryButton.textContent = copy.retry;
+        retryButton.addEventListener('click', function () {
+          window.location.reload();
+        });
+      }
+      if (navigation) navigation.setAttribute('aria-label', copy.navigation);
+
+      var phaseConfig = {
+        shell: { value: 8, text: 'starting' },
+        bootstrap: { value: 18, text: 'starting' },
+        download: { value: 34, text: 'downloading' },
+        initialize: { value: 68, text: 'initializing' },
+        firstFrame: { value: 86, text: 'catalogLoading' },
+        catalog: { value: 94, text: 'catalogLoading' },
+        ready: { value: 100, text: 'ready' }
+      };
+      var currentValue = 8;
+      var phaseHistory = [];
+
+      function setPhase(phase, overrideText) {
+        var next = phaseConfig[phase];
+        if (next && next.value < currentValue) return;
+        if (next) currentValue = Math.max(currentValue, next.value);
+        var nextText = overrideText || (next && copy[next.text]) || copy.loading;
+        if (loadingText) loadingText.textContent = nextText;
+        if (progressFill) progressFill.style.width = currentValue + '%';
+        if (progressValue) progressValue.textContent = currentValue + '%';
+        if (progress) {
+          progress.setAttribute('aria-valuenow', String(currentValue));
+          progress.setAttribute('aria-valuetext', nextText);
+        }
+        if (loadingScreen) loadingScreen.dataset.loadingPhase = phase;
+        phaseHistory.push({
+          phase: phase,
+          value: currentValue,
+          elapsedMs: Math.round(window.performance && performance.now
+            ? performance.now()
+            : 0)
+        });
+        if (phaseHistory.length > 12) phaseHistory.shift();
+        if (loadingScreen) {
+          loadingScreen.dataset.loadingHistory = JSON.stringify(phaseHistory);
+        }
+      }
+
+      window.__AGORA_STARTUP_PROGRESS__ = {
+        setPhase: setPhase,
+        getHistory: function() { return phaseHistory.slice(); }
+      };
+      setPhase('shell');
+
+      if (typeof window.PerformanceObserver === 'function') {
+        try {
+          var observer = new PerformanceObserver(function(list) {
+            var entries = list.getEntries();
+            for (var i = 0; i < entries.length; i += 1) {
+              var resourceName = String(entries[i] && entries[i].name || '');
+              if (/\/main\.dart(?:\.[0-9a-f]{7,40})?\.js(?:[?#]|$)/i.test(resourceName)) {
+                setPhase('initialize');
+                observer.disconnect();
+                break;
+              }
+            }
+          });
+          observer.observe({ type: 'resource', buffered: true });
+        } catch (_) {}
+      }
+    })();
+  </script>
+
+  <!-- Patch 2: Flutter root container for iOS 17+ touch fix -->
+  <div id="flutter-root">
+  </div>
+
+  <script id="telegram-ios-viewport-bridge">
+    (function () {
+      'use strict';
+
+      if (window.__AGORA_TELEGRAM_IOS_VIEWPORT_SYNC_INSTALLED) return;
+
+      var webApp = window.Telegram && window.Telegram.WebApp;
+      var initData = String(webApp && webApp.initData || '').trim();
+      var platform = String(webApp && webApp.platform || '').toLowerCase();
+      var ua = String(navigator.userAgent || '');
+      var isIOS = platform === 'ios' || /iPad|iPhone|iPod/.test(ua) ||
+        (/Macintosh/.test(ua) && Number(navigator.maxTouchPoints || 0) > 1);
+      if (!webApp || !initData || !isIOS) return;
+
+      var root = document.getElementById('flutter-root');
+      if (!root) return;
+
+      window.__AGORA_TELEGRAM_IOS_VIEWPORT_SYNC_INSTALLED = true;
+      document.documentElement.classList.add('agora-telegram-ios-mini-app');
+
+      var rafPending = false;
+      var queuedReason = 'startup';
+      var observer = null;
+      var publishingResize = false;
+
+      function nonNegativeNumber(value) {
+        var parsed = Number(value);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+      }
+
+      function readInset(source, side) {
+        return nonNegativeNumber(source && source[side]);
+      }
+
+      function stableViewportHeight() {
+        return nonNegativeNumber(webApp.viewportStableHeight) ||
+          nonNegativeNumber(webApp.viewportHeight) ||
+          nonNegativeNumber(window.innerHeight) || 1;
+      }
+
+      function moveFlutterViewIntoRoot() {
+        var flutterView = document.querySelector('flutter-view');
+        if (!flutterView) return false;
+        if (flutterView.parentElement !== root) {
+          root.appendChild(flutterView);
+        }
+        if (observer) {
+          try { observer.disconnect(); } catch (_) {}
+          observer = null;
+        }
+        return true;
+      }
+
+      function publishResize() {
+        publishingResize = true;
+        try { window.dispatchEvent(new Event('resize')); } catch (_) {}
+        publishingResize = false;
+      }
+
+      function syncNow() {
+        rafPending = false;
+
+        var safe = webApp.safeAreaInset || {};
+        var contentSafe = webApp.contentSafeAreaInset || {};
+        var top = readInset(safe, 'top') + readInset(contentSafe, 'top');
+        var bottom = readInset(safe, 'bottom') + readInset(contentSafe, 'bottom');
+        var left = readInset(safe, 'left') + readInset(contentSafe, 'left');
+        var right = readInset(safe, 'right') + readInset(contentSafe, 'right');
+        var viewportHeight = stableViewportHeight();
+        var viewportWidth = nonNegativeNumber(window.innerWidth) || 1;
+        var rootHeight = Math.max(1, viewportHeight - top - bottom);
+        var rootWidth = Math.max(1, viewportWidth - left - right);
+
+        root.style.top = top + 'px';
+        root.style.left = left + 'px';
+        root.style.width = rootWidth + 'px';
+        root.style.height = rootHeight + 'px';
+        root.style.transform = 'none';
+
+        moveFlutterViewIntoRoot();
+        try { root.getBoundingClientRect(); } catch (_) {}
+
+        window.__AGORA_TELEGRAM_VIEWPORT_STATUS = {
+          reason: queuedReason,
+          viewportHeight: viewportHeight,
+          viewportWidth: viewportWidth,
+          top: top,
+          right: right,
+          bottom: bottom,
+          left: left,
+          rootHeight: rootHeight,
+          rootWidth: rootWidth,
+          updatedAt: new Date().toISOString()
         };
 
-        Promise.race([
-          cleanup().catch(() => undefined),
-          new Promise((resolve) => setTimeout(resolve, 1200)),
-        ]).finally(() => location.replace(destination.href));
+        publishResize();
+        setTimeout(publishResize, 80);
+      }
+
+      function queueSync(reason) {
+        queuedReason = reason || 'event';
+        if (rafPending) return;
+        rafPending = true;
+        (window.requestAnimationFrame || function (callback) {
+          return setTimeout(callback, 16);
+        })(syncNow);
+      }
+
+      function subscribe(eventName, handler) {
+        try {
+          if (typeof webApp.onEvent === 'function') {
+            webApp.onEvent(eventName, handler);
+          }
+        } catch (_) {}
+      }
+
+      subscribe('viewportChanged', function (event) {
+        if (!event || event.isStateStable !== false) {
+          queueSync('viewportChanged');
+        }
+      });
+      subscribe('safeAreaChanged', function () { queueSync('safeAreaChanged'); });
+      subscribe('contentSafeAreaChanged', function () { queueSync('contentSafeAreaChanged'); });
+      subscribe('fullscreenChanged', function () { queueSync('fullscreenChanged'); });
+      subscribe('activated', function () { queueSync('activated'); });
+
+      window.addEventListener('resize', function () {
+        if (!publishingResize) queueSync('window-resize');
+      }, { passive: true });
+      window.addEventListener('orientationchange', function () { queueSync('orientationchange'); }, { passive: true });
+      window.addEventListener('pageshow', function () { queueSync('pageshow'); }, { passive: true });
+      document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) queueSync('visibilitychange');
+      });
+
+      if (window.MutationObserver && document.body) {
+        observer = new MutationObserver(function () { queueSync('flutter-view-mounted'); });
+        observer.observe(document.body, { childList: true, subtree: true });
+      }
+
+      queueSync('startup');
+      setTimeout(function () { queueSync('startup-250ms'); }, 250);
+      setTimeout(function () { queueSync('startup-900ms'); }, 900);
+    })();
+  </script>
+
+  <script>
+    (function () {
+      'use strict';
+
+      var logs = window.__AGORA_STARTUP_LAYOUT_LOGS = window.__AGORA_STARTUP_LAYOUT_LOGS || [];
+
+      function isStandalone() {
+        try {
+          return window.matchMedia('(display-mode: standalone)').matches ||
+            window.matchMedia('(display-mode: fullscreen)').matches ||
+            window.matchMedia('(display-mode: minimal-ui)').matches ||
+            window.navigator.standalone === true;
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function elementSnapshot(label, element) {
+        if (!element) return label + '=null';
+        try {
+          var rect = element.getBoundingClientRect();
+          var style = window.getComputedStyle(element);
+          return label +
+            ' rect=(' + rect.left.toFixed(1) + ',' + rect.top.toFixed(1) + ',' +
+            rect.width.toFixed(1) + 'x' + rect.height.toFixed(1) + ')' +
+            ' display=' + style.display +
+            ' visibility=' + style.visibility +
+            ' opacity=' + style.opacity +
+            ' background=' + style.backgroundColor +
+            ' position=' + style.position +
+            ' top=' + style.top +
+            ' height=' + style.height +
+            ' transform=' + style.transform;
+        } catch (e) {
+          return label + ' snapshot failed: ' + e.message;
+        }
+      }
+
+      function snapshot(label) {
+        try {
+          var vv = window.visualViewport;
+          var parts = [
+            label,
+            't=' + Math.round(performance.now()),
+            'htmlClasses=' + ((document.documentElement && document.documentElement.className) || ''),
+            'classes=' + ((document.body && document.body.className) || ''),
+            'startupReveal=' + (window.__AGORA_STARTUP_REVEAL_REASON || 'unset'),
+            'standalone=' + isStandalone(),
+            'inner=' + window.innerWidth + 'x' + window.innerHeight,
+            'outer=' + window.outerWidth + 'x' + window.outerHeight,
+            'screen=' + window.screen.width + 'x' + window.screen.height,
+            'screenAvail=' + window.screen.availWidth + 'x' +
+              window.screen.availHeight +
+              '@(' + window.screen.availLeft + ',' + window.screen.availTop + ')',
+            'client=' + document.documentElement.clientWidth + 'x' +
+              document.documentElement.clientHeight,
+            'dpr=' + window.devicePixelRatio
+          ];
+          try {
+            var webApp = window.Telegram && window.Telegram.WebApp;
+            parts.push('tg=' + (webApp && webApp.platform || 'none') +
+              ' viewport=' + (webApp && webApp.viewportWidth || 0) + 'x' +
+              (webApp && webApp.viewportHeight || 0) +
+              ' stableHeight=' + (webApp && webApp.viewportStableHeight || 0));
+          } catch (_) {}
+          if (vv) {
+            parts.push('vv=' + vv.width + 'x' + vv.height +
+              ' offset=(' + vv.offsetLeft + ',' + vv.offsetTop + ')' +
+              ' scale=' + vv.scale);
+          } else {
+            parts.push('vv=null');
+          }
+          parts.push(elementSnapshot('html', document.documentElement));
+          parts.push(elementSnapshot('body', document.body));
+          parts.push(elementSnapshot('loading', document.getElementById('loading-screen')));
+          parts.push(elementSnapshot('flutterRoot', document.getElementById('flutter-root')));
+          logs.push(parts.join(' | '));
+          if (logs.length > 40) logs.shift();
+        } catch (e) {
+          logs.push(label + ' failed: ' + e.message);
+        }
+      }
+
+      snapshot('inline');
+      (window.requestAnimationFrame || function (cb) { return setTimeout(cb, 16); })(function () {
+        snapshot('raf1');
+        (window.requestAnimationFrame || function (cb) { return setTimeout(cb, 16); })(function () {
+          snapshot('raf2');
+        });
+      });
+      setTimeout(function () { snapshot('t60'); }, 60);
+      setTimeout(function () { snapshot('t250'); }, 250);
+      setTimeout(function () { snapshot('t800'); }, 800);
+      setTimeout(function () { snapshot('t1500'); }, 1500);
+      setTimeout(function () { snapshot('t3000'); }, 3000);
+    })();
+  </script>
+  
+  <!-- Keep the stable HTML startup screen until Flutter has painted. -->
+  <script>
+    (function() {
+      'use strict';
+
+      function isStorefrontStartup() {
+        try {
+          var current = new URL(window.location.href);
+          if (current.searchParams.get('marketplaceDemo') === 'true') return true;
+
+          var fragment = current.hash.replace(/^#/, '');
+          var queryStart = fragment.indexOf('?');
+          var fragmentPath = (queryStart < 0 ? fragment : fragment.slice(0, queryStart))
+            .replace(/^\/+|\/+$/g, '');
+          var documentPath = current.pathname.replace(/\/+$/g, '') || '/';
+          // The public root resolves to #/home only after Flutter starts. On a
+          // cold connection the eight-second safety timer can run before that
+          // route exists, so classify the root as storefront up front and keep
+          // the stable HTML shell visible instead of revealing an empty canvas.
+          if (documentPath === '/' && fragmentPath === '') return true;
+          if (fragmentPath === 'home') return true;
+          if (queryStart < 0) return false;
+          return new URLSearchParams(fragment.slice(queryStart + 1))
+            .get('marketplaceDemo') === 'true';
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function revealFlutter(reason, immediate) {
+        if (!document.body || document.body.classList.contains('flutter-ready')) return;
+        if (window.__AGORA_STARTUP_PROGRESS__) {
+          window.__AGORA_STARTUP_PROGRESS__.setPhase('ready');
+        }
+        var loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen) loadingScreen.setAttribute('aria-busy', 'false');
+        document.body.classList.add('flutter-ready');
+        document.body.classList.toggle('immediate', immediate !== false);
+        console.log('[LOADING_SCREEN] Flutter revealed: ' + reason);
+      }
+
+      function isIOSWebKitStorefront() {
+        try {
+          var ua = String(navigator.userAgent || '');
+          var maxTouchPoints = Number(navigator.maxTouchPoints || 0);
+          return /iPad|iPhone|iPod/.test(ua) ||
+            (/Macintosh/.test(ua) && maxTouchPoints > 1);
+        } catch (_) {
+          return false;
+        }
+      }
+
+      var storefrontFirstFrameReady = false;
+      var storefrontShellReady = false;
+      var storefrontRevealScheduled = false;
+      var storefrontIsIOSWebKit = isIOSWebKitStorefront();
+      // iOS WebKit can expose a partially composited CanvasKit frame after the
+      // product-ready callback. Keep its proven stabilization window and reveal
+      // atomically; faster Chromium-based clients retain the short wait.
+      var storefrontSettleDelayMs = storefrontIsIOSWebKit ? 3000 : 300;
+
+      function scheduleStorefrontReveal(reason) {
+        if (!isStorefrontStartup() || !storefrontFirstFrameReady ||
+            !storefrontShellReady || storefrontRevealScheduled) {
+          return;
+        }
+        storefrontRevealScheduled = true;
+        var fontsReady = document.fonts && document.fonts.ready
+          ? document.fonts.ready
+          : Promise.resolve();
+        Promise.resolve(fontsReady).catch(function() {
+          // Font failures must not trap the storefront behind the startup shell.
+        }).then(function() {
+          setTimeout(function() {
+            requestAnimationFrame(function() {
+              requestAnimationFrame(function() {
+                storefrontRevealScheduled = false;
+                revealFlutter(reason, storefrontIsIOSWebKit);
+              });
+            });
+          }, storefrontSettleDelayMs);
+        });
+      }
+
+      window.addEventListener('agora-storefront-shell-ready', function(event) {
+        storefrontShellReady = true;
+        scheduleStorefrontReveal(event.type);
+      }, { once: true });
+
+      function markStorefrontContentReady(event) {
+        if (window.__AGORA_STARTUP_PROGRESS__) {
+          window.__AGORA_STARTUP_PROGRESS__.setPhase('catalog');
+        }
+        // A completed catalog request is stronger proof than the painted-shell
+        // callback. Telegram iOS can deliver Flutter's first-frame and catalog
+        // events while dropping the custom shell event, which otherwise leaves
+        // a fully rendered storefront trapped behind the 94% startup screen.
+        // Keep the shell callback as the fast path, and use catalog completion
+        // only as a fail-open readiness fallback.
+        if (!storefrontShellReady) storefrontShellReady = true;
+        scheduleStorefrontReveal(event.type + '-shell-fallback');
+      }
+
+      [
+        'agora-storefront-products-visible',
+        'agora-storefront-catalog-empty',
+        'agora-storefront-catalog-failed'
+      ].forEach(function(eventName) {
+        window.addEventListener(eventName, markStorefrontContentReady, { once: true });
+      });
+
+      // A render target can exist before Flutter has painted the storefront.
+      // The public storefront and sales demo reveal only after Flutter's first
+      // frame and the product page's painted-shell signal. Catalog data and
+      // product images continue loading progressively after that reveal.
+      window.addEventListener('flutter-first-frame', function() {
+        if (window.__AGORA_STARTUP_PROGRESS__) {
+          window.__AGORA_STARTUP_PROGRESS__.setPhase('firstFrame');
+        }
+        if (isStorefrontStartup()) {
+          storefrontFirstFrameReady = true;
+          scheduleStorefrontReveal('storefront-ready');
+          return;
+        }
+        requestAnimationFrame(function() {
+          requestAnimationFrame(function() {
+            revealFlutter('first-frame', true);
+          });
+        });
+      }, { once: true });
+
+      // Normal routes retain their legacy fail-open behavior. The storefront
+      // keeps the stable shell visible because exposing an unfinished CanvasKit
+      // frame produces a blank or partially painted marketplace on mobile.
+      setTimeout(function() {
+        if (document.body && document.body.classList.contains('flutter-ready')) return;
+        var loadingText = document.getElementById('loading-text');
+        if (loadingText) {
+          var startupCopy = window.__agoraStartupCopy || {};
+          loadingText.textContent = startupCopy.timeout ||
+            '\u8f09\u5165\u6642\u9593\u8f03\u9577\uff0c\u8acb\u6aa2\u67e5\u7db2\u8def\u6216\u91cd\u65b0\u6574\u7406\u3002';
+          if (window.__AGORA_STARTUP_PROGRESS__) {
+            window.__AGORA_STARTUP_PROGRESS__.setPhase('timeout', loadingText.textContent);
+          }
+        }
+        if (isStorefrontStartup()) {
+          var retryButton = document.getElementById('startup-retry-button');
+          if (retryButton) {
+            retryButton.hidden = false;
+            retryButton.classList.add('is-visible');
+          }
+          console.warn('[LOADING_SCREEN] Storefront still loading; startup shell retained');
+          return;
+        }
+        revealFlutter('startup-timeout', true);
+      }, 8000);
+    })();
+  </script>
+  
+  <!-- Reverted: remove external scripts that caused production errors -->
+  
+  <!-- Web Push JavaScript API -->
+  <script>
+    // Web Push ?????????????API
+    (function() {
+      'use strict';
+      
+      console.log('[WEB_PUSH_API] Web Push API initializing...');
+      
+      // ??? Web Push API ?????
+      window.WebPushAPI = {
+        
+        /**
+         * ??????????????
+         * @param {string} vapidKey - VAPID ?????????(????????????????????????????????????????????
+         * @param {string} token - ???? token (????????????????????????????????????????????
+         * @returns {Promise<Object>} ???????? (??JSON ????????)
+         */
+        async requestNotificationPermission(vapidKey, token) {
+          console.log('[WEB_PUSH_API] Starting permission request process...');
+          console.log('[WEB_PUSH_API] VAPID Key:', vapidKey ? 'provided' : 'not provided');
+          console.log('[WEB_PUSH_API] Token:', token ? 'provided' : 'not provided');
+          
+          try {
+            // 1. ???????????????????
+            if (!this.checkBrowserSupport()) {
+              throw new Error('Browser does not support Web Push');
+            }
+            
+            // 2. ??????????????
+            const permissionResult = await this.requestPermission();
+            console.log('[WEB_PUSH_API] Permission request result:', permissionResult);
+            
+            if (permissionResult !== 'granted') {
+              return {
+                success: false,
+                status: permissionResult,
+                error: 'Permission denied: ' + permissionResult
+              };
+            }
+            
+            // 3. ????????????????????????????????
+            const subscriptionData = await this.createPushSubscription(vapidKey);
+            console.log('[WEB_PUSH_API] Push subscription created successfully');
+            
+            // ????? JSON ???????????????????????????????????????
+            const result = {
+              success: true,
+              status: 'permission_granted',
+              subscriptionData: subscriptionData
+            };
+            console.log('[WEB_PUSH_API] Returning result:', {
+              success: result.success,
+              status: result.status,
+              subscriptionPresent: !!subscriptionData
+            });
+            return JSON.stringify(result);
+            
+          } catch (error) {
+            console.error('[WEB_PUSH_API] Permission request failed:', error?.name || 'Error');
+            const errorResult = {
+              success: false,
+              status: 'permission_error',
+              error: error.message
+            };
+            console.log('[WEB_PUSH_API] Returning error result:', {
+              success: errorResult.success,
+              status: errorResult.status,
+              errorPresent: !!errorResult.error
+            });
+            return JSON.stringify(errorResult);
+          }
+        },
+        
+        /**
+         * ???????????????????
+         * @returns {boolean} ?????????
+         */
+        checkBrowserSupport() {
+          const hasServiceWorker = 'serviceWorker' in navigator;
+          const hasPushManager = 'PushManager' in window;
+          const hasNotification = 'Notification' in window;
+          
+          console.log('[WEB_PUSH_API] Browser support check:');
+          console.log('  - Service Worker:', hasServiceWorker);
+          console.log('  - Push Manager:', hasPushManager);
+          console.log('  - Notification:', hasNotification);
+          
+          return hasServiceWorker && hasPushManager && hasNotification;
+        },
+        
+        /**
+         * ??????????????
+         * @returns {Promise<string>} ????????
+         */
+        async requestPermission() {
+          console.log('[WEB_PUSH_API] Requesting notification permission...');
+          
+          if (Notification.permission === 'granted') {
+            console.log('[WEB_PUSH_API] Permission already granted');
+            return 'granted';
+          }
+          
+          if (Notification.permission === 'denied') {
+            console.log('[WEB_PUSH_API] Permission already denied');
+            return 'denied';
+          }
+          
+          // ????????
+          const permission = await Notification.requestPermission();
+          console.log('[WEB_PUSH_API] Permission request result:', permission);
+          
+          return permission;
+        },
+        
+        /**
+         * ??????????????????????????
+         * @param {string} vapidKey - VAPID ?????????
+         * @returns {Promise<Object>} ???????
+         */
+        async createPushSubscription(vapidKey) {
+          console.log('[WEB_PUSH_API] Starting push subscription creation...');
+          
+          try {
+            // 1. ?????????Flutter????????ice Worker ????
+            const registration = await navigator.serviceWorker.ready;
+            console.log('[WEB_PUSH_API] Using existing Service Worker registration');
+            
+            // 2. ??????????????????????????
+            const subscription = await registration.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: this.urlBase64ToUint8Array(vapidKey)
+            });
+            
+            console.log('[WEB_PUSH_API] Push subscription created successfully');
+            console.log('[WEB_PUSH_API] Subscription endpoint present:', !!subscription.endpoint);
+            
+            // 3. ??????????????????????????????????
+            const deviceInfo = this.generateDeviceInfo();
+            const subscriptionData = {
+              endpoint: subscription.endpoint,
+              keys: {
+                p256dh: this.arrayBufferToBase64(subscription.getKey('p256dh')),
+                auth: this.arrayBufferToBase64(subscription.getKey('auth'))
+              },
+              userAgent: deviceInfo.userAgent,
+              deviceType: deviceInfo.deviceType,
+              deviceName: deviceInfo.deviceName
+            };
+            
+            return subscriptionData;
+            
+          } catch (error) {
+            console.error('[WEB_PUSH_API] Push subscription creation failed:', error?.name || 'Error');
+            throw new Error('Push subscription creation failed: ' + error.message);
+          }
+        },
+        
+        /**
+         * ???????????????????????
+         * @returns {Object} ????????????????????
+         */
+        generateDeviceInfo() {
+          const userAgent = navigator.userAgent;
+          const deviceName = navigator.platform + ' - ' + (navigator.userAgentData?.brands?.[0]?.brand || 'Unknown Browser');
+          const deviceId = this.generateDeviceId();
+          const browserInfo = {
+            name: navigator.userAgentData?.brands?.[0]?.brand || 'Unknown',
+            version: navigator.userAgentData?.brands?.[0]?.version || 'Unknown',
+            platform: navigator.platform,
+            userAgent: userAgent
+          };
+          const screenInfo = {
+            width: screen.width,
+            height: screen.height,
+            colorDepth: screen.colorDepth,
+            pixelDepth: screen.pixelDepth
+          };
+          
+          return {
+            userAgent,
+            deviceType: 'web',
+            deviceName,
+            deviceId,
+            browserInfo,
+            screenInfo
+          };
+        },
+        
+        /**
+         * ??????????????? ID
+         * @returns {string} ???????????? ID
+         */
+        generateDeviceId() {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          ctx.textBaseline = 'top';
+          ctx.font = '14px Arial';
+          ctx.fillText('Device fingerprint', 2, 2);
+          
+          const fingerprint = [
+            navigator.userAgent,
+            navigator.language,
+            screen.width + 'x' + screen.height,
+            new Date().getTimezoneOffset(),
+            canvas.toDataURL()
+          ].join('|');
+          
+          // ???????hash ?????
+          let hash = 0;
+          for (let i = 0; i < fingerprint.length; i++) {
+            const char = fingerprint.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // ???????32 ??????
+          }
+          
+          return Math.abs(hash).toString(36);
+        },
+        
+        /**
+         * ??VAPID ???????????????Uint8Array
+         * @param {string} base64String - Base64 ????????
+         * @returns {Uint8Array} Uint8Array
+         */
+        urlBase64ToUint8Array(base64String) {
+          const padding = '='.repeat((4 - base64String.length % 4) % 4);
+          const base64 = (base64String + padding)
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+          
+          const rawData = window.atob(base64);
+          const outputArray = new Uint8Array(rawData.length);
+          
+          for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+          }
+          
+          return outputArray;
+        },
+        
+        /**
+         * ??ArrayBuffer ???????Base64
+         * @param {ArrayBuffer} buffer - ArrayBuffer
+         * @returns {string} Base64 ????????
+         */
+        arrayBufferToBase64(buffer) {
+          const bytes = new Uint8Array(buffer);
+          let binary = '';
+          for (let i = 0; i < bytes.byteLength; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          return window.btoa(binary);
+        }
+      };
+      
+      console.log('[WEB_PUSH_API] Web Push API initialization completed');
+      
+      // ??????????????Flutter ??????
+      window.requestNotificationPermission = window.WebPushAPI.requestNotificationPermission.bind(window.WebPushAPI);
+      
+    })();
+  </script>
+
+  <!-- iOS visualViewport synchronizer for Safari, Telegram browsers, and PWA. -->
+  <script>
+    (function () {
+      'use strict';
+
+      const ua = navigator.userAgent || '';
+      const maxTouchPoints = Number(navigator.maxTouchPoints || 0);
+      const isIOS = /iPad|iPhone|iPod/.test(ua) ||
+            (/Macintosh/.test(ua) && maxTouchPoints > 1);
+      const isStandalone = (function () {
+        try {
+          return window.matchMedia('(display-mode: standalone)').matches ||
+                 window.navigator.standalone === true ||
+                 window.matchMedia('(display-mode: fullscreen)').matches;
+        } catch (_) {
+          return false;
+        }
       })();
-    </script>
-  </body>
+
+      // Initialize log storage even if skipped
+      if (!window.__VV_SYNC_LOGS) {
+        window.__VV_SYNC_LOGS = [];
+      }
+      
+      function logSync(message, level) {
+        level = level || 'info';
+        const timestamp = new Date().toISOString();
+        const logEntry = { timestamp: timestamp, level: level, message: message };
+        window.__VV_SYNC_LOGS.push(logEntry);
+        if (window.__VV_SYNC_LOGS.length > 100) {
+          window.__VV_SYNC_LOGS.shift();
+        }
+        if (level === 'error') {
+          console.error('[VV_SYNC]', message);
+        } else if (level === 'warn') {
+          console.warn('[VV_SYNC]', message);
+        } else {
+          console.log('[VV_SYNC]', message);
+        }
+      }
+      
+      const isTelegramIOSMiniApp =
+        window.__AGORA_TELEGRAM_IOS_VIEWPORT_SYNC_INSTALLED === true;
+
+      if (!isIOS || isTelegramIOSMiniApp || !window.visualViewport) {
+        logSync('Skipped: isIOS=' + isIOS +
+          ', isStandalone=' + isStandalone +
+          ', telegramMiniApp=' + isTelegramIOSMiniApp +
+          ', visualViewport=' + !!window.visualViewport);
+        if (typeof window.__AGORA_REVEAL_STARTUP_LOADING === 'function') {
+          window.__AGORA_REVEAL_STARTUP_LOADING('visualViewport-sync-skipped');
+        }
+        return;
+      }
+
+      // Guard to avoid double-application with legacy scripts
+      window.__AGORA_VV_SYNC_INSTALLED = true;
+      
+      // Initialize log storage for viewport debug page
+      if (!window.__VV_SYNC_LOGS) {
+        window.__VV_SYNC_LOGS = [];
+      }
+      
+      function logSync(message, level) {
+        level = level || 'info';
+        const timestamp = new Date().toISOString();
+        const logEntry = { timestamp: timestamp, level: level, message: message };
+        window.__VV_SYNC_LOGS.push(logEntry);
+        // Keep only last 100 logs
+        if (window.__VV_SYNC_LOGS.length > 100) {
+          window.__VV_SYNC_LOGS.shift();
+        }
+        // Also log to console
+        if (level === 'error') {
+          console.error('[VV_SYNC]', message);
+        } else if (level === 'warn') {
+          console.warn('[VV_SYNC]', message);
+        } else {
+          console.log('[VV_SYNC]', message);
+        }
+      }
+      
+      logSync('Initializing visualViewport synchronizer');
+
+      const vv = window.visualViewport;
+      const OFFSET_THRESHOLD_PX = 10;
+      let lastOffsetDetected = false;
+      let lastExtraSyncAt = 0;
+      let startupRevealTimer = 0;
+      let startupRevealSignature = '';
+      let lastAppliedRootSignature = '';
+
+      // Expose latest offset state for runtime inspection from Flutter/debug tools.
+      if (!window.__AGORA_VIEWPORT_OFFSET_STATUS) {
+        window.__AGORA_VIEWPORT_OFFSET_STATUS = {
+          detected: false,
+          offsetTop: 0,
+          offsetLeft: 0,
+          threshold: OFFSET_THRESHOLD_PX,
+          updatedAt: new Date().toISOString()
+        };
+      }
+
+      function getRoot() {
+        const root = document.getElementById('flutter-root');
+        if (!root) {
+          logSync('#flutter-root not found', 'warn');
+        }
+        return root;
+      }
+
+      // Move only Flutter's outer host into #flutter-root. Descendants such as
+      // flt-glass-pane and flt-scene-host must stay inside flutter-view: moving
+      // them independently breaks iOS WebKit hit testing and leaves Flutter's
+      // scroll recognizers outside the rendered surface.
+      function ensureFlutterHostInRoot(root) {
+        if (!root) return;
+
+        const flutterView = document.querySelector('flutter-view');
+        if (flutterView) {
+          if (flutterView.parentElement !== root) {
+            root.insertBefore(flutterView, root.firstChild);
+            logSync('Moved flutter-view into #flutter-root');
+          }
+          return;
+        }
+
+        // Older Flutter engines may not expose flutter-view. Move one outer
+        // legacy host only; never extract a nested scene host from its parent.
+        const legacyHost = document.querySelector('flt-glass-pane, flt-scene-host');
+        if (legacyHost && legacyHost.parentElement !== root) {
+          root.insertBefore(legacyHost, root.firstChild);
+          logSync('Moved legacy Flutter host into #flutter-root');
+        }
+      }
+
+      function resolveIOSVisualViewportRootFrame(standalone, viewport) {
+        const offsetTop = Number(viewport && viewport.offsetTop || 0);
+        const offsetLeft = Number(viewport && viewport.offsetLeft || 0);
+        const rawWidth = Number(viewport && viewport.width || 0);
+        const rawHeight = Number(viewport && viewport.height || 0);
+        const width = Number.isFinite(rawWidth) && rawWidth > 0 ? rawWidth : 1;
+        const height = Number.isFinite(rawHeight) && rawHeight > 0 ? rawHeight : 1;
+
+        if (!standalone) {
+          // Safari and Telegram's ordinary in-app browser expose a visual
+          // viewport that excludes their native top and bottom controls. A
+          // 100%-height Flutter host follows the larger layout viewport and
+          // leaves the app bar or bottom navigation outside the visible area.
+          return {
+            top: offsetTop,
+            left: offsetLeft,
+            width: width,
+            height: height,
+            transform: 'none'
+          };
+        }
+
+        // iOS standalone keeps the existing offset compensation. Its WebKit
+        // launch transition can report the visual viewport origin twice: once
+        // in document scroll and once in visualViewport.
+        return {
+          top: 0,
+          left: 0,
+          width: width,
+          height: height,
+          transform: 'translate3d(' + (-offsetLeft) + 'px,' +
+            (-offsetTop) + 'px,0)'
+        };
+      }
+
+      function computeSafeOffsets() {
+        const frame = resolveIOSVisualViewportRootFrame(isStandalone, vv);
+        const safeTop = isStandalone ? -Number(vv.offsetTop || 0) : frame.top;
+        const safeLeft = isStandalone ? -Number(vv.offsetLeft || 0) : frame.left;
+        
+        // Debug logging (only log when offset is significant)
+        if (Math.abs(vv.offsetTop) > 5 || Math.abs(vv.offsetLeft) > 5) {
+          logSync('offsetTop=' + vv.offsetTop + ', offsetLeft=' + vv.offsetLeft + 
+                 ', safeTop=' + safeTop + ', safeLeft=' + safeLeft);
+        }
+        
+        return { safeTop, safeLeft, frame };
+      }
+
+      function publishOffsetStatus() {
+        const offsetTop = Number(vv.offsetTop || 0);
+        const offsetLeft = Number(vv.offsetLeft || 0);
+        const detected = Math.abs(offsetTop) > OFFSET_THRESHOLD_PX || Math.abs(offsetLeft) > OFFSET_THRESHOLD_PX;
+
+        window.__AGORA_VIEWPORT_OFFSET_STATUS = {
+          detected: detected,
+          offsetTop: offsetTop,
+          offsetLeft: offsetLeft,
+          threshold: OFFSET_THRESHOLD_PX,
+          updatedAt: new Date().toISOString()
+        };
+
+        if (detected !== lastOffsetDetected) {
+          lastOffsetDetected = detected;
+          logSync('Offset state changed: detected=' + detected + ', top=' + offsetTop + ', left=' + offsetLeft, detected ? 'warn' : 'info');
+          try {
+            window.dispatchEvent(new CustomEvent('agora:viewport-offset-status', {
+              detail: window.__AGORA_VIEWPORT_OFFSET_STATUS
+            }));
+          } catch (_) {}
+        }
+
+        return detected;
+      }
+
+      function applyToRoot(root) {
+        if (!root) {
+          logSync('applyToRoot: root is null', 'warn');
+          return;
+        }
+        const { safeTop, safeLeft, frame } = computeSafeOffsets();
+        root.style.top = frame.top + 'px';
+        root.style.left = frame.left + 'px';
+        root.style.width = frame.width + 'px';
+        root.style.height = frame.height + 'px';
+        root.style.willChange = 'transform';
+        root.style.transformOrigin = '0 0';
+        const transform = frame.transform;
+        root.style.transform = transform;
+        
+        // Verify transform was applied
+        const computedStyle = window.getComputedStyle(root);
+        const appliedTransform = computedStyle.transform;
+        if (transform !== 'none' && appliedTransform === 'none') {
+          logSync('Transform not applied! Expected: ' + transform + ', Got: ' + appliedTransform, 'error');
+        } else if (appliedTransform !== 'none') {
+          logSync('Transform applied: ' + appliedTransform);
+        }
+        
+        try { 
+          root.getBoundingClientRect(); // force reflow for compositor alignment
+        } catch (e) {
+          logSync('getBoundingClientRect failed: ' + e.message, 'warn');
+        }
+
+        const appliedSignature = [
+          frame.left,
+          frame.top,
+          frame.width,
+          frame.height,
+          frame.transform
+        ].join('|');
+        if (appliedSignature !== lastAppliedRootSignature) {
+          lastAppliedRootSignature = appliedSignature;
+          // visualViewport resize does not consistently bubble to window on
+          // iOS. Flutter listens to the window resize boundary, so publish one
+          // after the host frame changes to force a complete layout and paint.
+          setTimeout(function () {
+            try { window.dispatchEvent(new Event('resize')); } catch (_) {}
+          }, 0);
+        }
+
+        // Diagnostic: trace extra offset when root position != expected (e.g. -124 vs -62)
+        if (Math.abs(safeTop) > 5 || Math.abs(safeLeft) > 5) {
+          try {
+            const r = root.getBoundingClientRect();
+            const b = document.body.getBoundingClientRect();
+            const h = document.documentElement.getBoundingClientRect();
+            const bodyTransform = (window.getComputedStyle(document.body).transform || 'none');
+            const htmlTransform = (window.getComputedStyle(document.documentElement).transform || 'none');
+            const bodyScroll = document.body.scrollTop || 0;
+            const docScroll = document.documentElement.scrollTop || 0;
+            logSync('DIAG root=(' + r.left.toFixed(0) + ',' + r.top.toFixed(0) + ') body.top=' + b.top.toFixed(0) + ' html.top=' + h.top.toFixed(0) +
+              ' bodyScroll=' + bodyScroll + ' docScroll=' + docScroll +
+              ' bodyTransform=' + (bodyTransform === 'none' ? 'none' : bodyTransform.substring(0, 40) + '...') +
+              ' htmlTransform=' + (htmlTransform === 'none' ? 'none' : htmlTransform.substring(0, 40) + '...'));
+          } catch (diagE) {
+            logSync('DIAG failed: ' + diagE.message, 'warn');
+          }
+        }
+      }
+
+      function viewportSignature() {
+        return [
+          window.innerWidth || 0,
+          window.innerHeight || 0,
+          vv.width || 0,
+          vv.height || 0,
+          vv.offsetLeft || 0,
+          vv.offsetTop || 0,
+          vv.scale || 1
+        ].join('x');
+      }
+
+      function scheduleStartupReveal(reason) {
+        if (typeof window.__AGORA_REVEAL_STARTUP_LOADING !== 'function') return;
+
+        startupRevealSignature = viewportSignature();
+        if (startupRevealTimer) {
+          clearTimeout(startupRevealTimer);
+        }
+
+        startupRevealTimer = setTimeout(function () {
+          if (viewportSignature() !== startupRevealSignature) {
+            scheduleStartupReveal(reason + '-rescheduled');
+            return;
+          }
+
+          (window.requestAnimationFrame || function (cb) { return setTimeout(cb, 16); })(function () {
+            (window.requestAnimationFrame || function (cb) { return setTimeout(cb, 16); })(function () {
+              if (viewportSignature() === startupRevealSignature) {
+                window.__AGORA_REVEAL_STARTUP_LOADING(reason);
+              } else {
+                scheduleStartupReveal(reason + '-raf-rescheduled');
+              }
+            });
+          });
+        }, 320);
+      }
+
+      let rafPending = false;
+      let syncCount = 0;
+      function syncNow() {
+        rafPending = false;
+        const root = getRoot();
+        if (!root) {
+          // Retry later if root doesn't exist yet
+          if (syncCount < 50) { // Try for ~5 seconds (50 * 100ms)
+            syncCount++;
+            setTimeout(queueSync, 100);
+          } else {
+            logSync('#flutter-root not found after 50 attempts', 'error');
+          }
+          return;
+        }
+        ensureFlutterHostInRoot(root);
+        const offsetDetected = publishOffsetStatus();
+        // iOS PWA: docScroll matches offsetTop (e.g. 62), so body is already at -62; our transform adds another -62 => double offset. Zero document scroll so only #flutter-root transform applies.
+        if (Math.abs(vv.offsetTop) > 5 || Math.abs(vv.offsetLeft) > 5) {
+          try {
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+          } catch (_) {}
+        }
+        applyToRoot(root);
+        scheduleStartupReveal('visualViewport-stable-sync');
+
+        // When offset is abnormal, request a couple of extra frames to converge faster.
+        if (offsetDetected) {
+          const now = Date.now();
+          if (now - lastExtraSyncAt > 800) {
+            lastExtraSyncAt = now;
+            setTimeout(queueSync, 40);
+            setTimeout(queueSync, 180);
+          }
+        }
+
+        syncCount++;
+        if (syncCount === 1) {
+          logSync('First sync completed');
+        }
+      }
+
+      function queueSync() {
+        if (rafPending) return;
+        rafPending = true;
+        (window.requestAnimationFrame || function (cb) { return setTimeout(cb, 16); })(syncNow);
+      }
+
+      function delayedSync() {
+        queueSync();
+        setTimeout(queueSync, 60);
+        setTimeout(queueSync, 600);
+        setTimeout(queueSync, 1500);
+      }
+
+      vv.addEventListener('resize', queueSync, { passive: true });
+      vv.addEventListener('scroll', queueSync, { passive: true });
+      window.addEventListener('orientationchange', delayedSync, { passive: true });
+      window.addEventListener('pageshow', delayedSync, { passive: true });
+      document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) delayedSync();
+      });
+
+      if (window.MutationObserver) {
+        const mo = new MutationObserver(function () { queueSync(); });
+        mo.observe(document.body, { childList: true, subtree: true });
+        setTimeout(function () { try { mo.disconnect(); } catch (_) {} }, 10000);
+      }
+
+      delayedSync();
+    })();
+  </script>
+
+  <!-- iOS standalone PWA edge-swipe back guard.
+       WebKit's native history swipe animates a page snapshot before Flutter
+       receives popstate, which can flash the stale route for one frame. Capture
+       the left-edge swipe early and route it through history.back() instead. -->
+  <script>
+    (function () {
+      'use strict';
+
+      if (window.__AGORA_IOS_EDGE_BACK_GUARD_INSTALLED) return;
+
+      var ua = navigator.userAgent || '';
+      var maxTouchPoints = Number(navigator.maxTouchPoints || 0);
+      var isIOS = /iPad|iPhone|iPod/.test(ua) ||
+        (/Macintosh/.test(ua) && maxTouchPoints > 1);
+      var isStandalone = false;
+      try {
+        isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+          window.navigator.standalone === true ||
+          window.matchMedia('(display-mode: fullscreen)').matches;
+      } catch (_) {
+        isStandalone = false;
+      }
+
+      if (!isIOS || !isStandalone) return;
+
+      window.__AGORA_IOS_EDGE_BACK_GUARD_INSTALLED = true;
+
+      var EDGE_WIDTH_PX = 28;
+      var MIN_BACK_SWIPE_PX = 48;
+      var HORIZONTAL_RATIO = 1.35;
+      var tracking = null;
+      var suppressingNativeSwipe = false;
+
+      function canGoBack() {
+        return window.history && window.history.length > 1;
+      }
+
+      function resetTracking() {
+        tracking = null;
+        suppressingNativeSwipe = false;
+      }
+
+      function stopNativeSwipe(event) {
+        try {
+          event.preventDefault();
+          event.stopPropagation();
+        } catch (_) {}
+      }
+
+      document.addEventListener('touchstart', function (event) {
+        if (!canGoBack() || event.touches.length !== 1) return;
+
+        var touch = event.touches[0];
+        if (touch.clientX > EDGE_WIDTH_PX) return;
+
+        tracking = {
+          startX: touch.clientX,
+          startY: touch.clientY,
+          lastX: touch.clientX,
+          lastY: touch.clientY
+        };
+        suppressingNativeSwipe = true;
+        stopNativeSwipe(event);
+      }, { capture: true, passive: false });
+
+      document.addEventListener('touchmove', function (event) {
+        if (!tracking || event.touches.length !== 1) return;
+
+        var touch = event.touches[0];
+        var dx = touch.clientX - tracking.startX;
+        var dy = Math.abs(touch.clientY - tracking.startY);
+
+        tracking.lastX = touch.clientX;
+        tracking.lastY = touch.clientY;
+
+        if (dx > 8 && dx > dy) {
+          suppressingNativeSwipe = true;
+          stopNativeSwipe(event);
+        }
+      }, { capture: true, passive: false });
+
+      document.addEventListener('touchend', function (event) {
+        if (!tracking) return;
+
+        var dx = tracking.lastX - tracking.startX;
+        var dy = Math.abs(tracking.lastY - tracking.startY);
+        var shouldGoBack = suppressingNativeSwipe &&
+          dx >= MIN_BACK_SWIPE_PX &&
+          dx > dy * HORIZONTAL_RATIO;
+
+        if (shouldGoBack) {
+          stopNativeSwipe(event);
+          window.setTimeout(function () {
+            window.history.back();
+          }, 0);
+        }
+
+        resetTracking();
+      }, { capture: true, passive: false });
+
+      document.addEventListener('touchcancel', resetTracking, {
+        capture: true,
+        passive: true
+      });
+    })();
+  </script>
+
+  <script src="passkey_helper.js"></script>
+  <script src="storefront_readiness.js"></script>
+  <script id="client-viewport-diagnostics">
+    (function () {
+      'use strict';
+
+      var endpoint = 'https://agoramarketapi.purrtechllc.com/api/public/traffic/client-viewport-diagnostics';
+      var productionHost = 'agoramarket.purrtechllc.com';
+      var maxReports = 8;
+      var maxLogs = 12;
+      var reportCount = 0;
+      var sequence = 0;
+      var viewportTimer = 0;
+      var lastGeometrySignature = '';
+      var pageWasHidden = false;
+      var sentOnce = Object.create(null);
+      var allowedPhases = {
+        INITIAL: true,
+        FLUTTER_FIRST_FRAME: true,
+        STOREFRONT_READY: true,
+        VIEWPORT_CHANGED: true,
+        PAGE_VISIBLE: true,
+        MANUAL: true
+      };
+
+      function boundedNumber(value, minimum, maximum) {
+        var number = Number(value);
+        return Number.isFinite(number) && number >= minimum && number <= maximum
+          ? Math.round(number * 1000) / 1000
+          : null;
+      }
+
+      function boundedText(value, maximum) {
+        if (typeof value !== 'string') return null;
+        var text = value.replace(/[\u0000-\u001f\u007f]/g, ' ').trim();
+        if (!text) return null;
+        return text.length <= maximum ? text : text.slice(0, maximum);
+      }
+
+      function readMeta(name) {
+        try {
+          var meta = document.querySelector('meta[name="' + name + '"]');
+          return meta ? boundedText(meta.getAttribute('content'), 96) : null;
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function createTraceId() {
+        try {
+          if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+            return window.crypto.randomUUID();
+          }
+        } catch (_) {}
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (character) {
+          var random = Math.floor(Math.random() * 16);
+          var value = character === 'x' ? random : (random & 0x3) | 0x8;
+          return value.toString(16);
+        });
+      }
+
+      function platform() {
+        var userAgent = '';
+        var touchPoints = 0;
+        try { userAgent = String(navigator.userAgent || ''); } catch (_) {}
+        try { touchPoints = Number(navigator.maxTouchPoints || 0); } catch (_) {}
+        if (/iPad|iPhone|iPod/.test(userAgent) ||
+            (/Macintosh/.test(userAgent) && touchPoints > 1)) {
+          return 'IOS';
+        }
+        if (/Android/i.test(userAgent)) return 'ANDROID';
+        if (/Windows|Macintosh|Linux/i.test(userAgent)) return 'DESKTOP';
+        return 'OTHER';
+      }
+
+      function isStandalone() {
+        try {
+          return window.navigator.standalone === true ||
+            window.matchMedia('(display-mode: standalone)').matches ||
+            window.matchMedia('(display-mode: fullscreen)').matches;
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function isTelegramMiniApp() {
+        try {
+          var webApp = window.Telegram && window.Telegram.WebApp;
+          return !!(webApp && (webApp.initData ||
+            (webApp.initDataUnsafe && webApp.initDataUnsafe.user)));
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function safeTransform(value) {
+        var transform = boundedText(value, 128);
+        if (!transform) return null;
+        return /^(none|matrix(3d)?\([0-9eE+.,\- ]+\)|translate3d\([0-9eE+.,%px\- ]+\))$/.test(transform)
+          ? transform
+          : null;
+      }
+
+      function elementSnapshot(selector) {
+        var element = null;
+        try { element = document.querySelector(selector); } catch (_) {}
+        if (!element || typeof element.getBoundingClientRect !== 'function') {
+          return { present: false, visible: false, rect: null, transform: null };
+        }
+        try {
+          var rect = element.getBoundingClientRect();
+          var style = window.getComputedStyle ? window.getComputedStyle(element) : null;
+          var opacity = style ? Number(style.opacity) : 1;
+          var visible = rect.width > 0 && rect.height > 0 &&
+            (!style || (style.display !== 'none' && style.visibility !== 'hidden' && opacity !== 0));
+          return {
+            present: true,
+            visible: visible,
+            rect: {
+              left: boundedNumber(rect.left, -20000, 20000),
+              top: boundedNumber(rect.top, -20000, 20000),
+              width: boundedNumber(rect.width, 0, 20000),
+              height: boundedNumber(rect.height, 0, 20000)
+            },
+            transform: style ? safeTransform(style.transform || 'none') : null
+          };
+        } catch (_) {
+          return { present: true, visible: false, rect: null, transform: null };
+        }
+      }
+
+      function bootstrapAsset() {
+        try {
+          var scripts = document.getElementsByTagName('script');
+          for (var index = scripts.length - 1; index >= 0; index--) {
+            var source = String(scripts[index].src || '');
+            if (source.indexOf('flutter_bootstrap') < 0) continue;
+            var asset = new URL(source, window.location.href).pathname.split('/').pop();
+            return /^flutter_bootstrap(?:\.[0-9]+\.[0-9]+\.[0-9]+)?\.js$/.test(asset)
+              ? asset
+              : null;
+          }
+        } catch (_) {}
+        return null;
+      }
+
+      function recentViewportLogs() {
+        var logs = [hostFrameLog()];
+        try {
+          if (!Array.isArray(window.__VV_SYNC_LOGS)) return logs;
+          logs = logs.concat(window.__VV_SYNC_LOGS.slice(-(maxLogs - 1)).map(function (entry) {
+            var level = String(entry && entry.level || 'info').toUpperCase();
+            if (level !== 'WARN' && level !== 'ERROR') level = 'INFO';
+            var timestamp = boundedText(entry && entry.timestamp, 40);
+            if (timestamp && !/^[0-9TZ:.+\-]{10,40}$/.test(timestamp)) timestamp = null;
+            return {
+              timestamp: timestamp,
+              level: level,
+              message: boundedText(entry && entry.message, 300)
+            };
+          }).filter(function (entry) { return !!entry.message; }));
+        } catch (_) {}
+        return logs.slice(-maxLogs);
+      }
+
+      function compactNumber(value) {
+        if (value === null || value === undefined || value === '') return 'na';
+        var number = boundedNumber(value, -20000, 100000);
+        return number === null ? 'na' : String(number);
+      }
+
+      function desktopExpectedWidth() {
+        var documentElement = document.documentElement;
+        try {
+          if (!documentElement || !documentElement.classList ||
+              !documentElement.classList.contains('agora-telegram-desktop-mini-app')) {
+            return null;
+          }
+          var style = window.getComputedStyle && window.getComputedStyle(documentElement);
+          var value = style && typeof style.getPropertyValue === 'function'
+            ? parseFloat(style.getPropertyValue('--agora-telegram-desktop-visible-width'))
+            : NaN;
+          if (Number.isFinite(value) && value > 0) return value;
+          var visual = window.visualViewport;
+          var reported = boundedNumber(
+            visual && visual.width || window.innerWidth,
+            0,
+            20000
+          );
+          return reported === null ? null : Math.min(reported, 675);
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function hostFrameLog() {
+        var screen = window.screen || {};
+        var visual = window.visualViewport || {};
+        var root = elementSnapshot('#flutter-root');
+        var rootRect = root.rect || {};
+        var expectedWidth = desktopExpectedWidth();
+        var screenX = boundedNumber(window.screenX, -20000, 20000);
+        var screenY = boundedNumber(window.screenY, -20000, 20000);
+        var outerWidth = boundedNumber(window.outerWidth, 0, 20000);
+        var outerHeight = boundedNumber(window.outerHeight, 0, 20000);
+        var availLeft = boundedNumber(screen.availLeft, -20000, 20000);
+        var availTop = boundedNumber(screen.availTop, -20000, 20000);
+        var availWidth = boundedNumber(screen.availWidth, 0, 20000);
+        var availHeight = boundedNumber(screen.availHeight, 0, 20000);
+        var hostOffscreen = false;
+        if (screenX !== null && screenY !== null && outerWidth !== null &&
+            outerHeight !== null && availLeft !== null && availTop !== null &&
+            availWidth !== null && availHeight !== null) {
+          hostOffscreen = screenX < availLeft - 2 || screenY < availTop - 2 ||
+            screenX + outerWidth > availLeft + availWidth + 2 ||
+            screenY + outerHeight > availTop + availHeight + 2;
+        }
+        var rootMismatch = false;
+        if (expectedWidth !== null && rootRect.width !== null && rootRect.width !== undefined) {
+          rootMismatch = Math.abs(rootRect.width - expectedWidth) > Math.max(2, expectedWidth * 0.05);
+        }
+        var telegramPlatform = 'none';
+        try {
+          telegramPlatform = boundedText(
+            window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.platform || 'none',
+            16
+          ) || 'none';
+        } catch (_) {}
+        return {
+          timestamp: null,
+          level: hostOffscreen || rootMismatch ? 'WARN' : 'INFO',
+          message: boundedText(
+            'HOST_FRAME tg=' + telegramPlatform +
+            ' pos=' + compactNumber(screenX) + ',' + compactNumber(screenY) +
+            ' outer=' + compactNumber(outerWidth) + 'x' + compactNumber(outerHeight) +
+            ' inner=' + compactNumber(window.innerWidth) + 'x' + compactNumber(window.innerHeight) +
+            ' avail=' + compactNumber(availWidth) + 'x' + compactNumber(availHeight) +
+            '@' + compactNumber(availLeft) + ',' + compactNumber(availTop) +
+            ' vv=' + compactNumber(visual.width) + 'x' + compactNumber(visual.height) +
+            '@' + compactNumber(visual.offsetLeft) + ',' + compactNumber(visual.offsetTop) +
+            ' expectedW=' + compactNumber(expectedWidth) +
+            ' root=' + compactNumber(rootRect.left) + ',' + compactNumber(rootRect.top) + ',' +
+            compactNumber(rootRect.width) + 'x' + compactNumber(rootRect.height) +
+            ' hostOffscreen=' + (hostOffscreen ? '1' : '0') +
+            ' rootMismatch=' + (rootMismatch ? '1' : '0'),
+            300
+          )
+        };
+      }
+
+      function viewportSnapshot() {
+        var visual = window.visualViewport || null;
+        var doc = document.documentElement || null;
+        var body = document.body || null;
+        return {
+          screenWidth: boundedNumber(window.screen && window.screen.width, 0, 20000),
+          screenHeight: boundedNumber(window.screen && window.screen.height, 0, 20000),
+          innerWidth: boundedNumber(window.innerWidth, 0, 20000),
+          innerHeight: boundedNumber(window.innerHeight, 0, 20000),
+          scrollX: boundedNumber(window.scrollX || 0, -20000, 20000),
+          scrollY: boundedNumber(window.scrollY || 0, -20000, 20000),
+          devicePixelRatio: boundedNumber(window.devicePixelRatio || 1, 0, 100),
+          visualWidth: boundedNumber(visual && visual.width, 0, 20000),
+          visualHeight: boundedNumber(visual && visual.height, 0, 20000),
+          visualOffsetLeft: boundedNumber(visual && visual.offsetLeft, -20000, 20000),
+          visualOffsetTop: boundedNumber(visual && visual.offsetTop, -20000, 20000),
+          visualPageLeft: boundedNumber(visual && visual.pageLeft, -20000, 20000),
+          visualPageTop: boundedNumber(visual && visual.pageTop, -20000, 20000),
+          visualScale: boundedNumber(visual && visual.scale, 0.01, 100),
+          documentClientWidth: boundedNumber(doc && doc.clientWidth, 0, 20000),
+          documentClientHeight: boundedNumber(doc && doc.clientHeight, 0, 20000),
+          documentScrollWidth: boundedNumber(
+            Math.max(doc && doc.scrollWidth || 0, body && body.scrollWidth || 0), 0, 100000),
+          documentScrollHeight: boundedNumber(
+            Math.max(doc && doc.scrollHeight || 0, body && body.scrollHeight || 0), 0, 100000)
+        };
+      }
+
+      function runtimeState() {
+        var body = document.body;
+        var classList = body && body.classList;
+        var elapsed = null;
+        try {
+          var measuredElapsed = boundedNumber(window.performance.now(), 0, 600000);
+          elapsed = measuredElapsed === null ? null : Math.round(measuredElapsed);
+        } catch (_) {}
+        return {
+          readyState: /^(loading|interactive|complete)$/.test(document.readyState)
+            ? document.readyState
+            : 'loading',
+          flutterReady: !!(classList && classList.contains('flutter-ready')),
+          immediate: !!(classList && classList.contains('immediate')),
+          startupLayoutReady: !!(document.documentElement &&
+            document.documentElement.classList.contains('agora-startup-layout-ready')),
+          serviceWorkerControlled: !!(navigator.serviceWorker && navigator.serviceWorker.controller),
+          elapsedMs: elapsed,
+          bootstrapAsset: bootstrapAsset()
+        };
+      }
+
+      function offsetStatus() {
+        var status = window.__AGORA_VIEWPORT_OFFSET_STATUS || {};
+        return {
+          detected: status.detected === true,
+          offsetTop: boundedNumber(status.offsetTop, -20000, 20000),
+          offsetLeft: boundedNumber(status.offsetLeft, -20000, 20000),
+          threshold: boundedNumber(status.threshold, 0, 1000)
+        };
+      }
+
+      var traceId = createTraceId();
+
+      function capture(phase) {
+        var version = readMeta('version');
+        var sourceCommit = readMeta('source-commit');
+        var path = String(window.location.pathname || '/');
+        if (!/^\/[A-Za-z0-9._~/%-]*$/.test(path)) path = '/';
+        if (!/^[0-9]+\.[0-9]+\.[0-9]+\+[0-9]+$/.test(version || '')) return null;
+        if (sourceCommit && !/^[0-9a-fA-F]{40}$/.test(sourceCommit)) sourceCommit = null;
+        return {
+          traceId: traceId,
+          sequence: sequence + 1,
+          phase: phase,
+          version: version,
+          sourceCommit: sourceCommit,
+          path: path,
+          platform: platform(),
+          standalone: isStandalone(),
+          telegramMiniApp: isTelegramMiniApp(),
+          runtime: runtimeState(),
+          viewport: viewportSnapshot(),
+          flutterRoot: elementSnapshot('#flutter-root'),
+          glassPane: elementSnapshot('flt-glass-pane'),
+          canvas: elementSnapshot('canvas'),
+          offsetStatus: offsetStatus(),
+          logs: recentViewportLogs()
+        };
+      }
+
+      function geometrySignature(payload) {
+        if (!payload) return '';
+        var viewport = payload.viewport;
+        var root = payload.flutterRoot.rect || {};
+        return [
+          viewport.innerWidth,
+          viewport.innerHeight,
+          viewport.visualWidth,
+          viewport.visualHeight,
+          viewport.visualOffsetLeft,
+          viewport.visualOffsetTop,
+          root.left,
+          root.top,
+          root.width,
+          root.height,
+          payload.runtime.flutterReady
+        ].join('|');
+      }
+
+      function send(phase) {
+        if (!allowedPhases[phase] || reportCount >= maxReports || !window.fetch) {
+          return Promise.resolve(false);
+        }
+        var payload = capture(phase);
+        if (!payload) return Promise.resolve(false);
+        var signature = geometrySignature(payload);
+        if (phase === 'VIEWPORT_CHANGED' && signature === lastGeometrySignature) {
+          return Promise.resolve(false);
+        }
+        lastGeometrySignature = signature;
+        reportCount++;
+        sequence++;
+        payload.sequence = sequence;
+        return window.fetch(endpoint, {
+          method: 'POST',
+          mode: 'cors',
+          credentials: 'omit',
+          cache: 'no-store',
+          keepalive: true,
+          referrerPolicy: 'no-referrer',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).then(function (response) {
+          return !!(response && response.ok);
+        }).catch(function () {
+          return false;
+        });
+      }
+
+      function sendOnce(phase, delay) {
+        if (sentOnce[phase]) return;
+        sentOnce[phase] = true;
+        setTimeout(function () { send(phase); }, delay || 0);
+      }
+
+      function sendViewportChange() {
+        if (viewportTimer) clearTimeout(viewportTimer);
+        viewportTimer = setTimeout(function () {
+          viewportTimer = 0;
+          send('VIEWPORT_CHANGED');
+        }, 450);
+      }
+
+      var enabled = window.location.protocol === 'https:' &&
+        window.location.hostname === productionHost;
+      window.__AGORA_CLIENT_DIAGNOSTICS = {
+        enabled: enabled,
+        traceId: traceId,
+        snapshot: function () { return capture('MANUAL'); },
+        send: function () { return enabled ? send('MANUAL') : Promise.resolve(false); }
+      };
+      if (!enabled) return;
+
+      if (document.readyState === 'complete') {
+        sendOnce('INITIAL', 800);
+      } else {
+        window.addEventListener('load', function () { sendOnce('INITIAL', 800); }, { once: true });
+      }
+      window.addEventListener('flutter-first-frame', function () {
+        sendOnce('FLUTTER_FIRST_FRAME', 120);
+      });
+      window.addEventListener('agora-storefront-products-visible', function () {
+        sendOnce('STOREFRONT_READY', 500);
+      });
+      window.addEventListener('agora:viewport-offset-status', sendViewportChange);
+      window.addEventListener('resize', sendViewportChange, { passive: true });
+      window.addEventListener('pageshow', function (event) {
+        if (event && event.persisted) send('PAGE_VISIBLE');
+      }, { passive: true });
+      if (window.visualViewport && window.visualViewport.addEventListener) {
+        window.visualViewport.addEventListener('resize', sendViewportChange, { passive: true });
+        window.visualViewport.addEventListener('scroll', sendViewportChange, { passive: true });
+      }
+      document.addEventListener('visibilitychange', function () {
+        if (document.hidden) {
+          pageWasHidden = true;
+        } else if (pageWasHidden) {
+          pageWasHidden = false;
+          send('PAGE_VISIBLE');
+        }
+      });
+    })();
+  </script>
+  <script id="marketplace-landing-observation">
+    (function () {
+      'use strict';
+
+      if (window.location.protocol !== 'https:' ||
+          window.location.hostname !== 'agoramarket.purrtechllc.com') {
+        return;
+      }
+
+      var storageKey = 'agora_marketplace_landing_observed_v1';
+      var pendingPrefix = 'pending:';
+      var pendingLeaseMs = 30000;
+      try {
+        var observationState = window.sessionStorage.getItem(storageKey);
+        if (observationState === 'recorded') return;
+        if (observationState && observationState.indexOf(pendingPrefix) === 0) {
+          var pendingAt = Number(observationState.slice(pendingPrefix.length));
+          var pendingAgeMs = Date.now() - pendingAt;
+          if (window.isFinite(pendingAt) && pendingAgeMs >= 0 && pendingAgeMs < pendingLeaseMs) {
+            return;
+          }
+        }
+        window.sessionStorage.setItem(storageKey, pendingPrefix + Date.now());
+      } catch (_) {}
+
+      var endpoint = 'https://agoramarketapi.purrtechllc.com/api/public/traffic/visit';
+      var ownedEntryPresets = [
+        'official_page|web|marketplace_entry',
+        'official_th_page|web|marketplace_entry',
+        'official_en_page|web|marketplace_entry',
+        'noscript|web|marketplace_catalog',
+        'noscript|web|marketplace_landing',
+        'category_guide|organic|marketplace_catalog',
+        'category_guide|organic|marketplace_search',
+        'category_guide_th|organic|marketplace_catalog',
+        'category_guide_th|organic|marketplace_search',
+        'category_guide_en|organic|marketplace_catalog',
+        'category_guide_en|organic|marketplace_search',
+        'marketplace_th|organic|marketplace_catalog',
+        'marketplace_th|organic|marketplace_search',
+        'marketplace_en|organic|marketplace_catalog',
+        'marketplace_en|organic|marketplace_search',
+        'telegram|bot|bot_menu',
+        'telegram|bot|bot_profile',
+        'telegram|bot|product_search',
+        'telegram|community|catalog_discovery'
+      ];
+
+      function ownedEntryQuery() {
+        if (!window.URLSearchParams) return '';
+        try {
+          var params = new URLSearchParams(window.location.search);
+          var keys = ['utm_source', 'utm_medium', 'utm_campaign'];
+          if (keys.some(function (key) { return params.getAll(key).length !== 1; })) {
+            return '';
+          }
+          var values = keys.map(function (key) { return params.get(key); });
+          if (ownedEntryPresets.indexOf(values.join('|')) < 0) return '';
+          var safe = new URLSearchParams();
+          keys.forEach(function (key, index) { safe.set(key, values[index]); });
+          return '?' + safe.toString();
+        } catch (_) {
+          return '';
+        }
+      }
+
+      endpoint += ownedEntryQuery();
+
+      function readSignal(reader) {
+        try { return reader(); } catch (_) { return null; }
+      }
+
+      function boundedString(value, maxLength) {
+        if (typeof value !== 'string') return null;
+        var cleaned = value.replace(/[\u0000-\u001f\u007f]/g, ' ').trim();
+        if (!cleaned) return null;
+        return cleaned.length <= maxLength ? cleaned : cleaned.slice(0, maxLength);
+      }
+
+      function boundedNumber(value, maxValue) {
+        if (value === null || typeof value === 'undefined' || value === '') return null;
+        var number = Number(value);
+        if (!window.isFinite(number) || number < 0 || number > maxValue) return null;
+        return number;
+      }
+
+      function boundedLanguages(value) {
+        if (!Array.isArray(value)) return [];
+        return value.slice(0, 8)
+          .map(function (item) { return boundedString(item, 64); })
+          .filter(function (item) { return item !== null; });
+      }
+
+      function deviceProfile() {
+        var timezone = null;
+        var screenProfile = {
+          width: null,
+          height: null,
+          colorDepth: null,
+          pixelRatio: null,
+          devicePixelRatio: null
+        };
+        try {
+          if (window.Intl && window.Intl.DateTimeFormat) {
+            timezone = boundedString(
+              new Intl.DateTimeFormat().resolvedOptions().timeZone,
+              128
+            );
+          }
+        } catch (_) {}
+        try {
+          if (window.screen) {
+            screenProfile.width = boundedNumber(window.screen.width, 100000);
+            screenProfile.height = boundedNumber(window.screen.height, 100000);
+            screenProfile.colorDepth = boundedNumber(window.screen.colorDepth, 256);
+          }
+          screenProfile.pixelRatio = boundedNumber(window.devicePixelRatio, 100);
+          screenProfile.devicePixelRatio = screenProfile.pixelRatio;
+        } catch (_) {}
+        return {
+          v: 1,
+          platform: boundedString(readSignal(function () { return navigator.platform; }), 128),
+          language: boundedString(readSignal(function () { return navigator.language; }), 64),
+          languages: boundedLanguages(readSignal(function () { return navigator.languages; })),
+          hardwareConcurrency: boundedNumber(
+            readSignal(function () { return navigator.hardwareConcurrency; }),
+            1024
+          ),
+          deviceMemory: boundedNumber(
+            readSignal(function () { return navigator.deviceMemory; }),
+            16384
+          ),
+          maxTouchPoints: boundedNumber(
+            readSignal(function () { return navigator.maxTouchPoints; }),
+            1024
+          ),
+          timezone: timezone,
+          timeZone: timezone,
+          screen: screenProfile
+        };
+      }
+
+      function profileHeader(profile) {
+        if (!window.TextEncoder || !window.btoa) return null;
+        try {
+          var bytes = new TextEncoder().encode(JSON.stringify(profile));
+          var binary = '';
+          for (var i = 0; i < bytes.length; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          var encoded = window.btoa(binary)
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=+$/, '');
+          return encoded.length <= 2048 ? encoded : null;
+        } catch (_) {
+          return null;
+        }
+      }
+
+      async function deviceFingerprint(profile) {
+        if (!window.crypto || !window.crypto.subtle || !window.TextEncoder) {
+          return null;
+        }
+        var material = JSON.stringify({
+          userAgent: boundedString(
+            readSignal(function () { return navigator.userAgent; }),
+            2048
+          ) || '',
+          profile: profile
+        });
+        try {
+          var digest = await window.crypto.subtle.digest(
+            'SHA-256',
+            new TextEncoder().encode(material)
+          );
+          return Array.from(new Uint8Array(digest))
+            .map(function (value) {
+              var hex = value.toString(16);
+              return hex.length === 1 ? '0' + hex : hex;
+            })
+            .join('');
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function postObservation(headers) {
+        if (!window.fetch) {
+          if (!window.XMLHttpRequest) {
+            return Promise.reject(new Error('landing observation transport unavailable'));
+          }
+          return new Promise(function (resolve, reject) {
+            var request = new XMLHttpRequest();
+            request.open('POST', endpoint, true);
+            request.withCredentials = false;
+            request.onload = function () {
+              if (request.status >= 200 && request.status < 300) {
+                resolve();
+              } else {
+                reject(new Error('landing observation rejected'));
+              }
+            };
+            request.onerror = function () {
+              reject(new Error('landing observation failed'));
+            };
+            Object.keys(headers || {}).forEach(function (name) {
+              request.setRequestHeader(name, headers[name]);
+            });
+            request.send();
+          });
+        }
+        return window.fetch(endpoint, {
+          method: 'POST',
+          mode: 'cors',
+          credentials: 'omit',
+          cache: 'no-store',
+          keepalive: true,
+          referrerPolicy: 'strict-origin-when-cross-origin',
+          headers: headers || {}
+        }).then(function (response) {
+          if (!response.ok) throw new Error('landing observation rejected');
+        });
+      }
+
+      var profile = deviceProfile();
+      deviceFingerprint(profile)
+        .then(function (fingerprint) {
+          var headers = {};
+          var encodedProfile = profileHeader(profile);
+          if (encodedProfile) {
+            headers['X-Agora-Device-Profile'] = encodedProfile;
+          }
+          if (fingerprint) {
+            headers['X-Agora-Device-Fingerprint'] = fingerprint;
+          }
+          if (Object.keys(headers).length === 0) {
+            return postObservation();
+          }
+          return postObservation(headers).catch(function () {
+            return postObservation();
+          });
+        })
+        .then(function () {
+          try { window.sessionStorage.setItem(storageKey, 'recorded'); } catch (_) {}
+        })
+        .catch(function () {
+          try { window.sessionStorage.removeItem(storageKey); } catch (_) {}
+        });
+    })();
+  </script>
+  <script id="public-route-bridge">
+    (function () {
+      'use strict';
+      if (window.location.hash) return;
+
+      var routeQuery = null;
+      if (window.location.pathname === '/search') {
+        routeQuery = window.location.search || '';
+      } else if (window.location.pathname === '/index.html') {
+        try {
+          var savedPath = sessionStorage.getItem('_404_redirect_path') || '';
+          var savedUrl = new URL(savedPath, window.location.origin);
+          if (savedUrl.pathname === '/search' && !savedUrl.hash) {
+            routeQuery = savedUrl.search || '';
+            sessionStorage.removeItem('_404_redirect_path');
+          }
+        } catch (_) {}
+      }
+
+      if (routeQuery === null) return;
+      window.history.replaceState(null, '', '/' + routeQuery + '#/search');
+    })();
+  </script>
+  <script>
+    (function() {
+      var versionMeta = document.querySelector('meta[name="version"]');
+      var currentVersion = versionMeta ? versionMeta.getAttribute('content') : '';
+      var versionKey = 'agora_web_bootstrap_version';
+      var controlledReloadKey = 'agora_web_controlled_reload_' + currentVersion;
+      var legacyFlutterCaches = [
+        'flutter-app-cache',
+        'flutter-temp-cache',
+        'flutter-app-manifest'
+      ];
+
+      function isStaleRuntimeCache(cacheName) {
+        return cacheName.indexOf('agora-') === 0 ||
+          legacyFlutterCaches.indexOf(cacheName) !== -1;
+      }
+
+      function loadFlutterBootstrap() {
+        var script = document.createElement('script');
+        script.src = "flutter_bootstrap.1.0.1902.js";
+        script.async = true;
+        if (window.__AGORA_STARTUP_PROGRESS__) {
+          window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
+        }
+        script.addEventListener('load', function() {
+          if (window.__AGORA_STARTUP_PROGRESS__) {
+            window.__AGORA_STARTUP_PROGRESS__.setPhase('download');
+          }
+        }, { once: true });
+        script.addEventListener('error', function() {
+          var startupCopy = window.__agoraStartupCopy || {};
+          if (window.__AGORA_STARTUP_PROGRESS__) {
+            window.__AGORA_STARTUP_PROGRESS__.setPhase(
+              'timeout',
+              startupCopy.loadError || startupCopy.timeout
+            );
+          }
+          var retryButton = document.getElementById('startup-retry-button');
+          if (retryButton) {
+            retryButton.hidden = false;
+            retryButton.classList.add('is-visible');
+          }
+        }, { once: true });
+        document.body.appendChild(script);
+      }
+
+      async function resetStaleRuntimeCache() {
+        if (!currentVersion) return;
+        var previousVersion;
+        try {
+          previousVersion = window.localStorage.getItem(versionKey);
+        } catch (_) {}
+        var hasActiveController = !!(
+          navigator.serviceWorker && navigator.serviceWorker.controller
+        );
+        if (previousVersion === currentVersion && !hasActiveController) return;
+
+        if (navigator.serviceWorker) {
+          var registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map(function(registration) {
+            return registration.unregister();
+          }));
+        }
+
+        if (window.caches) {
+          var cacheNames = await caches.keys();
+          await Promise.all(
+            cacheNames
+              .filter(isStaleRuntimeCache)
+              .map(function(cacheName) { return caches.delete(cacheName); })
+          );
+        }
+
+        try {
+          window.localStorage.setItem(versionKey, currentVersion);
+        } catch (_) {}
+      }
+
+      async function releaseLegacyServiceWorkerControl() {
+        if (!(navigator.serviceWorker && navigator.serviceWorker.controller)) {
+          return false;
+        }
+
+        await resetStaleRuntimeCache();
+        try {
+          if (window.sessionStorage.getItem(controlledReloadKey) === '1') {
+            return false;
+          }
+          window.sessionStorage.setItem(controlledReloadKey, '1');
+          window.location.reload();
+          return true;
+        } catch (_) {
+          // If sessionStorage is unavailable, continue with versioned assets
+          // after cleanup rather than risk an infinite reload loop.
+          return false;
+        }
+      }
+
+      function scheduleStaleRuntimeCacheReset() {
+        var cleanup = function() {
+          resetStaleRuntimeCache().catch(function(error) {
+            console.warn(
+              '[BOOTSTRAP_CACHE_RESET] errorType=' +
+              ((error && error.name) || 'UnknownError')
+            );
+          });
+        };
+
+        if (typeof window.requestIdleCallback === 'function') {
+          window.requestIdleCallback(cleanup, { timeout: 5000 });
+        } else {
+          setTimeout(cleanup, 0);
+        }
+      }
+
+      function installRuntimeVersionMonitor() {
+        if (!currentVersion || typeof window.fetch !== 'function') return;
+
+        var sourceMeta = document.querySelector('meta[name="source-commit"]');
+        var currentCommit = sourceMeta ? sourceMeta.getAttribute('content') : '';
+        if (!/^[0-9a-f]{40}$/i.test(currentCommit || '')) currentCommit = '';
+
+        var probeInFlight = null;
+        var lastProbeAt = 0;
+        var minimumProbeIntervalMs = 30000;
+        var periodicProbeIntervalMs = 300000;
+        var updateQueryKey = 'agora_update';
+
+        function validCommit(value) {
+          value = String(value || '');
+          return /^[0-9a-f]{40}$/i.test(value) ? value.toLowerCase() : '';
+        }
+
+        function validVersion(value) {
+          value = String(value || '');
+          return /^\d+\.\d+\.\d+\+\d+$/.test(value) ? value : '';
+        }
+
+        function latestBuild(payload) {
+          payload = payload && typeof payload === 'object' ? payload : {};
+          var version = validVersion(payload.version);
+          if (!version) {
+            var semanticVersion = String(payload.version || '');
+            var buildNumber = String(payload.build_number || '');
+            if (/^\d+\.\d+\.\d+$/.test(semanticVersion) && /^\d+$/.test(buildNumber)) {
+              version = validVersion(semanticVersion + '+' + buildNumber);
+            }
+          }
+          return {
+            commit: validCommit(payload.source_commit),
+            version: version
+          };
+        }
+
+        function buildChanged(latest) {
+          if (currentCommit && latest.commit) {
+            return currentCommit.toLowerCase() !== latest.commit;
+          }
+          return !!(
+            currentVersion && latest.version && currentVersion !== latest.version
+          );
+        }
+
+        function updateIdentity(latest) {
+          return latest.commit || latest.version || '';
+        }
+
+        function runtimeVersionUrl() {
+          var url = new URL('version.json', document.baseURI || window.location.href);
+          url.searchParams.set('probe', String(Date.now()));
+          return url.toString();
+        }
+
+        function reloadUrl(identity) {
+          var url = new URL(window.location.href);
+          url.searchParams.set(updateQueryKey, identity.substring(0, 12));
+          return url.toString();
+        }
+
+        function removeUpdateQuery() {
+          try {
+            var url = new URL(window.location.href);
+            if (!url.searchParams.has(updateQueryKey)) return;
+            url.searchParams.delete(updateQueryKey);
+            window.history.replaceState(null, '', url.toString());
+          } catch (_) {}
+        }
+
+        async function probeRuntimeVersion(reason, force) {
+          if (document.visibilityState === 'hidden') return false;
+
+          var now = Date.now();
+          if (!force && now - lastProbeAt < minimumProbeIntervalMs) return false;
+          if (probeInFlight) return probeInFlight;
+          lastProbeAt = now;
+
+          probeInFlight = (async function() {
+            var response = await window.fetch(runtimeVersionUrl(), {
+              cache: 'no-store',
+              credentials: 'same-origin',
+              headers: { 'Accept': 'application/json' }
+            });
+            if (!response || !response.ok) return false;
+
+            var latest = latestBuild(await response.json());
+            var identity = updateIdentity(latest);
+            if (!identity || !buildChanged(latest)) return false;
+
+            var reloadKey = 'agora_web_runtime_reload_' + identity;
+            try {
+              if (window.sessionStorage.getItem(reloadKey) === '1') return false;
+              window.sessionStorage.setItem(reloadKey, '1');
+            } catch (_) {
+              // Without sessionStorage, fail open instead of risking a reload loop.
+              return false;
+            }
+
+            try {
+              await resetStaleRuntimeCache();
+            } catch (_) {}
+
+            console.info(
+              '[RUNTIME_VERSION] update reason=' + String(reason || 'unknown')
+            );
+            window.location.replace(reloadUrl(identity));
+            return true;
+          })().catch(function(error) {
+            console.warn(
+              '[RUNTIME_VERSION] probe errorType=' +
+              ((error && error.name) || 'UnknownError')
+            );
+            return false;
+          }).finally(function() {
+            probeInFlight = null;
+          });
+
+          return probeInFlight;
+        }
+
+        function scheduleProbe(reason, delay) {
+          setTimeout(function() {
+            probeRuntimeVersion(reason, false);
+          }, delay || 0);
+        }
+
+        removeUpdateQuery();
+        window.__AGORA_RUNTIME_VERSION_PROBE__ = function(reason) {
+          return probeRuntimeVersion(reason || 'manual', true);
+        };
+        window.addEventListener('pageshow', function(event) {
+          scheduleProbe(event && event.persisted ? 'pageshow-cache' : 'pageshow', 500);
+        });
+        document.addEventListener('visibilitychange', function() {
+          if (document.visibilityState === 'visible') {
+            scheduleProbe('visible', 250);
+          }
+        });
+        setInterval(function() {
+          probeRuntimeVersion('periodic', false);
+        }, periodicProbeIntervalMs);
+        scheduleProbe('startup', 1500);
+      }
+
+      function startFlutter() {
+        // Versioned bootstrap/main filenames already prevent stale code from
+        // starting. Fresh clients never wait for cache cleanup.
+        loadFlutterBootstrap();
+        window.addEventListener(
+          'flutter-first-frame',
+          scheduleStaleRuntimeCacheReset,
+          { once: true }
+        );
+      }
+
+      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        releaseLegacyServiceWorkerControl()
+          .then(function(reloading) {
+            if (!reloading) startFlutter();
+          })
+          .catch(function(error) {
+            console.warn(
+              '[BOOTSTRAP_CONTROL_RELEASE] errorType=' +
+              ((error && error.name) || 'UnknownError')
+            );
+            startFlutter();
+          });
+      } else {
+        startFlutter();
+      }
+
+      installRuntimeVersionMonitor();
+    })();
+  </script>
+
+  <!-- Fix 2: Removed pwa_viewport_fix.js - conflicts with visualViewport root model -->
+
+  <!-- Web Vitals ???????? -->
+  <script src="web_vitals.js"></script>
+  
+  <!-- ?????????????? -->
+  <script src="offline_handler.js"></script>
+  
+  <!-- GitHub Pages 404 ??????????????-->
+  <script>
+    // ?????404.html ????????????????
+    (function() {
+      try {
+        var savedPath = sessionStorage.getItem('_404_redirect_path');
+        if (savedPath) {
+          // ????????????????????????????????
+          sessionStorage.removeItem('_404_redirect_path');
+          
+          // ???????????????????????????????????????????????????????????????
+          var currentPath = window.location.pathname + window.location.search + window.location.hash;
+          if (currentPath !== savedPath && savedPath !== '/index.html') {
+            // ???????replaceState ????? URL?????????????????
+            // ??????Flutter ??????????????????????? URL ?????????
+            window.history.replaceState(null, '', savedPath);
+            console.log('[404_REDIRECT] Path restored: restored=true');
+          }
+        }
+      } catch (e) {
+        console.error('[404_REDIRECT] Failed to restore path:', e && e.name || 'Error');
+      }
+    })();
+  </script>
+  
+  <!-- OAuth ??????????????????????????????????????? -->
+  <script>
+    // Detect OAuth callback and update loading screen
+    (function() {
+      try {
+        var urlParams = new URLSearchParams(window.location.search);
+        var savedPath = sessionStorage.getItem('_404_redirect_path') || '';
+        var isOAuth = urlParams.has('tokenId') || 
+                     window.location.pathname.includes('/oauth2-callback') ||
+                     savedPath.includes('tokenId=') ||
+                     savedPath.includes('/oauth2-callback');
+        
+        if (isOAuth) {
+          var loadingText = document.getElementById('loading-text');
+          if (loadingText) loadingText.textContent = '\u6b63\u5728\u8655\u7406\u767b\u5165...';
+        }
+      } catch (e) {
+        // Silent fail, don't block
+      }
+    })();
+  </script>
+  <script>
+    // ?????????????? Flutter ??????
+    window.registerMessageHandler = function(callback) {
+      window._messageHandler = callback;
+    };
+
+    // ???????????Service Worker ?????
+    window.handleServiceWorkerMessage = function(data) {
+      if (window._messageHandler) {
+        window._messageHandler(data);
+      }
+    };
+  </script>
+  
+</body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,25 +1,31 @@
-"use strict";
+'use strict';
 
-const destinationFor = (url) => {
-  const source = new URL(url);
-  const path = source.pathname === "/index.html" ? "/" : source.pathname;
-  return new URL(path + source.search + source.hash, "https://agoramarket-test.141-148-142-175.sslip.io").href;
-};
-
-self.addEventListener("install", () => self.skipWaiting());
-
-self.addEventListener("activate", (event) => {
-  event.waitUntil((async () => {
-    const names = await caches.keys();
-    await Promise.allSettled(names.map((name) => caches.delete(name)));
-    const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-    await Promise.allSettled(windows.map((client) => client.navigate(destinationFor(client.url))));
-    await self.registration.unregister();
-  })());
+self.addEventListener('install', () => {
+  self.skipWaiting();
 });
 
-self.addEventListener("fetch", (event) => {
-  if (event.request.mode === "navigate") {
-    event.respondWith(Response.redirect(destinationFor(event.request.url), 302));
-  }
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    (async () => {
+      try {
+        await self.registration.unregister();
+      } catch (e) {
+        console.warn('Failed to unregister the service worker:', e);
+      }
+
+      try {
+        const clients = await self.clients.matchAll({
+          type: 'window',
+        });
+        // Reload clients to ensure they are not using the old service worker.
+        clients.forEach((client) => {
+          if (client.url && 'navigate' in client) {
+            client.navigate(client.url);
+          }
+        });
+      } catch (e) {
+        console.warn('Failed to navigate some service worker clients:', e);
+      }
+    })()
+  );
 });
