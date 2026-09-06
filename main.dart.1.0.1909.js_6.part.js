@@ -184,7 +184,7 @@ w=!0
 if(x!=null)if(x.ge5().toLowerCase()==="https")if(x.ga21().length===0)w=x.gXf()&&x.gKI()!==443||!C.a8N.t(0,x.gmT().toLowerCase())||x.gKv().length===0
 if(w)return null
 return x.cd4("telegram.me")},
-doK(d){return d.c?d:A.dsJ(A.by(d),A.bB(d),A.c1(d),A.ht(d),A.mg(d),A.N2(d),A.aAl(d),d.b)},
+doK(d){return d.c?d:A.dsJ(A.by(d),A.bB(d),A.c1(d),A.hu(d),A.mg(d),A.N2(d),A.aAl(d),d.b)},
 dZ1(d){var x
 if(d==null||d.length===0)return null
 x=A.dzi().j(0,d)
@@ -1986,4 +1986,4 @@ D.bT9=new A.U("slot-game-access-gate",y.O)})();(function staticFields(){$.a6_=fu
 return A.o(x,x)}()})();(function lazyInitializers(){var x=a.lazyFinal
 x($,"ekH","dKg",()=>A.bg("Mobi|Android|iPhone|iPad|iPod",!1,!1,!1,!1))
 x($,"elG","hM",()=>A.aX("SlotGamePage"))})()};
-(a=>{a["ZE6FEnCFqhTDt1237fEakSenJAM="]=a.current})($__dart_deferred_initializers__);
+(a=>{a["vD6lxiM+TxE0XxsRzYE3vyRwB6I="]=a.current})($__dart_deferred_initializers__);
