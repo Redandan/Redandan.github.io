@@ -1244,7 +1244,7 @@ html, body { width:100%; height:var(--app-height, 100dvh); overflow:hidden; back
   available when the module initialises.
   • flutter_adapter.js  →  Flutter Native + Flutter Web iframe + Standalone PWA
 -->
-<script src="../_runtime/flutter_adapter.js?v=1.0.1909"></script>
+<script src="../_runtime/flutter_adapter.js?v=1.0.1910"></script>
 
 <script type="module">
 import * as THREE from 'https://esm.sh/three@0.160.0';
@@ -2036,10 +2036,9 @@ const betLabel  = document.getElementById('bet-label');
 const spinBtn   = document.getElementById('spin-btn');
 const spinStatusEl = null; // removed — bet amount is now shown in bet-label (cb-label under + button)
 
-// Frontend V2 runs this game in a sandbox without allow-same-origin. Browsers
-// intentionally throw a SecurityError when that sandbox touches localStorage.
-// Legacy Flutter hosting still gets its normal storage when available, while
-// the V2 HttpOnly host safely falls back to the state supplied by postMessage.
+// A sandboxed host without allow-same-origin throws a SecurityError when it
+// touches localStorage. Flutter hosting gets normal storage when available;
+// embedded hosts can fall back to state supplied by postMessage.
 function safeLocalStorageGet(key) {
   try {
     return window.localStorage.getItem(key);
@@ -2083,9 +2082,9 @@ window._game_onHostInit = function ({
   }
   viewportManager.fit();
 
-  // Frontend V2 deliberately keeps its bearer token in the parent server-side
-  // session. The isolated game receives only an authenticated-host marker and
-  // delegates every account read/write to that parent via postMessage.
+  // An HttpOnly host keeps its bearer token in the parent server-side session.
+  // The isolated game receives only an authenticated-host marker and delegates
+  // every account read/write to that parent via postMessage.
   window.__agoraAuth = {
     token: jwt || '',
     authMode: usesHttpOnlyHostSession ? 'v2-http-only' : 'bearer',
