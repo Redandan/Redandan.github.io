@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- Versioned cache marker. -->
-    <meta name="cache-version" content="1.0.1917">
+    <meta name="cache-version" content="1.0.1918">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -29,8 +29,8 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.1917+1917">
-  <meta name="source-commit" content="ce52122bbf4d28593d4f31ea1caa6a28b71dcc76">
+  <meta name="version" content="1.0.1918+1918">
+  <meta name="source-commit" content="1294edb7385aee07fdd9cf8bbf8c8e83d66b1307">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     // Request the largest available Telegram Mini App viewport before Flutter
@@ -443,7 +443,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market｜台灣與泰國生活用品線上市集</title>
-  <link rel="manifest" href="manifest.json?v=1.0.1917">
+  <link rel="manifest" href="manifest.json?v=1.0.1918">
   
   <!-- PWA ?????????????????? -->
   <meta name="application-name" content="Agora Market">
@@ -451,8 +451,8 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
-  <link rel="preload" href="flutter_bootstrap.1.0.1917.js" as="script">
-  <link rel="preload" href="main.dart.js?v=1.0.1917" as="script" fetchpriority="high">
+  <link rel="preload" href="flutter_bootstrap.1.0.1918.js" as="script">
+  <link rel="preload" href="main.dart.js?v=1.0.1918" as="script" fetchpriority="high">
   <link rel="preload" href="canvaskit/canvaskit.js" as="script">
   <link rel="preload" href="canvaskit/canvaskit.wasm" as="fetch" type="application/wasm" crossorigin>
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
@@ -1921,17 +1921,48 @@
         const rawHeight = Number(viewport && viewport.height || 0);
         const width = Number.isFinite(rawWidth) && rawWidth > 0 ? rawWidth : 1;
         const height = Number.isFinite(rawHeight) && rawHeight > 0 ? rawHeight : 1;
-        const visualRight = offsetLeft + width;
-        const visualBottom = offsetTop + height;
-
         safeArea = safeArea || {};
         layoutViewport = layoutViewport || {};
         const insetTop = nonNegativeFinite(safeArea.top);
         const insetRight = nonNegativeFinite(safeArea.right);
         const insetBottom = nonNegativeFinite(safeArea.bottom);
         const insetLeft = nonNegativeFinite(safeArea.left);
-        const layoutWidth = nonNegativeFinite(layoutViewport.width) || visualRight;
-        const layoutHeight = nonNegativeFinite(layoutViewport.height) || visualBottom;
+        const rawVisualRight = offsetLeft + width;
+        const rawVisualBottom = offsetTop + height;
+        const layoutWidth = nonNegativeFinite(layoutViewport.width) || rawVisualRight;
+        const layoutHeight = nonNegativeFinite(layoutViewport.height) || rawVisualBottom;
+        const safeLeft = insetLeft;
+        const safeTop = insetTop;
+        const safeRight = Math.max(safeLeft + 1, layoutWidth - insetRight);
+        const safeBottom = Math.max(safeTop + 1, layoutHeight - insetBottom);
+        const safeWidth = Math.max(1, safeRight - safeLeft);
+        const safeHeight = Math.max(1, safeBottom - safeTop);
+
+        let visualLeft = offsetLeft;
+        let visualTop = offsetTop;
+        let visualRight = rawVisualRight;
+        let visualBottom = rawVisualBottom;
+
+        // iOS standalone WebKit has two valid ways to expose visualViewport:
+        // either the full layout viewport, or a safe-area-sized viewport whose
+        // origin is still reported as (0, 0). The latter is already inset-sized;
+        // intersecting it with the CSS safe frame would subtract the top/left
+        // inset a second time and move the bottom navigation upward. Rebase only
+        // an exact safe-frame-sized axis. Smaller viewports (for example while
+        // the keyboard is open) must continue to constrain Flutter normally.
+        const standaloneRebaseTolerance = 2;
+        if (standalone &&
+            Math.abs(offsetLeft) <= standaloneRebaseTolerance &&
+            Math.abs(width - safeWidth) <= standaloneRebaseTolerance) {
+          visualLeft = safeLeft;
+          visualRight = safeRight;
+        }
+        if (standalone &&
+            Math.abs(offsetTop) <= standaloneRebaseTolerance &&
+            Math.abs(height - safeHeight) <= standaloneRebaseTolerance) {
+          visualTop = safeTop;
+          visualBottom = safeBottom;
+        }
 
         // visualViewport excludes Safari browser chrome, while CSS safe-area
         // insets exclude the notch/status bar and home indicator. Neither is a
@@ -1939,15 +1970,15 @@
         // intersection. This also handles standalone PWAs where WebKit reports
         // offsetTop=0 even though the translucent status bar still overlays the
         // page.
-        const left = Math.max(offsetLeft, insetLeft);
-        const top = Math.max(offsetTop, insetTop);
+        const left = Math.max(visualLeft, safeLeft);
+        const top = Math.max(visualTop, safeTop);
         const right = Math.max(
           left + 1,
-          Math.min(visualRight, Math.max(0, layoutWidth - insetRight))
+          Math.min(visualRight, safeRight)
         );
         const bottom = Math.max(
           top + 1,
-          Math.min(visualBottom, Math.max(0, layoutHeight - insetBottom))
+          Math.min(visualBottom, safeBottom)
         );
 
         return {
@@ -3070,7 +3101,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.1.0.1917.js";
+        script.src = "flutter_bootstrap.1.0.1918.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
