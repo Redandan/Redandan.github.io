@@ -294,7 +294,7 @@ r=r==null?o:J.ao(r).length
 s.k(B.f,"\ud83d\udce4 [WebRTC] Answer SDP length: "+(r==null?0:r),o,o)
 s.k(B.f,"\ud83d\udcbe [WebRTC] Setting remote description from answer...",o,o)
 t.r.aa2(v).aX(new C.bUk(p),x.a).i9(new C.bUl(p))}else{s.k(B.f,"\u274c [WebRTC] Call rejected by remote party",o,o)
-t.qg("rejected")
+t.qh("rejected")
 t.uW()}}catch(q){u=A.u(q)
 t=p.a.f
 t.k(B.u,"\u274c [WebRTC] Failed to handle incoming answer: "+A.b(u),o,o)
@@ -341,7 +341,7 @@ l=m.dy
 l===$&&A.f()
 l.eI(0)
 m.uW()
-m.qg("ended")
+m.qh("ended")
 k.k(B.f,"\u2705 [WebRTC] Call cleanup completed",g,g)}else{k.k(B.q,"\u26a0\ufe0f [WebRTC] End call notification for different call: "+A.b(r)+" vs "+A.b(m.y),g,g)
 k.k(B.q,"\ud83d\udd0d [WebRTC] Condition check failed:",g,g)
 k.k(B.q,d+A.b(r),g,g)
@@ -621,7 +621,7 @@ m=A.aa(["callId",p,"fromUserId",o,"toUserId",n,"callType",m,"timestamp",J.aD(w,e
 n=u.dy
 n===$&&A.f()
 n.btr(m)
-u.qg("incoming")
+u.qh("incoming")
 q.k(B.f,"\u2705 [WebRTC] Incoming call notification sent",j,j)
 q.k(B.f,"\ud83d\udcca [WebRTC] Incoming call state: isIncomingCall="+u.at+", pendingOffer="+(u.ay!=null)+", callId="+A.b(u.y),j,j)}else if(m&&t===n)q.k(B.f,"\ud83d\udce8 [WebRTC] \ud83d\udce4 This is an outgoing offer from current user (ignoring)",j,j)
 else{q.k(B.f,"\ud83d\udce8 [WebRTC] \u274c Offer ignored (not for current user)",j,j)
@@ -1284,17 +1284,17 @@ w=1
 break
 case 1:return A.j(u,v)}})
 return A.k($async$beb,v)},
-qv(d){return this.djk(d)},
+qw(d){return this.djk(d)},
 djk(d){var w=0,v=A.l(x.y),u,t=this,s
-var $async$qv=A.h(function(e,f){if(e===1)return A.i(f,v)
+var $async$qw=A.h(function(e,f){if(e===1)return A.i(f,v)
 for(;;)switch(w){case 0:s=d?"\u63a5\u807d\u901a\u8a71\u5931\u6557":"\u62d2\u7d55\u901a\u8a71\u5931\u6557"
 w=3
-return A.c(E.yN(new C.bV_(t,d),"answerCall",s,x.y),$async$qv)
+return A.c(E.yN(new C.bV_(t,d),"answerCall",s,x.y),$async$qw)
 case 3:u=f
 w=1
 break
 case 1:return A.j(u,v)}})
-return A.k($async$qv,v)},
+return A.k($async$qw,v)},
 tF(){var w=0,v=A.l(x.H),u=this
 var $async$tF=A.h(function(d,e){if(d===1)return A.i(e,v)
 for(;;)switch(w){case 0:w=2
@@ -1355,7 +1355,7 @@ break
 case 5:return A.j(null,v)
 case 1:return A.i(t.at(-1),v)}})
 return A.k($async$uW,v)},
-qg(d){var w,v,u,t,s,r=this,q=null
+qh(d){var w,v,u,t,s,r=this,q=null
 try{if(r.R8){r.f.k(B.f,"\u26a0\ufe0f [WebRTC] Service is disposing, skipping state notification: "+d,q,q)
 return}u=r.f
 u.k(B.f,"\ud83d\udce2 [WebRTC] Notifying call state change: "+d,q,q)
@@ -1409,7 +1409,7 @@ if(u<3){++u
 w.ok=u
 t.k(B.f,"Retrying connection (attempt "+u+"/3)...",v,v)
 w.aio()}else{t.k(B.u,"Max retry attempts reached, giving up",v,v)
-w.qg("failed")}},
+w.qh("failed")}},
 aio(){var w=0,v=A.l(x.H),u=1,t=[],s=this,r,q,p,o,n,m
 var $async$aio=A.h(function(d,e){if(d===1){t.push(e)
 w=u}for(;;)switch(w){case 0:u=3
@@ -1434,7 +1434,7 @@ case 3:u=2
 m=t.pop()
 q=A.u(m)
 s.f.k(B.u,"Failed to retry connection: "+A.b(q),null,null)
-s.qg("failed")
+s.qh("failed")
 w=5
 break
 case 2:w=1
@@ -1855,7 +1855,7 @@ C.bUk.prototype={
 $1(d){var w=this.a.a
 w.f.k(B.f,"\u2705 [WebRTC] Remote description set from answer",null,null)
 w.p1=new A.az(Date.now(),0,!1)
-w.qg("connected")},
+w.qh("connected")},
 $S:30}
 C.bUl.prototype={
 $1(d){this.a.a.f.k(B.u,"\u274c [WebRTC] Failed to set remote description from answer: "+A.b(d),null,null)},
@@ -2073,7 +2073,7 @@ case 9:h=a3
 if(h==null)throw A.t(A.bk("Failed to get call ID from backend"))
 g.y=h
 g.as=!0
-g.qg("initiated")
+g.qh("initiated")
 e=g.CW
 d=e.length
 w=d!==0?10:11
@@ -2128,7 +2128,7 @@ return A.c(a0.a9E(!1,null,a1,k,"isIncomingCall="+d.at+", isAnsweringCall="+d.ax+
 case 5:w=6
 return A.c(d.uW(),$async$$0)
 case 6:d.ax=!1
-d.qg("rejected")
+d.qh("rejected")
 u=!0
 w=1
 break
@@ -2224,7 +2224,7 @@ return A.c(k.a9E(!0,e,a1,j,"isIncomingCall="+d.at+", isAnsweringCall="+d.ax+", i
 case 26:d.as=!0
 d.ax=d.at=!1
 d.p1=new A.az(Date.now(),0,!1)
-d.qg("accepted")
+d.qh("accepted")
 a0.k(B.f,"\ud83c\udf89 [WebRTC] Call answered successfully! Call ID: "+A.b(d.y),null,null)
 u=!0
 w=1
@@ -2256,7 +2256,7 @@ case 4:w=5
 return A.c(t.bLa("ended"),$async$$0)
 case 5:case 3:w=6
 return A.c(p.uW(),$async$$0)
-case 6:p.qg("ended")
+case 6:p.qh("ended")
 o.k(B.f,"\u2705 [WebRTC] Call ended successfully",null,null)
 return A.j(null,v)}})
 return A.k($async$$0,v)},
@@ -2310,7 +2310,7 @@ break
 case"RTCPeerConnectionState.RTCPeerConnectionStateClosed":u.bfd()
 w="ended"
 break
-default:w=d.W()}u.qg(w)},
+default:w=d.W()}u.qh(w)},
 $S:z+3}
 C.bUY.prototype={
 $1(d){var w=null,v=this.a,u=v.f
@@ -2421,7 +2421,7 @@ $S:1927}
 C.dcX.prototype={
 $1(d){return J.dd(b.G.window.navigator.userAgent,A.bg(d,!1,!1,!1,!1))},
 $S:10};(function installTearOffs(){var w=a._instance_1u
-w(C.Bw.prototype,"gGb","qv",0)})();(function inheritance(){var w=a.inheritMany,v=a.inherit
+w(C.Bw.prototype,"gGb","qw",0)})();(function inheritance(){var w=a.inheritMany,v=a.inherit
 w(A.T,[C.bUm,C.bUr,C.bUj,C.bUp,C.bUq,C.bUt,C.bUu,C.bUM,C.bm1,C.bUK,C.bUN,C.bV6,C.Bw,C.aHw,C.aHx,C.Hz,C.bUs,C.aHy,C.aHz,C.adh,C.bUL,C.bC2,C.zV,C.Vt,C.brG,C.a9i,C.a9j,C.bCd,C.Ge,C.Gf,C.a9k])
 w(A.hd,[C.bUn,C.bm2,C.bm3,C.bV0,C.bV4,C.bV_,C.bV3,C.bV5,C.bUZ,C.brJ,C.brK])
 w(A.ff,[C.bUo,C.bUk,C.bUl,C.bUv,C.bUw,C.bm4,C.bm5,C.bV1,C.bV2,C.bUO,C.bUP,C.bUQ,C.bUR,C.bUS,C.bUT,C.bUU,C.bUV,C.bUW,C.bUX,C.bUY,C.brT,C.brU,C.brQ,C.brR,C.brS,C.brL,C.bC5,C.bC6,C.bC7,C.bC8,C.bC9,C.bCa,C.bCb,C.bCc,C.bC4,C.dcX])
@@ -2475,4 +2475,4 @@ D.bTX=new C.adh("video")})();(function staticFields(){$.dB1=null
 $.dB2=null})();(function lazyInitializers(){var w=a.lazyFinal
 w($,"eiN","dpo",()=>new C.bC3())
 w($,"ega","dpa",()=>B.c.t(A.aN(A.aN(A.aN(A.ym(),"window"),"navigator"),"userAgent"),"Firefox"))})()};
-(a=>{a["VHarKoExz8xPAbIuy8BljaWI35g="]=a.current})($__dart_deferred_initializers__);
+(a=>{a["JbjGSfHj3TDe5KPMWY7RKnyxJqE="]=a.current})($__dart_deferred_initializers__);
