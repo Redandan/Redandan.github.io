@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- Versioned cache marker. -->
-    <meta name="cache-version" content="1.0.1914">
+    <meta name="cache-version" content="1.0.1915">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -29,8 +29,8 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.1914+1914">
-  <meta name="source-commit" content="f9c7fbd4ec97d37e854e5d055098b89f69def51b">
+  <meta name="version" content="1.0.1915+1915">
+  <meta name="source-commit" content="12cc73b00d50c4671965b93917a4a0a89bc6373d">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     // Request the largest available Telegram Mini App viewport before Flutter
@@ -443,7 +443,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market｜台灣與泰國生活用品線上市集</title>
-  <link rel="manifest" href="manifest.json?v=1.0.1914">
+  <link rel="manifest" href="manifest.json?v=1.0.1915">
   
   <!-- PWA ?????????????????? -->
   <meta name="application-name" content="Agora Market">
@@ -451,8 +451,8 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
-  <link rel="preload" href="flutter_bootstrap.1.0.1914.js" as="script">
-  <link rel="preload" href="main.dart.js?v=1.0.1914" as="script" fetchpriority="high">
+  <link rel="preload" href="flutter_bootstrap.1.0.1915.js" as="script">
+  <link rel="preload" href="main.dart.js?v=1.0.1915" as="script" fetchpriority="high">
   <link rel="preload" href="canvaskit/canvaskit.js" as="script">
   <link rel="preload" href="canvaskit/canvaskit.wasm" as="fetch" type="application/wasm" crossorigin>
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
@@ -512,6 +512,10 @@
     
     /* Patch 3: Apple official viewport CSS */
     html {
+      --agora-safe-area-top: env(safe-area-inset-top, 0px);
+      --agora-safe-area-right: env(safe-area-inset-right, 0px);
+      --agora-safe-area-bottom: env(safe-area-inset-bottom, 0px);
+      --agora-safe-area-left: env(safe-area-inset-left, 0px);
       margin: 0;
       padding: 0;
       width: 100%;
@@ -604,6 +608,8 @@
       width: 100%;
       height: 100%;
       box-sizing: border-box;
+      padding: var(--agora-safe-area-top) var(--agora-safe-area-right)
+        var(--agora-safe-area-bottom) var(--agora-safe-area-left);
       background: var(--startup-canvas);
       display: flex;
       flex-direction: column;
@@ -1041,6 +1047,34 @@
         return nonNegativeNumber(source && source[side]);
       }
 
+      function resolveTelegramIOSRootFrame(
+        viewportWidth,
+        viewportHeight,
+        safeArea,
+        contentSafeArea
+      ) {
+        var width = nonNegativeNumber(viewportWidth) || 1;
+        var height = nonNegativeNumber(viewportHeight) || 1;
+        var insets = {
+          top: readInset(safeArea, 'top') + readInset(contentSafeArea, 'top'),
+          right: readInset(safeArea, 'right') + readInset(contentSafeArea, 'right'),
+          bottom: readInset(safeArea, 'bottom') + readInset(contentSafeArea, 'bottom'),
+          left: readInset(safeArea, 'left') + readInset(contentSafeArea, 'left')
+        };
+        var left = Math.min(width - 1, insets.left);
+        var top = Math.min(height - 1, insets.top);
+        var right = Math.max(left + 1, width - Math.min(width - 1, insets.right));
+        var bottom = Math.max(top + 1, height - Math.min(height - 1, insets.bottom));
+
+        return {
+          top: top,
+          left: left,
+          width: Math.max(1, right - left),
+          height: Math.max(1, bottom - top),
+          insets: insets
+        };
+      }
+
       function stableViewportHeight() {
         return nonNegativeNumber(webApp.viewportStableHeight) ||
           nonNegativeNumber(webApp.viewportHeight) ||
@@ -1071,14 +1105,20 @@
 
         var safe = webApp.safeAreaInset || {};
         var contentSafe = webApp.contentSafeAreaInset || {};
-        var top = readInset(safe, 'top') + readInset(contentSafe, 'top');
-        var bottom = readInset(safe, 'bottom') + readInset(contentSafe, 'bottom');
-        var left = readInset(safe, 'left') + readInset(contentSafe, 'left');
-        var right = readInset(safe, 'right') + readInset(contentSafe, 'right');
         var viewportHeight = stableViewportHeight();
         var viewportWidth = nonNegativeNumber(window.innerWidth) || 1;
-        var rootHeight = Math.max(1, viewportHeight - top - bottom);
-        var rootWidth = Math.max(1, viewportWidth - left - right);
+        var frame = resolveTelegramIOSRootFrame(
+          viewportWidth,
+          viewportHeight,
+          safe,
+          contentSafe
+        );
+        var top = frame.top;
+        var bottom = frame.insets.bottom;
+        var left = frame.left;
+        var right = frame.insets.right;
+        var rootHeight = frame.height;
+        var rootWidth = frame.width;
 
         root.style.top = top + 'px';
         root.style.left = left + 'px';
@@ -1087,7 +1127,53 @@
         root.style.transform = 'none';
 
         moveFlutterViewIntoRoot();
-        try { root.getBoundingClientRect(); } catch (_) {}
+        var rect = null;
+        try { rect = root.getBoundingClientRect(); } catch (_) {}
+        var deltas = rect ? {
+          top: Math.abs(rect.top - frame.top),
+          left: Math.abs(rect.left - frame.left),
+          width: Math.abs(rect.width - frame.width),
+          height: Math.abs(rect.height - frame.height)
+        } : {
+          top: Number.POSITIVE_INFINITY,
+          left: Number.POSITIVE_INFINITY,
+          width: Number.POSITIVE_INFINITY,
+          height: Number.POSITIVE_INFINITY
+        };
+        var detected = deltas.top > 2 || deltas.left > 2 ||
+          deltas.width > 2 || deltas.height > 2;
+
+        window.__AGORA_VIEWPORT_OFFSET_STATUS = {
+          detected: detected,
+          offsetTop: 0,
+          offsetLeft: 0,
+          threshold: 2,
+          safeArea: frame.insets,
+          layoutViewport: {
+            width: viewportWidth,
+            height: viewportHeight
+          },
+          expectedFrame: {
+            top: frame.top,
+            left: frame.left,
+            width: frame.width,
+            height: frame.height,
+            transform: 'none'
+          },
+          actualRoot: rect ? {
+            top: rect.top,
+            left: rect.left,
+            width: rect.width,
+            height: rect.height
+          } : null,
+          deltas: deltas,
+          source: 'telegram-ios',
+          updatedAt: new Date().toISOString()
+        };
+        root.setAttribute(
+          'data-agora-viewport-offset-detected',
+          detected ? 'true' : 'false'
+        );
 
         window.__AGORA_TELEGRAM_VIEWPORT_STATUS = {
           reason: queuedReason,
@@ -1099,8 +1185,16 @@
           left: left,
           rootHeight: rootHeight,
           rootWidth: rootWidth,
+          offsetDetected: detected,
+          deltas: deltas,
           updatedAt: new Date().toISOString()
         };
+
+        try {
+          window.dispatchEvent(new CustomEvent('agora:viewport-offset-status', {
+            detail: window.__AGORA_VIEWPORT_OFFSET_STATUS
+          }));
+        } catch (_) {}
 
         publishResize();
         setTimeout(publishResize, 80);
@@ -1810,29 +1904,90 @@
         }
       }
 
-      function resolveIOSVisualViewportRootFrame(standalone, viewport) {
+      function nonNegativeFinite(value) {
+        const parsed = parseFloat(String(value || 0));
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+      }
+
+      function resolveIOSVisualViewportRootFrame(
+        standalone,
+        viewport,
+        safeArea,
+        layoutViewport
+      ) {
         const offsetTop = Number(viewport && viewport.offsetTop || 0);
         const offsetLeft = Number(viewport && viewport.offsetLeft || 0);
         const rawWidth = Number(viewport && viewport.width || 0);
         const rawHeight = Number(viewport && viewport.height || 0);
         const width = Number.isFinite(rawWidth) && rawWidth > 0 ? rawWidth : 1;
         const height = Number.isFinite(rawHeight) && rawHeight > 0 ? rawHeight : 1;
+        const visualRight = offsetLeft + width;
+        const visualBottom = offsetTop + height;
 
-        // Safari, standalone PWA, and ordinary in-app browsers all report the
-        // visible frame in layout-viewport coordinates. Position the Flutter
-        // host at that frame directly. A negative transform double-applies the
-        // visualViewport origin on iOS and makes painting and hit testing drift.
+        safeArea = safeArea || {};
+        layoutViewport = layoutViewport || {};
+        const insetTop = nonNegativeFinite(safeArea.top);
+        const insetRight = nonNegativeFinite(safeArea.right);
+        const insetBottom = nonNegativeFinite(safeArea.bottom);
+        const insetLeft = nonNegativeFinite(safeArea.left);
+        const layoutWidth = nonNegativeFinite(layoutViewport.width) || visualRight;
+        const layoutHeight = nonNegativeFinite(layoutViewport.height) || visualBottom;
+
+        // visualViewport excludes Safari browser chrome, while CSS safe-area
+        // insets exclude the notch/status bar and home indicator. Neither is a
+        // substitute for the other: the safe Flutter frame is their
+        // intersection. This also handles standalone PWAs where WebKit reports
+        // offsetTop=0 even though the translucent status bar still overlays the
+        // page.
+        const left = Math.max(offsetLeft, insetLeft);
+        const top = Math.max(offsetTop, insetTop);
+        const right = Math.max(
+          left + 1,
+          Math.min(visualRight, Math.max(0, layoutWidth - insetRight))
+        );
+        const bottom = Math.max(
+          top + 1,
+          Math.min(visualBottom, Math.max(0, layoutHeight - insetBottom))
+        );
+
         return {
-          top: offsetTop,
-          left: offsetLeft,
-          width: width,
-          height: height,
+          top: top,
+          left: left,
+          width: Math.max(1, right - left),
+          height: Math.max(1, bottom - top),
           transform: 'none'
         };
       }
 
+      function readSafeAreaInsets() {
+        const style = window.getComputedStyle(document.documentElement);
+        return {
+          top: nonNegativeFinite(style.getPropertyValue('--agora-safe-area-top')),
+          right: nonNegativeFinite(style.getPropertyValue('--agora-safe-area-right')),
+          bottom: nonNegativeFinite(style.getPropertyValue('--agora-safe-area-bottom')),
+          left: nonNegativeFinite(style.getPropertyValue('--agora-safe-area-left'))
+        };
+      }
+
+      function readLayoutViewportSize() {
+        const documentElement = document.documentElement;
+        return {
+          width: nonNegativeFinite(documentElement && documentElement.clientWidth) ||
+            nonNegativeFinite(window.innerWidth),
+          height: nonNegativeFinite(documentElement && documentElement.clientHeight) ||
+            nonNegativeFinite(window.innerHeight)
+        };
+      }
+
       function computeSafeOffsets() {
-        const frame = resolveIOSVisualViewportRootFrame(isStandalone, vv);
+        const safeArea = readSafeAreaInsets();
+        const layoutViewport = readLayoutViewportSize();
+        const frame = resolveIOSVisualViewportRootFrame(
+          isStandalone,
+          vv,
+          safeArea,
+          layoutViewport
+        );
         const safeTop = frame.top;
         const safeLeft = frame.left;
         
@@ -1842,25 +1997,54 @@
                  ', safeTop=' + safeTop + ', safeLeft=' + safeLeft);
         }
         
-        return { safeTop, safeLeft, frame };
+        return { safeTop, safeLeft, frame, safeArea, layoutViewport };
       }
 
-      function publishOffsetStatus() {
+      function publishOffsetStatus(root, geometry) {
+        const frame = geometry.frame;
+        const rect = root.getBoundingClientRect();
         const offsetTop = Number(vv.offsetTop || 0);
         const offsetLeft = Number(vv.offsetLeft || 0);
-        const detected = Math.abs(offsetTop) > OFFSET_THRESHOLD_PX || Math.abs(offsetLeft) > OFFSET_THRESHOLD_PX;
+        const deltas = {
+          top: Math.abs(rect.top - frame.top),
+          left: Math.abs(rect.left - frame.left),
+          width: Math.abs(rect.width - frame.width),
+          height: Math.abs(rect.height - frame.height)
+        };
+        const detected = deltas.top > 2 || deltas.left > 2 ||
+          deltas.width > 2 || deltas.height > 2;
 
         window.__AGORA_VIEWPORT_OFFSET_STATUS = {
           detected: detected,
           offsetTop: offsetTop,
           offsetLeft: offsetLeft,
           threshold: OFFSET_THRESHOLD_PX,
+          safeArea: geometry.safeArea,
+          layoutViewport: geometry.layoutViewport,
+          expectedFrame: frame,
+          actualRoot: {
+            top: rect.top,
+            left: rect.left,
+            width: rect.width,
+            height: rect.height
+          },
+          deltas: deltas,
           updatedAt: new Date().toISOString()
         };
+        root.setAttribute(
+          'data-agora-viewport-offset-detected',
+          detected ? 'true' : 'false'
+        );
 
         if (detected !== lastOffsetDetected) {
           lastOffsetDetected = detected;
-          logSync('Offset state changed: detected=' + detected + ', top=' + offsetTop + ', left=' + offsetLeft, detected ? 'warn' : 'info');
+          logSync(
+            'Offset state changed: detected=' + detected +
+            ', vv=(' + offsetLeft + ',' + offsetTop + ')' +
+            ', expected=(' + frame.left + ',' + frame.top + ')' +
+            ', actual=(' + rect.left + ',' + rect.top + ')',
+            detected ? 'warn' : 'info'
+          );
           try {
             window.dispatchEvent(new CustomEvent('agora:viewport-offset-status', {
               detail: window.__AGORA_VIEWPORT_OFFSET_STATUS
@@ -1871,12 +2055,12 @@
         return detected;
       }
 
-      function applyToRoot(root) {
+      function applyToRoot(root, geometry) {
         if (!root) {
           logSync('applyToRoot: root is null', 'warn');
           return;
         }
-        const { safeTop, safeLeft, frame } = computeSafeOffsets();
+        const { safeTop, safeLeft, frame } = geometry;
         root.style.top = frame.top + 'px';
         root.style.left = frame.left + 'px';
         root.style.width = frame.width + 'px';
@@ -1992,8 +2176,9 @@
           return;
         }
         ensureFlutterHostInRoot(root);
-        const offsetDetected = publishOffsetStatus();
-        applyToRoot(root);
+        const geometry = computeSafeOffsets();
+        applyToRoot(root, geometry);
+        const offsetDetected = publishOffsetStatus(root, geometry);
         scheduleStartupReveal('visualViewport-stable-sync');
 
         // When offset is abnormal, request a couple of extra frames to converge faster.
@@ -2885,7 +3070,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.1.0.1914.js";
+        script.src = "flutter_bootstrap.1.0.1915.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
