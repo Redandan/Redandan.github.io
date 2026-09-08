@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- Versioned cache marker. -->
-    <meta name="cache-version" content="1.0.1921">
+    <meta name="cache-version" content="1.0.1922">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -29,8 +29,8 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.1921+1921">
-  <meta name="source-commit" content="5c27165f8de612a81b3fd9d61becf730ebac12c3">
+  <meta name="version" content="1.0.1922+1922">
+  <meta name="source-commit" content="aebae767a19f538db03b348658c30cf322c3c3c4">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     // Request the largest available Telegram Mini App viewport before Flutter
@@ -443,7 +443,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market｜台灣與泰國生活用品線上市集</title>
-  <link rel="manifest" href="manifest.json?v=1.0.1921">
+  <link rel="manifest" href="manifest.json?v=1.0.1922">
   
   <!-- PWA ?????????????????? -->
   <meta name="application-name" content="Agora Market">
@@ -451,8 +451,8 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
-  <link rel="preload" href="flutter_bootstrap.1.0.1921.js" as="script">
-  <link rel="preload" href="main.dart.js?v=1.0.1921" as="script" fetchpriority="high">
+  <link rel="preload" href="flutter_bootstrap.1.0.1922.js" as="script">
+  <link rel="preload" href="main.dart.js?v=1.0.1922" as="script" fetchpriority="high">
   <link rel="preload" href="canvaskit/canvaskit.js" as="script">
   <link rel="preload" href="canvaskit/canvaskit.wasm" as="fetch" type="application/wasm" crossorigin>
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
@@ -2015,19 +2015,28 @@
         }
 
         // Some iOS standalone builds additionally report either the leading
-        // safe inset or the sum of both safe insets as the trailing
-        // visualViewport gap. The physical iPhone variants observed here are:
+        // visual origin/safe inset or the sum of both safe insets as the
+        // trailing visualViewport gap. The physical iPhone variants observed
+        // here are:
         // 844 - 797 = 47 (leading/top inset echoed), and
         // 844 - (47 + 716) = 81 (= 47 + 34, both insets echoed).
         // Both leave Flutter short of the 810px safe bottom. Correct only those
         // exact inset echoes; a keyboard produces a substantially larger gap.
         const horizontalInsetSum = insetLeft + insetRight;
         const verticalInsetSum = insetTop + insetBottom;
+        const leadingHorizontalInset = Math.max(
+          insetLeft,
+          nonNegativeFinite(offsetLeft)
+        );
+        const leadingVerticalInset = Math.max(
+          insetTop,
+          nonNegativeFinite(offsetTop)
+        );
         const trailingHorizontalGap = layoutWidth - rawVisualRight;
         const trailingVerticalGap = layoutHeight - rawVisualBottom;
         if (standalone && (
-            (insetLeft > 0 &&
-              Math.abs(trailingHorizontalGap - insetLeft) <=
+            (leadingHorizontalInset > 0 &&
+              Math.abs(trailingHorizontalGap - leadingHorizontalInset) <=
                 standaloneRebaseTolerance) ||
             (horizontalInsetSum > 0 &&
               Math.abs(trailingHorizontalGap - horizontalInsetSum) <=
@@ -2035,8 +2044,8 @@
           visualRight = safeRight;
         }
         if (standalone && (
-            (insetTop > 0 &&
-              Math.abs(trailingVerticalGap - insetTop) <=
+            (leadingVerticalInset > 0 &&
+              Math.abs(trailingVerticalGap - leadingVerticalInset) <=
                 standaloneRebaseTolerance) ||
             (verticalInsetSum > 0 &&
               Math.abs(trailingVerticalGap - verticalInsetSum) <=
@@ -3194,7 +3203,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.1.0.1921.js";
+        script.src = "flutter_bootstrap.1.0.1922.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
