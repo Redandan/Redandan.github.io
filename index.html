@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- Versioned cache marker. -->
-    <meta name="cache-version" content="1.0.1918">
+    <meta name="cache-version" content="1.0.1919">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -29,8 +29,8 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.1918+1918">
-  <meta name="source-commit" content="1294edb7385aee07fdd9cf8bbf8c8e83d66b1307">
+  <meta name="version" content="1.0.1919+1919">
+  <meta name="source-commit" content="a5fb8fb251a92b8a952a56dbd7f91b5f107f01bb">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     // Request the largest available Telegram Mini App viewport before Flutter
@@ -443,7 +443,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market｜台灣與泰國生活用品線上市集</title>
-  <link rel="manifest" href="manifest.json?v=1.0.1918">
+  <link rel="manifest" href="manifest.json?v=1.0.1919">
   
   <!-- PWA ?????????????????? -->
   <meta name="application-name" content="Agora Market">
@@ -451,8 +451,8 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
-  <link rel="preload" href="flutter_bootstrap.1.0.1918.js" as="script">
-  <link rel="preload" href="main.dart.js?v=1.0.1918" as="script" fetchpriority="high">
+  <link rel="preload" href="flutter_bootstrap.1.0.1919.js" as="script">
+  <link rel="preload" href="main.dart.js?v=1.0.1919" as="script" fetchpriority="high">
   <link rel="preload" href="canvaskit/canvaskit.js" as="script">
   <link rel="preload" href="canvaskit/canvaskit.wasm" as="fetch" type="application/wasm" crossorigin>
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
@@ -1909,6 +1909,56 @@
         return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
       }
 
+      function normalizeIOSStandaloneLayoutViewport(
+        standalone,
+        safeArea,
+        layoutViewport,
+        screenViewport
+      ) {
+        safeArea = safeArea || {};
+        layoutViewport = layoutViewport || {};
+        screenViewport = screenViewport || {};
+
+        let width = nonNegativeFinite(layoutViewport.width);
+        let height = nonNegativeFinite(layoutViewport.height);
+        let screenWidth = nonNegativeFinite(screenViewport.width);
+        let screenHeight = nonNegativeFinite(screenViewport.height);
+        if (!standalone || !width || !height || !screenWidth || !screenHeight) {
+          return { width: width, height: height };
+        }
+
+        // Older iOS releases keep screen.width/screen.height in portrait order
+        // after rotation. Match the candidate to the live layout orientation.
+        if ((width > height) !== (screenWidth > screenHeight)) {
+          const swap = screenWidth;
+          screenWidth = screenHeight;
+          screenHeight = swap;
+        }
+
+        const tolerance = 2;
+        const horizontalInsetSum =
+          nonNegativeFinite(safeArea.left) + nonNegativeFinite(safeArea.right);
+        const verticalInsetSum =
+          nonNegativeFinite(safeArea.top) + nonNegativeFinite(safeArea.bottom);
+        const widthGap = screenWidth - width;
+        const heightGap = screenHeight - height;
+
+        // iOS standalone can expose clientHeight/clientWidth with the leading
+        // safe inset already removed. Recover the full layout dimension only
+        // when the screen gap fits inside the declared safe-area budget; this
+        // avoids expanding genuine iPad multi-window viewports to full screen.
+        if (widthGap >= 0 &&
+            widthGap <= horizontalInsetSum + tolerance) {
+          width = screenWidth;
+        }
+        if (heightGap >= 0 &&
+            heightGap <= verticalInsetSum + tolerance) {
+          height = screenHeight;
+        }
+
+        return { width: width, height: height };
+      }
+
       function resolveIOSVisualViewportRootFrame(
         standalone,
         viewport,
@@ -1964,6 +2014,26 @@
           visualBottom = safeBottom;
         }
 
+        // Some iOS standalone builds additionally report the sum of both safe
+        // insets as the trailing visualViewport gap. On an iPhone portrait
+        // frame this can surface as 844 - (47 + 716) = 81 (= 47 + 34), leaving
+        // a second 47px blank strip below Flutter. Correct only that exact inset
+        // echo; a keyboard produces a substantially larger trailing gap.
+        const horizontalInsetSum = insetLeft + insetRight;
+        const verticalInsetSum = insetTop + insetBottom;
+        const trailingHorizontalGap = layoutWidth - rawVisualRight;
+        const trailingVerticalGap = layoutHeight - rawVisualBottom;
+        if (standalone && horizontalInsetSum > 0 &&
+            Math.abs(trailingHorizontalGap - horizontalInsetSum) <=
+              standaloneRebaseTolerance) {
+          visualRight = safeRight;
+        }
+        if (standalone && verticalInsetSum > 0 &&
+            Math.abs(trailingVerticalGap - verticalInsetSum) <=
+              standaloneRebaseTolerance) {
+          visualBottom = safeBottom;
+        }
+
         // visualViewport excludes Safari browser chrome, while CSS safe-area
         // insets exclude the notch/status bar and home indicator. Neither is a
         // substitute for the other: the safe Flutter frame is their
@@ -2000,19 +2070,32 @@
         };
       }
 
-      function readLayoutViewportSize() {
+      function readLayoutViewportSize(safeArea) {
         const documentElement = document.documentElement;
-        return {
-          width: nonNegativeFinite(documentElement && documentElement.clientWidth) ||
-            nonNegativeFinite(window.innerWidth),
-          height: nonNegativeFinite(documentElement && documentElement.clientHeight) ||
+        const layoutViewport = {
+          width: Math.max(
+            nonNegativeFinite(documentElement && documentElement.clientWidth),
+            nonNegativeFinite(window.innerWidth)
+          ),
+          height: Math.max(
+            nonNegativeFinite(documentElement && documentElement.clientHeight),
             nonNegativeFinite(window.innerHeight)
+          )
         };
+        return normalizeIOSStandaloneLayoutViewport(
+          isStandalone,
+          safeArea,
+          layoutViewport,
+          {
+            width: nonNegativeFinite(window.screen && window.screen.width),
+            height: nonNegativeFinite(window.screen && window.screen.height)
+          }
+        );
       }
 
       function computeSafeOffsets() {
         const safeArea = readSafeAreaInsets();
-        const layoutViewport = readLayoutViewportSize();
+        const layoutViewport = readLayoutViewportSize(safeArea);
         const frame = resolveIOSVisualViewportRootFrame(
           isStandalone,
           vv,
@@ -3101,7 +3184,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.1.0.1918.js";
+        script.src = "flutter_bootstrap.1.0.1919.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
