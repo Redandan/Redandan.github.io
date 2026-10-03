@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- Versioned cache marker. -->
-    <meta name="cache-version" content="1.0.1935">
+    <meta name="cache-version" content="1.0.1936">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -29,8 +29,8 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.1935+1935">
-  <meta name="source-commit" content="f2c164fdf67832cdb88618385ae9f014b8680827">
+  <meta name="version" content="1.0.1936+1936">
+  <meta name="source-commit" content="7b9e155265aff68b3d8a708c93e19faed4bf9fd8">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     // Request the largest available Telegram Mini App viewport before Flutter
@@ -443,7 +443,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market｜台灣與泰國生活用品線上市集</title>
-  <link rel="manifest" href="manifest.json?v=1.0.1935">
+  <link rel="manifest" href="manifest.json?v=1.0.1936">
   
   <!-- PWA ?????????????????? -->
   <meta name="application-name" content="Agora Market">
@@ -451,8 +451,8 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
-  <link rel="preload" href="flutter_bootstrap.1.0.1935.js" as="script">
-  <link rel="preload" href="main.dart.js?v=1.0.1935" as="script" fetchpriority="high">
+  <link rel="preload" href="flutter_bootstrap.1.0.1936.js" as="script">
+  <link rel="preload" href="main.dart.js?v=1.0.1936" as="script" fetchpriority="high">
   <link rel="preload" href="canvaskit/canvaskit.js" as="script">
   <link rel="preload" href="canvaskit/canvaskit.wasm" as="fetch" type="application/wasm" crossorigin>
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
@@ -779,6 +779,17 @@
       padding: 0 !important;
       /* DO NOT use position: fixed - causes touch offset on iOS 17+ */
       overflow: hidden;
+    }
+
+    /* App theme controls exposed PWA canvas, while the status-bar band retains
+       the system canvas for native status text contrast. */
+    html[data-agora-page-background],
+    html[data-agora-page-background] body {
+      background: linear-gradient(to bottom,
+        var(--startup-canvas) 0px,
+        var(--startup-canvas) var(--agora-safe-area-top),
+        var(--agora-page-background) var(--agora-safe-area-top),
+        var(--agora-page-background) 100%);
     }
 
     /* Patch 1: Removed all position: fixed from .flutter-ready rules */
@@ -2209,6 +2220,14 @@
           return;
         }
         const { safeTop, safeLeft, frame } = geometry;
+        if (isStandalone) {
+          // A normalized safe root may end below the reported 797px document.
+          // Its hidden-overflow ancestors must cover the same 844px layout;
+          // otherwise the last 13px of the safe content is painted/hit clipped.
+          const paintHeight = geometry.layoutViewport.height + 'px';
+          document.documentElement.style.minHeight = paintHeight;
+          document.body.style.minHeight = paintHeight;
+        }
         root.style.top = frame.top + 'px';
         root.style.left = frame.left + 'px';
         root.style.width = frame.width + 'px';
@@ -3252,7 +3271,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.1.0.1935.js";
+        script.src = "flutter_bootstrap.1.0.1936.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
@@ -3562,7 +3581,7 @@
   <script src="web_vitals.js"></script>
   
   <!-- ?????????????? -->
-  <script src="offline_handler.f2c164fdf678.js"></script>
+  <script src="offline_handler.7b9e155265af.js"></script>
   
   <!-- GitHub Pages 404 ??????????????-->
   <script>
@@ -3662,6 +3681,8 @@
             htmlY: number(doc.scrollTop), bodyY: number(document.body.scrollTop),
             width: number(doc.clientWidth), height: number(doc.clientHeight),
             overflowX: number(Math.max(doc.scrollWidth, document.body.scrollWidth) - doc.clientWidth) },
+          html: rect(doc), body: rect(document.body),
+          pageBackground: doc.getAttribute('data-agora-page-background'),
           visualViewport: vv ? { x: number(vv.offsetLeft), y: number(vv.offsetTop),
             width: number(vv.width), height: number(vv.height), scale: number(vv.scale) } : null,
           root: rect(root), rootScrollY: root ? number(root.scrollTop) : null,
@@ -3782,6 +3803,15 @@
           record('diagnostic-touch'); render();
         };
         panel.appendChild(target);
+        var bottomTarget = textNode('button', '底端觸控測試');
+        bottomTarget.id = 'agora-diagnostic-bottom-touch-target';
+        bottomTarget.style.cssText = 'position:absolute;left:14px;right:14px;bottom:0;height:32px;z-index:2;font-size:12px;';
+        bottomTarget.onclick = function (event) {
+          lastTouch = { kind: 'bottom', x: number(event.clientX), y: number(event.clientY), target: rect(bottomTarget) };
+          bottomTarget.textContent = '底端觸控通過 y=' + lastTouch.y;
+          record('diagnostic-bottom-touch'); render();
+        };
+        panel.appendChild(bottomTarget);
         var output = textNode('pre', '');
         output.style.cssText = 'white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.5 monospace;';
         panel.appendChild(output);
