@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- Versioned cache marker. -->
-    <meta name="cache-version" content="1.0.1927">
+    <meta name="cache-version" content="1.0.1928">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -29,8 +29,8 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.1927+1927">
-  <meta name="source-commit" content="bb6aee9fcd87503526a4e05892d353595f2e0788">
+  <meta name="version" content="1.0.1928+1928">
+  <meta name="source-commit" content="db9760381c292b2a9831067f1bd34e2e2dba448b">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     // Request the largest available Telegram Mini App viewport before Flutter
@@ -443,7 +443,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market｜台灣與泰國生活用品線上市集</title>
-  <link rel="manifest" href="manifest.json?v=1.0.1927">
+  <link rel="manifest" href="manifest.json?v=1.0.1928">
   
   <!-- PWA ?????????????????? -->
   <meta name="application-name" content="Agora Market">
@@ -451,8 +451,8 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
-  <link rel="preload" href="flutter_bootstrap.1.0.1927.js" as="script">
-  <link rel="preload" href="main.dart.js?v=1.0.1927" as="script" fetchpriority="high">
+  <link rel="preload" href="flutter_bootstrap.1.0.1928.js" as="script">
+  <link rel="preload" href="main.dart.js?v=1.0.1928" as="script" fetchpriority="high">
   <link rel="preload" href="canvaskit/canvaskit.js" as="script">
   <link rel="preload" href="canvaskit/canvaskit.wasm" as="fetch" type="application/wasm" crossorigin>
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
@@ -3244,7 +3244,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.1.0.1927.js";
+        script.src = "flutter_bootstrap.1.0.1928.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
@@ -3554,7 +3554,7 @@
   <script src="web_vitals.js"></script>
   
   <!-- ?????????????? -->
-  <script src="offline_handler.bb6aee9fcd87.js"></script>
+  <script src="offline_handler.db9760381c29.js"></script>
   
   <!-- GitHub Pages 404 ??????????????-->
   <script>
@@ -3616,6 +3616,111 @@
     };
   </script>
   
+  <script id="pwa-layout-diagnostics">
+    // Explicitly opened local diagnostics: no account/input data or uploads.
+    (function () {
+      'use strict';
+      var history = [], panel = null, timer = null, lastTouch = null;
+      function number(value) {
+        if (value === null || value === undefined || value === '') return null;
+        value = Number(value);
+        return Number.isFinite(value) ? Math.round(value * 100) / 100 : null;
+      }
+      function meta(name) {
+        var node = document.querySelector('meta[name="' + name + '"]');
+        return node ? node.content : null;
+      }
+      function rect(node) {
+        if (!node) return null;
+        var r = node.getBoundingClientRect();
+        return { x: number(r.left), y: number(r.top), w: number(r.width), h: number(r.height) };
+      }
+      function snapshot(reason) {
+        var vv = window.visualViewport, doc = document.documentElement;
+        var root = document.getElementById('flutter-root');
+        var status = window.__AGORA_VIEWPORT_OFFSET_STATUS || {};
+        return {
+          time: new Date().toISOString(), reason: reason,
+          version: meta('version'), source: meta('source-commit'),
+          standalone: !!(navigator.standalone || window.matchMedia('(display-mode: standalone)').matches),
+          document: { x: number(window.scrollX), y: number(window.scrollY),
+            htmlY: number(doc.scrollTop), bodyY: number(document.body.scrollTop),
+            width: number(doc.clientWidth), height: number(doc.clientHeight),
+            overflowX: number(Math.max(doc.scrollWidth, document.body.scrollWidth) - doc.clientWidth) },
+          visualViewport: vv ? { x: number(vv.offsetLeft), y: number(vv.offsetTop),
+            width: number(vv.width), height: number(vv.height), scale: number(vv.scale) } : null,
+          root: rect(root), rootScrollY: root ? number(root.scrollTop) : null,
+          view: rect(document.querySelector('flutter-view')),
+          safeArea: status.safeArea || null,
+          expectedFrame: status.expectedFrame || null,
+          detected: typeof status.detected === 'boolean' ? status.detected : null,
+          listOffset: number(doc.getAttribute('data-agora-product-list-scroll-offset')),
+          navigationVisible: doc.getAttribute('data-agora-product-list-bottom-nav-visible'),
+          listActive: doc.getAttribute('data-agora-product-list-active'),
+          touch: lastTouch
+        };
+      }
+      function record(reason) {
+        history.push(snapshot(reason));
+        if (history.length > 24) history.shift();
+      }
+      function afterEvent(event) {
+        record(event.type);
+        setTimeout(function () { record(event.type + '+1500ms'); }, 1500);
+      }
+      function textNode(tag, text) {
+        var node = document.createElement(tag); node.textContent = text; return node;
+      }
+      window.__AGORA_READ_LAYOUT_DIAGNOSTICS = function () {
+        return { current: snapshot('read'), history: history.slice() };
+      };
+      window.__AGORA_SHOW_LAYOUT_DIAGNOSTICS = function () {
+        if (panel) return;
+        var root = document.getElementById('flutter-root');
+        if (!root) return;
+        panel = document.createElement('section');
+        panel.id = 'agora-layout-diagnostics';
+        panel.setAttribute('role', 'dialog');
+        panel.setAttribute('aria-label', 'PWA 版面診斷');
+        panel.style.cssText = 'position:absolute;inset:0;z-index:2147483646;background:#101318;color:#edf3fa;overflow:auto;overscroll-behavior:contain;padding:14px;box-sizing:border-box;font:14px/1.5 monospace;touch-action:pan-y;';
+        panel.appendChild(textNode('h2', 'PWA 版面診斷'));
+        var close = textNode('button', '關閉');
+        close.style.cssText = 'padding:12px 24px;font-size:16px;';
+        close.onclick = function () {
+          clearInterval(timer); timer = null; panel.remove(); panel = null;
+        };
+        panel.appendChild(close);
+        var home = textNode('a', ' 商城首頁'); home.href = '/';
+        home.style.color = '#90c7ff'; panel.appendChild(home);
+        panel.appendChild(textNode('p', '僅顯示本機版面數值，不收集帳號、輸入內容或上傳資料。'));
+        var target = textNode('button', '觸控對位測試');
+        target.id = 'agora-diagnostic-touch-target';
+        target.style.cssText = 'display:block;padding:20px;width:100%;font-size:16px;';
+        target.onclick = function (event) {
+          lastTouch = { x: number(event.clientX), y: number(event.clientY), target: rect(target) };
+          record('diagnostic-touch'); render();
+        };
+        panel.appendChild(target);
+        var output = textNode('pre', '');
+        output.style.cssText = 'white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.5 monospace;';
+        panel.appendChild(output);
+        function render() {
+          output.textContent = JSON.stringify(window.__AGORA_READ_LAYOUT_DIAGNOSTICS(), null, 2);
+        }
+        root.appendChild(panel); record('diagnostic-open'); render();
+        timer = setInterval(render, 1000);
+      };
+      window.addEventListener('pageshow', afterEvent);
+      document.addEventListener('visibilitychange', afterEvent);
+      document.addEventListener('focusin', afterEvent);
+      document.addEventListener('focusout', afterEvent);
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', afterEvent);
+        window.visualViewport.addEventListener('scroll', afterEvent);
+      }
+      record('installed');
+    })();
+  </script>
 </body>
 </html>
 

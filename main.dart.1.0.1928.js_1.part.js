@@ -23,8 +23,8 @@ this.b=e},bm3:function bm3(d,e){this.a=d
 this.b=e},bm5:function bm5(d,e){this.a=d
 this.b=e},bUM:function bUM(d){this.b=d},bUP:function bUP(d){this.a=d},bV8:function bV8(d,e){this.a=d
 this.b=e},
-e0S(d,e,f,g){var w=null,v=$.a1E(),u=A.aW("WebRTCService"),t=A.a([],x.t),s=A.a([],x.L),r=x.q
-v=new C.Bw(g,e,d,f,v,u,t,s,new A.i9(w,w,r),new A.i9(w,w,x.n),new A.i9(w,w,r),new A.i9(w,w,x.M),A.o(x.N,x.k))
+e0T(d,e,f,g){var w=null,v=$.a1E(),u=A.aW("WebRTCService"),t=A.a([],x.t),s=A.a([],x.L),r=x.q
+v=new C.Bw(g,e,d,f,v,u,t,s,new A.ia(w,w,r),new A.ia(w,w,x.n),new A.ia(w,w,r),new A.ia(w,w,x.M),A.o(x.N,x.k))
 v.csy(d,e,f,g)
 return v},
 Bw:function Bw(d,e,f,g,h,i,j,k,l,m,n,o,p){var _=this
@@ -72,7 +72,7 @@ bUY:function bUY(d){this.a=d},
 bUZ:function bUZ(d){this.a=d},
 bV_:function bV_(d){this.a=d},
 bV0:function bV0(d){this.a=d},
-e0J(d){var w,v,u,t=x.N,s=d.a3(0,t,x.z),r=A.n(s,"callId",t),q=x.S,p=A.n(s,"fromUserId",q)
+e0K(d){var w,v,u,t=x.N,s=d.a3(0,t,x.z),r=A.n(s,"callId",t),q=x.S,p=A.n(s,"fromUserId",q)
 p.toString
 q=A.n(s,"toUserId",q)
 q.toString
@@ -81,12 +81,12 @@ t=A.n(s,"type",t)
 v=A.as(s,"timestamp","")
 u=A.n(s,"accepted",x.y)
 return new C.aHw(r,p,q,w,t,v,u)},
-e0L(d){var w,v,u=d.a3(0,x.N,x.z),t=x.S,s=A.n(u,"toUserId",t)
+e0M(d){var w,v,u=d.a3(0,x.N,x.z),t=x.S,s=A.n(u,"toUserId",t)
 s.toString
 w=u.$ti.m("4?").a(u.a.j(0,"reason"))
 v=$.dB9
 return new C.aHx(s,(v==null?$.dB9=D.amG:v).C(w),A.n(u,"timestamp",t),A.n(u,"duration",t))},
-e0N(d){var w,v,u,t,s=x.N,r=d.a3(0,s,x.z),q=A.n(r,"callId",s),p=x.S,o=A.n(r,"fromUserId",p)
+e0O(d){var w,v,u,t,s=x.N,r=d.a3(0,s,x.z),q=A.n(r,"callId",s),p=x.S,o=A.n(r,"fromUserId",p)
 o.toString
 w=A.n(r,"toUserId",p)
 w.toString
@@ -96,7 +96,7 @@ p=A.n(r,"sdpMLineIndex",p)
 s=A.n(r,"type",s)
 t=A.as(r,"timestamp","")
 return new C.aHy(q,o,w,v,u,p,s,t)},
-e0Q(d){var w,v,u,t,s,r=x.N,q=d.a3(0,r,x.z),p=x.S,o=A.n(q,"fromUserId",p)
+e0R(d){var w,v,u,t,s,r=x.N,q=d.a3(0,r,x.z),p=x.S,o=A.n(q,"fromUserId",p)
 o.toString
 p=A.n(q,"toUserId",p)
 p.toString
@@ -181,9 +181,9 @@ bCc:function bCc(d){this.a=d},
 bC4:function bC4(d){this.a=d},
 aBv:function aBv(){},
 dlC:function dlC(){},
-ebM(){return B.e.wr(A.a(["Android","webOS","iPhone","iPad","iPod","BlackBerry","Windows Phone"],x.W),new C.dd2())!==-1},
+ebN(){return B.e.wr(A.a(["Android","webOS","iPhone","iPad","iPod","BlackBerry","Windows Phone"],x.W),new C.dd2())!==-1},
 dd2:function dd2(){},
-ebj(d){switch(d){case"new":return D.bo1
+ebk(d){switch(d){case"new":return D.bo1
 case"checking":return D.bo2
 case"connected":return D.a72
 case"completed":return D.bo3
@@ -191,16 +191,16 @@ case"failed":return D.a73
 case"disconnected":return D.bo5
 case"closed":return D.a74
 case"count":return D.bo4}return D.a74},
-ebk(d){switch(d){case"new":return D.a75
+ebl(d){switch(d){case"new":return D.a75
 case"gathering":return D.bo6
 case"complete":return D.bo7}return D.a75},
-eel(d){switch(d){case"stable":return D.bo8
+eem(d){switch(d){case"stable":return D.bo8
 case"have-local-offer":return D.bo9
 case"have-local-pranswer":return D.bob
 case"have-remote-offer":return D.boa
 case"have-remote-pranswer":return D.boc
 case"closed":return D.a7b}return D.a7b},
-ecz(d){switch(d){case"new":return D.a78
+ecA(d){switch(d){case"new":return D.a78
 case"connecting":return D.a79
 case"connected":return D.a7a
 case"closed":return D.FW
@@ -969,7 +969,7 @@ q=A.aa(["fromUserId",h,"toUserId",g,"sdp",i,"callType",a1,"audioEnabled",!0,"vid
 j.k(B.f,"\ud83d\udce4 [WebRTC] Creating WebRTCOfferDto...",null,null)
 j.k(B.f,"\ud83d\udcca [WebRTC] Offer data (without callId): "+A.b(q),null,null)
 p=null
-try{p=C.e0Q(q)
+try{p=C.e0R(q)
 j.k(B.f,"\u2705 [WebRTC] WebRTCOfferDto created successfully",null,null)}catch(a5){o=A.u(a5)
 j.k(B.u,"\u274c [WebRTC] WebRTCOfferDto.fromJson failed: "+A.b(o),null,null)
 j.k(B.u,"\ud83d\udcca [WebRTC] DTO creation error details: "+J.a4(o).l(0)+" - "+J.ao(o),null,null)
@@ -1054,7 +1054,7 @@ n=n?null:e.a
 if(n==null)n=""
 r=A.aa(["callId",f,"fromUserId",m,"toUserId",l,"sdp",n,"accepted",d,"timestamp",new A.aA(Date.now(),0,!1).V()],x.N,x.K)
 o.k(B.f,"\ud83d\udce4 [WebRTC] Creating WebRTCAnswerDto...",null,null)
-q=C.e0J(r)
+q=C.e0K(r)
 w=q!=null?6:8
 break
 case 6:o.k(B.f,"\ud83d\udce1 [WebRTC] Sending answer to server via API...",null,null)
@@ -1098,7 +1098,7 @@ throw A.t(n)}if(f==null){n=A.bk("Current user ID is null")
 throw A.t(n)}if(g==null){n=A.bk("Target user ID is null")
 throw A.t(n)}n.k(B.f,"\ud83d\udce4 [WebRTC] Creating WebRTCHangupDto...",null,null)
 r=A.aa(["callId",e,"toUserId",A.dy(g,null),"reason","user_hangup","timestamp",Date.now(),"duration",d],x.N,x.X)
-q=C.e0L(r)
+q=C.e0M(r)
 if(q==null){n=A.bk("Failed to create WebRTCHangupDto")
 throw A.t(n)}n.k(B.f,"\ud83d\udce1 [WebRTC] Sending hangup call notification to server via API...",null,null)
 w=6
@@ -1147,7 +1147,7 @@ break}if(f==null){n=A.bk("Current user ID is null")
 throw A.t(n)}if(h==null){n=A.bk("Target user ID is null")
 throw A.t(n)}q=A.aa(["callId",e,"fromUserId",A.dy(f,null),"toUserId",A.dy(h,null),"candidate",m,"sdpMid",l,"sdpMLineIndex",k,"timestamp",new A.aA(Date.now(),0,!1).V()],x.N,x.X)
 n.k(B.f,"\ud83d\udce4 [WebRTC] Creating WebRTCIceCandidateDto...",null,null)
-p=C.e0N(q)
+p=C.e0O(q)
 w=p!=null?7:9
 break
 case 7:n.k(B.f,"\ud83d\udce1 [WebRTC] Sending ICE candidate to server via API...",null,null)
@@ -1538,12 +1538,12 @@ C.Hz.prototype={
 l(d){return this.a},
 B(){return this.a}}
 C.bUu.prototype={
-C(d){if(d!=null)switch(d){case"user_hangup":return D.bTU
-case"timeout":return D.bTS
-case"network_error":return D.bTQ
-case"busy":return D.bTP
-case"rejected":return D.bTR
-case"unknown_default_open_api":return D.bTT}return null}}
+C(d){if(d!=null)switch(d){case"user_hangup":return D.bTV
+case"timeout":return D.bTT
+case"network_error":return D.bTR
+case"busy":return D.bTQ
+case"rejected":return D.bTS
+case"unknown_default_open_api":return D.bTU}return null}}
 C.aHy.prototype={
 n(d,e){var w,v=this
 if(e==null)return!1
@@ -1635,9 +1635,9 @@ C.adh.prototype={
 l(d){return this.a},
 B(){return this.a}}
 C.bUN.prototype={
-C(d){if(d!=null)switch(d){case"video":return D.bTX
-case"audio":return D.bTV
-case"unknown_default_open_api":return D.bTW}return null}}
+C(d){if(d!=null)switch(d){case"video":return D.bTY
+case"audio":return D.bTW
+case"unknown_default_open_api":return D.bTX}return null}}
 C.bC3.prototype={
 bEv(d,e){return this.doJ(d,e)},
 doJ(d,e){var w=0,v=A.l(x.A),u,t,s,r,q,p
@@ -1685,7 +1685,7 @@ a2Z(d){return this.chA(d)},
 chA(d){var w=0,v=A.l(x.E),u,t=2,s=[],r,q,p,o,n,m,l,k,j,i,h,g,f,e
 var $async$a2Z=A.h(function(a1,a2){if(a1===1){s.push(a2)
 w=t}for(;;)switch(w){case 0:t=4
-try{if(!C.ebM())if(x.f.b(d.j(0,"video"))&&J.aD(d.j(0,"video"),"facingMode")!=null)J.pC(d.j(0,"video"),"facingMode")
+try{if(!C.ebN())if(x.f.b(d.j(0,"video"))&&J.aD(d.j(0,"video"),"facingMode")!=null)J.pC(d.j(0,"video"),"facingMode")
 d.c8("video",new C.brJ())
 d.c8("audio",new C.brK())}catch(a0){A.a1v("[getUserMedia] failed to remove facingMode from mediaConstraints")}try{if(x.P.b(d.j(0,"audio"))){h=x.z
 h=A.ug(d.j(0,"audio"),h,h).aD("optional")&&x.D.b(J.aD(d.j(0,"audio"),"optional"))}else h=!1
@@ -2364,7 +2364,7 @@ $S:9}
 C.bC7.prototype={
 $1(d){var w,v=this.a,u=v.at
 u===$&&A.f()
-u=C.ebj(u.iceConnectionState)
+u=C.ebk(u.iceConnectionState)
 v.cx=u
 w=v.d
 if(w!=null)w.$1(u)
@@ -2388,17 +2388,17 @@ $S:132}
 C.bC8.prototype={
 $1(d){var w=this.a,v=w.at
 v===$&&A.f()
-w.CW=C.ebk(v.iceGatheringState)},
+w.CW=C.ebl(v.iceGatheringState)},
 $S:132}
 C.bC9.prototype={
 $1(d){var w=this.a,v=w.at
 v===$&&A.f()
-w.ch=C.eel(v.signalingState)},
+w.ch=C.eem(v.signalingState)},
 $S:132}
 C.bCa.prototype={
 $1(d){var w=this.a,v=w.at
 v===$&&A.f()
-v=C.ecz(v.connectionState)
+v=C.ecA(v.connectionState)
 w.cy=v
 w=w.b
 if(w!=null)w.$1(v)},
@@ -2437,7 +2437,7 @@ w(A.n9,[C.Gg,C.a9h,C.xc,C.rV])})()
 A.fu(b.typeUniverse,JSON.parse('{"Bw":{"a4G":[],"dkr":[]},"wM":{"zV":[]},"ayb":{"Vt":[]},"aBu":{"a9i":[]},"aBv":{"a9j":[]}}'))
 var y={a:"\u2705 [WebRTC] All pending ICE candidates sent"}
 var x=(function rtii(){var w=A.au
-return{J:w("ev"),U:w("JV"),k:w("aA"),V:w("E<co>"),m:w("E<a3<q,q>>"),s:w("E<a3<q,N>>"),t:w("E<a3<q,@>>"),Q:w("E<Vt>"),L:w("E<Ge>"),W:w("E<q>"),p:w("E<m>"),o:w("c6"),l:w("a5<c6>"),D:w("a5<a3<q,@>>"),P:w("a3<q,@>"),f:w("a3<@,@>"),E:w("zV"),F:w("Vt"),h:w("wM"),a:w("bn"),K:w("T"),A:w("a9i"),j:w("a9j"),v:w("Gf"),N:w("q"),q:w("i9<a3<q,@>>"),n:w("i9<zV>"),M:w("i9<N>"),y:w("N"),z:w("@"),S:w("x"),B:w("c6?"),g:w("a5<@>?"),X:w("T?"),T:w("q?"),H:w("~")}})();(function constants(){D.amG=new C.bUu()
+return{J:w("ev"),U:w("JV"),k:w("aA"),V:w("E<co>"),m:w("E<a3<q,q>>"),s:w("E<a3<q,N>>"),t:w("E<a3<q,@>>"),Q:w("E<Vt>"),L:w("E<Ge>"),W:w("E<q>"),p:w("E<m>"),o:w("c6"),l:w("a5<c6>"),D:w("a5<a3<q,@>>"),P:w("a3<q,@>"),f:w("a3<@,@>"),E:w("zV"),F:w("Vt"),h:w("wM"),a:w("bn"),K:w("T"),A:w("a9i"),j:w("a9j"),v:w("Gf"),N:w("q"),q:w("ia<a3<q,@>>"),n:w("ia<zV>"),M:w("ia<N>"),y:w("N"),z:w("@"),S:w("x"),B:w("c6?"),g:w("a5<@>?"),X:w("T?"),T:w("q?"),H:w("~")}})();(function constants(){D.amG=new C.bUu()
 D.amH=new C.bUN()
 D.bo1=new C.rV(0,"RTCIceConnectionStateNew")
 D.bo2=new C.rV(1,"RTCIceConnectionStateChecking")
@@ -2463,16 +2463,16 @@ D.bob=new C.Gg(3,"RTCSignalingStateHaveLocalPrAnswer")
 D.boc=new C.Gg(4,"RTCSignalingStateHaveRemotePrAnswer")
 D.a7b=new C.Gg(5,"RTCSignalingStateClosed")
 D.bFb=new A.ad(!0,null,null,null,null,null,24,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
-D.bTP=new C.Hz("busy")
-D.bTQ=new C.Hz("network_error")
-D.bTR=new C.Hz("rejected")
-D.bTS=new C.Hz("timeout")
-D.bTT=new C.Hz("unknown_default_open_api")
-D.bTU=new C.Hz("user_hangup")
-D.bTV=new C.adh("audio")
-D.bTW=new C.adh("unknown_default_open_api")
-D.bTX=new C.adh("video")})();(function staticFields(){$.dB9=null
+D.bTQ=new C.Hz("busy")
+D.bTR=new C.Hz("network_error")
+D.bTS=new C.Hz("rejected")
+D.bTT=new C.Hz("timeout")
+D.bTU=new C.Hz("unknown_default_open_api")
+D.bTV=new C.Hz("user_hangup")
+D.bTW=new C.adh("audio")
+D.bTX=new C.adh("unknown_default_open_api")
+D.bTY=new C.adh("video")})();(function staticFields(){$.dB9=null
 $.dBa=null})();(function lazyInitializers(){var w=a.lazyFinal
-w($,"eiY","dpv",()=>new C.bC3())
-w($,"egl","dph",()=>B.c.t(A.aN(A.aN(A.aN(A.ym(),"window"),"navigator"),"userAgent"),"Firefox"))})()};
-(a=>{a["C3MnS1DkRUvGSJZnP5xDT+eQwJE="]=a.current})($__dart_deferred_initializers__);
+w($,"ej_","dpv",()=>new C.bC3())
+w($,"egn","dph",()=>B.c.t(A.aN(A.aN(A.aN(A.ym(),"window"),"navigator"),"userAgent"),"Firefox"))})()};
+(a=>{a["U3SEH/i3BugRH9sVdQcymlZ6bKU="]=a.current})($__dart_deferred_initializers__);

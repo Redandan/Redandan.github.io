@@ -483,14 +483,14 @@ B.v7.prototype={
 l(d){return this.a},
 B(){return this.a}}
 B.bVu.prototype={
-C(d){switch(d){case"PENDING":return D.bUd
-case"PENDING_REVIEW":return D.bUe
-case"PROCESSING":return D.bUf
-case"COMPLETED":return D.bUb
-case"CANCELLED":return D.bUa
-case"FAILED":return D.bUc
-case"REJECTED":return D.bUg
-case"unknown_default_open_api":return D.bUh}return null}}
+C(d){switch(d){case"PENDING":return D.bUe
+case"PENDING_REVIEW":return D.bUf
+case"PROCESSING":return D.bUg
+case"COMPLETED":return D.bUc
+case"CANCELLED":return D.bUb
+case"FAILED":return D.bUd
+case"REJECTED":return D.bUh
+case"unknown_default_open_api":return D.bUi}return null}}
 var z=a.updateTypes(["~()","a5<m>(T?)","m(M,T?)","m(T?)","a7<~>()","be(aL<x,pR>)"])
 B.d5N.prototype={
 $1(d){this.a.bC2()},
@@ -655,7 +655,7 @@ w(A.T,[B.pR,B.aHN,B.v7,B.bVu])
 x(B.Y1,A.n9)})()
 A.fu(b.typeUniverse,JSON.parse('{"xN":{"U":[],"m":[]},"an_":{"d0":["jE","xN"],"W":["xN"],"d0.T":"jE"}}'))
 var y=(function rtii(){var x=A.au
-return{g:x("be"),J:x("ev"),P:x("tV"),a:x("E<pR>"),s:x("E<q>"),p:x("E<m>"),W:x("E<jE>"),E:x("dM<pR>"),A:x("aL<lM,q>"),w:x("iH"),N:x("q"),n:x("jE"),v:x("lM"),z:x("@"),S:x("x"),X:x("aA?"),K:x("el_?"),R:x("v7?"),H:x("~")}})();(function constants(){D.amL=new B.bVu()
+return{g:x("be"),J:x("ev"),P:x("tV"),a:x("E<pR>"),s:x("E<q>"),p:x("E<m>"),W:x("E<jE>"),E:x("dM<pR>"),A:x("aL<lM,q>"),w:x("iH"),N:x("q"),n:x("jE"),v:x("lM"),z:x("@"),S:x("x"),X:x("aA?"),K:x("el1?"),R:x("v7?"),H:x("~")}})();(function constants(){D.amL=new B.bVu()
 D.as4=new B.pR("\u63d0\u6b3e\u5730\u5740","toAddress")
 D.as5=new B.pR("\u91d1\u984d","amount")
 D.as7=new B.pR("\u5354\u8b70","protocol")
@@ -668,12 +668,12 @@ D.bzb=new B.Y1(0,"totalAmount")
 D.bzi=new B.Y1(1,"pendingCount")
 D.bzl=new B.Y1(2,"completedCount")
 D.bzn=new B.Y1(3,"rejectedCount")
-D.bUa=new B.v7("CANCELLED")
-D.bUb=new B.v7("COMPLETED")
-D.bUc=new B.v7("FAILED")
-D.bUd=new B.v7("PENDING")
-D.bUe=new B.v7("PENDING_REVIEW")
-D.bUf=new B.v7("PROCESSING")
-D.bUg=new B.v7("REJECTED")
-D.bUh=new B.v7("unknown_default_open_api")})();(function staticFields(){$.dBe=null})()};
-(a=>{a["XKA9BDyeOVzgD6mVCTzZVz1BpHc="]=a.current})($__dart_deferred_initializers__);
+D.bUb=new B.v7("CANCELLED")
+D.bUc=new B.v7("COMPLETED")
+D.bUd=new B.v7("FAILED")
+D.bUe=new B.v7("PENDING")
+D.bUf=new B.v7("PENDING_REVIEW")
+D.bUg=new B.v7("PROCESSING")
+D.bUh=new B.v7("REJECTED")
+D.bUi=new B.v7("unknown_default_open_api")})();(function staticFields(){$.dBe=null})()};
+(a=>{a["71LvghQHePUUOtajyFOLli2vpIA="]=a.current})($__dart_deferred_initializers__);
