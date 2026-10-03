@@ -3,7 +3,8 @@
 // The previous custom SW cached Flutter bootstrap/main/chunk files and could
 // keep serving stale route chunks after a deploy. Keep this file registered only
 // long enough for browsers with the old SW to update, unregister, and release
-// control back to the network.
+// control back to the network. Existing tabs keep their state until the user
+// chooses to reload; this worker never navigates clients during activation.
 
 'use strict';
 
@@ -24,15 +25,22 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys()
+    Promise.allSettled([
+      caches.keys()
       .then((keys) => Promise.all(
         keys
           .filter(isStaleRuntimeCache)
           .map((key) => caches.delete(key)),
-      ))
-      .then(() => self.registration.unregister())
-      .then(() => self.clients.matchAll({ type: 'window', includeUncontrolled: true }))
-      .then((clients) => Promise.all(clients.map((client) => client.navigate(client.url))))
+      )),
+      self.registration.unregister(),
+    ])
+      .then((results) => {
+        for (const result of results) {
+          if (result.status === 'rejected') {
+            console.warn('[SW_NOOP]', BUILD_VERSION, result.reason);
+          }
+        }
+      })
       .catch((err) => console.warn('[SW_NOOP]', BUILD_VERSION, err)),
   );
 });
