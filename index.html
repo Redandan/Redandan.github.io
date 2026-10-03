@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- Versioned cache marker. -->
-    <meta name="cache-version" content="1.0.1923">
+    <meta name="cache-version" content="1.0.1924">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -29,8 +29,8 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.1923+1923">
-  <meta name="source-commit" content="dd3f7bbbfdb19932e24a8a714550d6305408a8af">
+  <meta name="version" content="1.0.1924+1924">
+  <meta name="source-commit" content="cf638f05dc0d4c7e235f16dc556d716d11091cc9">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     // Request the largest available Telegram Mini App viewport before Flutter
@@ -443,7 +443,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market｜台灣與泰國生活用品線上市集</title>
-  <link rel="manifest" href="manifest.json?v=1.0.1923">
+  <link rel="manifest" href="manifest.json?v=1.0.1924">
   
   <!-- PWA ?????????????????? -->
   <meta name="application-name" content="Agora Market">
@@ -451,8 +451,8 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
-  <link rel="preload" href="flutter_bootstrap.1.0.1923.js" as="script">
-  <link rel="preload" href="main.dart.js?v=1.0.1923" as="script" fetchpriority="high">
+  <link rel="preload" href="flutter_bootstrap.1.0.1924.js" as="script">
+  <link rel="preload" href="main.dart.js?v=1.0.1924" as="script" fetchpriority="high">
   <link rel="preload" href="canvaskit/canvaskit.js" as="script">
   <link rel="preload" href="canvaskit/canvaskit.wasm" as="fetch" type="application/wasm" crossorigin>
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
@@ -1630,7 +1630,22 @@
           
           try {
             // 1. ?????????Flutter????????ice Worker ????
-            const registration = await navigator.serviceWorker.ready;
+            let workerTimeout;
+            let registrations;
+            try {
+              registrations = await Promise.race([
+                navigator.serviceWorker.getRegistrations(),
+                new Promise((_, reject) => {
+                  workerTimeout = setTimeout(() => reject(new Error('Notification service timed out')), 3000);
+                })
+              ]);
+            } finally {
+              clearTimeout(workerTimeout);
+            }
+            const registration = registrations
+              .filter(item => item.active && window.location.href.startsWith(item.scope))
+              .sort((a, b) => b.scope.length - a.scope.length)[0];
+            if (!registration) throw new Error('Notification service is not ready. Please try again later.');
             console.log('[WEB_PUSH_API] Using existing Service Worker registration');
             
             // 2. ??????????????????????????
@@ -3203,7 +3218,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.1.0.1923.js";
+        script.src = "flutter_bootstrap.1.0.1924.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
@@ -3311,6 +3326,7 @@
         var minimumProbeIntervalMs = 30000;
         var periodicProbeIntervalMs = 300000;
         var updateQueryKey = 'agora_update';
+        var offeredIdentity = '';
 
         function validCommit(value) {
           value = String(value || '');
@@ -3351,7 +3367,7 @@
         }
 
         function updateIdentity(latest) {
-          return latest.commit || latest.version || '';
+          return latest.commit ? latest.commit + '@' + latest.version : latest.version || '';
         }
 
         function runtimeVersionUrl() {
@@ -3384,34 +3400,37 @@
           lastProbeAt = now;
 
           probeInFlight = (async function() {
-            var response = await window.fetch(runtimeVersionUrl(), {
-              cache: 'no-store',
-              credentials: 'same-origin',
-              headers: { 'Accept': 'application/json' }
-            });
-            if (!response || !response.ok) return false;
-
-            var latest = latestBuild(await response.json());
-            var identity = updateIdentity(latest);
-            if (!identity || !buildChanged(latest)) return false;
-
-            var reloadKey = 'agora_web_runtime_reload_' + identity;
+            var controller = new AbortController();
+            var probeTimeout = setTimeout(function() { controller.abort(); }, 8000);
+            var response;
+            var payload;
             try {
-              if (window.sessionStorage.getItem(reloadKey) === '1') return false;
-              window.sessionStorage.setItem(reloadKey, '1');
-            } catch (_) {
-              // Without sessionStorage, fail open instead of risking a reload loop.
-              return false;
+              response = await window.fetch(runtimeVersionUrl(), {
+                cache: 'no-store',
+                credentials: 'same-origin',
+                signal: controller.signal,
+                headers: { 'Accept': 'application/json' }
+              });
+              if (!response || !response.ok) return false;
+              payload = await response.json();
+            } finally {
+              clearTimeout(probeTimeout);
             }
 
-            try {
-              await resetStaleRuntimeCache();
-            } catch (_) {}
+            var latest = latestBuild(payload);
+            var identity = updateIdentity(latest);
+            if (!identity || !buildChanged(latest)) return false;
+            if (identity === offeredIdentity) return false;
 
-            console.info(
-              '[RUNTIME_VERSION] update reason=' + String(reason || 'unknown')
-            );
-            window.location.replace(reloadUrl(identity));
+            if (!window.__AGORA_RUNTIME_STATUS__) return false;
+            window.__AGORA_RUNTIME_STATUS__.offerUpdate(identity, async function() {
+              // Versioned assets already isolate builds. A deliberate update
+              // must not wait for cache APIs or require writable storage.
+              console.info('[RUNTIME_VERSION] user accepted update');
+              window.location.replace(reloadUrl(identity));
+              return true;
+            });
+            offeredIdentity = identity;
             return true;
           })().catch(function(error) {
             console.warn(
@@ -3487,7 +3506,7 @@
   <script src="web_vitals.js"></script>
   
   <!-- ?????????????? -->
-  <script src="offline_handler.js"></script>
+  <script src="offline_handler.cf638f05dc0d.js"></script>
   
   <!-- GitHub Pages 404 ??????????????-->
   <script>
