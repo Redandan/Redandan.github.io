@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- Versioned cache marker. -->
-    <meta name="cache-version" content="1.0.1932">
+    <meta name="cache-version" content="1.0.1933">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -29,8 +29,8 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.1932+1932">
-  <meta name="source-commit" content="b1446f57941c407f8290a1d0fc78376a08269e01">
+  <meta name="version" content="1.0.1933+1933">
+  <meta name="source-commit" content="0f9cb160543b34be6ba69d1b5efcc98dcdd96d21">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     // Request the largest available Telegram Mini App viewport before Flutter
@@ -443,7 +443,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market｜台灣與泰國生活用品線上市集</title>
-  <link rel="manifest" href="manifest.json?v=1.0.1932">
+  <link rel="manifest" href="manifest.json?v=1.0.1933">
   
   <!-- PWA ?????????????????? -->
   <meta name="application-name" content="Agora Market">
@@ -451,8 +451,8 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
-  <link rel="preload" href="flutter_bootstrap.1.0.1932.js" as="script">
-  <link rel="preload" href="main.dart.js?v=1.0.1932" as="script" fetchpriority="high">
+  <link rel="preload" href="flutter_bootstrap.1.0.1933.js" as="script">
+  <link rel="preload" href="main.dart.js?v=1.0.1933" as="script" fetchpriority="high">
   <link rel="preload" href="canvaskit/canvaskit.js" as="script">
   <link rel="preload" href="canvaskit/canvaskit.wasm" as="fetch" type="application/wasm" crossorigin>
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
@@ -3252,7 +3252,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.1.0.1932.js";
+        script.src = "flutter_bootstrap.1.0.1933.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
@@ -3562,7 +3562,7 @@
   <script src="web_vitals.js"></script>
   
   <!-- ?????????????? -->
-  <script src="offline_handler.b1446f57941c.js"></script>
+  <script src="offline_handler.0f9cb160543b.js"></script>
   
   <!-- GitHub Pages 404 ??????????????-->
   <script>
@@ -3629,6 +3629,8 @@
     (function () {
       'use strict';
       var history = [], panel = null, timer = null, lastTouch = null;
+      var colorsEnabled = false, colorLayer = null, colorSignature = null;
+      try { colorsEnabled = localStorage.getItem('agora_layout_colors') === 'true'; } catch (_) {}
       function number(value) {
         if (value === null || value === undefined || value === '') return null;
         value = Number(value);
@@ -3646,6 +3648,11 @@
       function snapshot(reason) {
         var vv = window.visualViewport, doc = document.documentElement;
         var root = document.getElementById('flutter-root');
+        var view = document.querySelector('flutter-view');
+        var glass = document.querySelector('flt-glass-pane');
+        var canvas = view && view.querySelector('canvas');
+        if (!canvas && view && view.shadowRoot) canvas = view.shadowRoot.querySelector('canvas');
+        if (!canvas && glass && glass.shadowRoot) canvas = glass.shadowRoot.querySelector('canvas');
         var status = window.__AGORA_VIEWPORT_OFFSET_STATUS || {};
         return {
           time: new Date().toISOString(), reason: reason,
@@ -3658,7 +3665,10 @@
           visualViewport: vv ? { x: number(vv.offsetLeft), y: number(vv.offsetTop),
             width: number(vv.width), height: number(vv.height), scale: number(vv.scale) } : null,
           root: rect(root), rootScrollY: root ? number(root.scrollTop) : null,
-          view: rect(document.querySelector('flutter-view')),
+          view: rect(view), glass: rect(glass),
+          canvas: rect(canvas),
+          login: window.__AGORA_LOGIN_LAYOUT_STATUS || null,
+          colorsEnabled: colorsEnabled,
           safeArea: status.safeArea || null,
           expectedFrame: status.expectedFrame || null,
           detected: typeof status.detected === 'boolean' ? status.detected : null,
@@ -3679,6 +3689,55 @@
       function textNode(tag, text) {
         var node = document.createElement(tag); node.textContent = text; return node;
       }
+      function paintColors() {
+        if (!colorsEnabled) return;
+        var data = snapshot('colors');
+        var signature = JSON.stringify(Object.assign({}, data, { time: null }));
+        if (signature === colorSignature) return;
+        colorSignature = signature;
+        if (!colorLayer) {
+          colorLayer = document.createElement('div');
+          colorLayer.id = 'agora-layout-color-layer';
+          colorLayer.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:2147483645;overflow:hidden;';
+          document.body.appendChild(colorLayer);
+        }
+        colorLayer.replaceChildren();
+        function boundary(box, color, inset) {
+          if (!box) return;
+          var node = document.createElement('div');
+          node.style.cssText = 'position:absolute;box-sizing:border-box;border:2px solid ' + color + ';';
+          node.style.left = (box.x + inset) + 'px'; node.style.top = (box.y + inset) + 'px';
+          node.style.width = Math.max(0, box.w - inset * 2) + 'px';
+          node.style.height = Math.max(0, box.h - inset * 2) + 'px';
+          colorLayer.appendChild(node);
+        }
+        boundary({x:0,y:0,w:data.document.width,h:data.document.height}, '#ff394d', 0);
+        var vv = data.visualViewport;
+        if (vv) boundary({x:vv.x,y:vv.y,w:vv.width,h:vv.height}, '#ff9800', 2);
+        boundary(data.root, '#00e5ff', 0);
+        boundary(data.view, '#ff4fff', 4);
+        boundary(data.canvas, '#76ff03', 8);
+        var login = data.login;
+        var note = textNode('div', '紅=document 橙=VV 青=root 紫=view 綠=canvas 黃=登入視窗\n' +
+          'root y=' + (data.root && data.root.y) + ' view y=' + (data.view && data.view.y) +
+          '\nlogin offset=' + (login ? number(login.offset) : '?') +
+          ' content y=' + (login && login.content ? number(login.content.y) : '?') +
+          ' focus=' + (login ? login.editorFocused : '?'));
+        note.style.cssText = 'position:absolute;left:10px;right:10px;bottom:40px;white-space:pre-wrap;background:#101318ee;color:white;font:10px/1.4 monospace;padding:4px;';
+        colorLayer.appendChild(note);
+      }
+      window.__AGORA_SET_LAYOUT_COLORS = function (enabled) {
+        colorsEnabled = !!enabled;
+        try { localStorage.setItem('agora_layout_colors', String(colorsEnabled)); } catch (_) {}
+        document.documentElement.setAttribute('data-agora-layout-colors', String(colorsEnabled));
+        if (!colorsEnabled && colorLayer) { colorLayer.remove(); colorLayer = null; }
+        colorSignature = null;
+        window.dispatchEvent(new Event('agora:layout-colors'));
+        paintColors();
+      };
+      window.__AGORA_SET_LAYOUT_COLORS(colorsEnabled);
+      window.addEventListener('agora:login-layout', function () { record('login-layout'); paintColors(); });
+      setInterval(paintColors, 500);
       window.__AGORA_READ_LAYOUT_DIAGNOSTICS = function () {
         return { current: snapshot('read'), history: history.slice() };
       };
@@ -3698,6 +3757,13 @@
           clearInterval(timer); timer = null; panel.remove(); panel = null;
         };
         panel.appendChild(close);
+        var colorButton = textNode('button', colorsEnabled ? '關閉分層顏色' : '開啟分層顏色');
+        colorButton.style.cssText = 'display:block;margin:12px 0;padding:12px;font-size:16px;';
+        colorButton.onclick = function () {
+          window.__AGORA_SET_LAYOUT_COLORS(!colorsEnabled);
+          close.onclick();
+        };
+        panel.appendChild(colorButton);
         var home = textNode('a', ' 商城首頁'); home.href = '/#/home';
         home.onclick = close.onclick;
         home.style.color = '#90c7ff'; panel.appendChild(home);
