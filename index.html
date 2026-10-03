@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- Versioned cache marker. -->
-    <meta name="cache-version" content="1.0.1924">
+    <meta name="cache-version" content="1.0.1925">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -29,8 +29,8 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.1924+1924">
-  <meta name="source-commit" content="cf638f05dc0d4c7e235f16dc556d716d11091cc9">
+  <meta name="version" content="1.0.1925+1925">
+  <meta name="source-commit" content="0d2fda9a7c80358f3ab1e5ce86259a9733831833">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     // Request the largest available Telegram Mini App viewport before Flutter
@@ -443,7 +443,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market｜台灣與泰國生活用品線上市集</title>
-  <link rel="manifest" href="manifest.json?v=1.0.1924">
+  <link rel="manifest" href="manifest.json?v=1.0.1925">
   
   <!-- PWA ?????????????????? -->
   <meta name="application-name" content="Agora Market">
@@ -451,8 +451,8 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
-  <link rel="preload" href="flutter_bootstrap.1.0.1924.js" as="script">
-  <link rel="preload" href="main.dart.js?v=1.0.1924" as="script" fetchpriority="high">
+  <link rel="preload" href="flutter_bootstrap.1.0.1925.js" as="script">
+  <link rel="preload" href="main.dart.js?v=1.0.1925" as="script" fetchpriority="high">
   <link rel="preload" href="canvaskit/canvaskit.js" as="script">
   <link rel="preload" href="canvaskit/canvaskit.wasm" as="fetch" type="application/wasm" crossorigin>
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
@@ -2310,6 +2310,23 @@
 
       let rafPending = false;
       let syncCount = 0;
+      function restoreIdleStandaloneOuterScroll(root) {
+        if (!isStandalone || Number(vv.scale || 1) > 1.01) return;
+        const active = document.activeElement;
+        // Focused editing lets WebKit pan the document to reveal the caret.
+        // Restore only the idle outer hosts, never Flutter's internal lists.
+        if (active && (active.isContentEditable ||
+            /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName))) return;
+        const hosts = [document.scrollingElement, document.documentElement,
+          document.body, root, root.querySelector('flutter-view')];
+        for (const host of new Set(hosts)) {
+          if (!host) continue;
+          if (host.scrollTop !== 0) host.scrollTop = 0;
+          if (host.scrollLeft !== 0) host.scrollLeft = 0;
+        }
+        if (window.scrollX || window.scrollY) window.scrollTo(0, 0);
+      }
+
       function syncNow() {
         rafPending = false;
         const root = getRoot();
@@ -2324,6 +2341,7 @@
           return;
         }
         ensureFlutterHostInRoot(root);
+        restoreIdleStandaloneOuterScroll(root);
         const geometry = computeSafeOffsets();
         applyToRoot(root, geometry);
         const offsetDetected = publishOffsetStatus(root, geometry);
@@ -2362,6 +2380,14 @@
       vv.addEventListener('scroll', queueSync, { passive: true });
       window.addEventListener('orientationchange', delayedSync, { passive: true });
       window.addEventListener('pageshow', delayedSync, { passive: true });
+      document.addEventListener('focusout', delayedSync, { passive: true });
+      window.addEventListener('scroll', queueSync, { passive: true });
+      document.addEventListener('scroll', function (event) {
+        const target = event.target;
+        if (target === document || target === document.documentElement ||
+            target === document.body || target === getRoot() ||
+            (target && target.tagName === 'FLUTTER-VIEW')) queueSync();
+      }, { capture: true, passive: true });
       document.addEventListener('visibilitychange', function () {
         if (!document.hidden) delayedSync();
       });
@@ -3218,7 +3244,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.1.0.1924.js";
+        script.src = "flutter_bootstrap.1.0.1925.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
@@ -3506,7 +3532,7 @@
   <script src="web_vitals.js"></script>
   
   <!-- ?????????????? -->
-  <script src="offline_handler.cf638f05dc0d.js"></script>
+  <script src="offline_handler.0d2fda9a7c80.js"></script>
   
   <!-- GitHub Pages 404 ??????????????-->
   <script>
