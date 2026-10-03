@@ -31,8 +31,8 @@ C=c[2]
 D=c[27]
 B=a.updateHolder(c[4],B)
 B.HC.prototype={
-XA(d){return this.duB(d)},
-duB(d){var x=0,w=A.l(y.e),v,u=this
+XA(d){return this.duC(d)},
+duC(d){var x=0,w=A.l(y.e),v,u=this
 var $async$XA=A.h(function(e,f){if(e===1)return A.i(f,w)
 for(;;)switch(x){case 0:x=3
 return A.c(D.yN(new B.bUJ(u,d),"initialize","Failed to initialize WebRTC manager",y.e),$async$XA)
@@ -42,12 +42,12 @@ break
 case 1:return A.j(v,w)}})
 return A.k($async$XA,w)},
 bXw(){var x=this,w=x.a
-x.y=w.gdkM().ed(new B.bUz(x),new B.bUA(x))
-x.z=w.gdBa().ed(new B.bUB(x),new B.bUC(x))
-x.Q=w.gduu().ed(new B.bUD(x),new B.bUE(x))
-x.as=w.gclk().ed(new B.bUF(x),new B.bUG(x))},
-ac_(d){return this.cls(d)},
-cls(d){var x=0,w=A.l(y.e),v,u=this
+x.y=w.gdkN().ed(new B.bUz(x),new B.bUA(x))
+x.z=w.gdBb().ed(new B.bUB(x),new B.bUC(x))
+x.Q=w.gduv().ed(new B.bUD(x),new B.bUE(x))
+x.as=w.gcll().ed(new B.bUF(x),new B.bUG(x))},
+ac_(d){return this.clt(d)},
+clt(d){var x=0,w=A.l(y.e),v,u=this
 var $async$ac_=A.h(function(e,f){if(e===1)return A.i(f,w)
 for(;;)switch(x){case 0:x=3
 return A.c(D.yN(new B.bUK(u,d),"startAudioCall","Failed to start audio call",y.e),$async$ac_)
@@ -56,8 +56,8 @@ x=1
 break
 case 1:return A.j(v,w)}})
 return A.k($async$ac_,w)},
-qy(d){return this.djm(d)},
-djm(d){var x=0,w=A.l(y.e),v,u=this,t
+qy(d){return this.djn(d)},
+djn(d){var x=0,w=A.l(y.e),v,u=this,t
 var $async$qy=A.h(function(e,f){if(e===1)return A.i(f,w)
 for(;;)switch(x){case 0:t=d?"Failed to answer call":"Failed to reject call"
 x=3
@@ -74,9 +74,9 @@ return A.c(D.yN(new B.bUI(v),"endCall","Failed to end call",y.p),$async$tF)
 case 2:return A.j(null,w)}})
 return A.k($async$tF,w)},
 bKW(){return D.drw(new B.bUL(this),"toggleAudio","Failed to switch audio")},
-ck6(d){this.e=d},
-ck4(d){this.f=d},
-ck5(d){var x=null,w=this.c
+ck7(d){this.e=d},
+ck5(d){this.f=d},
+ck6(d){var x=null,w=this.c
 w.k(C.f,"\ud83d\udcde [WebRTC Manager] Setting incoming call callback",x,x)
 w.k(C.f,"\ud83d\udd0d [WebRTC Manager] Callback verification:",x,x)
 w.k(C.f,"   - Previous callback: "+(this.r!=null),x,x)
@@ -84,7 +84,7 @@ w.k(C.f,"   - New callback: true",x,x)
 w.k(C.f,"   - Callback type: "+J.a4(d).l(0),x,x)
 this.r=d
 w.k(C.f,"\u2705 [WebRTC Manager] Incoming call callback set successfully",x,x)},
-ck3(d){this.w=d},
+ck4(d){this.w=d},
 gbHn(){return this.d},
 gaLo(){return this.a.gaLo()},
 gaLt(){return this.a.gaLt()},
@@ -282,4 +282,4 @@ w(A.hd,[B.bUJ,B.bUK,B.bUH,B.bUI,B.bUL])
 w(A.ff,[B.bUz,B.bUA,B.bUB,B.bUC,B.bUD,B.bUE,B.bUF,B.bUG])})()
 A.fu(b.typeUniverse,JSON.parse('{"HC":{"a4G":[],"awq":[]}}'))
 var y={p:A.au("bn"),e:A.au("N"),b:A.au("@"),f:A.au("~")}};
-(a=>{a["iPwBWHzODrx0ICDK2k0QOROGy9Q="]=a.current})($__dart_deferred_initializers__);
+(a=>{a["0WYDoSwdPEMxi+SgVXIqtyNlGNY="]=a.current})($__dart_deferred_initializers__);

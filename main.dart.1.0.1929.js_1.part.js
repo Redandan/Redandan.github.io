@@ -25,7 +25,7 @@ this.b=e},bUM:function bUM(d){this.b=d},bUP:function bUP(d){this.a=d},bV8:functi
 this.b=e},
 e0T(d,e,f,g){var w=null,v=$.a1E(),u=A.aW("WebRTCService"),t=A.a([],x.t),s=A.a([],x.L),r=x.q
 v=new C.Bw(g,e,d,f,v,u,t,s,new A.ia(w,w,r),new A.ia(w,w,x.n),new A.ia(w,w,r),new A.ia(w,w,x.M),A.o(x.N,x.k))
-v.csy(d,e,f,g)
+v.csz(d,e,f,g)
 return v},
 Bw:function Bw(d,e,f,g,h,i,j,k,l,m,n,o,p){var _=this
 _.a=d
@@ -148,7 +148,7 @@ this.b=e},
 brT:function brT(d){this.a=d},
 brU:function brU(d){this.a=d},
 dkY(d){var w=new C.ayb(d)
-w.csf(d)
+w.csg(d)
 return w},
 ayb:function ayb(d){this.d=d
 this.c=null},
@@ -162,7 +162,7 @@ brL:function brL(d){this.a=d},
 brI:function brI(d){this.a=d},
 dXw(d,e){var w=x.N
 w=new C.aBu(d,e,A.o(w,x.E),A.o(w,x.z))
-w.csl(d,e)
+w.csm(d,e)
 return w},
 aBu:function aBu(d,e,f,g){var _=this
 _.as=d
@@ -238,7 +238,7 @@ C.bUo.prototype={
 btD(d){this.d=d
 if(d==null)return
 this.a.k(B.f,"\ud83c\udfa4 [WebRTC] Starting audio level monitoring...",null,null)
-this.cXY()},
+this.cXZ()},
 eB(){var w,v,u,t,s,r,q,p,o=this,n=null
 try{t=o.a
 t.k(B.f,"\ud83c\udfb5 [WebRTC] Stopping Web audio analysis...",n,n)
@@ -248,23 +248,23 @@ for(s=w,r=s.length,q=0;q<r;++q){v=s[q]
 v.c=null}}o.d=null
 t.k(B.f,"\u2705 [WebRTC] Web audio analysis stopped",n,n)}catch(p){u=A.u(p)
 o.a.k(B.q,"\u26a0\ufe0f [WebRTC] Failed to stop Web audio analysis: "+A.b(u),n,n)}},
-cXY(){var w,v,u=null
+cXZ(){var w,v,u=null
 try{this.a.k(B.f,"\ud83c\udf10 [WebRTC] Web audio level monitoring started",u,u)
-this.dc3()}catch(v){w=A.u(v)
+this.dc4()}catch(v){w=A.u(v)
 this.a.k(B.u,"\u274c [WebRTC] Failed to start audio level monitoring: "+A.b(w),u,u)}},
-dc3(){var w,v,u,t,s=this,r=null
+dc4(){var w,v,u,t,s=this,r=null
 try{v=s.a
 v.k(B.f,"\ud83c\udfb5 [WebRTC] Starting Web Audio API analysis...",r,r)
 u=s.d
 if(u!=null){if(u.ol().length===0){v.k(B.q,"\u26a0\ufe0f [WebRTC] No audio tracks in remote stream",r,r)
 s.bke()
-return}s.dbQ()}else{v.k(B.q,"\u26a0\ufe0f [WebRTC] Web platform or remote stream not available, using fallback",r,r)
+return}s.dbR()}else{v.k(B.q,"\u26a0\ufe0f [WebRTC] Web platform or remote stream not available, using fallback",r,r)
 s.bke()}}catch(t){w=A.u(t)
 v=s.a
 v.k(B.u,"\u274c [WebRTC] Failed to start Web Audio analysis: "+A.b(w),r,r)
 v.k(B.u,"\ud83d\udcca [WebRTC] Audio analysis error details: "+J.a4(w).l(0)+" - "+J.ao(w),r,r)
 s.bke()}},
-dbQ(){var w,v,u,t,s,r=this,q=null
+dbR(){var w,v,u,t,s,r=this,q=null
 try{t=r.a
 t.k(B.f,"\ud83c\udfb5 [WebRTC] Starting Flutter WebRTC audio analysis...",q,q)
 w=r.d.ol()
@@ -400,8 +400,8 @@ r=this.a.f
 r.k(B.u,"\u274c [WebRTC] Failed to handle call initiated: "+A.b(s),n,n)
 r.k(B.u,"\ud83d\udcca [WebRTC] Call initiated error details: "+J.a4(s).l(0)+" - "+J.ao(s),n,n)}}}
 C.bUv.prototype={
-nY(d){return this.dsA(d)},
-dsA(a0){var w=0,v=A.l(x.H),u=1,t=[],s=this,r,q,p,o,n,m,l,k,j,i,h,g,f,e,d
+nY(d){return this.dsB(d)},
+dsB(a0){var w=0,v=A.l(x.H),u=1,t=[],s=this,r,q,p,o,n,m,l,k,j,i,h,g,f,e,d
 var $async$nY=A.h(function(a1,a2){if(a1===1){t.push(a2)
 w=u}for(;;)switch(w){case 0:u=3
 r=x.P.a(a0)
@@ -456,7 +456,7 @@ w=22
 return A.c(l.uW(),$async$nY)
 case 22:l.e.tD("WEBRTC_STATE_CHANGE",A.aa(["state","call_ended","callId",n,"userId",l.z,"reason","heartbeat_idle"],x.N,x.z),"WebRTCService")
 k.k(B.f,"\u2705 [WebRTC] Local state cleared to match backend",null,null)
-case 21:case 19:case 7:s.cB7()
+case 21:case 19:case 7:s.cB8()
 u=1
 w=5
 break
@@ -471,7 +471,7 @@ break
 case 5:return A.j(null,v)
 case 1:return A.i(t.at(-1),v)}})
 return A.k($async$nY,v)},
-cB7(){var w,v,u,t,s=null,r="\ud83d\udd0d [WebRTC] Consistency check details:",q="   - Is Incoming Call: ",p="   - Is Answering Call: ",o="   - Is Call Active: "
+cB8(){var w,v,u,t,s=null,r="\ud83d\udd0d [WebRTC] Consistency check details:",q="   - Is Incoming Call: ",p="   - Is Answering Call: ",o="   - Is Call Active: "
 try{v=this.a
 if(v.ay!=null&&v.y==null){u=v.f
 u.k(B.q,"\u26a0\ufe0f [WebRTC] Local state exists but no callId from backend",s,s)
@@ -531,7 +531,7 @@ p=k.a.f
 p.k(B.u,"\u274c [WebRTC] Failed to handle ICE candidate: "+A.b(q),j,j)
 p.k(B.u,"\ud83d\udcca [WebRTC] ICE error details: "+J.a4(q).l(0)+" - "+J.ao(q),j,j)}}}
 C.bUO.prototype={
-dtQ(d){var w,v,u,t,s,r,q,p,o=null,n=this.a,m=n.f
+dtR(d){var w,v,u,t,s,r,q,p,o=null,n=this.a,m=n.f
 m.k(B.f,"\ud83d\udce8 [WebRTC] _handleIncomingOffer method called",o,o)
 try{w=d.j(0,"callId")
 v="WEBRTC_OFFER_"+A.b(w)
@@ -544,18 +544,18 @@ r=A.N4(d)
 q=("Instance of '"+A.N4(d)+"'").length>200?200:("Instance of '"+A.N4(d)+"'").length
 m.k(B.f,"\ud83d\udcca [WebRTC] Offer data: "+B.c.ao("Instance of '"+r+"'",0,q)+"...",o,o)
 if(w!=null){n.h(0,v,t)
-if(n.a>100)n.a4(0)}this.c_h(d)}catch(p){s=A.u(p)
+if(n.a>100)n.a4(0)}this.c_i(d)}catch(p){s=A.u(p)
 m.k(B.u,"\u274c [WebRTC] Failed to handle incoming offer: "+A.b(s),o,o)}},
-dsF(d){var w,v,u,t,s,r=null,q=this.a,p=q.f
+dsG(d){var w,v,u,t,s,r=null,q=this.a,p=q.f
 p.k(B.f,"\ud83d\udce8 [WebRTC] _handleIncomingOfferDirect method called (no duplicate check)",r,r)
 try{w=A.aS(d.j(0,"callId"))
 p.k(B.f,"\ud83d\udce8 [WebRTC] Processing offer directly: "+A.b(w),r,r)
 if(w!=null){v="WEBRTC_OFFER_"+w
 u=new A.aA(Date.now(),0,!1)
 q.RG.h(0,v,u)
-p.k(B.f,"\ud83d\udd52 [WebRTC] Event timestamp recorded: "+A.b(u),r,r)}this.c_h(d)}catch(s){t=A.u(s)
+p.k(B.f,"\ud83d\udd52 [WebRTC] Event timestamp recorded: "+A.b(u),r,r)}this.c_i(d)}catch(s){t=A.u(s)
 p.k(B.u,"\u274c [WebRTC] Failed in direct offer handler: "+A.b(t),r,r)}},
-c_h(d){var w,v,u,t,s,r,q,p,o,n,m,l,k,j=null,i="callId",h="   - From User: ",g="callType",f="audio",e="timestamp"
+c_i(d){var w,v,u,t,s,r,q,p,o,n,m,l,k,j=null,i="callId",h="   - From User: ",g="callType",f="audio",e="timestamp"
 x.P.a(d)
 w=d
 u=J.aD(w,"fromUserId")
@@ -649,8 +649,8 @@ if(w!=null){w.eI(0)
 t.k(B.f,"\u2705 [WebRTC] Call overlay removed successfully",u,u)}else t.k(B.q,"\u26a0\ufe0f [WebRTC] No overlay to remove",u,u)
 v.d=null
 t.k(B.f,"\ud83d\udd04 [WebRTC] Call overlay reference cleared",u,u)},
-agh(d,e,f){return this.cLR(d,e,f)},
-cLR(a1,a2,a3){var w=0,v=A.l(x.H),u,t=2,s=[],r=this,q,p,o,n,m,l,k,j,i,h,g,f,e,d,a0
+agh(d,e,f){return this.cLS(d,e,f)},
+cLS(a1,a2,a3){var w=0,v=A.l(x.H),u,t=2,s=[],r=this,q,p,o,n,m,l,k,j,i,h,g,f,e,d,a0
 var $async$agh=A.h(function(a5,a6){if(a5===1){s.push(a6)
 w=t}for(;;)switch(w){case 0:f={}
 e=A.bO(a1.j(0,"fromUserId"))
@@ -700,8 +700,8 @@ k.k(B.u,"\u274c [WebRTC] Failed to insert overlay: "+A.b(l),null,null)
 r.d=null}case 1:return A.j(u,v)
 case 2:return A.i(s.at(-1),v)}})
 return A.k($async$agh,v)},
-bex(d){return this.csO(d)},
-csO(d){var w=0,v=A.l(x.H),u=1,t=[],s=this,r,q,p,o,n
+bex(d){return this.csP(d)},
+csP(d){var w=0,v=A.l(x.H),u=1,t=[],s=this,r,q,p,o,n
 var $async$bex=A.h(function(e,f){if(e===1){t.push(f)
 w=u}for(;;)switch(w){case 0:o=s.a
 o.k(B.f,"\ud83d\udcde [WebRTC] Accepting call...",null,null)
@@ -726,8 +726,8 @@ break
 case 5:return A.j(null,v)
 case 1:return A.i(t.at(-1),v)}})
 return A.k($async$bex,v)},
-bj9(d){return this.d50(d)},
-d50(d){var w=0,v=A.l(x.H),u=1,t=[],s=this,r,q,p,o
+bj9(d){return this.d51(d)},
+d51(d){var w=0,v=A.l(x.H),u=1,t=[],s=this,r,q,p,o
 var $async$bj9=A.h(function(e,f){if(e===1){t.push(f)
 w=u}for(;;)switch(w){case 0:p=s.a
 p.k(B.f,"\ud83d\udcde [WebRTC] Rejecting call...",null,null)
@@ -750,8 +750,8 @@ break
 case 5:return A.j(null,v)
 case 1:return A.i(t.at(-1),v)}})
 return A.k($async$bj9,v)},
-R9(d){return this.cYm(d)},
-cYm(a1){var w=0,v=A.l(x.H),u,t=2,s=[],r=this,q,p,o,n,m,l,k,j,i,h,g,f,e,d,a0
+R9(d){return this.cYn(d)},
+cYn(a1){var w=0,v=A.l(x.H),u,t=2,s=[],r=this,q,p,o,n,m,l,k,j,i,h,g,f,e,d,a0
 var $async$R9=A.h(function(a2,a3){if(a2===1){s.push(a3)
 w=t}for(;;)switch(w){case 0:e=r.a
 e.k(B.f,"\ud83d\udcde [WebRTC] Navigating to call page...",null,null)
@@ -817,8 +817,8 @@ return s}catch(t){v=A.u(t)
 this.a.k(B.u,"\u274c [WebRTC] Error getting navigation context: "+A.b(v),s,s)
 return s}}}
 C.bUM.prototype={
-Vl(d){return this.doK(d)},
-doK(d){var w=0,v=A.l(x.A),u,t,s,r,q,p,o,n,m
+Vl(d){return this.doL(d)},
+doL(d){var w=0,v=A.l(x.A),u,t,s,r,q,p,o,n,m
 var $async$Vl=A.h(function(e,f){if(e===1)return A.i(f,v)
 for(;;)switch(w){case 0:n=A.a([],x.t)
 m=x.g.a(d.j(0,"iceServers"))
@@ -832,8 +832,8 @@ w=1
 break
 case 1:return A.j(u,v)}})
 return A.k($async$Vl,v)},
-a3_(d,e,f,g){return this.chB(!0,!0,f,!0)},
-chB(d,e,f,g){var w=0,v=A.l(x.E),u,t=2,s=[],r=this,q,p,o,n
+a3_(d,e,f,g){return this.chC(!0,!0,f,!0)},
+chC(d,e,f,g){var w=0,v=A.l(x.E),u,t=2,s=[],r=this,q,p,o,n
 var $async$a3_=A.h(function(h,i){if(h===1){s.push(i)
 w=t}for(;;)switch(w){case 0:t=4
 p=r.b
@@ -860,8 +860,8 @@ break
 case 6:case 1:return A.j(u,v)
 case 2:return A.i(s.at(-1),v)}})
 return A.k($async$a3_,v)},
-bjh(d,e,f,g){return this.d5A(!0,!0,f,!0)},
-d5A(d,e,f,g){var w=0,v=A.l(x.E),u,t=2,s=[],r=this,q,p,o,n,m,l,k,j,i,h
+bjh(d,e,f,g){return this.d5B(!0,!0,f,!0)},
+d5B(d,e,f,g){var w=0,v=A.l(x.E),u,t=2,s=[],r=this,q,p,o,n,m,l,k,j,i,h
 var $async$bjh=A.h(function(a0,a1){if(a0===1){s.push(a1)
 w=t}for(;;)switch(w){case 0:t=4
 l=r.b
@@ -904,8 +904,8 @@ case 6:case 1:return A.j(u,v)
 case 2:return A.i(s.at(-1),v)}})
 return A.k($async$bjh,v)}}
 C.bUP.prototype={
-bpD(d){return this.dA3(d)},
-dA3(d){var w=0,v=A.l(x.y),u,t=2,s=[],r=this,q,p,o,n
+bpD(d){return this.dA4(d)},
+dA4(d){var w=0,v=A.l(x.y),u,t=2,s=[],r=this,q,p,o,n
 var $async$bpD=A.h(function(e,f){if(e===1){s.push(f)
 w=t}for(;;)switch(w){case 0:t=4
 r.a.k(B.f,"\ud83d\udd10 [WebRTC] Pre-checking permissions (video: "+d+")...",null,null)
@@ -932,8 +932,8 @@ break
 case 6:case 1:return A.j(u,v)
 case 2:return A.i(s.at(-1),v)}})
 return A.k($async$bpD,v)},
-bvw(d){return this.cBo(d)},
-cBo(d){var w=0,v=A.l(x.y),u,t=this,s,r,q
+bvw(d){return this.cBp(d)},
+cBp(d){var w=0,v=A.l(x.y),u,t=this,s,r,q
 var $async$bvw=A.h(function(e,f){if(e===1)return A.i(f,v)
 for(;;)switch(w){case 0:try{r=t.a
 r.k(B.f,"\ud83c\udf10 [WebRTC] Checking Web platform permissions...",null,null)
@@ -948,8 +948,8 @@ w=1
 break}case 1:return A.j(u,v)}})
 return A.k($async$bvw,v)}}
 C.bV8.prototype={
-bdR(d,e,f,g){return this.cjp(d,e,f,g)},
-cjp(a1,a2,a3,a4){var w=0,v=A.l(x.T),u,t=2,s=[],r=this,q,p,o,n,m,l,k,j,i,h,g,f,e,d,a0
+bdR(d,e,f,g){return this.cjq(d,e,f,g)},
+cjq(a1,a2,a3,a4){var w=0,v=A.l(x.T),u,t=2,s=[],r=this,q,p,o,n,m,l,k,j,i,h,g,f,e,d,a0
 var $async$bdR=A.h(function(a6,a7){if(a6===1){s.push(a7)
 w=t}for(;;)switch(w){case 0:t=4
 j=r.b
@@ -1027,8 +1027,8 @@ break
 case 6:case 1:return A.j(u,v)
 case 2:return A.i(s.at(-1),v)}})
 return A.k($async$bdR,v)},
-a9E(d,e,f,g,h,i){return this.cj8(d,e,f,g,h,i)},
-cj8(d,e,f,g,h,i){var w=0,v=A.l(x.H),u=1,t=[],s=this,r,q,p,o,n,m,l,k,j
+a9E(d,e,f,g,h,i){return this.cj9(d,e,f,g,h,i)},
+cj9(d,e,f,g,h,i){var w=0,v=A.l(x.H),u=1,t=[],s=this,r,q,p,o,n,m,l,k,j
 var $async$a9E=A.h(function(a0,a1){if(a0===1){t.push(a1)
 w=u}for(;;)switch(w){case 0:u=3
 o=s.b
@@ -1083,8 +1083,8 @@ break
 case 5:return A.j(null,v)
 case 1:return A.i(t.at(-1),v)}})
 return A.k($async$a9E,v)},
-bdP(d,e,f,g){return this.cjf(d,e,f,g)},
-cjf(d,e,f,g){var w=0,v=A.l(x.H),u=1,t=[],s=this,r,q,p,o,n,m,l,k
+bdP(d,e,f,g){return this.cjg(d,e,f,g)},
+cjg(d,e,f,g){var w=0,v=A.l(x.H),u=1,t=[],s=this,r,q,p,o,n,m,l,k
 var $async$bdP=A.h(function(h,i){if(h===1){t.push(i)
 w=u}for(;;)switch(w){case 0:u=3
 n=s.b
@@ -1122,8 +1122,8 @@ break
 case 5:return A.j(null,v)
 case 1:return A.i(t.at(-1),v)}})
 return A.k($async$bdP,v)},
-O2(d,e,f,g,h){return this.cji(d,e,f,g,h)},
-cji(d,e,f,g,h){var w=0,v=A.l(x.H),u,t=2,s=[],r=this,q,p,o,n,m,l,k,j,i
+O2(d,e,f,g,h){return this.cjj(d,e,f,g,h)},
+cjj(d,e,f,g,h){var w=0,v=A.l(x.H),u,t=2,s=[],r=this,q,p,o,n,m,l,k,j,i
 var $async$O2=A.h(function(a0,a1){if(a0===1){s.push(a1)
 w=t}for(;;)switch(w){case 0:t=4
 n=r.b
@@ -1176,14 +1176,14 @@ break
 case 6:case 1:return A.j(u,v)
 case 2:return A.i(s.at(-1),v)}})
 return A.k($async$O2,v)},
-bLd(d){return this.dDY(d)},
-dDY(d){var w=0,v=A.l(x.H),u=this,t,s
+bLd(d){return this.dDZ(d)},
+dDZ(d){var w=0,v=A.l(x.H),u=this,t,s
 var $async$bLd=A.h(function(e,f){if(e===1)return A.i(f,v)
 for(;;)switch(w){case 0:try{u.b.k(B.f,"Call status updated: "+d+" (handled via SSE events)",null,null)}catch(r){t=A.u(r)
 u.b.k(B.q,"Failed to update call status: "+A.b(t),null,null)}return A.j(null,v)}})
 return A.k($async$bLd,v)}}
 C.Bw.prototype={
-csy(d,e,f,g){var w=this,v=null,u=w.f
+csz(d,e,f,g){var w=this,v=null,u=w.f
 w.rx!==$&&A.b1()
 w.rx=new C.bUo(u,new C.bV2(w),new C.bV3(w))
 w.x2!==$&&A.b1()
@@ -1274,8 +1274,8 @@ break}case 1:return A.j(u,v)}})
 return A.k($async$a32,v)},
 bVh(){var w=x.N
 return A.aa(["iceServers",A.a([A.aa(["urls","stun:stun.l.google.com:19302"],w,w),A.aa(["urls","stun:stun1.l.google.com:19302"],w,w),A.aa(["urls","stun:stun2.l.google.com:19302"],w,w),A.aa(["urls","stun:stun3.l.google.com:19302"],w,w),A.aa(["urls","stun:stun4.l.google.com:19302"],w,w),A.aa(["urls","stun:stun.ekiga.net"],w,w),A.aa(["urls","stun:stun.ideasip.com"],w,w),A.aa(["urls","stun:stun.schlund.de"],w,w),A.aa(["urls","stun:stun.stunprotocol.org:3478"],w,w),A.aa(["urls","stun:stun.voiparound.com"],w,w),A.aa(["urls","stun:stun.voipbuster.com"],w,w),A.aa(["urls","stun:stun.voipstunt.com"],w,w),A.aa(["urls","stun:stun.counterpath.com"],w,w),A.aa(["urls","stun:stun.1und1.de"],w,w),A.aa(["urls","stun:stun.gmx.net"],w,w),A.aa(["urls","stun:stun.callwithus.com"],w,w),A.aa(["urls","stun:stun.counterpath.net"],w,w),A.aa(["urls","stun:stun.internetcalls.com"],w,w)],x.m),"iceCandidatePoolSize",10,"bundlePolicy","max-bundle","rtcpMuxPolicy","require","iceTransportPolicy","all","iceCandidateTimeout",30],w,x.z)},
-beb(d,e){return this.clu(d,e)},
-clu(d,e){var w=0,v=A.l(x.y),u,t=this
+beb(d,e){return this.clv(d,e)},
+clv(d,e){var w=0,v=A.l(x.y),u,t=this
 var $async$beb=A.h(function(f,g){if(f===1)return A.i(g,v)
 for(;;)switch(w){case 0:w=3
 return A.c(E.yN(new C.bV6(t,d,e),"startCall","\u767c\u8d77\u901a\u8a71\u5931\u6557",x.y),$async$beb)
@@ -1284,8 +1284,8 @@ w=1
 break
 case 1:return A.j(u,v)}})
 return A.k($async$beb,v)},
-qy(d){return this.djn(d)},
-djn(d){var w=0,v=A.l(x.y),u,t=this,s
+qy(d){return this.djo(d)},
+djo(d){var w=0,v=A.l(x.y),u,t=this,s
 var $async$qy=A.h(function(e,f){if(e===1)return A.i(f,v)
 for(;;)switch(w){case 0:s=d?"\u63a5\u807d\u901a\u8a71\u5931\u6557":"\u62d2\u7d55\u901a\u8a71\u5931\u6557"
 w=3
@@ -1308,7 +1308,7 @@ v.Q=new C.bUX(w)
 v.e=new C.bUY(w)
 v.b=new C.bUZ(w)
 v.d=new C.bV_(w)},
-cAf(){var w,v
+cAg(){var w,v
 if(this.p1==null)return null
 w=Date.now()
 v=this.p1
@@ -1371,11 +1371,11 @@ if((t.c&4)===0){w=A.aa(["state",d,"callId",r.y,"timestamp",new A.aA(Date.now(),0
 u.k(B.f,"\ud83d\udce4 [WebRTC] Adding state change to controller: "+A.b(w),q,q)
 t.L(0,w)
 u.k(B.f,"\u2705 [WebRTC] Call state change notification sent successfully",q,q)}else u.k(B.q,"\u26a0\ufe0f [WebRTC] Call state controller is closed, cannot notify state change: "+d,q,q)
-r.cHf(d)}catch(s){v=A.u(s)
+r.cHg(d)}catch(s){v=A.u(s)
 u=r.f
 u.k(B.u,"\u274c [WebRTC] Failed to notify call state change: "+A.b(v),q,q)
 u.k(B.u,"\ud83d\udcca [WebRTC] Error details: "+J.a4(v).l(0)+" - "+J.ao(v),q,q)}},
-cHf(d){var w,v,u,t,s=this,r=null
+cHg(d){var w,v,u,t,s=this,r=null
 try{v=s.f
 v.k(B.f,"\ud83d\udcca [WebRTC EventBus] Emitting local state change: "+d,r,r)
 u=d==="ended"?"ended":d
@@ -1391,15 +1391,15 @@ this.bg8()},
 gaLo(){return this.as},
 gaLt(){return this.at},
 gaAh(){return this.y},
-gdkM(){var w=this.cx
+gdkN(){var w=this.cx
 return new A.e_(w,A.B(w).m("e_<1>"))},
-gdBa(){var w=this.cy
+gdBb(){var w=this.cy
 return new A.e_(w,A.B(w).m("e_<1>"))},
-gduu(){var w=this.db
+gduv(){var w=this.db
 return new A.e_(w,A.B(w).m("e_<1>"))},
-gclk(){var w=this.dx
+gcll(){var w=this.dx
 return new A.e_(w,A.B(w).m("e_<1>"))},
-c2A(){this.bfd()
+c2B(){this.bfd()
 this.k4=A.dC(B.B9,new C.bV0(this))},
 bfd(){var w=this.k4
 if(w!=null)w.ai()
@@ -1427,7 +1427,7 @@ if(s.at&&s.ay!=null){p=s.x1
 p===$&&A.f()
 o=s.ay
 o.toString
-p.c.dtQ(o)}u=1
+p.c.dtR(o)}u=1
 w=5
 break
 case 3:u=2
@@ -1442,7 +1442,7 @@ break
 case 5:return A.j(null,v)
 case 1:return A.i(t.at(-1),v)}})
 return A.k($async$aio,v)},
-cOU(){var w,v,u,t=null,s=this.f
+cOV(){var w,v,u,t=null,s=this.f
 s.k(B.q,"ICE connection failed, attempting to restart ICE...",t,t)
 v=this.r
 if(v!=null)try{v=v.at
@@ -1639,8 +1639,8 @@ C(d){if(d!=null)switch(d){case"video":return D.bTY
 case"audio":return D.bTW
 case"unknown_default_open_api":return D.bTX}return null}}
 C.bC3.prototype={
-bEv(d,e){return this.doJ(d,e)},
-doJ(d,e){var w=0,v=A.l(x.A),u,t,s,r,q,p
+bEv(d,e){return this.doK(d,e)},
+doK(d,e){var w=0,v=A.l(x.A),u,t,s,r,q,p
 var $async$bEv=A.h(function(f,g){if(f===1)return A.i(g,v)
 for(;;)switch(w){case 0:s=x.z
 r=x.N
@@ -1668,11 +1668,11 @@ a2X(){var w=A.P(this.ol(),x.F)
 B.e.A(w,this.a31())
 return w}}
 C.ayb.prototype={
-csf(d){var w=this,v=w.d
+csg(d){var w=this,v=w.d
 v.addEventListener("ended",A.eT(new C.brQ(w)))
 v.addEventListener("mute",A.eT(new C.brR(w)))
 v.addEventListener("unmute",A.eT(new C.brS(w)))},
-gca0(){return this.d.id},
+gca1(){return this.d.id},
 ghW(){return this.d.enabled},
 shW(d){this.d.enabled=d},
 eB(){var w=0,v=A.l(x.H),u=this
@@ -1681,8 +1681,8 @@ for(;;)switch(w){case 0:u.d.stop()
 return A.j(null,v)}})
 return A.k($async$eB,v)}}
 C.brH.prototype={
-a2Z(d){return this.chA(d)},
-chA(d){var w=0,v=A.l(x.E),u,t=2,s=[],r,q,p,o,n,m,l,k,j,i,h,g,f,e
+a2Z(d){return this.chB(d)},
+chB(d){var w=0,v=A.l(x.E),u,t=2,s=[],r,q,p,o,n,m,l,k,j,i,h,g,f,e
 var $async$a2Z=A.h(function(a1,a2){if(a1===1){s.push(a2)
 w=t}for(;;)switch(w){case 0:t=4
 try{if(!C.ebN())if(x.f.b(d.j(0,"video"))&&J.aD(d.j(0,"video"),"facingMode")!=null)J.pC(d.j(0,"video"),"facingMode")
@@ -1733,7 +1733,7 @@ case 6:case 1:return A.j(u,v)
 case 2:return A.i(s.at(-1),v)}})
 return A.k($async$a2Z,v)}}
 C.aBu.prototype={
-csl(d,e){var w=this,v=w.at
+csm(d,e){var w=this,v=w.at
 v===$&&A.f()
 v.addEventListener("datachannel",A.eT(new C.bC5(w)))
 v.addEventListener("icecandidate",A.eT(new C.bC6(w)))
@@ -1767,8 +1767,8 @@ w=1
 break
 case 1:return A.j(u,v)}})
 return A.k($async$bmM,v)},
-a9Z(d){return this.cjX(d)},
-cjX(d){var w=0,v=A.l(x.H),u=this,t
+a9Z(d){return this.cjY(d)},
+cjY(d){var w=0,v=A.l(x.H),u=this,t
 var $async$a9Z=A.h(function(e,f){if(e===1)return A.i(f,v)
 for(;;)switch(w){case 0:t=u.at
 t===$&&A.f()
@@ -1776,8 +1776,8 @@ w=2
 return A.c(A.fd(t.setLocalDescription({type:d.b,sdp:d.a}),x.X),$async$a9Z)
 case 2:return A.j(null,v)}})
 return A.k($async$a9Z,v)},
-aa2(d){return this.ckb(d)},
-ckb(d){var w=0,v=A.l(x.H),u=this,t
+aa2(d){return this.ckc(d)},
+ckc(d){var w=0,v=A.l(x.H),u=this,t
 var $async$aa2=A.h(function(e,f){if(e===1)return A.i(f,v)
 for(;;)switch(w){case 0:t=u.at
 t===$&&A.f()
@@ -1785,8 +1785,8 @@ w=2
 return A.c(A.fd(t.setRemoteDescription({type:d.b,sdp:d.a}),x.X),$async$aa2)
 case 2:return A.j(null,v)}})
 return A.k($async$aa2,v)},
-akn(d){return this.diA(d)},
-diA(d){var w=0,v=A.l(x.H),u=this,t,s
+akn(d){return this.diB(d)},
+diB(d){var w=0,v=A.l(x.H),u=this,t,s
 var $async$akn=A.h(function(e,f){if(e===1)return A.i(f,v)
 for(;;)switch(w){case 0:s=u.at
 s===$&&A.f()
@@ -1806,8 +1806,8 @@ w=1
 break
 case 1:return A.j(u,v)}})
 return A.k($async$aI,v)},
-blP(d,e){return this.dj3(d,e)},
-dj3(d,e){var w=0,v=A.l(x.j),u,t=this,s
+blP(d,e){return this.dj4(d,e)},
+dj4(d,e){var w=0,v=A.l(x.j),u,t=this,s
 var $async$blP=A.h(function(f,g){if(f===1)return A.i(g,v)
 for(;;)switch(w){case 0:s=t.at
 s===$&&A.f()
@@ -1829,7 +1829,7 @@ C.rV.prototype={
 W(){return"RTCIceConnectionState."+this.b}}
 C.bC2.prototype={}
 C.zV.prototype={
-gdzy(){return this.b}}
+gdzz(){return this.b}}
 C.Vt.prototype={
 l(d){var w=this.d
 return"Track(id: "+A.b(w.id)+", kind: "+A.b(w.kind)+", label: "+A.b(w.label)+", enabled: "+A.b(w.enabled)+", muted: "+A.b(w.muted)+")"}}
@@ -1914,7 +1914,7 @@ if(u!=null&&B.i.bn(t.bV(u).a,1000)<5000){n.k(B.f,"\ud83d\udce8 [WebRTC EventBus]
 return}n.k(B.f,"\ud83d\udcde [WebRTC EventBus] Calling _handleIncomingOffer with data: "+d.l(0),p,p)
 try{r=o.x1
 r===$&&A.f()
-r.c.dsF(d)
+r.c.dsG(d)
 n.k(B.f,"\u2705 [WebRTC EventBus] _handleIncomingOffer completed successfully",p,p)}catch(q){s=A.u(q)
 n.k(B.u,"\u274c [WebRTC EventBus] _handleIncomingOffer failed: "+A.b(s),p,p)
 n.k(B.u,"\ud83d\udcca [WebRTC EventBus] Offer error details: "+J.a4(s).l(0)+" - "+J.ao(s),p,p)}o.e.tD("WEBRTC_STATE_CHANGE",A.aa(["state","offer_received","callId",w,"userId",o.z,"fromUserId",d.j(0,"fromUserId")],x.N,x.z),"WebRTCService")},
@@ -2251,7 +2251,7 @@ s=p.y
 r=p.z
 q=p.Q
 w=4
-return A.c(t.bdP(p.cAf(),s,r,q),$async$$0)
+return A.c(t.bdP(p.cAg(),s,r,q),$async$$0)
 case 4:w=5
 return A.c(t.bLd("ended"),$async$$0)
 case 5:case 3:w=6
@@ -2296,11 +2296,11 @@ t.k(B.f,"PeerConnection state changed: "+d.l(0),v,v)
 switch(d.W()){case"RTCPeerConnectionState.RTCPeerConnectionStateConnected":u.bfd()
 w="connected"
 break
-case"RTCPeerConnectionState.RTCPeerConnectionStateConnecting":u.c2A()
+case"RTCPeerConnectionState.RTCPeerConnectionStateConnecting":u.c2B()
 w="connecting"
 break
 case"RTCPeerConnectionState.RTCPeerConnectionStateDisconnected":t.k(B.q,"Connection disconnected, attempting to reconnect...",v,v)
-u.c2A()
+u.c2B()
 w="disconnected"
 break
 case"RTCPeerConnectionState.RTCPeerConnectionStateFailed":t.k(B.u,"Connection failed, attempting recovery...",v,v)
@@ -2316,7 +2316,7 @@ C.bV_.prototype={
 $1(d){var w=null,v=this.a,u=v.f
 u.k(B.f,"ICE connection state changed: "+d.l(0),w,w)
 if(d===D.a73){u.k(B.q,"ICE connection failed, attempting recovery...",w,w)
-v.cOU()}else if(d===D.a72){u.k(B.f,"ICE connection established successfully",w,w)
+v.cOV()}else if(d===D.a72){u.k(B.f,"ICE connection established successfully",w,w)
 v.bfd()}},
 $S:z+4}
 C.bV0.prototype={
@@ -2475,4 +2475,4 @@ D.bTY=new C.adh("video")})();(function staticFields(){$.dB9=null
 $.dBa=null})();(function lazyInitializers(){var w=a.lazyFinal
 w($,"ej_","dpv",()=>new C.bC3())
 w($,"egn","dph",()=>B.c.t(A.aN(A.aN(A.aN(A.ym(),"window"),"navigator"),"userAgent"),"Firefox"))})()};
-(a=>{a["U3SEH/i3BugRH9sVdQcymlZ6bKU="]=a.current})($__dart_deferred_initializers__);
+(a=>{a["5E8mapqYdatkZl7EoE47K43s/a4="]=a.current})($__dart_deferred_initializers__);
