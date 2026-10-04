@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- Versioned cache marker. -->
-    <meta name="cache-version" content="1.0.1938">
+    <meta name="cache-version" content="1.0.1939">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -29,8 +29,8 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.1938+1938">
-  <meta name="source-commit" content="5e440e1bd56b5029636f41ad0dac324245d57e40">
+  <meta name="version" content="1.0.1939+1939">
+  <meta name="source-commit" content="1e91af2b1928ee9a4dc0567257384b4250b17180">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     // Request the largest available Telegram Mini App viewport before Flutter
@@ -443,7 +443,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market｜台灣與泰國生活用品線上市集</title>
-  <link rel="manifest" href="manifest.json?v=1.0.1938">
+  <link rel="manifest" href="manifest.json?v=1.0.1939">
   
   <!-- PWA ?????????????????? -->
   <meta name="application-name" content="Agora Market">
@@ -451,8 +451,8 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
-  <link rel="preload" href="flutter_bootstrap.1.0.1938.js" as="script">
-  <link rel="preload" href="main.dart.js?v=1.0.1938" as="script" fetchpriority="high">
+  <link rel="preload" href="flutter_bootstrap.1.0.1939.js" as="script">
+  <link rel="preload" href="main.dart.js?v=1.0.1939" as="script" fetchpriority="high">
   <link rel="preload" href="canvaskit/canvaskit.js" as="script">
   <link rel="preload" href="canvaskit/canvaskit.wasm" as="fetch" type="application/wasm" crossorigin>
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
@@ -2138,6 +2138,27 @@
         );
       }
 
+      function resolveIOSStandalonePaintFrame(standalone, viewport, safeArea, layoutViewport, contentFrame) {
+        const tolerance = 2;
+        const canExtend = standalone && Number(viewport.scale || 1) <= 1.01;
+        const paintInsets = {
+          left: canExtend && Math.abs(contentFrame.left - safeArea.left) <= tolerance
+            ? safeArea.left : 0,
+          right: canExtend && Math.abs(contentFrame.left + contentFrame.width -
+            (layoutViewport.width - safeArea.right)) <= tolerance ? safeArea.right : 0,
+          bottom: canExtend && Math.abs(contentFrame.top + contentFrame.height -
+            (layoutViewport.height - safeArea.bottom)) <= tolerance ? safeArea.bottom : 0
+        };
+        return {
+          frame: Object.assign({}, contentFrame, {
+            left: contentFrame.left - paintInsets.left,
+            width: contentFrame.width + paintInsets.left + paintInsets.right,
+            height: contentFrame.height + paintInsets.bottom
+          }),
+          paintInsets: paintInsets
+        };
+      }
+
       function computeSafeOffsets() {
         const safeArea = readSafeAreaInsets();
         const layoutViewport = readLayoutViewportSize(safeArea);
@@ -2147,16 +2168,12 @@
           safeArea,
           layoutViewport
         );
-        // Paint the home-indicator band with Flutter too, while keeping the
-        // routed content inside its existing safe frame. Do not extend a
-        // keyboard-constrained viewport or a Safari browser viewport.
-        const safeBottom = layoutViewport.height - safeArea.bottom;
-        const bottomPaintInset = isStandalone && safeArea.bottom > 0 &&
-          Math.abs(contentFrame.top + contentFrame.height - safeBottom) <= 2
-          ? safeArea.bottom : 0;
-        const frame = Object.assign({}, contentFrame, {
-          height: contentFrame.height + bottomPaintInset
-        });
+        // One renderer owns the bottom and side bands. Content retains its
+        // safe frame; keyboard-constrained axes and zoom do not gain space.
+        const paint = resolveIOSStandalonePaintFrame(isStandalone, vv, safeArea, layoutViewport, contentFrame);
+        const frame = paint.frame;
+        const paintInsets = paint.paintInsets;
+        const bottomPaintInset = paintInsets.bottom;
         const safeTop = frame.top;
         const safeLeft = frame.left;
         
@@ -2166,7 +2183,7 @@
                  ', safeTop=' + safeTop + ', safeLeft=' + safeLeft);
         }
         
-        return { safeTop, safeLeft, frame, contentFrame, bottomPaintInset, safeArea, layoutViewport };
+        return { safeTop, safeLeft, frame, contentFrame, paintInsets, bottomPaintInset, safeArea, layoutViewport };
       }
 
       function publishOffsetStatus(root, geometry) {
@@ -2192,6 +2209,7 @@
           layoutViewport: geometry.layoutViewport,
           expectedFrame: frame,
           contentFrame: geometry.contentFrame,
+          paintInsets: geometry.paintInsets,
           bottomPaintInset: geometry.bottomPaintInset,
           actualRoot: {
             top: rect.top,
@@ -2244,7 +2262,10 @@
         root.style.left = frame.left + 'px';
         root.style.width = frame.width + 'px';
         root.style.height = frame.height + 'px';
+        root.setAttribute('data-agora-content-width', geometry.contentFrame.width);
         root.setAttribute('data-agora-content-height', geometry.contentFrame.height);
+        root.setAttribute('data-agora-left-paint-inset', geometry.paintInsets.left);
+        root.setAttribute('data-agora-right-paint-inset', geometry.paintInsets.right);
         root.setAttribute('data-agora-bottom-paint-inset', geometry.bottomPaintInset);
         root.style.willChange = 'transform';
         root.style.transformOrigin = '0 0';
@@ -2271,10 +2292,18 @@
           frame.top,
           frame.width,
           frame.height,
-          frame.transform
+          frame.transform,
+          geometry.contentFrame.width,
+          geometry.contentFrame.height,
+          geometry.paintInsets.left,
+          geometry.paintInsets.right,
+          geometry.paintInsets.bottom
         ].join('|');
         if (appliedSignature !== lastAppliedRootSignature) {
           lastAppliedRootSignature = appliedSignature;
+          // Safe-area changes can move/resize content while the paint host
+          // keeps exactly the same dimensions, so ResizeObserver alone misses them.
+          window.dispatchEvent(new Event('agora:pwa-host-geometry'));
           // visualViewport resize does not consistently bubble to window on
           // iOS. Flutter listens to the window resize boundary, so publish one
           // after the host frame changes to force a complete layout and paint.
@@ -3285,7 +3314,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.1.0.1938.js";
+        script.src = "flutter_bootstrap.1.0.1939.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
@@ -3595,7 +3624,7 @@
   <script src="web_vitals.js"></script>
   
   <!-- ?????????????? -->
-  <script src="offline_handler.js"></script>
+  <script src="offline_handler.1e91af2b1928.js"></script>
   
   <!-- GitHub Pages 404 ??????????????-->
   <script>
@@ -3762,6 +3791,7 @@
           safeArea: status.safeArea || null,
           expectedFrame: status.expectedFrame || null,
           contentFrame: status.contentFrame || null,
+          paintInsets: status.paintInsets || null,
           bottomPaintInset: number(status.bottomPaintInset),
           detected: typeof status.detected === 'boolean' ? status.detected : null,
           listOffset: number(doc.getAttribute('data-agora-product-list-scroll-offset')),
@@ -3891,6 +3921,20 @@
           record('diagnostic-bottom-touch'); render();
         };
         panel.appendChild(bottomTarget);
+        ['left', 'right'].forEach(function (side) {
+          var inset = snapshot('side-target').paintInsets;
+          if (!inset || !(inset[side] > 0)) return;
+          var sideTarget = textNode('button', side === 'left' ? '左側測試' : '右側測試');
+          sideTarget.id = 'agora-diagnostic-' + side + '-touch-target';
+          sideTarget.style.cssText = 'position:absolute;top:50%;width:' + Math.min(inset[side], 44) +
+            'px;height:64px;padding:0;z-index:2;font-size:11px;' + side + ':0;';
+          sideTarget.onclick = function (event) {
+            lastTouch = { kind: side, x: number(event.clientX), y: number(event.clientY), target: rect(sideTarget) };
+            sideTarget.textContent = '通過 x=' + lastTouch.x;
+            record('diagnostic-' + side + '-touch'); render();
+          };
+          panel.appendChild(sideTarget);
+        });
         var output = textNode('pre', '');
         output.style.cssText = 'white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.5 monospace;';
         panel.appendChild(output);
