@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- Versioned cache marker. -->
-    <meta name="cache-version" content="1.0.1936">
+    <meta name="cache-version" content="1.0.1937">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -29,8 +29,8 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.1936+1936">
-  <meta name="source-commit" content="7b9e155265aff68b3d8a708c93e19faed4bf9fd8">
+  <meta name="version" content="1.0.1937+1937">
+  <meta name="source-commit" content="9d2476373117723cabde123c812618cc90f6a411">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     // Request the largest available Telegram Mini App viewport before Flutter
@@ -443,7 +443,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market｜台灣與泰國生活用品線上市集</title>
-  <link rel="manifest" href="manifest.json?v=1.0.1936">
+  <link rel="manifest" href="manifest.json?v=1.0.1937">
   
   <!-- PWA ?????????????????? -->
   <meta name="application-name" content="Agora Market">
@@ -451,8 +451,8 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
-  <link rel="preload" href="flutter_bootstrap.1.0.1936.js" as="script">
-  <link rel="preload" href="main.dart.js?v=1.0.1936" as="script" fetchpriority="high">
+  <link rel="preload" href="flutter_bootstrap.1.0.1937.js" as="script">
+  <link rel="preload" href="main.dart.js?v=1.0.1937" as="script" fetchpriority="high">
   <link rel="preload" href="canvaskit/canvaskit.js" as="script">
   <link rel="preload" href="canvaskit/canvaskit.wasm" as="fetch" type="application/wasm" crossorigin>
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
@@ -3271,7 +3271,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.1.0.1936.js";
+        script.src = "flutter_bootstrap.1.0.1937.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
@@ -3581,7 +3581,7 @@
   <script src="web_vitals.js"></script>
   
   <!-- ?????????????? -->
-  <script src="offline_handler.7b9e155265af.js"></script>
+  <script src="offline_handler.9d2476373117.js"></script>
   
   <!-- GitHub Pages 404 ??????????????-->
   <script>
@@ -3643,6 +3643,61 @@
     };
   </script>
   
+  <script id="pwa-background-test">
+    // Opt-in paint experiment: retain the real Flutter canvas and host geometry.
+    // No storage, network, inputs or permanent appearance changes.
+    window.__AGORA_SHOW_BACKGROUND_TEST = function () {
+      if (document.getElementById('agora-background-test')) return;
+      var root = document.getElementById('flutter-root');
+      if (!root || !document.documentElement.hasAttribute('data-agora-page-background')) return;
+      var style = document.createElement('style');
+      var band = document.createElement('div');
+      band.style.cssText = 'position:absolute;left:0;top:0;width:100%;pointer-events:none;z-index:2147483645;background:var(--startup-canvas);';
+      var bar = document.createElement('section');
+      bar.id = 'agora-background-test';
+      bar.setAttribute('aria-label', '底部背景 A/B 測試');
+      bar.style.cssText = 'position:absolute;left:8px;right:8px;top:4px;z-index:2147483646;background:#101318;color:white;padding:8px;font:12px/1.4 monospace;';
+      var info = document.createElement('div');
+      var mode = 'A';
+      var lastTouch = '';
+      function render() {
+        var box = root.getBoundingClientRect();
+        var vv = window.visualViewport;
+        band.style.height = Math.max(0, box.top) + 'px';
+        info.textContent = mode + ' / root=' + [box.x, box.y, box.width, box.height].join(',') +
+          ' / doc=' + [window.scrollX, window.scrollY].join(',') +
+          ' / vv=' + (vv ? [vv.offsetLeft, vv.offsetTop, vv.width, vv.height].join(',') : '?') + lastTouch;
+      }
+      function button(id, label, action) {
+        var target = document.createElement('button');
+        target.id = id; target.textContent = label;
+        target.style.cssText = 'padding:10px;margin:0 4px 6px 0;font-size:14px;';
+        target.onclick = function (event) {
+          lastTouch = ' / touch=' + event.clientX + ',' + event.clientY;
+          action(); render();
+        };
+        bar.appendChild(target);
+      }
+      button('agora-background-test-a', 'A 原始漸層', function () {
+        mode = 'A'; style.textContent = ''; band.hidden = true;
+      });
+      button('agora-background-test-b', 'B 純色', function () {
+        mode = 'B';
+        style.textContent = 'html[data-agora-page-background],html[data-agora-page-background] body{background:var(--agora-page-background)!important;}';
+        band.hidden = false;
+      });
+      button('agora-background-test-close', '結束', function () {
+        clearInterval(timer); style.remove(); band.remove(); bar.remove();
+      });
+      bar.appendChild(info);
+      band.hidden = true;
+      document.head.appendChild(style);
+      document.body.appendChild(band);
+      root.appendChild(bar);
+      render();
+      var timer = setInterval(render, 1000);
+    };
+  </script>
   <script id="pwa-layout-diagnostics">
     // Explicitly opened local diagnostics: no account/input data or uploads.
     (function () {
@@ -3791,6 +3846,14 @@
           close.onclick();
         };
         panel.appendChild(colorButton);
+        var backgroundTest = textNode('button', '底部背景 A/B 測試');
+        backgroundTest.id = 'agora-background-test-open';
+        backgroundTest.style.cssText = 'display:block;margin:12px 0;padding:12px;font-size:16px;';
+        backgroundTest.onclick = function () {
+          close.onclick();
+          window.__AGORA_SHOW_BACKGROUND_TEST();
+        };
+        panel.appendChild(backgroundTest);
         var home = textNode('a', ' 商城首頁'); home.href = '/#/home';
         home.onclick = close.onclick;
         home.style.color = '#90c7ff'; panel.appendChild(home);
