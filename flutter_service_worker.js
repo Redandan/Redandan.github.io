@@ -8,7 +8,7 @@
 
 'use strict';
 
-const BUILD_VERSION = 'bb1c3353c568';
+const BUILD_VERSION = '84091ac66756';
 const LEGACY_FLUTTER_CACHES = new Set([
   'flutter-app-cache',
   'flutter-temp-cache',
