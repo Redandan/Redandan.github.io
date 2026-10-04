@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- Versioned cache marker. -->
-    <meta name="cache-version" content="1.0.1944">
+    <meta name="cache-version" content="1.0.1945">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -29,8 +29,8 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.1944+1944">
-  <meta name="source-commit" content="84091ac667564ddf637886d4bc410ac638b78950">
+  <meta name="version" content="1.0.1945+1945">
+  <meta name="source-commit" content="17bdf245810074ed19aa033cf5b7a36b54bdf3d9">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     // Request the largest available Telegram Mini App viewport before Flutter
@@ -443,7 +443,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market｜台灣與泰國生活用品線上市集</title>
-  <link rel="manifest" href="manifest.json?v=1.0.1944">
+  <link rel="manifest" href="manifest.json?v=1.0.1945">
   
   <!-- PWA ?????????????????? -->
   <meta name="application-name" content="Agora Market">
@@ -451,8 +451,8 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
-  <link rel="preload" href="flutter_bootstrap.1.0.1944.js" as="script">
-  <link rel="preload" href="main.dart.js?v=1.0.1944" as="script" fetchpriority="high">
+  <link rel="preload" href="flutter_bootstrap.1.0.1945.js" as="script">
+  <link rel="preload" href="main.dart.js?v=1.0.1945" as="script" fetchpriority="high">
   <link rel="preload" href="canvaskit/canvaskit.js" as="script">
   <link rel="preload" href="canvaskit/canvaskit.wasm" as="fetch" type="application/wasm" crossorigin>
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
@@ -3318,7 +3318,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.1.0.1944.js";
+        script.src = "flutter_bootstrap.1.0.1945.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
@@ -3628,7 +3628,7 @@
   <script src="web_vitals.js"></script>
   
   <!-- ?????????????? -->
-  <script src="offline_handler.84091ac66756.js"></script>
+  <script src="offline_handler.17bdf2458100.js"></script>
   
   <!-- GitHub Pages 404 ??????????????-->
   <script>
@@ -3744,6 +3744,163 @@
       render();
       var timer = setInterval(render, 1000);
     };
+  </script>
+  <script id="pwa-login-layer-probe">
+    // Inspect the real login page in place. No cloned layout, storage or upload.
+    (function () {
+      'use strict';
+      var bar = null, style = null, timer = null, level = 0, baseline = null;
+      var details = null, info = null, lastTouch = null, previousColors = false;
+      var documentRoot = document.documentElement;
+      function round(n) { return Math.round(n * 100) / 100; }
+      function box(node) {
+        var r = node.getBoundingClientRect();
+        return { x: round(r.x), y: round(r.y), w: round(r.width), h: round(r.height) };
+      }
+      function label(node) {
+        // Deliberately omit text, input values, attributes and arbitrary IDs.
+        return node.tagName.toLowerCase() + (node.id === 'flutter-root' ? '#flutter-root' : '');
+      }
+      function geometry() { return window.__AGORA_READ_LAYOUT_DIAGNOSTICS().current; }
+      function metrics(node, child) {
+        var s = getComputedStyle(node), r = box(node), clipped = null;
+        if (child && /hidden|clip|scroll|auto/.test(s.overflowX + s.overflowY)) {
+          var c = box(child);
+          clipped = { left: round(Math.max(0, r.x - c.x)), top: round(Math.max(0, r.y - c.y)),
+            right: round(Math.max(0, c.x + c.w - r.x - r.w)),
+            bottom: round(Math.max(0, c.y + c.h - r.y - r.h)) };
+        }
+        return { node: label(node), rect: r, background: s.backgroundColor,
+          backgroundImage: s.backgroundImage === 'none' ? 'none' : 'present',
+          display: s.display, visibility: s.visibility, opacity: s.opacity,
+          overflowX: s.overflowX, overflowY: s.overflowY, position: s.position,
+          transform: s.transform, zIndex: s.zIndex, pointerEvents: s.pointerEvents,
+          clipPath: s.clipPath, contain: s.contain, clippedChild: clipped };
+      }
+      function inventory() {
+        var root = document.getElementById('flutter-root'), rows = [], nodes = [];
+        // Include the actual engine subtree and open shadow roots, not just root rects.
+        function visit(node) {
+          if (nodes.length >= 96 || node === bar || node.id === 'agora-layout-color-layer') return;
+          nodes.push(node);
+          Array.from(node.children || []).forEach(visit);
+          if (node.shadowRoot) Array.from(node.shadowRoot.children).forEach(visit);
+        }
+        if (root) visit(root);
+        var child = root;
+        for (var p = root && root.parentElement; p; p = p.parentElement) {
+          rows.push(metrics(p, child)); child = p;
+        }
+        return { ancestors: rows, engine: nodes.map(function (n) { return metrics(n, n.firstElementChild); }),
+          truncated: nodes.length >= 96 };
+      }
+      function hitStack(x, y) {
+        var result = [], seen = new Set();
+        function read(scope) {
+          if (!scope.elementsFromPoint) return;
+          scope.elementsFromPoint(x, y).forEach(function (node) {
+            if (seen.has(node) || (bar && bar.contains(node))) return;
+            seen.add(node); result.push(metrics(node));
+            if (node.shadowRoot) read(node.shadowRoot);
+          });
+        }
+        read(document);
+        return { x: x, y: round(y), elements: result };
+      }
+      function read() {
+        var data = geometry(), login = data.login, root = data.root;
+        var view = login && login.viewport, content = login && login.content;
+        var h = data.visualViewport ? data.visualViewport.y + data.visualViewport.height : innerHeight;
+        var bottom = data.safeArea && data.safeArea.bottom || 0;
+        return { mode: level, baseline: baseline, current: data, actualLayers: inventory(),
+          gaps: { rootToDocumentBottom: root && round(data.html.y + data.html.h - root.y - root.h),
+            rootToContentBottom: root && view && round(root.h - view.y - view.h),
+            viewportToContentBottom: view && content && round(view.y + view.h - content.y - content.h) },
+          bottomHits: [hitStack(Math.round(innerWidth / 2), Math.max(0, h - 2)),
+            hitStack(Math.round(innerWidth / 2), Math.max(0, h - bottom - 2))], touch: lastTouch };
+      }
+      function render() {
+        if (!bar) return;
+        var data = read(), g = data.current, login = g.login;
+        // The panel is a body sibling: never clipped by the root under investigation.
+        bar.style.top = Math.max(4, g.root ? g.root.y + 4 : 4) + 'px';
+        info.textContent = '目前第 ' + level + ' 層 / 捲動 ' + (login ? login.offset + '/' + login.maxScrollExtent : '?') +
+          '\n底端差：文件→承載 ' + data.gaps.rootToDocumentBottom +
+          ' / 承載→視窗 ' + data.gaps.rootToContentBottom +
+          ' / 視窗→內容 ' + data.gaps.viewportToContentBottom + ' px' +
+          (lastTouch ? '\n觸控 ' + lastTouch.x + ',' + lastTouch.y : '');
+        var clean = Object.assign({}, data, { current: Object.assign({}, g, { time: undefined, reason: undefined }) });
+        var next = JSON.stringify(clean, null, 2);
+        if (details.lastChild.textContent !== next) details.lastChild.textContent = next;
+        bar.querySelectorAll('[data-layer]').forEach(function (button) {
+          button.setAttribute('aria-pressed', String(Number(button.dataset.layer) === level));
+          button.style.outline = Number(button.dataset.layer) === level ? '3px solid white' : 'none';
+        });
+      }
+      function setLevel(value) {
+        if (!bar || ![1,2,3,4].includes(value)) return;
+        level = value; documentRoot.setAttribute('data-agora-layer-probe', String(level));
+        window.dispatchEvent(new Event('agora:layer-probe')); render();
+      }
+      function close() {
+        if (!bar) return;
+        clearInterval(timer); timer = null;
+        documentRoot.removeAttribute('data-agora-layer-probe');
+        style.remove(); bar.remove(); bar = null; style = null; level = 0;
+        window.dispatchEvent(new Event('agora:layer-probe'));
+        if (previousColors) window.__AGORA_SET_LAYOUT_COLORS(true);
+        var url = new URL(location.href);
+        if (url.searchParams.has('login_layers')) {
+          url.searchParams.delete('login_layers'); history.replaceState(null, '', url.href);
+        }
+      }
+      window.__AGORA_READ_LOGIN_LAYER_PROBE = read;
+      window.__AGORA_CLOSE_LOGIN_LAYER_PROBE = close;
+      window.__AGORA_SHOW_LOGIN_LAYER_PROBE = function () {
+        if (bar || !window.__AGORA_READ_LAYOUT_DIAGNOSTICS) return;
+        var data = geometry();
+        if (!data.login || (data.login.routerTop && data.login.routerTop !== 'LoginRoute')) return;
+        baseline = { geometry: data, actualLayers: inventory() };
+        previousColors = data.colorsEnabled;
+        if (previousColors) window.__AGORA_SET_LAYOUT_COLORS(false);
+        style = document.createElement('style'); style.id = 'agora-login-layer-probe-style';
+        style.textContent = 'html[data-agora-layer-probe],html[data-agora-layer-probe] body{background:#ff1744!important;}' +
+          'html[data-agora-layer-probe] #flutter-root{background:#0057ff!important;}' +
+          'html[data-agora-layer-probe="1"] #flutter-root{opacity:0!important;pointer-events:none!important;}' +
+          'html[data-agora-layer-probe="2"] #flutter-root>*{visibility:hidden!important;}';
+        document.head.appendChild(style);
+        bar = document.createElement('section'); bar.id = 'agora-login-layer-probe';
+        bar.setAttribute('aria-label', '登入頁圖層檢測');
+        bar.style.cssText = 'position:fixed;left:8px;right:8px;z-index:2147483647;max-height:65vh;overflow:auto;overscroll-behavior:contain;background:#101318ee;color:white;padding:8px;border-radius:8px;box-sizing:border-box;font:12px/1.4 monospace;touch-action:pan-y;';
+        var title = document.createElement('div'); title.textContent = '登入頁圖層檢測｜由底往上揭開'; bar.appendChild(title);
+        function button(id, text, color, action) {
+          var b = document.createElement('button'); b.id = id; b.textContent = text;
+          b.style.cssText = 'min-height:44px;margin:5px 5px 5px 0;padding:5px 8px;border:0;border-radius:4px;font:14px sans-serif;color:' +
+            (color === '#0057ff' ? 'white' : '#101318') + ';background:' + color + ';';
+          b.onclick = function (event) { lastTouch = { x: round(event.clientX), y: round(event.clientY), control: id }; action(); };
+          bar.appendChild(b); return b;
+        }
+        [['紅', '#ff1744'], ['藍', '#0057ff'], ['綠', '#00c853'], ['黃', '#ffe500']].forEach(function (item, i) {
+          button('agora-probe-layer-' + (i+1), (i+1) + ' ' + item[0], item[1], function () { setLevel(i+1); }).dataset.layer = i+1;
+        });
+        button('agora-probe-close', '結束', '#ffffff', close);
+        info = document.createElement('div'); info.style.whiteSpace = 'pre-wrap'; bar.appendChild(info);
+        details = document.createElement('details');
+        var summary = document.createElement('summary'); summary.textContent = '圖層／裁切／底端命中詳情'; summary.style.padding = '8px 0'; details.appendChild(summary);
+        var legend = document.createElement('p'); legend.textContent = '紅＝文件；藍＝實際承載背景（含安全區）；綠＝登入捲動視窗；黃＝原登入內容。1/2 隱藏上層繪製但保留尺寸；3 隱藏內容；4 保留內容外觀。空白區也按所屬層上色。欄位及登入按鈕暫停，頁面仍可捲動。'; details.appendChild(legend);
+        var output = document.createElement('pre'); output.style.cssText = 'white-space:pre-wrap;overflow-wrap:anywhere;font:10px/1.4 monospace;'; details.appendChild(output); bar.appendChild(details);
+        document.body.appendChild(bar); setLevel(4); timer = setInterval(render, 500);
+      };
+      var auto = new URLSearchParams(location.search).get('login_layers') === '1';
+      window.addEventListener('agora:login-layout', function () {
+        if (bar) {
+          var login = geometry().login;
+          if (!login || (login.routerTop && login.routerTop !== 'LoginRoute')) close();
+        } else if (auto && window.__AGORA_LOGIN_LAYOUT_STATUS) {
+          auto = false; window.__AGORA_SHOW_LOGIN_LAYER_PROBE();
+        }
+      });
+    })();
   </script>
   <script id="pwa-layout-diagnostics">
     // Explicitly opened local diagnostics: no account/input data or uploads.
@@ -3904,6 +4061,11 @@
           window.__AGORA_SHOW_BACKGROUND_TEST();
         };
         panel.appendChild(backgroundTest);
+        var layerTest = textNode('button', '登入頁圖層檢測（紅藍綠黃）');
+        layerTest.id = 'agora-login-layer-probe-open';
+        layerTest.style.cssText = 'display:block;margin:12px 0;padding:12px;font-size:16px;';
+        layerTest.onclick = function () { close.onclick(); window.__AGORA_SHOW_LOGIN_LAYER_PROBE(); };
+        panel.appendChild(layerTest);
         var home = textNode('a', ' 商城首頁'); home.href = '/#/home';
         home.onclick = close.onclick;
         home.style.color = '#90c7ff'; panel.appendChild(home);
