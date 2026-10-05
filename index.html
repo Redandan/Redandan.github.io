@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- Versioned cache marker. -->
-    <meta name="cache-version" content="1.0.1954">
+    <meta name="cache-version" content="1.0.1955">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -29,8 +29,8 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.1954+1954">
-  <meta name="source-commit" content="116ca13679b54e233fc39fbcdecf77652efdf1cb">
+  <meta name="version" content="1.0.1955+1955">
+  <meta name="source-commit" content="bbc4efc39d157e8bd7b847158ad1d0830dbc67fb">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     // Request the largest available Telegram Mini App viewport before Flutter
@@ -443,7 +443,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market｜台灣與泰國生活用品線上市集</title>
-  <link rel="manifest" href="manifest.json?v=1.0.1954">
+  <link rel="manifest" href="manifest.json?v=1.0.1955">
   
   <!-- PWA ?????????????????? -->
   <meta name="application-name" content="Agora Market">
@@ -451,8 +451,8 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
-  <link rel="preload" href="flutter_bootstrap.1.0.1954.js" as="script">
-  <link rel="preload" href="main.dart.js?v=1.0.1954" as="script" fetchpriority="high">
+  <link rel="preload" href="flutter_bootstrap.1.0.1955.js" as="script">
+  <link rel="preload" href="main.dart.js?v=1.0.1955" as="script" fetchpriority="high">
   <link rel="preload" href="canvaskit/canvaskit.js" as="script">
   <link rel="preload" href="canvaskit/canvaskit.wasm" as="fetch" type="application/wasm" crossorigin>
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
@@ -3318,7 +3318,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.1.0.1954.js";
+        script.src = "flutter_bootstrap.1.0.1955.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
@@ -3628,7 +3628,7 @@
   <script src="web_vitals.js"></script>
   
   <!-- ?????????????? -->
-  <script src="offline_handler.116ca13679b5.js"></script>
+  <script src="offline_handler.js"></script>
   
   <!-- GitHub Pages 404 ??????????????-->
   <script>
@@ -3948,6 +3948,7 @@
           view: rect(view), glass: rect(glass),
           canvas: rect(canvas),
           login: window.__AGORA_LOGIN_LAYOUT_STATUS || null,
+          bottomNavigation: window.__AGORA_BOTTOM_NAV_LAYOUT || null,
           colorsEnabled: colorsEnabled,
           safeArea: status.safeArea || null,
           expectedFrame: status.expectedFrame || null,
@@ -4030,6 +4031,45 @@
       window.__AGORA_READ_LAYOUT_DIAGNOSTICS = function () {
         return { current: snapshot('read'), history: history.slice() };
       };
+      window.__AGORA_SHOW_BOTTOM_NAV_PROBE = function () {
+        if (document.getElementById('agora-bottom-nav-probe')) return;
+        var root = document.getElementById('flutter-root');
+        if (!root) return;
+        var probe = document.createElement('aside');
+        probe.id = 'agora-bottom-nav-probe';
+        probe.style.cssText = 'position:absolute;top:52px;left:8px;right:8px;z-index:2147483646;background:#101318ed;color:#fff;padding:8px;box-sizing:border-box;font:12px/1.4 monospace;';
+        var output = textNode('pre', '等待商品導覽列');
+        output.style.cssText = 'white-space:pre-wrap;margin:0 0 6px;';
+        probe.appendChild(output);
+        var close = textNode('button', '關閉底部檢測');
+        close.style.cssText = 'padding:12px;font-size:14px;';
+        probe.appendChild(close);
+        var details = textNode('button', '完整數值');
+        details.style.cssText = 'padding:12px;font-size:14px;';
+        details.onclick = function () { window.__AGORA_SHOW_LAYOUT_DIAGNOSTICS(); };
+        probe.appendChild(details);
+        root.appendChild(probe);
+        function update() {
+          var data = snapshot('bottom-nav'), nav = data.bottomNavigation;
+          if (!nav || !data.root || !nav.bar) return;
+          var bottom = nav.bar.y + nav.bar.h, labels = nav.labels || [];
+          var text = 'v' + data.version + ' ' + (data.source || '').slice(0, 12) +
+            '\n導覽 ' + (nav.visible ? '顯示' : '隱藏') +
+            ' 本體=' + number(Math.max(0, nav.bar.h - nav.safeBottom)) +
+            ' 安全區=' + number(nav.safeBottom) +
+            '\n底邊=' + number(data.root.y + bottom) +
+            ' root底=' + number(data.root.y + data.root.h) +
+            ' 文件偏移=' + data.document.y + ' 橫溢=' + data.document.overflowX;
+          labels.forEach(function (label) {
+            text += '\n' + label.text + ' 文字下留白=' +
+              number(bottom - label.rect.y - label.rect.h) + '（含安全區）';
+          });
+          if (output.textContent !== text) output.textContent = text;
+        }
+        var probeTimer = setInterval(update, 250);
+        close.onclick = function () { clearInterval(probeTimer); probe.remove(); };
+        update();
+      };
       window.__AGORA_SHOW_LAYOUT_DIAGNOSTICS = function () {
         if (panel) return;
         var root = document.getElementById('flutter-root');
@@ -4066,6 +4106,15 @@
         layerTest.style.cssText = 'display:block;margin:12px 0;padding:12px;font-size:16px;';
         layerTest.onclick = function () { close.onclick(); window.__AGORA_SHOW_LOGIN_LAYER_PROBE(); };
         panel.appendChild(layerTest);
+        var bottomNavTest = textNode('button', '商品底部檢測');
+        bottomNavTest.id = 'agora-bottom-nav-probe-open';
+        bottomNavTest.style.cssText = 'display:block;margin:12px 0;padding:12px;font-size:16px;';
+        bottomNavTest.onclick = function () {
+          close.onclick();
+          window.location.hash = '/home';
+          window.__AGORA_SHOW_BOTTOM_NAV_PROBE();
+        };
+        panel.appendChild(bottomNavTest);
         var home = textNode('a', ' 商城首頁'); home.href = '/#/home';
         home.onclick = close.onclick;
         home.style.color = '#90c7ff'; panel.appendChild(home);
