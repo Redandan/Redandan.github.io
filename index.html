@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- Versioned cache marker. -->
-    <meta name="cache-version" content="1.0.1969">
+    <meta name="cache-version" content="1.0.1970">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -29,8 +29,8 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.1969+1969">
-  <meta name="source-commit" content="32264995f9efa6237749c78549fa68244d51fb95">
+  <meta name="version" content="1.0.1970+1970">
+  <meta name="source-commit" content="d298ff9587fc5214890691b9f4389f184157f81f">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     // Request the largest available Telegram Mini App viewport before Flutter
@@ -443,7 +443,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market｜台灣與泰國生活用品線上市集</title>
-  <link rel="manifest" href="manifest.json?v=1.0.1969">
+  <link rel="manifest" href="manifest.json?v=1.0.1970">
   
   <!-- PWA ?????????????????? -->
   <meta name="application-name" content="Agora Market">
@@ -451,8 +451,8 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
-  <link rel="preload" href="flutter_bootstrap.1.0.1969.js" as="script">
-  <link rel="preload" href="main.dart.js?v=1.0.1969" as="script" fetchpriority="high">
+  <link rel="preload" href="flutter_bootstrap.1.0.1970.js" as="script">
+  <link rel="preload" href="main.dart.js?v=1.0.1970" as="script" fetchpriority="high">
   <link rel="preload" href="canvaskit/canvaskit.js" as="script">
   <link rel="preload" href="canvaskit/canvaskit.wasm" as="fetch" type="application/wasm" crossorigin>
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
@@ -1394,6 +1394,7 @@
         if (loadingScreen) loadingScreen.setAttribute('aria-busy', 'false');
         document.body.classList.add('flutter-ready');
         document.body.classList.toggle('immediate', immediate !== false);
+        window.dispatchEvent(new Event('agora-startup-visible'));
         console.log('[LOADING_SCREEN] Flutter revealed: ' + reason);
       }
 
@@ -3318,7 +3319,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.1.0.1969.js";
+        script.src = "flutter_bootstrap.1.0.1970.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
