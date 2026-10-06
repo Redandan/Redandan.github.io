@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- Versioned cache marker. -->
-    <meta name="cache-version" content="1.0.1973">
+    <meta name="cache-version" content="1.0.1974">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -29,8 +29,8 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.1973+1973">
-  <meta name="source-commit" content="55dbceee8cedc76c93b2d63109d70a50bb64c02e">
+  <meta name="version" content="1.0.1974+1974">
+  <meta name="source-commit" content="405dda54bf05ea0c404085ea3b7ca48aab443fd3">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     // Request the largest available Telegram Mini App viewport before Flutter
@@ -443,7 +443,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market｜台灣與泰國生活用品線上市集</title>
-  <link rel="manifest" href="manifest.json?v=1.0.1973">
+  <link rel="manifest" href="manifest.json?v=1.0.1974">
   
   <!-- PWA ?????????????????? -->
   <meta name="application-name" content="Agora Market">
@@ -451,8 +451,8 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
-  <link rel="preload" href="flutter_bootstrap.1.0.1973.js" as="script">
-  <link rel="preload" href="main.dart.js?v=1.0.1973" as="script" fetchpriority="high">
+  <link rel="preload" href="flutter_bootstrap.1.0.1974.js" as="script">
+  <link rel="preload" href="main.dart.1.0.1974.js" as="script" fetchpriority="high">
   <link rel="preload" href="canvaskit/canvaskit.js" as="script">
   <link rel="preload" href="canvaskit/canvaskit.wasm" as="fetch" type="application/wasm" crossorigin>
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
@@ -968,8 +968,31 @@
       };
       var currentValue = 8;
       var phaseHistory = [];
+      // Local-only timings: no URL queries, account data or uploads.
+      var bootMarks = {};
+      window.__AGORA_BOOT_TIMING__ = {
+        mark: function (name) {
+          if (!(name in bootMarks)) bootMarks[name] = Math.round(performance.now());
+        },
+        snapshot: function () {
+          return {
+            marks: Object.assign({}, bootMarks),
+            resources: performance.getEntriesByType('resource').filter(function (r) {
+              var url = new URL(r.name, location.href);
+              return url.origin === location.origin &&
+                /(?:\/main\.dart[^/]*\.js$|\/canvaskit\.(?:js|wasm)$)/.test(url.pathname);
+            }).slice(0, 8).map(function (r) {
+              return { asset: new URL(r.name).pathname.split('/').pop(),
+                startMs: Math.round(r.startTime), endMs: Math.round(r.responseEnd),
+                transferBytes: r.transferSize, bodyBytes: r.encodedBodySize,
+                deliveryType: r.deliveryType || '' };
+            })
+          };
+        }
+      };
 
       function setPhase(phase, overrideText) {
+        window.__AGORA_BOOT_TIMING__.mark(phase);
         var next = phaseConfig[phase];
         if (next && next.value < currentValue) return;
         if (next) currentValue = Math.max(currentValue, next.value);
@@ -1007,7 +1030,7 @@
             var entries = list.getEntries();
             for (var i = 0; i < entries.length; i += 1) {
               var resourceName = String(entries[i] && entries[i].name || '');
-              if (/\/main\.dart(?:\.[0-9a-f]{7,40})?\.js(?:[?#]|$)/i.test(resourceName)) {
+              if (/\/main\.dart(?:\.[0-9a-f]{7,40}|\.\d+\.\d+\.\d+)?\.js(?:[?#]|$)/i.test(resourceName)) {
                 setPhase('initialize');
                 observer.disconnect();
                 break;
@@ -1395,6 +1418,18 @@
         document.body.classList.add('flutter-ready');
         document.body.classList.toggle('immediate', immediate !== false);
         window.dispatchEvent(new Event('agora-startup-visible'));
+        if (window.__AGORA_BOOT_TIMING__) {
+          var visibleDeadline = performance.now() + 10000;
+          (function recordVisible() {
+            var shell = document.getElementById('loading-screen');
+            if (!shell || getComputedStyle(shell).opacity === '0' ||
+                getComputedStyle(shell).display === 'none') {
+              window.__AGORA_BOOT_TIMING__.mark('visible');
+            } else if (performance.now() < visibleDeadline) {
+              setTimeout(recordVisible, 50);
+            }
+          })();
+        }
         console.log('[LOADING_SCREEN] Flutter revealed: ' + reason);
       }
 
@@ -1414,9 +1449,12 @@
       var storefrontRevealScheduled = false;
       var storefrontIsIOSWebKit = isIOSWebKitStorefront();
       // iOS WebKit can expose a partially composited CanvasKit frame after the
-      // product-ready callback. Keep its proven stabilization window and reveal
-      // atomically; faster Chromium-based clients retain the short wait.
-      var storefrontSettleDelayMs = storefrontIsIOSWebKit ? 3000 : 300;
+      // product-ready callback. Installed PWAs use a shorter atomic reveal;
+      // embedded/browser WebKit retains its existing compositor margin.
+      var storefrontInstalled = !!(navigator.standalone ||
+        window.matchMedia('(display-mode: standalone)').matches);
+      var storefrontSettleDelayMs = storefrontIsIOSWebKit
+        ? (storefrontInstalled ? 600 : 3000) : 300;
 
       function scheduleStorefrontReveal(reason) {
         if (!isStorefrontStartup() || !storefrontFirstFrameReady ||
@@ -1424,12 +1462,14 @@
           return;
         }
         storefrontRevealScheduled = true;
+        if (window.__AGORA_BOOT_TIMING__) window.__AGORA_BOOT_TIMING__.mark('shellReady');
         var fontsReady = document.fonts && document.fonts.ready
           ? document.fonts.ready
           : Promise.resolve();
         Promise.resolve(fontsReady).catch(function() {
           // Font failures must not trap the storefront behind the startup shell.
         }).then(function() {
+          if (window.__AGORA_BOOT_TIMING__) window.__AGORA_BOOT_TIMING__.mark('fontsReady');
           setTimeout(function() {
             requestAnimationFrame(function() {
               requestAnimationFrame(function() {
@@ -1444,6 +1484,10 @@
       window.addEventListener('agora-storefront-shell-ready', function(event) {
         storefrontShellReady = true;
         scheduleStorefrontReveal(event.type);
+      }, { once: true });
+
+      window.addEventListener('agora-storefront-preview-visible', function () {
+        if (window.__AGORA_BOOT_TIMING__) window.__AGORA_BOOT_TIMING__.mark('snapshotReady');
       }, { once: true });
 
       function markStorefrontContentReady(event) {
@@ -3319,7 +3363,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.1.0.1973.js";
+        script.src = "flutter_bootstrap.1.0.1974.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
@@ -3629,7 +3673,7 @@
   <script src="web_vitals.js"></script>
   
   <!-- ?????????????? -->
-  <script src="offline_handler.55dbceee8ced.js"></script>
+  <script src="offline_handler.405dda54bf05.js"></script>
   
   <!-- GitHub Pages 404 ??????????????-->
   <script>
@@ -3966,6 +4010,7 @@
           detected: typeof status.detected === 'boolean' ? status.detected : null,
           listOffset: number(doc.getAttribute('data-agora-product-list-scroll-offset')),
           navigationVisible: doc.getAttribute('data-agora-product-list-bottom-nav-visible'),
+          bootTiming: window.__AGORA_BOOT_TIMING__ ? window.__AGORA_BOOT_TIMING__.snapshot() : null,
           listActive: doc.getAttribute('data-agora-product-list-active'),
           touch: lastTouch
         };
@@ -4182,7 +4227,7 @@
           var current = data.current;
           output.textContent = ['version ' + current.version, 'source ' + current.source]
             .concat(['standalone', 'document', 'html', 'body', 'root', 'view',
-              'visualViewport', 'safeArea', 'paintInsets', 'detected', 'touch']
+              'visualViewport', 'safeArea', 'paintInsets', 'detected', 'bootTiming', 'touch']
               .map(function (key) { return key + ' ' + JSON.stringify(current[key]); }))
             .join('\n');
           fullOutput.textContent = JSON.stringify(data, null, 2);
