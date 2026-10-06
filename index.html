@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- Versioned cache marker. -->
-    <meta name="cache-version" content="1.0.1982">
+    <meta name="cache-version" content="1.0.1983">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -29,8 +29,8 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.1982+1982">
-  <meta name="source-commit" content="40e6fc2f7fa2e4991e1b670582464468232e6514">
+  <meta name="version" content="1.0.1983+1983">
+  <meta name="source-commit" content="964cdfb99bcd616358480bc69d6bfb556a317656">
   <script id="telegram-sdk-entry-loader">
     // Preserve synchronous SDK/viewport ordering inside Telegram only.
     // A normal browser/PWA must not depend on Telegram's network availability.
@@ -475,7 +475,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market｜台灣與泰國生活用品線上市集</title>
-  <link rel="manifest" href="manifest.json?v=1.0.1982">
+  <link rel="manifest" href="manifest.json?v=1.0.1983">
   
   <!-- PWA ?????????????????? -->
   <meta name="application-name" content="Agora Market">
@@ -483,8 +483,8 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
-  <link rel="preload" href="flutter_bootstrap.1.0.1982.js" as="script">
-  <link rel="preload" href="main.dart.1.0.1982.js" as="script" fetchpriority="high">
+  <link rel="preload" href="flutter_bootstrap.1.0.1983.js" as="script">
+  <link rel="preload" href="main.dart.1.0.1983.js" as="script" fetchpriority="high">
   <link rel="preload" href="canvaskit/canvaskit.js" as="script">
   <link rel="preload" href="canvaskit/canvaskit.wasm" as="fetch" type="application/wasm" crossorigin>
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
@@ -674,45 +674,16 @@
       text-align: center;
     }
 
-    .loading-progress-shell {
+    .loading-status-shell {
       box-sizing: border-box;
       width: min(280px, calc(100vw - 48px));
       margin: 10px 0 14px;
       padding: 0 env(safe-area-inset-right, 0) 0 env(safe-area-inset-left, 0);
     }
 
-    .loading-progress-meta {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 16px;
-      min-height: 22px;
-      margin-bottom: 8px;
-    }
-
-    .loading-progress-value {
-      flex: 0 0 auto;
-      color: var(--startup-text);
-      font-size: 13px;
-      font-variant-numeric: tabular-nums;
-      opacity: 0.76;
-    }
-
-    .loading-progress {
-      position: relative;
-      height: 6px;
-      overflow: hidden;
-      border-radius: 999px;
-      background: var(--startup-muted-track);
-    }
-
-    .loading-progress-fill {
-      width: 8%;
-      height: 100%;
-      border-radius: inherit;
-      background: var(--startup-text);
-      transform-origin: left center;
-      transition: width 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    #loading-screen[data-loading-phase="failed"] .loading-spinner {
+      animation: none;
+      visibility: hidden;
     }
 
     .loading-brand {
@@ -740,10 +711,6 @@
     @media (prefers-reduced-motion: reduce) {
       .loading-spinner {
         animation-duration: 1.8s;
-      }
-
-      .loading-progress-fill {
-        transition: none;
       }
     }
 
@@ -875,14 +842,8 @@
   <div id="loading-screen">
     <div class="loading-brand">AgoraMarket</div>
     <div class="loading-spinner" aria-hidden="true"></div>
-    <div class="loading-progress-shell">
-      <div class="loading-progress-meta">
-        <div class="loading-text" id="loading-text" role="status" aria-live="polite">&#27491;&#22312;&#28310;&#20633;&#21830;&#22478;...</div>
-        <div class="loading-progress-value" id="loading-progress-value" aria-hidden="true">8%</div>
-      </div>
-      <div class="loading-progress" id="loading-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="8">
-        <div class="loading-progress-fill" id="loading-progress-fill"></div>
-      </div>
+    <div class="loading-status-shell">
+      <div class="loading-text" id="loading-text" role="status" aria-live="polite">&#27491;&#22312;&#28310;&#20633;&#21830;&#22478;...</div>
     </div>
     <nav class="startup-marketplace-links" aria-label="Agora Market 商品入口">
       <a id="startup-product-catalog-link" href="https://agoramarket.purrtechllc.com/products">瀏覽商品目錄</a>
@@ -920,12 +881,11 @@
       var copy = {
         'zh-Hant': {
           loading: '正在準備商城...',
-          progressLabel: '商城載入進度',
           starting: '啟動商城...',
           downloading: '下載商城程式...',
           initializing: '初始化商城...',
-          catalogLoading: '載入商品資料...',
-          ready: '商城已準備完成',
+          preparingPage: '正在準備首頁...',
+          ready: '正在開啟商城...',
           loadError: '商城程式載入失敗，請重新整理。',
           catalog: '瀏覽商品目錄',
           search: '搜尋商品',
@@ -935,12 +895,11 @@
         },
         en: {
           loading: 'Preparing the marketplace...',
-          progressLabel: 'Marketplace loading progress',
           starting: 'Starting the marketplace...',
           downloading: 'Downloading the marketplace...',
           initializing: 'Initializing the marketplace...',
-          catalogLoading: 'Loading product data...',
-          ready: 'Marketplace ready',
+          preparingPage: 'Preparing the home page...',
+          ready: 'Opening the marketplace...',
           loadError: 'The marketplace failed to load. Please refresh.',
           catalog: 'Browse product catalog',
           search: 'Search products',
@@ -950,12 +909,11 @@
         },
         th: {
           loading: 'กำลังเตรียมร้านค้า...',
-          progressLabel: 'ความคืบหน้าการโหลดร้านค้า',
           starting: 'กำลังเริ่มร้านค้า...',
           downloading: 'กำลังดาวน์โหลดร้านค้า...',
           initializing: 'กำลังเริ่มต้นระบบร้านค้า...',
-          catalogLoading: 'กำลังโหลดข้อมูลสินค้า...',
-          ready: 'ร้านค้าพร้อมใช้งาน',
+          preparingPage: 'กำลังเตรียมหน้าแรก...',
+          ready: 'กำลังเปิดร้านค้า...',
           loadError: 'โหลดร้านค้าไม่สำเร็จ โปรดรีเฟรชหน้า',
           catalog: 'ดูแคตตาล็อกสินค้า',
           search: 'ค้นหาสินค้า',
@@ -969,16 +927,12 @@
       window.__agoraStartupCopy = copy;
       var loadingText = document.getElementById('loading-text');
       var loadingScreen = document.getElementById('loading-screen');
-      var progress = document.getElementById('loading-progress');
-      var progressFill = document.getElementById('loading-progress-fill');
-      var progressValue = document.getElementById('loading-progress-value');
       var catalogLink = document.getElementById('startup-product-catalog-link');
       var searchLink = document.getElementById('startup-product-search-link');
       var retryButton = document.getElementById('startup-retry-button');
       var navigation = document.querySelector('.startup-marketplace-links');
       if (loadingScreen) loadingScreen.setAttribute('aria-busy', 'true');
       if (loadingText) loadingText.textContent = copy.loading;
-      if (progress) progress.setAttribute('aria-label', copy.progressLabel);
       if (catalogLink) catalogLink.textContent = copy.catalog;
       if (searchLink) searchLink.textContent = copy.search;
       if (retryButton) {
@@ -990,15 +944,17 @@
       if (navigation) navigation.setAttribute('aria-label', copy.navigation);
 
       var phaseConfig = {
-        shell: { value: 8, text: 'starting' },
-        bootstrap: { value: 18, text: 'starting' },
-        download: { value: 34, text: 'downloading' },
-        initialize: { value: 68, text: 'initializing' },
-        firstFrame: { value: 86, text: 'catalogLoading' },
-        catalog: { value: 94, text: 'catalogLoading' },
-        ready: { value: 100, text: 'ready' }
+        shell: { order: 0, text: 'starting' },
+        bootstrap: { order: 1, text: 'starting' },
+        download: { order: 2, text: 'downloading' },
+        initialize: { order: 3, text: 'initializing' },
+        firstFrame: { order: 4, text: 'preparingPage' },
+        catalog: { order: 5, text: 'preparingPage' },
+        ready: { order: 6, text: 'ready' }
       };
-      var currentValue = 8;
+      var currentOrder = 0;
+      var failed = false;
+      var complete = false;
       var phaseHistory = [];
       // Local-only timings: no URL queries, account data or uploads.
       var bootMarks = {};
@@ -1024,22 +980,20 @@
       };
 
       function setPhase(phase, overrideText) {
+        // A failed attempt can only be retried by reloading the document.
+        // Late resource events, timers and paint callbacks cannot revive it.
+        if (failed) return;
         window.__AGORA_BOOT_TIMING__.mark(phase);
+        if (complete) return;
         var next = phaseConfig[phase];
-        if (next && next.value < currentValue) return;
-        if (next) currentValue = Math.max(currentValue, next.value);
+        if (next && next.order < currentOrder) return;
+        if (next) currentOrder = next.order;
+        if (phase === 'ready') complete = true;
         var nextText = overrideText || (next && copy[next.text]) || copy.loading;
         if (loadingText) loadingText.textContent = nextText;
-        if (progressFill) progressFill.style.width = currentValue + '%';
-        if (progressValue) progressValue.textContent = currentValue + '%';
-        if (progress) {
-          progress.setAttribute('aria-valuenow', String(currentValue));
-          progress.setAttribute('aria-valuetext', nextText);
-        }
         if (loadingScreen) loadingScreen.dataset.loadingPhase = phase;
         phaseHistory.push({
           phase: phase,
-          value: currentValue,
           elapsedMs: Math.round(window.performance && performance.now
             ? performance.now()
             : 0)
@@ -1050,28 +1004,43 @@
         }
       }
 
+      function failStartup() {
+        if (failed || complete || document.body.classList.contains('flutter-ready')) return;
+        setPhase('failed', copy.loadError);
+        failed = true;
+        if (loadingScreen) loadingScreen.setAttribute('aria-busy', 'false');
+        if (retryButton) {
+          retryButton.hidden = false;
+          retryButton.classList.add('is-visible');
+        }
+        // Notify bootstrap cleanup for resource-error failures as well. The
+        // failed guard above makes repeated/nested failure signals idempotent.
+        window.dispatchEvent(new Event('agora-startup-failed'));
+      }
+
       window.__AGORA_STARTUP_PROGRESS__ = {
         setPhase: setPhase,
+        fail: failStartup,
+        hasFailed: function() { return failed; },
         getHistory: function() { return phaseHistory.slice(); }
       };
       setPhase('shell');
 
-      if (typeof window.PerformanceObserver === 'function') {
+      function isStartupScript(url) {
         try {
-          var observer = new PerformanceObserver(function(list) {
-            var entries = list.getEntries();
-            for (var i = 0; i < entries.length; i += 1) {
-              var resourceName = String(entries[i] && entries[i].name || '');
-              if (/\/main\.dart(?:\.[0-9a-f]{7,40}|\.\d+\.\d+\.\d+)?\.js(?:[?#]|$)/i.test(resourceName)) {
-                setPhase('initialize');
-                observer.disconnect();
-                break;
-              }
-            }
-          });
-          observer.observe({ type: 'resource', buffered: true });
-        } catch (_) {}
+          var resource = new URL(url, location.href);
+          return resource.origin === location.origin &&
+            /\/(?:main\.dart|flutter_bootstrap)(?:\.[0-9a-f.]+)?\.js$/i.test(resource.pathname);
+        } catch (_) { return false; }
       }
+      // Flutter's callback loader does not reject when the main script fails.
+      // Capture the actual script error, not preload/resource timing completion.
+      window.addEventListener('error', function(event) {
+        var target = event.target;
+        if ((target && target.tagName === 'SCRIPT' && isStartupScript(target.src)) ||
+            (event.filename && isStartupScript(event.filename))) failStartup();
+      }, true);
+      window.addEventListener('agora-startup-failed', failStartup);
     })();
   </script>
 
@@ -1442,6 +1411,7 @@
 
       function revealFlutter(reason, immediate) {
         if (!document.body || document.body.classList.contains('flutter-ready')) return;
+        if (window.__AGORA_STARTUP_PROGRESS__ && window.__AGORA_STARTUP_PROGRESS__.hasFailed()) return;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('ready');
         }
@@ -1569,6 +1539,7 @@
       // first paint; a slow login reload otherwise exposes an empty canvas.
       setTimeout(function() {
         if (document.body && document.body.classList.contains('flutter-ready')) return;
+        if (window.__AGORA_STARTUP_PROGRESS__ && window.__AGORA_STARTUP_PROGRESS__.hasFailed()) return;
         var loadingText = document.getElementById('loading-text');
         if (loadingText) {
           var startupCopy = window.__agoraStartupCopy || {};
@@ -3395,7 +3366,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.1.0.1982.js";
+        script.src = "flutter_bootstrap.1.0.1983.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
@@ -3406,17 +3377,8 @@
           }
         }, { once: true });
         script.addEventListener('error', function() {
-          var startupCopy = window.__agoraStartupCopy || {};
           if (window.__AGORA_STARTUP_PROGRESS__) {
-            window.__AGORA_STARTUP_PROGRESS__.setPhase(
-              'timeout',
-              startupCopy.loadError || startupCopy.timeout
-            );
-          }
-          var retryButton = document.getElementById('startup-retry-button');
-          if (retryButton) {
-            retryButton.hidden = false;
-            retryButton.classList.add('is-visible');
+            window.__AGORA_STARTUP_PROGRESS__.fail();
           }
         }, { once: true });
         document.body.appendChild(script);
@@ -3705,7 +3667,7 @@
   <script src="web_vitals.js"></script>
   
   <!-- ?????????????? -->
-  <script src="offline_handler.40e6fc2f7fa2.js"></script>
+  <script src="offline_handler.964cdfb99bcd.js"></script>
   
   <!-- GitHub Pages 404 ??????????????-->
   <script>
