@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- Versioned cache marker. -->
-    <meta name="cache-version" content="1.0.1983">
+    <meta name="cache-version" content="1.0.1984">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -29,8 +29,8 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.1983+1983">
-  <meta name="source-commit" content="964cdfb99bcd616358480bc69d6bfb556a317656">
+  <meta name="version" content="1.0.1984+1984">
+  <meta name="source-commit" content="8360014c6bb5ebe6ff51de56fb3779f664bcfecf">
   <script id="telegram-sdk-entry-loader">
     // Preserve synchronous SDK/viewport ordering inside Telegram only.
     // A normal browser/PWA must not depend on Telegram's network availability.
@@ -475,7 +475,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market｜台灣與泰國生活用品線上市集</title>
-  <link rel="manifest" href="manifest.json?v=1.0.1983">
+  <link rel="manifest" href="manifest.json?v=1.0.1984">
   
   <!-- PWA ?????????????????? -->
   <meta name="application-name" content="Agora Market">
@@ -483,8 +483,8 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
-  <link rel="preload" href="flutter_bootstrap.1.0.1983.js" as="script">
-  <link rel="preload" href="main.dart.1.0.1983.js" as="script" fetchpriority="high">
+  <link rel="preload" href="flutter_bootstrap.1.0.1984.js" as="script">
+  <link rel="preload" href="main.dart.1.0.1984.js" as="script" fetchpriority="high">
   <link rel="preload" href="canvaskit/canvaskit.js" as="script">
   <link rel="preload" href="canvaskit/canvaskit.wasm" as="fetch" type="application/wasm" crossorigin>
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
@@ -714,22 +714,6 @@
       }
     }
 
-    .startup-marketplace-links {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 12px;
-    }
-
-    #startup-product-search-link,
-    #startup-product-catalog-link {
-      color: var(--startup-text);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 14px;
-      line-height: 1.4;
-      text-underline-offset: 3px;
-    }
-
     #startup-retry-button {
       display: none;
       margin-top: 8px;
@@ -845,10 +829,6 @@
     <div class="loading-status-shell">
       <div class="loading-text" id="loading-text" role="status" aria-live="polite">&#27491;&#22312;&#28310;&#20633;&#21830;&#22478;...</div>
     </div>
-    <nav class="startup-marketplace-links" aria-label="Agora Market 商品入口">
-      <a id="startup-product-catalog-link" href="https://agoramarket.purrtechllc.com/products">瀏覽商品目錄</a>
-      <a id="startup-product-search-link" href="https://agoramarket.purrtechllc.com/search">搜尋商品</a>
-    </nav>
     <button id="startup-retry-button" type="button" hidden>重新整理</button>
   </div>
   <script>
@@ -887,9 +867,6 @@
           preparingPage: '正在準備首頁...',
           ready: '正在開啟商城...',
           loadError: '商城程式載入失敗，請重新整理。',
-          catalog: '瀏覽商品目錄',
-          search: '搜尋商品',
-          navigation: 'Agora Market 商品入口',
           timeout: '載入時間較長，商城仍在準備中。您可以繼續等待或重新整理。',
           retry: '重新整理'
         },
@@ -901,9 +878,6 @@
           preparingPage: 'Preparing the home page...',
           ready: 'Opening the marketplace...',
           loadError: 'The marketplace failed to load. Please refresh.',
-          catalog: 'Browse product catalog',
-          search: 'Search products',
-          navigation: 'Agora Market product links',
           timeout: 'The marketplace is still preparing. You can keep waiting or refresh.',
           retry: 'Refresh'
         },
@@ -915,9 +889,6 @@
           preparingPage: 'กำลังเตรียมหน้าแรก...',
           ready: 'กำลังเปิดร้านค้า...',
           loadError: 'โหลดร้านค้าไม่สำเร็จ โปรดรีเฟรชหน้า',
-          catalog: 'ดูแคตตาล็อกสินค้า',
-          search: 'ค้นหาสินค้า',
-          navigation: 'ลิงก์สินค้า Agora Market',
           timeout: 'ร้านค้ายังอยู่ระหว่างเตรียมข้อมูล คุณสามารถรอต่อหรือรีเฟรชหน้าได้',
           retry: 'รีเฟรช'
         }
@@ -927,21 +898,15 @@
       window.__agoraStartupCopy = copy;
       var loadingText = document.getElementById('loading-text');
       var loadingScreen = document.getElementById('loading-screen');
-      var catalogLink = document.getElementById('startup-product-catalog-link');
-      var searchLink = document.getElementById('startup-product-search-link');
       var retryButton = document.getElementById('startup-retry-button');
-      var navigation = document.querySelector('.startup-marketplace-links');
       if (loadingScreen) loadingScreen.setAttribute('aria-busy', 'true');
       if (loadingText) loadingText.textContent = copy.loading;
-      if (catalogLink) catalogLink.textContent = copy.catalog;
-      if (searchLink) searchLink.textContent = copy.search;
       if (retryButton) {
         retryButton.textContent = copy.retry;
         retryButton.addEventListener('click', function () {
           window.location.reload();
         });
       }
-      if (navigation) navigation.setAttribute('aria-label', copy.navigation);
 
       var phaseConfig = {
         shell: { order: 0, text: 'starting' },
@@ -3366,7 +3331,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.1.0.1983.js";
+        script.src = "flutter_bootstrap.1.0.1984.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
@@ -3667,7 +3632,7 @@
   <script src="web_vitals.js"></script>
   
   <!-- ?????????????? -->
-  <script src="offline_handler.964cdfb99bcd.js"></script>
+  <script src="offline_handler.8360014c6bb5.js"></script>
   
   <!-- GitHub Pages 404 ??????????????-->
   <script>
