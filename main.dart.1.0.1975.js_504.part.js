@@ -1,0 +1,16 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var B,C,A
+B=c[0]
+C=c[2]
+A=c[422]
+var z=a.updateTypes([]);(function constants(){var y=a.makeConstList
+A.Oa=new B.X(57920,"MaterialIcons",!1)
+A.wf=new B.ey(null,null,null,"\u986f\u793a\u540d\u7a31",null,null,null,null,null,null,null,null,null,null,null,null,!0,!0,!1,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,!0,null,null,null,null)
+A.rd=new B.ey(null,null,null,"TG \u7fa4\u540d\u7a31",null,null,null,null,null,null,null,null,null,null,null,null,!0,!0,!1,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,!0,null,null,null,null)
+A.QC=new B.ey(null,null,null,"Telegram Group ID",null,null,null,"\u5fc5\u586b\uff0c\u53ef\u586b -100 \u958b\u982d\u7684\u7fa4\u7d44 ID",null,null,null,null,null,null,null,null,!0,!0,!1,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,!0,null,null,null,null)
+A.Rj=y(["PENDING","APPROVED","REJECTED","CANCELLED"],B.A("v<o>"))
+A.ox=y([],B.A("v<jg>"))
+A.rk=y([],B.A("v<jM>"))
+A.aDx=new B.ao(0,80,0,80)
+A.Fj=new B.I(A.aDx,C.bX,null)})()};
+(a=>{a["3qU0or9BFA73ZT67PxHQv/CGmBI="]=a.current})($__dart_deferred_initializers__);
