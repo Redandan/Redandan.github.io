@@ -6,10 +6,23 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- Versioned cache marker. -->
-    <meta name="cache-version" content="1.0.1984">
+    <meta name="cache-version" content="1.0.1985">
   <base href="/">
 
   <meta charset="UTF-8">
+  <script id="startup-theme">
+    // SharedPreferences stores these two non-secret appearance preferences.
+    // Match Flutter before the startup surface is first painted; storage may
+    // be unavailable in private/embedded contexts, which retain OS appearance.
+    (function () {
+      try {
+        if (localStorage.getItem('flutter.system_theme') === 'false') {
+          document.documentElement.setAttribute('data-agora-startup-theme',
+            localStorage.getItem('flutter.dark_mode') === 'true' ? 'dark' : 'light');
+        }
+      } catch (_) {}
+    })();
+  </script>
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <!-- ???????????????????????????????????????????HTML -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -29,8 +42,8 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.1984+1984">
-  <meta name="source-commit" content="8360014c6bb5ebe6ff51de56fb3779f664bcfecf">
+  <meta name="version" content="1.0.1985+1985">
+  <meta name="source-commit" content="f39a7bb7ca67da76447e105c74910189af477e79">
   <script id="telegram-sdk-entry-loader">
     // Preserve synchronous SDK/viewport ordering inside Telegram only.
     // A normal browser/PWA must not depend on Telegram's network availability.
@@ -475,7 +488,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market｜台灣與泰國生活用品線上市集</title>
-  <link rel="manifest" href="manifest.json?v=1.0.1984">
+  <link rel="manifest" href="manifest.json?v=1.0.1985">
   
   <!-- PWA ?????????????????? -->
   <meta name="application-name" content="Agora Market">
@@ -483,8 +496,8 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
-  <link rel="preload" href="flutter_bootstrap.1.0.1984.js" as="script">
-  <link rel="preload" href="main.dart.1.0.1984.js" as="script" fetchpriority="high">
+  <link rel="preload" href="flutter_bootstrap.1.0.1985.js" as="script">
+  <link rel="preload" href="main.dart.1.0.1985.js" as="script" fetchpriority="high">
   <link rel="preload" href="canvaskit/canvaskit.js" as="script">
   <link rel="preload" href="canvaskit/canvaskit.wasm" as="fetch" type="application/wasm" crossorigin>
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
@@ -524,6 +537,7 @@
   <style>
     :root {
       --startup-canvas: #0b0d12;
+      --startup-surface: #0a0a0a;
       --startup-text: #ffffff;
       --startup-muted-border: rgba(255, 255, 255, 0.72);
       --startup-muted-track: rgba(255, 255, 255, 0.2);
@@ -533,11 +547,28 @@
     @media (prefers-color-scheme: light) {
       :root {
         --startup-canvas: #f6f8fb;
+        --startup-surface: #f8f9fa;
         --startup-text: #182234;
         --startup-muted-border: rgba(24, 34, 52, 0.5);
         --startup-muted-track: rgba(24, 34, 52, 0.18);
         --startup-muted-background: rgba(24, 34, 52, 0.06);
       }
+    }
+
+    html[data-agora-startup-theme="dark"] {
+      --startup-surface: #0a0a0a;
+      --startup-text: #ffffff;
+      --startup-muted-border: rgba(255, 255, 255, 0.72);
+      --startup-muted-track: rgba(255, 255, 255, 0.2);
+      --startup-muted-background: rgba(255, 255, 255, 0.08);
+    }
+
+    html[data-agora-startup-theme="light"] {
+      --startup-surface: #f8f9fa;
+      --startup-text: #182234;
+      --startup-muted-border: rgba(24, 34, 52, 0.5);
+      --startup-muted-track: rgba(24, 34, 52, 0.18);
+      --startup-muted-background: rgba(24, 34, 52, 0.06);
     }
 
     /* Patch 1: Removed all position: fixed - root cause of iOS 17 touch offset */
@@ -642,7 +673,11 @@
       box-sizing: border-box;
       padding: var(--agora-safe-area-top) var(--agora-safe-area-right)
         var(--agora-safe-area-bottom) var(--agora-safe-area-left);
-      background: var(--startup-canvas);
+      background: linear-gradient(to bottom,
+        var(--startup-canvas) 0px,
+        var(--startup-canvas) var(--agora-safe-area-top),
+        var(--startup-surface) var(--agora-safe-area-top),
+        var(--startup-surface) 100%);
       display: flex;
       flex-direction: column;
       gap: 4px;
@@ -672,13 +707,33 @@
       line-height: 1.4;
       letter-spacing: 0;
       text-align: center;
+      width: 100%;
+      min-height: 4.2em;
+    }
+
+    .loading-content {
+      position: relative;
+      flex: 0 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      width: min(280px, calc(100% - 48px));
+      margin-bottom: 96px;
     }
 
     .loading-status-shell {
+      /* Dynamic messages and retry controls must not recenter the brand. */
+      position: absolute;
+      top: 100%;
+      left: 0;
       box-sizing: border-box;
-      width: min(280px, calc(100vw - 48px));
-      margin: 10px 0 14px;
-      padding: 0 env(safe-area-inset-right, 0) 0 env(safe-area-inset-left, 0);
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin-top: 14px;
     }
 
     #loading-screen[data-loading-phase="failed"] .loading-spinner {
@@ -691,6 +746,7 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       font-size: 24px;
       font-weight: 700;
+      line-height: 1.4;
       letter-spacing: 0.01em;
     }
 
@@ -716,7 +772,8 @@
 
     #startup-retry-button {
       display: none;
-      margin-top: 8px;
+      box-sizing: border-box;
+      min-height: 44px;
       padding: 10px 18px;
       border: 1px solid var(--startup-muted-border);
       border-radius: 999px;
@@ -735,8 +792,7 @@
     .flutter-ready #loading-screen {
       opacity: 0;
       visibility: hidden;
-      transform: scale(0.95);
-      transition: opacity 0.8s ease-out, visibility 0.8s ease-out, transform 0.8s ease-out;
+      transition: opacity 0.2s ease-out, visibility 0.2s ease-out;
       pointer-events: none;
     }
     
@@ -824,12 +880,14 @@
 
   <!-- Loading screen lives outside #flutter-root so iOS PWA viewport transforms cannot move it. -->
   <div id="loading-screen">
-    <div class="loading-brand">AgoraMarket</div>
-    <div class="loading-spinner" aria-hidden="true"></div>
-    <div class="loading-status-shell">
-      <div class="loading-text" id="loading-text" role="status" aria-live="polite">&#27491;&#22312;&#28310;&#20633;&#21830;&#22478;...</div>
+    <div class="loading-content">
+      <div class="loading-brand">AgoraMarket</div>
+      <div class="loading-spinner" aria-hidden="true"></div>
+      <div class="loading-status-shell">
+        <div class="loading-text" id="loading-text" role="status" aria-live="polite">&#27491;&#22312;&#28310;&#20633;&#21830;&#22478;...</div>
+        <button id="startup-retry-button" type="button" hidden>重新整理</button>
+      </div>
     </div>
-    <button id="startup-retry-button" type="button" hidden>重新整理</button>
   </div>
   <script>
     (function localizeStartupShell() {
@@ -3331,7 +3389,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.1.0.1984.js";
+        script.src = "flutter_bootstrap.1.0.1985.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
@@ -3632,7 +3690,7 @@
   <script src="web_vitals.js"></script>
   
   <!-- ?????????????? -->
-  <script src="offline_handler.8360014c6bb5.js"></script>
+  <script src="offline_handler.f39a7bb7ca67.js"></script>
   
   <!-- GitHub Pages 404 ??????????????-->
   <script>
