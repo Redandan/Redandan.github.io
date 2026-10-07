@@ -6,7 +6,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <!-- Versioned cache marker. -->
-    <meta name="cache-version" content="1.0.1985">
+    <meta name="cache-version" content="1.0.1986">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -42,8 +42,8 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.1985+1985">
-  <meta name="source-commit" content="f39a7bb7ca67da76447e105c74910189af477e79">
+  <meta name="version" content="1.0.1986+1986">
+  <meta name="source-commit" content="84e8ed7f5f0ee33b407d38709bb2e1f6f978b78e">
   <script id="telegram-sdk-entry-loader">
     // Preserve synchronous SDK/viewport ordering inside Telegram only.
     // A normal browser/PWA must not depend on Telegram's network availability.
@@ -488,7 +488,7 @@
   <link rel="shortcut icon" href="icons/new_favicon/favicon.ico">
 
   <title>Agora Market｜台灣與泰國生活用品線上市集</title>
-  <link rel="manifest" href="manifest.json?v=1.0.1985">
+  <link rel="manifest" href="manifest.json?v=1.0.1986">
   
   <!-- PWA ?????????????????? -->
   <meta name="application-name" content="Agora Market">
@@ -496,8 +496,8 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
-  <link rel="preload" href="flutter_bootstrap.1.0.1985.js" as="script">
-  <link rel="preload" href="main.dart.1.0.1985.js" as="script" fetchpriority="high">
+  <link rel="preload" href="flutter_bootstrap.1.0.1986.js" as="script">
+  <link rel="preload" href="main.dart.1.0.1986.js" as="script" fetchpriority="high">
   <link rel="preload" href="canvaskit/canvaskit.js" as="script">
   <link rel="preload" href="canvaskit/canvaskit.wasm" as="fetch" type="application/wasm" crossorigin>
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
@@ -1605,10 +1605,10 @@
          * @param {string} token - ???? token (????????????????????????????????????????????
          * @returns {Promise<Object>} ???????? (??JSON ????????)
          */
-        async requestNotificationPermission(vapidKey, token) {
+        async requestNotificationPermission(vapidKey) {
           console.log('[WEB_PUSH_API] Starting permission request process...');
           console.log('[WEB_PUSH_API] VAPID Key:', vapidKey ? 'provided' : 'not provided');
-          console.log('[WEB_PUSH_API] Token:', token ? 'provided' : 'not provided');
+
           
           try {
             // 1. ???????????????????
@@ -1621,11 +1621,11 @@
             console.log('[WEB_PUSH_API] Permission request result:', permissionResult);
             
             if (permissionResult !== 'granted') {
-              return {
+              return JSON.stringify({
                 success: false,
                 status: permissionResult,
                 error: 'Permission denied: ' + permissionResult
-              };
+              });
             }
             
             // 3. ????????????????????????????????
@@ -1707,63 +1707,60 @@
          * @param {string} vapidKey - VAPID ?????????
          * @returns {Promise<Object>} ???????
          */
-        async createPushSubscription(vapidKey) {
-          console.log('[WEB_PUSH_API] Starting push subscription creation...');
-          
+        async boundedPushLookup(operation) {
+          let timeout;
           try {
-            // 1. ?????????Flutter????????ice Worker ????
-            let workerTimeout;
-            let registrations;
-            try {
-              registrations = await Promise.race([
-                navigator.serviceWorker.getRegistrations(),
-                new Promise((_, reject) => {
-                  workerTimeout = setTimeout(() => reject(new Error('Notification service timed out')), 3000);
-                })
-              ]);
-            } finally {
-              clearTimeout(workerTimeout);
+            return await Promise.race([
+              operation,
+              new Promise((_, reject) => {
+                timeout = setTimeout(() => reject(new Error('Notification service timed out')), 3000);
+              })
+            ]);
+          } finally { clearTimeout(timeout); }
+        },
+
+        async currentPushRegistration() {
+          const registrations = await this.boundedPushLookup(navigator.serviceWorker.getRegistrations());
+          return registrations
+            .filter(item => item.active && window.location.href.startsWith(item.scope))
+            .sort((a, b) => b.scope.length - a.scope.length)[0];
+        },
+
+        async getCurrentPushSubscription() {
+          try {
+            if (!this.checkBrowserSupport() || Notification.permission !== 'granted') {
+              return JSON.stringify({success: true, subscriptionData: null});
             }
-            const registration = registrations
-              .filter(item => item.active && window.location.href.startsWith(item.scope))
-              .sort((a, b) => b.scope.length - a.scope.length)[0];
-            if (!registration) throw new Error('Notification service is not ready. Please try again later.');
-            console.log('[WEB_PUSH_API] Using existing Service Worker registration');
-            
-            // 2. ??????????????????????????
-            const subscription = await registration.pushManager.subscribe({
-              userVisibleOnly: true,
-              applicationServerKey: this.urlBase64ToUint8Array(vapidKey)
-            });
-            
-            console.log('[WEB_PUSH_API] Push subscription created successfully');
-            console.log('[WEB_PUSH_API] Subscription endpoint present:', !!subscription.endpoint);
-            
-            // 3. ??????????????????????????????????
-            const deviceInfo = this.generateDeviceInfo();
-            const subscriptionData = {
-              endpoint: subscription.endpoint,
-              keys: {
-                p256dh: this.arrayBufferToBase64(subscription.getKey('p256dh')),
-                auth: this.arrayBufferToBase64(subscription.getKey('auth'))
-              },
-              userAgent: deviceInfo.userAgent,
-              deviceType: deviceInfo.deviceType,
-              deviceName: deviceInfo.deviceName
-            };
-            
-            return subscriptionData;
-            
-          } catch (error) {
-            console.error('[WEB_PUSH_API] Push subscription creation failed:', error?.name || 'Error');
-            throw new Error('Push subscription creation failed: ' + error.message);
+            const registration = await this.currentPushRegistration();
+            const subscription = registration
+              ? await this.boundedPushLookup(registration.pushManager.getSubscription()) : null;
+            return JSON.stringify({success: true, subscriptionData: subscription ? {endpoint: subscription.endpoint} : null});
+          } catch (_) {
+            return JSON.stringify({success: false});
           }
         },
-        
-        /**
-         * ???????????????????????
-         * @returns {Object} ????????????????????
-         */
+
+        async createPushSubscription(vapidKey) {
+          const registration = await this.currentPushRegistration();
+          if (!registration) throw new Error('Notification service is not ready. Please try again later.');
+          const existing = await this.boundedPushLookup(registration.pushManager.getSubscription());
+          const subscription = existing || await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: this.urlBase64ToUint8Array(vapidKey)
+          });
+          const deviceInfo = this.generateDeviceInfo();
+          return {
+            endpoint: subscription.endpoint,
+            keys: {
+              p256dh: this.arrayBufferToBase64(subscription.getKey('p256dh')),
+              auth: this.arrayBufferToBase64(subscription.getKey('auth'))
+            },
+            userAgent: deviceInfo.userAgent,
+            deviceType: deviceInfo.deviceType,
+            deviceName: deviceInfo.deviceName
+          };
+        },
+
         generateDeviceInfo() {
           const userAgent = navigator.userAgent;
           const deviceName = navigator.platform + ' - ' + (navigator.userAgentData?.brands?.[0]?.brand || 'Unknown Browser');
@@ -1861,6 +1858,7 @@
       
       // ??????????????Flutter ??????
       window.requestNotificationPermission = window.WebPushAPI.requestNotificationPermission.bind(window.WebPushAPI);
+      window.getCurrentPushSubscription = window.WebPushAPI.getCurrentPushSubscription.bind(window.WebPushAPI);
       
     })();
   </script>
@@ -3389,7 +3387,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.1.0.1985.js";
+        script.src = "flutter_bootstrap.1.0.1986.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
@@ -3690,7 +3688,7 @@
   <script src="web_vitals.js"></script>
   
   <!-- ?????????????? -->
-  <script src="offline_handler.f39a7bb7ca67.js"></script>
+  <script src="offline_handler.84e8ed7f5f0e.js"></script>
   
   <!-- GitHub Pages 404 ??????????????-->
   <script>
