@@ -1,0 +1,16 @@
+{
+  "id": "_template",
+  "title": "Game Title",
+  "version": "1.0.0",
+  "description": "Reusable game template — copy this folder to create a new game.",
+  "entryPoint": "game.js",
+  "assets": [],
+  "config": {
+    "initialBalance": 10000,
+    "minBet": 100,
+    "maxBet": 5000,
+    "winProbability": 0.35,
+    "minMultiplier": 2,
+    "maxMultiplier": 10
+  }
+}
