@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="agora-frontend-sha" content="a0da4719d3e2770ccc891104dc3210bb2953215a" />
+  <meta name="agora-frontend-sha" content="00c31f9e89d63031307c78d5083ca1c347416ee2" />
   <title>AgoraMarket</title>
   <style>
     html, body {
@@ -103,12 +103,16 @@
     <small id="error-code"></small>
   </div>
 
+  <script src="../../legacy_auth_guard.js"></script>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="../../storefront_readiness.js"></script>
-  <script src="./tg_store_routing.a0da4719d3e2.js"></script>
+  <script src="./tg_store_routing.00c31f9e89d6.js"></script>
   <script>
     (function () {
       var API_BASE = 'https://agoramarketapi.purrtechllc.com/api';
+      function allowsLegacyHostAuth() {
+        return !!window.AgoraLegacyAuth && window.AgoraLegacyAuth.allows();
+      }
       var USDT_TELEMETRY_ENDPOINT =
         API_BASE + '/public/traffic/usdt-landing/events';
       var DESKTOP_CACHE_VERSION_KEY = '_tg_store_runtime_cache_sha';
@@ -427,19 +431,19 @@
       }
       function persistHostSession(routeTarget, jwt, userId, userRole, themeMode) {
         try {
-          localStorage.setItem('_tg_store_jwt', jwt);
-          localStorage.setItem('_tg_store_uid', userId);
-          localStorage.setItem('_tg_store_role', userRole);
-          localStorage.setItem('_tg_store_target_path', routeTarget.targetPath);
+          window.AgoraLegacyAuth.setItem('_tg_store_jwt', jwt);
+          window.AgoraLegacyAuth.setItem('_tg_store_uid', userId);
+          window.AgoraLegacyAuth.setItem('_tg_store_role', userRole);
+          window.AgoraLegacyAuth.setItem('_tg_store_target_path', routeTarget.targetPath);
           if (themeMode) {
-            localStorage.setItem('_tg_store_theme', themeMode);
+            window.AgoraLegacyAuth.setItem('_tg_store_theme', themeMode);
           } else {
-            localStorage.removeItem('_tg_store_theme');
+            window.AgoraLegacyAuth.removeItem('_tg_store_theme');
           }
           if (routeTarget.ref) {
-            localStorage.setItem('_tg_store_ref', routeTarget.ref);
+            window.AgoraLegacyAuth.setItem('_tg_store_ref', routeTarget.ref);
           } else {
-            localStorage.removeItem('_tg_store_ref');
+            window.AgoraLegacyAuth.removeItem('_tg_store_ref');
           }
           return true;
         } catch (err) {
@@ -474,6 +478,14 @@
               typeof navigator.serviceWorker.getRegistrations === 'function') {
             var registrations = await navigator.serviceWorker.getRegistrations();
             await Promise.all(registrations.map(function (registration) {
+              // The push-only worker has no Flutter cache or document control.
+              var pushScope = new URL('/push/', window.location.href).href;
+              var pushScript = new URL('/push/worker.js', window.location.href).href;
+              if (registration.scope === pushScope &&
+                  [registration.active, registration.waiting, registration.installing]
+                    .filter(Boolean).length > 0 &&
+                  [registration.active, registration.waiting, registration.installing]
+                    .filter(Boolean).every(function (worker) { return worker.scriptURL === pushScript; })) return;
               return registration.unregister();
             }));
           }
@@ -506,6 +518,10 @@
         }
       }
       function redirectToStore(hashTarget) {
+        if (!allowsLegacyHostAuth()) {
+          setStatus('登入狀態已變更，請返回商城繼續。');
+          return;
+        }
         try {
           window.location.replace(hashTarget);
           return;
@@ -683,6 +699,10 @@
             'กำลังยืนยันตัวตน...'
           ));
           startupStage = 'auth_exchange';
+          if (!allowsLegacyHostAuth()) {
+            setStatus('請返回商城繼續目前的登入，或更新後重新開啟。');
+            return;
+          }
           var authBody = { initData: initData };
           if (routeTarget.referrerGroupId !== null) {
             authBody.referrerGroupId = routeTarget.referrerGroupId;
@@ -755,6 +775,10 @@
           }
 
           var userInfo = body.userInfo || body || {};
+          if (!allowsLegacyHostAuth()) {
+            setStatus('登入狀態已變更，請返回商城繼續。');
+            return;
+          }
           var userId = String(userInfo.id || userInfo.userId || body.userId || '');
           var userRole = String(userInfo.role || body.role || 'USER').toUpperCase();
           authResult.tokenReceived = Boolean(jwt);
@@ -773,6 +797,10 @@
             userRole,
             themeMode
           );
+          if (!allowsLegacyHostAuth()) {
+            setStatus('登入狀態已變更，請返回商城繼續。');
+            return;
+          }
           if (launchContext && hostJwtAuthPath && readiness &&
               typeof readiness.recordAuthOutcome === 'function') {
             authOutcomeRecorded = true;

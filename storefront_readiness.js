@@ -40,6 +40,12 @@
     flutterFallback: 'FLUTTER_INITDATA_FALLBACK',
   };
 
+  function isSessionHost(rootObject) {
+    var marker = rootObject.document && rootObject.document.querySelector &&
+      rootObject.document.querySelector('meta[name="agora-telegram-host"]');
+    return Boolean(marker && ['store', 'group/admin', 'slot'].includes(marker.content));
+  }
+
   function uuid(rootObject) {
     if (rootObject.crypto && typeof rootObject.crypto.randomUUID === 'function') {
       return rootObject.crypto.randomUUID();
@@ -120,7 +126,7 @@
       'Content-Type': 'application/json',
     };
     try {
-      var token = String(
+      var token = isSessionHost(rootObject) ? '' : String(
         (rootObject.localStorage &&
           (rootObject.localStorage.getItem('_tg_store_jwt') ||
             rootObject.localStorage.getItem('access_token'))) ||
@@ -319,7 +325,8 @@
   function install(rootObject) {
     if (rootObject.__agoraStorefrontReadinessInstalled) return;
     rootObject.__agoraStorefrontReadinessInstalled = true;
-    var context = read(rootObject, Date.now());
+    var launch = rootObject.AgoraTelegramSessionHost;
+    var context = launch ? beginLaunch(rootObject, launch) : read(rootObject, Date.now());
     if (context) recordAttempt(rootObject, context);
     rootObject.addEventListener(DOM_EVENTS.productsVisible, function () {
       recordOutcome(rootObject, EVENTS.productsVisible);
@@ -331,19 +338,24 @@
       recordOutcome(rootObject, EVENTS.catalogFailed);
     });
     rootObject.addEventListener(DOM_EVENTS.flutterAuthStarted, function () {
+      if (isSessionHost(rootObject)) return;
       var launch = read(rootObject, Date.now());
       recordAuthStarted(rootObject, launch, AUTH_PATHS.flutterFallback);
     });
     rootObject.addEventListener(DOM_EVENTS.flutterAuthSucceeded, function () {
+      if (isSessionHost(rootObject)) return;
       recordAuthOutcome(rootObject, null, true, AUTH_PATHS.flutterFallback);
     });
     rootObject.addEventListener(DOM_EVENTS.flutterAuthFailed, function () {
+      if (isSessionHost(rootObject)) return;
       recordAuthOutcome(rootObject, null, false, AUTH_PATHS.flutterFallback, null, 'UNKNOWN');
     });
     rootObject.addEventListener(DOM_EVENTS.flutterSessionReadyHost, function () {
+      if (isSessionHost(rootObject)) return;
       recordFlutterSessionReady(rootObject, null, AUTH_PATHS.hostJwt);
     });
     rootObject.addEventListener(DOM_EVENTS.flutterSessionReadyFallback, function () {
+      if (isSessionHost(rootObject)) return;
       recordFlutterSessionReady(rootObject, null, AUTH_PATHS.flutterFallback);
     });
   }

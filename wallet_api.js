@@ -8,12 +8,28 @@ const WALLET_API_CONFIG = {
   apiBaseUrl: 'https://agoramarketapi.purrtechllc.com/api',
 };
 
+// Fix the transport authority for this document; a URL parameter cannot select
+// the native bridge or revive a retired browser page.
+const WALLET_NATIVE_HOST = !!(window.flutter_inappwebview &&
+  typeof window.flutter_inappwebview.callHandler === 'function');
+function requireWalletLegacyActive() {
+  if (WALLET_NATIVE_HOST) return;
+  if (window.AgoraLegacyAuth) {
+    window.AgoraLegacyAuth.requireActive();
+    return;
+  }
+  const error = new Error('This page must reload before continuing wallet login');
+  error.name = 'LegacyAuthRetiredError';
+  throw error;
+}
+
 /**
  * 获取 nonce（用于签名）
  * @param {string} walletAddress - 钱包地址
  * @returns {Promise<Object>} 包含 message, nonce, timestamp 的对象
  */
 async function getNonce(walletAddress) {
+  requireWalletLegacyActive();
   const nonceResponse = await fetch(`${WALLET_API_CONFIG.apiBaseUrl}/auth/wallet-connect/nonce`, {
     method: 'POST',
     headers: {
@@ -23,12 +39,14 @@ async function getNonce(walletAddress) {
       walletAddress: walletAddress
     })
   });
+  requireWalletLegacyActive();
 
   if (!nonceResponse.ok) {
     throw new Error('獲取 nonce 失敗: ' + nonceResponse.statusText);
   }
 
   const data = await nonceResponse.json();
+  requireWalletLegacyActive();
   
   // 从 message 中提取 nonce（如果 API 返回格式特殊）
   if (data.message && (!data.nonce || data.nonce === '')) {
@@ -79,6 +97,7 @@ async function getNonce(walletAddress) {
  * @returns {Promise<Object>} 登录响应数据（包含 token, refreshToken, user）
  */
 async function verifyAndLogin(walletAddress, signature, nonceData, chainType = 'tron') {
+  requireWalletLegacyActive();
   const requestBody = {
     walletAddress: walletAddress,
     signature: signature,
@@ -99,6 +118,7 @@ async function verifyAndLogin(walletAddress, signature, nonceData, chainType = '
     },
     body: JSON.stringify(requestBody)
   });
+  requireWalletLegacyActive();
 
   if (!loginResponse.ok) {
     const errorData = await loginResponse.json().catch(() => ({ message: loginResponse.statusText }));
@@ -106,6 +126,7 @@ async function verifyAndLogin(walletAddress, signature, nonceData, chainType = '
   }
 
   const loginData = await loginResponse.json();
+  requireWalletLegacyActive();
   
   if (!loginData.token || !loginData.refreshToken) {
     throw new Error(loginData.message || '登錄響應中缺少 token');

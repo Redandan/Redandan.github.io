@@ -36,9 +36,49 @@
   const _params        = new URLSearchParams(window.location.search);
   const _isFlutterMode = _params.get('flutter') === '1' || _params.get('hosted') === '1' || !!window._flutterNative;
   const _isV2HttpOnlyHost = _params.get('v2host') === '1';
+  const _isNativeHost = !_isV2HttpOnlyHost && (window._flutterNative === true ||
+    !!(window.flutter_inappwebview && typeof window.flutter_inappwebview.callHandler === 'function'));
+  const _legacyWebHost = !_isV2HttpOnlyHost && !_isNativeHost;
+  let _retired = false;
+  const _pendingMessages = new Set();
+  const _pendingHttp = new Set();
+  let _slotRecovery = {status: _isV2HttpOnlyHost ? 'loading' : 'ready'};
+  let _recoveryInitialized = false;
+  let _recoveryBusy = false;
+  let _recoverySequence = 0;
   const _DEFAULT_API_BASE = 'https://agoramarketapi.purrtechllc.com/api';
 
+  function _allowed() {
+    return !_retired && (!_legacyWebHost || (!!window.AgoraLegacyAuth &&
+      typeof window.AgoraLegacyAuth.onRetire === 'function' && window.AgoraLegacyAuth.allows()));
+  }
+  function _requireActive() {
+    if (_allowed()) return;
+    const error = new Error('This game must reload before continuing with the current login');
+    error.name = 'LegacyAuthRetiredError';
+    throw error;
+  }
+  async function _fetch(url, options = {}) {
+    _requireActive();
+    const controller = typeof AbortController === 'function' ? new AbortController() : null;
+    const relay = () => controller?.abort();
+    if (controller) {
+      _pendingHttp.add(controller);
+      if (options.signal?.aborted) controller.abort();
+      else options.signal?.addEventListener('abort', relay, {once:true});
+    }
+    try {
+      const response = await fetch(url, {...options, signal:controller?.signal ?? options.signal});
+      _requireActive();
+      return response;
+    } finally {
+      if (controller) _pendingHttp.delete(controller);
+      options.signal?.removeEventListener('abort', relay);
+    }
+  }
+
   function _storageGet(key) {
+    if (!_legacyWebHost || !_allowed()) return null;
     try {
       return window.localStorage.getItem(key);
     } catch (_) {
@@ -47,6 +87,7 @@
   }
 
   function _storageSet(key, value) {
+    if (!_legacyWebHost || !_allowed()) return false;
     try {
       window.localStorage.setItem(key, value);
       return true;
@@ -58,6 +99,7 @@
   // ── Flutter native bridge helpers ─────────────────────────────────────────
 
   function _hasBridge() {
+    if (_isV2HttpOnlyHost) return false;
     const b = window.flutter_inappwebview;
     return !!( b && typeof b.callHandler === 'function');
   }
@@ -79,31 +121,39 @@
   // ── postMessage helper ─────────────────────────────────────────────────────
 
   function _postAndWait(payload, okType, errType, timeoutMs, timeoutMsg) {
+    _requireActive();
     return new Promise((resolve) => {
       let settled = false;
-      function onMsg(e) {
-        if (e.origin !== window.__gameOrigin) return;
-        if (e.source !== window.parent && e.source !== window && e.source !== null) return;
-        const d = e.data || {};
-        if (d.type !== okType && d.type !== errType) return;
-        if (payload.requestId && d.requestId !== payload.requestId) return;
+      let tOut;
+      const retired = () => finish({result:null,timedOut:false,errorMessage:'LEGACY_AUTH_RETIRED'});
+      function finish(result) {
         if (settled) return;
         settled = true;
         window.removeEventListener('message', onMsg);
         clearTimeout(tOut);
+        _pendingMessages.delete(retired);
+        resolve(result);
+      }
+      function onMsg(e) {
+        if (!_allowed()) { retired(); return; }
+        if (e.origin !== window.__gameOrigin) return;
+        if (_isV2HttpOnlyHost && e.source !== window.parent) return;
+        if (e.source !== window.parent && e.source !== window && e.source !== null) return;
+        const d = e.data || {};
+        if (d.type !== okType && d.type !== errType) return;
+        if (payload.requestId && d.requestId !== payload.requestId) return;
         if (d.type === okType) {
-          resolve({ result: d, timedOut: false, errorMessage: null });
+          finish({ result: d, timedOut: false, errorMessage: null });
         } else {
-          resolve({ result: null, timedOut: false, errorMessage: d.message || d.error || `${errType} received` });
+          finish({ result: null, timedOut: false, errorMessage: d.message || d.error || `${errType} received` });
         }
       }
       window.addEventListener('message', onMsg);
-      const tOut = setTimeout(() => {
+      _pendingMessages.add(retired);
+      tOut = setTimeout(() => {
         if (settled) return;
-        settled = true;
-        window.removeEventListener('message', onMsg);
         _log(timeoutMsg, 'warn');
-        resolve({ result: null, timedOut: true, errorMessage: timeoutMsg });
+        finish({ result: null, timedOut: true, errorMessage: timeoutMsg });
       }, timeoutMs);
       window.parent.postMessage(payload, window.__gameOrigin);
     });
@@ -113,9 +163,93 @@
     return _storageGet('_flutter_game_api_base') || window.__AGORA_API_BASE_URL || _DEFAULT_API_BASE;
   }
 
+  function _setRecovery(state) {
+    if (!_isV2HttpOnlyHost || !_allowed()) return;
+    _slotRecovery = state && ['ready', 'pending', 'resolved'].includes(state.status)
+      ? state : {status:'unavailable'};
+    document.getElementById('agora-slot-recovery')?.remove();
+    if (_slotRecovery.status === 'ready') { window._game_onRecoveryReady?.(); return; }
+    window._game_onRecoveryBlocked?.();
+    if (!document.body) {
+      document.addEventListener('DOMContentLoaded', () => _setRecovery(_slotRecovery), {once:true});
+      return;
+    }
+    const overlay = document.createElement('div');
+    overlay.id = 'agora-slot-recovery';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', '旋轉結果確認');
+    Object.assign(overlay.style, {position:'fixed', inset:'0', zIndex:'99999',
+      display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,.82)',
+      padding:'max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left))', boxSizing:'border-box'});
+    const card = document.createElement('section');
+    Object.assign(card.style, {width:'100%', maxWidth:'420px', maxHeight:'100%', overflowY:'auto',
+      padding:'20px', boxSizing:'border-box', background:'#17152e', color:'#fff', borderRadius:'16px',
+      font:'16px/1.5 system-ui', overflowWrap:'anywhere'});
+    const title = document.createElement('h2'); title.textContent = '旋轉結果確認';
+    Object.assign(title.style, {fontSize:'20px', margin:'0 0 12px'}); card.append(title);
+    const text = document.createElement('p');
+    const stateValue = _slotRecovery;
+    text.textContent = stateValue.status === 'resolved'
+      ? (stateValue.rejected ? '這一局未成立。確認後可以繼續遊戲。'
+        : `上一局投注 ${stateValue.amount} USDT，派彩 ${stateValue.winAmount} USDT。確認結果後可以繼續遊戲。`)
+      : stateValue.status === 'pending'
+        ? `上一局 ${stateValue.amount} USDT 的結果尚未確認。先查詢結果；如需重試，將使用原本的同一局。`
+        : '目前無法確認上一局的結果。請重新查詢後再繼續遊戲。';
+    card.append(text);
+    const button = (label, action) => {
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = label;
+      b.disabled = _recoveryBusy;
+      Object.assign(b.style, {display:'block', width:'100%', marginTop:'12px', minHeight:'46px',
+        padding:'10px 14px', border:'1px solid #928ce0', borderRadius:'10px', background:'#3d357e',
+        color:'#fff', font:'inherit', cursor:'pointer'});
+      b.addEventListener('click', action); card.append(b); return b;
+    };
+    if (stateValue.status === 'resolved') {
+      button('確認結果並繼續', async () => {
+        if (await _acknowledgeSpin(stateValue.operationId)) {
+          await window._game_onRecoveryComplete?.();
+        }
+      });
+    } else {
+      button('重新查詢結果', () => _recoverSpin());
+      if (stateValue.status === 'pending') {
+        button(`重試同一局（${stateValue.amount} USDT）`, () => _recoverSpin(stateValue.operationId));
+      }
+    }
+    const back = button('返回商城', () => window.__gameHost.navigate('back'));
+    back.disabled = false;
+    overlay.append(card); document.body.append(overlay);
+  }
+
+  async function _recoverSpin(operationId) {
+    if (!_isV2HttpOnlyHost || _recoveryBusy || !_allowed()) return;
+    _recoveryBusy = true; _setRecovery(_slotRecovery);
+    const reply = await _postAndWait({type: operationId ? 'SPIN_RETRY_REQUEST' : 'SPIN_RECOVERY_REQUEST',
+      requestId:`slot-recovery-${++_recoverySequence}`, ...(operationId ? {operationId} : {})},
+      'SPIN_RECOVERY_RESULT', 'SPIN_RECOVERY_ERROR', 25000, 'Spin recovery timed out');
+    _recoveryBusy = false;
+    _setRecovery(reply.result || {status:'unavailable'});
+  }
+
+  async function _acknowledgeSpin(operationId) {
+    if (!_isV2HttpOnlyHost || !operationId) return true;
+    if (_recoveryBusy || !_allowed()) return false;
+    _recoveryBusy = true;
+    const reply = await _postAndWait({type:'SPIN_ACK_REQUEST', operationId,
+      requestId:`slot-ack-${++_recoverySequence}`}, 'SPIN_ACK_RESULT', 'SPIN_ACK_ERROR',
+      8000, 'Spin acknowledgement timed out');
+    _recoveryBusy = false;
+    if (!_allowed()) return false;
+    if (reply.result) { _setRecovery({status:'ready'}); return true; }
+    _setRecovery({status:'unavailable'});
+    return false;
+  }
+
   let _hostRtpData = null;
 
   function _cacheHostRtpData(data, source) {
+    if (!_allowed()) return false;
     if (!data || typeof data !== 'object') return false;
     _hostRtpData = data;
     _storageSet('_flutter_game_rtp', JSON.stringify(data));
@@ -124,6 +258,7 @@
   }
 
   async function _fetchRtpRest(timeoutMs) {
+    if (!_allowed()) return null;
     if (_hostRtpData) return _hostRtpData;
     // V2 keeps credentials in its HttpOnly parent session.  Its sandbox must
     // never fall through to a legacy REST origin, even when HOST_INIT is late.
@@ -147,7 +282,7 @@
     const controller = typeof AbortController === 'function' ? new AbortController() : null;
     const timeout = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
     try {
-      const resp = await fetch(
+      const resp = await _fetch(
         apiBase + '/slot/rtp?gameId=' + encodeURIComponent(gameId),
         { headers, signal: controller ? controller.signal : undefined }
       );
@@ -156,6 +291,7 @@
         return null;
       }
       const json = await resp.json();
+      _requireActive();
       const data = json.data ?? json;
       if (data) {
         _storageSet('_flutter_game_rtp', JSON.stringify(data));
@@ -172,6 +308,7 @@
   let _rtpRestPrefetchPromise = null;
 
   function _getRtpRestPrefetch(timeoutMs) {
+    if (!_allowed()) return Promise.resolve(null);
     if (_hostRtpData) return Promise.resolve(_hostRtpData);
 
     if (!_rtpRestPrefetchPromise) {
@@ -192,7 +329,7 @@
     return _rtpRestPrefetchPromise;
   }
 
-  if (_isFlutterMode && !_isV2HttpOnlyHost) {
+  if (_isFlutterMode && _legacyWebHost) {
     window.__gameHostRtpPrefetch = _getRtpRestPrefetch(2500);
   }
 
@@ -201,10 +338,13 @@
   window.__gameOrigin = window.location.origin;
 
   window.addEventListener('message', (e) => {
+    if (!_allowed()) return;
     if (e.origin !== window.__gameOrigin) return;
+    if (_isV2HttpOnlyHost && e.source !== window.parent) return;
     if (e.source !== window.parent && e.source !== window && e.source !== null) return;
 
     const { type } = e.data || {};
+    if (_isV2HttpOnlyHost && type === 'HOST_RETIRED') { retire(); return; }
 
     if (type === 'HOST_LOG') {
       const level = String((e.data && e.data.level) || 'info').toLowerCase();
@@ -214,6 +354,10 @@
     }
 
     if (type === 'HOST_INIT') {
+      if (_isV2HttpOnlyHost && !_recoveryInitialized) {
+        _recoveryInitialized = true;
+        _setRecovery(e.data.slotOperation || {status:'unavailable'});
+      }
       const {
         jwt,
         balance,
@@ -226,7 +370,7 @@
       } = e.data;
       _cacheHostRtpData(rtp, 'HOST_INIT');
       _deliverHostInit({
-        jwt,
+        jwt: _isV2HttpOnlyHost ? undefined : jwt,
         balance,
         demoMode,
         username,
@@ -244,8 +388,10 @@
   // Queue the payload and replay it once the module registers _game_onHostInit.
   let _pendingInit = null;
   let _initDelivered = false;
+  let _initRetryTimeout = null;
 
   function _deliverHostInit(data) {
+    if (!_allowed()) return;
     if (_initDelivered) return; // idempotent — only the first HOST_INIT wins
     if (typeof window._game_onHostInit === 'function') {
       _initDelivered = true;
@@ -255,6 +401,7 @@
       _pendingInit = data;
       if (!_pendingInit._retryHandle) {
         _pendingInit._retryHandle = setInterval(function () {
+          if (!_allowed()) { clearInterval(_pendingInit?._retryHandle); return; }
           if (typeof window._game_onHostInit !== 'function') return;
           clearInterval(_pendingInit._retryHandle);
           if (_initDelivered) return;
@@ -262,7 +409,7 @@
           window._game_onHostInit(_pendingInit);
         }, 50);
         // Safety: stop retrying after 20 s
-        setTimeout(function () { clearInterval(_pendingInit?._retryHandle); }, 20000);
+        _initRetryTimeout = setTimeout(function () { clearInterval(_pendingInit?._retryHandle); }, 20000);
       }
     }
   }
@@ -273,9 +420,10 @@
   // localStorage before navigating; this poller delivers HOST_INIT once found.
   // Also used when TG host redirects to Flutter PWA and Flutter navigates the
   // browser to the game URL on mobile.
-  if (_isFlutterMode) {
+  if (_isFlutterMode && _legacyWebHost) {
     var _selfHostRetries = 0;
     var _selfHostTimer = setInterval(function () {
+      if (!_allowed()) { clearInterval(_selfHostTimer); return; }
       if (_initDelivered) { clearInterval(_selfHostTimer); return; }
       var jwt = _storageGet('_flutter_game_jwt') || '';
       if (jwt) {
@@ -295,6 +443,7 @@
 
   // Send GAME_READY so the Flutter/TG host knows the iframe is alive.
   setTimeout(() => {
+    if (!_allowed()) return;
     if (window.parent !== window && window.__gameOrigin) {
       window.parent.postMessage({ type: 'GAME_READY' }, window.__gameOrigin);
     }
@@ -304,6 +453,10 @@
   // ── window.__gameHost implementation ──────────────────────────────────────
 
   window.__gameHost = {
+    isRetired() { return !_allowed(); },
+    isRecoveryBlocked() { return _isV2HttpOnlyHost && _slotRecovery.status !== 'ready'; },
+    openRecovery() { return _recoverSpin(); },
+    acknowledgeSpin(operationId) { return _acknowledgeSpin(operationId); },
 
     /**
      * Execute a spin.
@@ -311,6 +464,9 @@
      * { symbols, symbolIds, multiplier, prize, newBalance, mode }
      */
     async spin({ betIndex, betAmount, mode, clientSeed, nonce, clientRoundId }) {
+      if (_isV2HttpOnlyHost && _slotRecovery.status !== 'ready') {
+        _setRecovery(_slotRecovery); return null;
+      }
       const params = { betIndex, betAmount, mode, clientSeed, nonce };
       if (mode !== 'DEMO') params.clientRoundId = clientRoundId;
 
@@ -354,7 +510,11 @@
         );
         if (r.result) {
           const d = r.result;
+          if (_isV2HttpOnlyHost && mode === 'REAL' && typeof d.operationId !== 'string') {
+            _setRecovery({status:'unavailable'}); await _recoverSpin(); return null;
+          }
           return {
+            operationId: _isV2HttpOnlyHost ? d.operationId : undefined,
             symbols:    Array.isArray(d.symbols)    ? d.symbols                        : null,
             symbolIds:  Array.isArray(d.symbolIds)  ? d.symbolIds.map(v => Number(v)) : null,
             multiplier: Number(d.multiplier ?? 0),
@@ -362,6 +522,10 @@
             newBalance: Number(d.newBalance ?? d.balance ?? NaN),
             mode:       d.mode || mode,
           };
+        }
+        if (_isV2HttpOnlyHost) {
+          _setRecovery({status:'unavailable'});
+          await _recoverSpin();
         }
         if (!r.timedOut) _log(`SPIN(postMsg) SPIN_ERROR: ${r.errorMessage}`, 'error');
         return null;
@@ -371,7 +535,7 @@
       // Flutter navigated the browser directly to the game URL; no bridge or
       // iframe is available.  Call the spin API directly with the JWT that
       // Flutter cached in localStorage before navigating.
-      if (_isFlutterMode) {
+      if (_isFlutterMode && _legacyWebHost) {
         var apiBase = _storageGet('_flutter_game_api_base') || '';
         var jwt     = _storageGet('_flutter_game_jwt') || '';
         if (!apiBase || !jwt) {
@@ -390,7 +554,7 @@
             nonce:      nonce ? Number(nonce) : Date.now(),
           };
           if (mode !== 'DEMO') body.clientRoundId = clientRoundId || undefined;
-          var resp = await fetch(apiBase + '/slot/spin', {
+          var resp = await _fetch(apiBase + '/slot/spin', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json',
                        'Authorization': 'Bearer ' + jwt },
@@ -403,6 +567,7 @@
             return null;
           }
           var json = await resp.json();
+          _requireActive();
           var d = (json.data ?? json) || {};
           if (!(Array.isArray(d.symbols) || Array.isArray(d.symbolIds))) {
             _log('SPIN(rest) invalid response', 'error');
@@ -458,7 +623,7 @@
 
       // ── Branch 2: iframe postMessage ───────────────────────────────────
       if (window.parent !== window) {
-        if (!_isV2HttpOnlyHost) {
+        if (_legacyWebHost) {
           const restData = await _getRtpRestPrefetch(2500);
           if (restData) return restData;
         }
@@ -475,7 +640,7 @@
       }
 
       // ── Branch 3: localStorage cache or REST (mobile Flutter / TG hosted) ─
-      if (_isFlutterMode) {
+      if (_isFlutterMode && _legacyWebHost) {
         const restData = await _getRtpRestPrefetch(2500);
         if (restData) return restData;
       }
@@ -512,7 +677,7 @@
       }
 
       // ── Branch 3: localStorage cache (mobile Flutter Web / PWA direct nav) ─
-      if (_isFlutterMode) {
+      if (_isFlutterMode && _legacyWebHost) {
         var cached = parseFloat(_storageGet('_flutter_game_balance') || '0');
         return isNaN(cached) ? 0 : cached;
       }
@@ -546,17 +711,18 @@
       }
 
       // ── Branch 3: REST (mobile Flutter Web / TG hosted path) ─────────────
-      if (_isFlutterMode) {
+      if (_isFlutterMode && _legacyWebHost) {
         var apiBase = _storageGet('_flutter_game_api_base') || '';
         var jwt     = _storageGet('_flutter_game_jwt') || '';
         if (!apiBase || !jwt) throw new Error('getTransactions: runtime credentials unavailable');
-        var resp = await fetch(apiBase + '/transactions/list', {
+        var resp = await _fetch(apiBase + '/transactions/list', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt },
           body: JSON.stringify({ token: 'USDT', page: page || 0, size: size }),
         });
         if (!resp.ok) throw new Error('getTransactions HTTP ' + resp.status);
         var json = await resp.json();
+        _requireActive();
         var d = json.data != null ? json.data : json;
         return {
           content:       (d && d.content)       || [],
@@ -573,6 +739,7 @@
      * dest: 'back' | 'deposit' | 'withdraw'
      */
     navigate(dest) {
+      if (dest !== 'back') _requireActive();
       const NAV = {
         back:     { handler: 'goBack',     msg: 'GO_BACK'     },
         deposit:  { handler: 'goDeposit',  msg: 'GO_DEPOSIT'  },
@@ -606,6 +773,42 @@
       }
     },
   };
+
+  // Recheck after every asynchronous branch, including native-body parsing,
+  // iframe replies and cached reads. Native/V2 retain their original authority.
+  for (const name of ['spin', 'getRtp', 'getBalance', 'getTransactions']) {
+    const original = window.__gameHost[name];
+    window.__gameHost[name] = async function (...args) {
+      _requireActive();
+      try {
+        const result = await original.apply(this, args);
+        _requireActive();
+        return result;
+      } catch (error) { _requireActive(); throw error; }
+    };
+  }
+  function retire() {
+    if (_retired) return;
+    _retired = true;
+    clearInterval(_selfHostTimer);
+    clearInterval(_pendingInit?._retryHandle);
+    clearTimeout(_initRetryTimeout);
+    _pendingInit = null;
+    _slotRecovery = {status:'unavailable'};
+    document.getElementById('agora-slot-recovery')?.remove();
+    _hostRtpData = null;
+    _rtpRestPrefetchPromise = null;
+    window.__gameHostRtpPrefetch = null;
+    delete window.__agoraAuth;
+    delete window.__hostDemoMode;
+    for (const finish of _pendingMessages) finish();
+    for (const controller of _pendingHttp) controller.abort();
+    if (typeof window._game_onHostRetired === 'function') window._game_onHostRetired();
+  }
+  if (_legacyWebHost) {
+    if (typeof window.AgoraLegacyAuth?.onRetire === 'function') window.AgoraLegacyAuth.onRetire(retire);
+    else retire();
+  }
 
   console.log('[flutter_adapter] loaded, _isFlutterMode =', _isFlutterMode);
 })();

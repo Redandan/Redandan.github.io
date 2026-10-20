@@ -2,6 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <meta name="referrer" content="strict-origin">
   <title>Redirecting...</title>
   <script>
     // GitHub Pages SPA 路由支持
@@ -10,6 +11,22 @@
       var path = window.location.pathname;
       var search = window.location.search;
       var hash = window.location.hash;
+
+      // Pages is not a v2 callback origin. Do not copy a one-time proof into
+      // sessionStorage or forward it through the generic SPA redirect.
+      var fragment = hash.slice(1);
+      var split = fragment.indexOf('?');
+      var query = new URLSearchParams(search);
+      var fragmentQuery = new URLSearchParams(split < 0 ? fragment : fragment.slice(split + 1));
+      if (['webSessionVersion', 'bindingVersion', 'flowId', 'completionCode'].some(function (key) {
+        return query.has(key) || fragmentQuery.has(key);
+      })) {
+        try { sessionStorage.removeItem('_404_redirect_path'); } catch (_) {}
+        try { window.history.replaceState(null, '', '/oauth2-callback'); } catch (_) {}
+        var binding = query.has('bindingVersion') || fragmentQuery.has('bindingVersion');
+        window.location.replace('/index.html?' + (binding ? 'bindingVersion' : 'webSessionVersion') + '=2');
+        return;
+      }
       
       // 防止循环重定向：检查是否已经包含 /index.html
       if (path.indexOf('/index.html') !== -1) {
@@ -44,7 +61,7 @@
       window.location.replace('/index.html');
     })();
   </script>
-  <meta http-equiv="refresh" content="0; url=/index.html">
+  <noscript><meta http-equiv="refresh" content="0; url=/index.html"></noscript>
 </head>
 <body>
   <p>Redirecting to <a href="/index.html">home page</a>...</p>

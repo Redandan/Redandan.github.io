@@ -215,7 +215,7 @@ async function importFreshWalletModule() {
   return import(fileUrl);
 }
 
-async function setup({ balance = 123.45 } = {}) {
+async function setup({ balance = 123.45, isActive = () => true, getBalance = async () => balance } = {}) {
   const document = new FakeDocument();
   const localStorage = createLocalStorage();
 
@@ -250,8 +250,9 @@ async function setup({ balance = 123.45 } = {}) {
   const onBalanceChangeCalls = [];
 
   mod.initWalletPanel({
+    isActive,
     getToken: () => 'jwt-token',
-    getBalance: async () => balance,
+    getBalance,
     onBalanceChange: (usdt) => onBalanceChangeCalls.push(usdt),
     onLog: () => {},
     onBeforeOpen: () => {},
@@ -303,4 +304,44 @@ test('closeWalletPanel should close panel and hide it after transitionend', asyn
   panel.dispatchEvent({ type: 'transitionend' });
   assert.equal(panel.style.display, 'none');
   assert.equal(mod.walletIsOpen(), false);
+});
+
+test('retired game cannot reopen wallet or send recharge and withdrawal requests', async () => {
+  let active = true;
+  const {mod,document} = await setup({isActive:()=>active});
+  await mod.openWalletPanel('withdraw');
+  active = false;
+  mod.closeWalletPanel();
+  let requests = 0, confirmations = 0;
+  global.fetch = async()=>{requests++;throw Error('Unexpected retired request');};
+  global.window.confirm = ()=>{confirmations++;return true;};
+  document.getElementById('wallet-deposit-amount-input').value = '10';
+  document.getElementById('wallet-withdraw-amount-input').value = '100';
+  document.getElementById('wallet-withdraw-address-input').value = 'fixture-address';
+  document.getElementById('wallet-deposit-create').click();
+  document.getElementById('wallet-withdraw-create').click();
+  document.getElementById('wallet-deposit-cancel').click();
+  await mod.openWalletPanel('deposit');
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(requests,0);assert.equal(confirmations,0);assert.equal(mod.walletIsOpen(),false);
+});
+
+test('late wallet state body is discarded and cannot trigger the next request', async () => {
+  let active = true,release,requests=0;
+  const {mod,document} = await setup({isActive:()=>active});
+  global.fetch = async()=>{requests++;return {ok:true,status:200,text:()=>new Promise(resolve=>{release=resolve;})};};
+  const pending=mod.openWalletPanel('deposit');
+  while(!release)await new Promise(resolve=>setImmediate(resolve));
+  active=false;release(JSON.stringify({id:'fixture-old',receiveAddress:'fixture-old-address',status:'PENDING'}));
+  await pending;
+  assert.equal(requests,1);assert.equal(mod.walletIsOpen(),false);
+  assert.notEqual(document.getElementById('wallet-deposit-address').textContent,'fixture-old-address');
+});
+
+test('late balance cannot overwrite the retired wallet display or notify its game', async () => {
+  let active=true,release;
+  const {mod,document,onBalanceChangeCalls}=await setup({isActive:()=>active,getBalance:()=>new Promise(resolve=>{release=resolve;})});
+  const pending=mod.openWalletPanel('withdraw');active=false;release(999);await pending;
+  assert.deepEqual(onBalanceChangeCalls,[]);assert.notEqual(document.getElementById('wallet-balance-chip').textContent,'USDT 999.00');
+  assert.equal(mod.walletIsOpen(),false);
 });

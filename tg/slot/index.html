@@ -16,12 +16,16 @@
 <body>
   <p id="status">載入中...</p>
 
+  <script src="../../legacy_auth_guard.js"></script>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     (function () {
       var API_BASE = 'https://agoramarketapi.purrtechllc.com/api';
       var statusEl = document.getElementById('status');
       function setStatus(t) { if (statusEl) statusEl.textContent = t; }
+      function allowsLegacyHostAuth() {
+        return !!window.AgoraLegacyAuth && window.AgoraLegacyAuth.allows();
+      }
 
       var tg = window.Telegram && window.Telegram.WebApp;
       if (!tg) { setStatus('請在 Telegram 中開啟'); return; }
@@ -34,6 +38,10 @@
       (async function () {
         try {
           setStatus('驗證身分中...');
+          if (!allowsLegacyHostAuth()) {
+            setStatus('請返回商城繼續目前的登入，或更新後重新開啟。');
+            return;
+          }
           var resp = await fetch(API_BASE + '/auth/telegram-webapp/exchange-jwt', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -56,6 +64,10 @@
           );
           if (isNaN(balance)) balance = 0;
 
+          if (!allowsLegacyHostAuth()) {
+            setStatus('登入狀態已變更，請返回商城繼續。');
+            return;
+          }
           // exchange-jwt may not include balance — fetch real balance from /auth/me
           setStatus('取得餘額中...');
           try {
@@ -82,15 +94,20 @@
           } catch (_) {}
 
           // Store for flutter_adapter.js self-host path
-          localStorage.setItem('_flutter_game_jwt',         jwt);
-          localStorage.setItem('_flutter_game_balance',     balance.toFixed(4));
-          localStorage.setItem('_flutter_game_api_base',    API_BASE);
-          localStorage.setItem('_flutter_game_id',          'moon_dance');
-          localStorage.setItem('_flutter_game_tg_safe_top', String(safeTop));
+          if (!allowsLegacyHostAuth()) {
+            setStatus('登入狀態已變更，請返回商城繼續。');
+            return;
+          }
+          window.AgoraLegacyAuth.setItem('_flutter_game_jwt',         jwt);
+          window.AgoraLegacyAuth.setItem('_flutter_game_balance',     balance.toFixed(4));
+          window.AgoraLegacyAuth.setItem('_flutter_game_api_base',    API_BASE);
+          window.AgoraLegacyAuth.setItem('_flutter_game_id',          'moon_dance');
+          window.AgoraLegacyAuth.setItem('_flutter_game_tg_safe_top', String(safeTop));
 
           setStatus('進入遊戲中...');
           // Use ?hosted=1 so viewport_manager enables the TG safe-area offset logic.
           // flutter_adapter.js treats hosted=1 the same as flutter=1 for self-host transport.
+          window.AgoraLegacyAuth.requireActive();
           window.location.replace('/games/moon_dance/index.html?hosted=1&_ts=' + Date.now());
         } catch (err) {
           console.error('[tg/slot] error: errorType=' + ((err && err.name) || 'UnknownError'));

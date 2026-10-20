@@ -354,7 +354,15 @@ function _startCountdown(expireTime) {
 }
 
 // ── API ───────────────────────────────────────────────────────────────────────
+function _requireActive() {
+  if (_opts.isActive?.() !== false) return;
+  const error = new Error('This game must reload before continuing with the current login');
+  error.name = 'LegacyAuthRetiredError';
+  throw error;
+}
+
 async function _request(path, { method = 'GET', body, allowNotFound = false } = {}) {
+  _requireActive();
   const token = _token();
   if (!token) { const e = new Error('請先登入後再操作'); e.status = 401; throw e; }
   const resp = await fetch(_apiBase() + path, {
@@ -362,7 +370,9 @@ async function _request(path, { method = 'GET', body, allowNotFound = false } = 
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
     body: body ? JSON.stringify(body) : undefined,
   });
+  _requireActive();
   const text = await resp.text();
+  _requireActive();
   const data = text ? (() => { try { return JSON.parse(text); } catch (_) { return { message: text }; } })() : null;
   if (allowNotFound && (resp.status === 404 || resp.status === 204)) return null;
   if (!resp.ok) {
@@ -374,7 +384,9 @@ async function _request(path, { method = 'GET', body, allowNotFound = false } = 
 
 // ── Balance ───────────────────────────────────────────────────────────────────
 async function _refreshBalance() {
+  _requireActive();
   const usdt = await _opts.getBalance?.();
+  _requireActive();
   if (Number.isFinite(usdt)) {
     _balance = usdt;
     _syncBalanceUI();
@@ -455,6 +467,7 @@ async function _loadState() {
   try {
     _st.pendingWithdraw = await _request('/withdraws/ongoing', { allowNotFound: true });
   } catch (e) { _st.pendingWithdraw = null; _log(`提款狀態載入失敗: ${e.message}`, 'warn'); }
+  _requireActive();
   _renderDeposit();
   _renderWithdraw();
 }
@@ -471,6 +484,7 @@ async function _createRecharge(forcedAmount) {
       method: 'POST',
       body: { amount, currency: 'USDT', protocolEnum: 'TRC20' },
     });
+    _requireActive();
     if (resp?.success === false) {
       _st.rechargeSuggestedAmounts = Array.isArray(resp.suggestedAmounts) ? resp.suggestedAmounts : [];
       _renderSuggestedAmounts();
@@ -487,8 +501,10 @@ async function _createRecharge(forcedAmount) {
     };
     try {
       const p = await _request('/recharge/pending', { allowNotFound: true });
+      _requireActive();
       if (p) _st.pendingRecharge = p;
     } catch (_) {}
+    _requireActive();
     _renderDeposit();
     _showFlash('充值單已建立，請使用下方地址完成轉帳', 'success');
   } catch (e) {
@@ -500,6 +516,7 @@ async function _createRecharge(forcedAmount) {
 }
 
 async function _cancelRecharge() {
+  if (_opts.isActive?.() === false) return;
   const r = _st.pendingRecharge;
   if (!r?.id) { _showFlash('目前沒有可取消的充值', 'warn'); return; }
   if (!window.confirm('確定要取消這筆充值嗎？取消後需要重新建立。')) return;
@@ -508,6 +525,7 @@ async function _cancelRecharge() {
   btn.disabled = true; btn.textContent = '取消中...';
   try {
     await _request(`/recharge/${encodeURIComponent(r.id)}/cancel`, { method: 'POST' });
+    _requireActive();
     _st.pendingRecharge = null;
     _st.rechargePaymentUrl = '';
     _renderDeposit();
@@ -520,6 +538,7 @@ async function _cancelRecharge() {
 }
 
 async function _createWithdraw() {
+  if (_opts.isActive?.() === false) return;
   const amount  = Number(_withdrawAmountInput.value);
   const address = String(_withdrawAddressInput.value || '').trim();
   const net     = _NETWORKS[_st.selectedProtocol] || _NETWORKS.TRC20;
@@ -569,17 +588,25 @@ export function walletIsOpen() {
 
 /** Open the wallet panel in 'deposit' or 'withdraw' mode. */
 export async function openWalletPanel(mode) {
+  if (_opts.isActive?.() === false) return;
   _opts.onBeforeOpen?.();
   _setMode(mode);
   _panel.style.display = 'flex';
   _backdrop.classList.add('open');
   _panel.getBoundingClientRect(); // force reflow so CSS transition plays
   _panel.classList.add('open');
-  await _loadState();
+  try {
+    await _loadState();
+    _requireActive();
+  } catch (error) {
+    if (error.name !== 'LegacyAuthRetiredError') throw error;
+    closeWalletPanel();
+    return;
+  }
   if (_st.mode === 'deposit' && !_st.pendingRecharge) {
-    setTimeout(() => _depositAmountInput.focus(), 50);
+    setTimeout(() => { if (_opts.isActive?.() !== false) _depositAmountInput.focus(); }, 50);
   } else if (_st.mode === 'withdraw' && !_st.pendingWithdraw) {
-    setTimeout(() => _withdrawAmountInput.focus(), 50);
+    setTimeout(() => { if (_opts.isActive?.() !== false) _withdrawAmountInput.focus(); }, 50);
   }
 }
 
@@ -610,6 +637,7 @@ export function walletUpdateBalance(usdt) {
  * @param {object}  opts
  * @param {string}  [opts.apiBase]             Override API base URL.
  * @param {()=>string}         opts.getToken   Returns the current JWT.
+ * @param {()=>boolean}        [opts.isActive] Whether this document may still use its authentication authority.
  * @param {()=>Promise<number>} opts.getBalance Returns USDT balance as float.
  * @param {(usdt:number)=>void} [opts.onBalanceChange] Called after every balance refresh.
  * @param {(msg:string, level:string)=>void} [opts.onLog]  Logging hook.
@@ -668,6 +696,7 @@ export function initWalletPanel(opts) {
   document.getElementById('wallet-withdraw-create').addEventListener('click', _createWithdraw);
 
   document.getElementById('wallet-deposit-copy').addEventListener('click', async () => {
+    if (_opts.isActive?.() === false) return;
     const text = document.getElementById('wallet-deposit-address').textContent || '';
     if (!text || text === '—') return;
     try {
@@ -679,6 +708,7 @@ export function initWalletPanel(opts) {
   });
 
   document.getElementById('wallet-deposit-open-url').addEventListener('click', () => {
+    if (_opts.isActive?.() === false) return;
     if (_st.rechargePaymentUrl)
       window.open(_st.rechargePaymentUrl, '_blank', 'noopener,noreferrer');
   });

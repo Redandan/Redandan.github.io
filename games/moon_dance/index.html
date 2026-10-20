@@ -1244,6 +1244,7 @@ html, body { width:100%; height:var(--app-height, 100dvh); overflow:hidden; back
   available when the module initialises.
   • flutter_adapter.js  →  Flutter Native + Flutter Web iframe + Standalone PWA
 -->
+<script src="../../legacy_auth_guard.js" data-agora-auth-host="game"></script>
 <script src="../_runtime/flutter_adapter.js?v=slot-runtime"></script>
 
 <script type="module">
@@ -2040,6 +2041,8 @@ const spinStatusEl = null; // removed — bet amount is now shown in bet-label (
 // touches localStorage. Flutter hosting gets normal storage when available;
 // embedded hosts can fall back to state supplied by postMessage.
 function safeLocalStorageGet(key) {
+  if (window.__gameHost?.isRetired()) return null;
+  if (key === '_flutter_game_jwt' && usesHttpOnlySlotHost()) return null;
   try {
     return window.localStorage.getItem(key);
   } catch (_) {
@@ -2047,7 +2050,13 @@ function safeLocalStorageGet(key) {
   }
 }
 
+function usesHttpOnlySlotHost() {
+  return new URLSearchParams(window.location.search).get('v2host') === '1' ||
+    window.__agoraAuth?.authMode === 'v2-http-only';
+}
+
 function safeLocalStorageSet(key, value) {
+  if (window.__gameHost?.isRetired()) return false;
   try {
     window.localStorage.setItem(key, value);
     return true;
@@ -2070,6 +2079,7 @@ window._game_onHostInit = function ({
   authMode,
   hostAuthenticated,
 } = {}) {
+  if (window.__gameHost?.isRetired()) return;
   const usesHttpOnlyHostSession = authMode === 'v2-http-only' && hostAuthenticated === true;
   if (!jwt && !usesHttpOnlyHostSession) {
     addLog('HOST_INIT 無 JWT，判定為未登入', 'warn');
@@ -2115,6 +2125,8 @@ let _paytableReady = false;
 let _paytableLoadStarted = false;
 
 function _checkAndUnlockSpin() {
+  if (window.__gameHost?.isRetired()) return;
+  if (window.__gameHost?.isRecoveryBlocked?.()) return;
   if (!_modelReady || !_paytableReady) return;
   if (!_loaderHidden) hideLoader();
   spinBtn.disabled = false;
@@ -2196,6 +2208,7 @@ function updateBalanceDisplay() {
 //   { balance: 1.23 }                        ← flat (Telegram exchange-jwt compat)
 async function fetchAndApplyBalance(_jwt) {
   const usdt = await window.__gameHost?.getBalance();
+  if (window.__gameHost?.isRetired()) return;
   if (usdt === null || usdt === undefined) return;
   applyBalance(usdt);
   window.__hostDemoMode = usdt < 0.25;
@@ -2232,6 +2245,7 @@ async function loadAndApplyPaytable(attempt = 1) {
   try {
     addLog(`[RTP→] attempt=${attempt}/${PAYTABLE_MAX_ATTEMPTS} jwt=${window.__agoraAuth?.token ? '✓' : '✗'} adapter=${window.__gameHost ? '✓' : '✗'}`, 'info');
     const rtpData = await window.__gameHost?.getRtp();
+    if (window.__gameHost?.isRetired()) return;
     addLog(`[RTP←] data=${rtpData ? JSON.stringify(rtpData).slice(0, 80) : 'null'}`, 'info');
 
     if (!rtpData) {
@@ -2302,7 +2316,7 @@ async function loadAndApplyPaytable(attempt = 1) {
     addLog(`賠率表加載失敗: ${e}`, 'warn');
     shouldRetry = true;
   } finally {
-    if (shouldRetry && attempt < PAYTABLE_MAX_ATTEMPTS) {
+    if (shouldRetry && !window.__gameHost?.isRetired() && attempt < PAYTABLE_MAX_ATTEMPTS) {
       const delayMs = PAYTABLE_RETRY_DELAYS_MS[Math.min(
         attempt - 1,
         PAYTABLE_RETRY_DELAYS_MS.length - 1,
@@ -2359,9 +2373,51 @@ function _setAutoSpinUI(active) {
   _spinAutoBadge.classList.toggle('hidden', !active);
 }
 
+window._game_onHostRetired = function () {
+  autoSpin = false;
+  isSpinning = false;
+  clearTimeout(autoTimer);
+  clearTimeout(pressTimer);
+  _setAutoSpinUI(false);
+  if (walletIsOpen()) closeWalletPanel();
+  delete window.__agoraAuth;
+  delete window.__hostDemoMode;
+  applyBalance(0);
+  spinBtn.disabled = true;
+  showAuthError();
+};
+if (window.__gameHost?.isRetired()) window._game_onHostRetired();
+
+window._game_onRecoveryBlocked = function () {
+  cancelAutoSpin();
+  clearTimeout(pressTimer);
+  isSpinning = false;
+  spinBtn.disabled = true;
+};
+window._game_onRecoveryReady = function () {
+  if (!isSpinning) _checkAndUnlockSpin();
+};
+window._game_onRecoveryComplete = async function () {
+  cancelAutoSpin();
+  isSpinning = true;
+  spinBtn.disabled = true;
+  await fetchAndApplyBalance().catch(() => {});
+  if (window.__gameHost?.isRetired()) return;
+  isSpinning = false;
+  spinBtn.disabled = false;
+};
+if (window.__gameHost?.isRecoveryBlocked?.()) window._game_onRecoveryBlocked();
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { cancelAutoSpin(); clearTimeout(pressTimer); }
+});
+
 // Long-press spin button → toggle auto-spin
 spinBtn.addEventListener('pointerdown', () => {
+  if (window.__gameHost?.isRetired()) return;
+  if (window.__gameHost?.isRecoveryBlocked?.()) return;
   pressTimer = setTimeout(() => {
+    if (window.__gameHost?.isRetired()) return;
+    if (window.__gameHost?.isRecoveryBlocked?.() || document.hidden) return;
     autoSpin = !autoSpin;
     if (!autoSpin) clearTimeout(autoTimer); // toggling off: cancel pending scheduled spin
     _setAutoSpinUI(autoSpin);
@@ -2594,7 +2650,7 @@ function _goPage(dest) {
   document.getElementById('menu-popup').classList.remove('open');
   if (
     (dest === 'deposit' || dest === 'withdraw') &&
-    window.__agoraAuth?.authMode !== 'v2-http-only'
+    !usesHttpOnlySlotHost()
   ) {
     openWalletPanel(dest);
     return;
@@ -2608,7 +2664,7 @@ document.getElementById('menu-withdraw').addEventListener('click', () => _goPage
 document.getElementById('menu-txn').addEventListener('click', () => {
   // Close menu popup first
   document.getElementById('menu-popup').classList.remove('open');
-  if (window.__agoraAuth?.authMode === 'v2-http-only') {
+  if (usesHttpOnlySlotHost()) {
     window.__gameHost?.navigate('transactions');
     return;
   }
@@ -2619,9 +2675,12 @@ txnBackdrop.addEventListener('click', closeTxnPanel);
 txnLoadMore.addEventListener('click', () => _loadTxnPage(false));
 
 initWalletPanel({
-  getToken:        () => window.__agoraAuth?.token || safeLocalStorageGet('_flutter_game_jwt') || '',
+  isActive:        () => !window.__gameHost?.isRetired(),
+  getToken:        () => usesHttpOnlySlotHost()
+    ? '' : window.__agoraAuth?.token || safeLocalStorageGet('_flutter_game_jwt') || '',
   getBalance:      () => window.__gameHost?.getBalance?.(),
   onBalanceChange: (usdt) => {
+    if (window.__gameHost?.isRetired()) return;
     balance = Math.round(usdt * 100);
     window.__hostDemoMode = usdt < 0.25;
     updateBalanceDisplay();
@@ -2642,6 +2701,9 @@ document.addEventListener('keydown', (e) => {
 // Paytable (multiplier applied to current bet):
 
 async function doSpin() {
+  if (window.__gameHost?.isRetired()) { window._game_onHostRetired(); return; }
+  if (window.__gameHost?.isRecoveryBlocked?.()) { await window.__gameHost.openRecovery(); return; }
+  if (document.hidden) { cancelAutoSpin(); return; }
   if (isSpinning) return;
 
   // Demo mode: trust server-confirmed balance if available.
@@ -2664,7 +2726,11 @@ async function doSpin() {
     clientSeed:   generateClientSeed(),
     nonce:        Date.now().toString(),
     clientRoundId: generateClientSeed(),
+  }).catch((error) => {
+    if (error?.name !== 'LegacyAuthRetiredError') addLog(`旋轉請求失敗: ${error}`, 'error');
+    return null;
   });
+  if (window.__gameHost?.isRetired()) { window._game_onHostRetired(); return; }
 
   // Backend must return a valid SPIN_RESULT; no client-side fallback.
   if (!(_hostSpinResult?.symbolIds?.length || _hostSpinResult?.symbols?.length)) {
@@ -2748,9 +2814,8 @@ async function doSpin() {
   });
 
   // Resolve spin — all 3 reel stop timeouts (600 / 1050 / 1500 ms) have fired by now.
-  setTimeout(() => {
-    isSpinning = false;
-    spinBtn.disabled = false;
+  setTimeout(async () => {
+    if (window.__gameHost?.isRetired()) { window._game_onHostRetired(); return; }
 
     const multiplier = _hostSpinResult.multiplier ?? 0;
     const displaySymbols = (forcedSymbolIds || []).map(idx => {
@@ -2798,6 +2863,13 @@ async function doSpin() {
       }
     }
 
+    // Acknowledge only after this outcome was presented. Lost acknowledgements
+    // keep the durable result available and stop automatic spins.
+    const acknowledged = await acknowledgePresentedSpin(_hostSpinResult);
+    if (window.__gameHost?.isRetired()) { window._game_onHostRetired(); return; }
+    isSpinning = false;
+    if (acknowledged === false) { spinBtn.disabled = true; cancelAutoSpin(); return; }
+    spinBtn.disabled = false;
     // Continue auto-spin: wait for any win overlay to dismiss first
     const overlayMs = multiplier >= 20 ? BIG_WIN_DISPLAY_MS : multiplier >= 3 ? WIN_DISPLAY_MS : 0;
     if (autoSpin) autoTimer = setTimeout(doSpin, overlayMs > 0 ? overlayMs : AUTO_SPIN_INTERVAL);
@@ -2805,6 +2877,17 @@ async function doSpin() {
 }
 
 // ===== Back button – cancel auto-spin =====
+async function acknowledgePresentedSpin(result) {
+  if (result.operationId && document.hidden) {
+    // A hidden page cannot count as having presented the financial outcome.
+    // Preserve the durable receipt and show it for explicit acknowledgement.
+    cancelAutoSpin();
+    await window.__gameHost?.openRecovery?.();
+    return false;
+  }
+  return window.__gameHost?.acknowledgeSpin?.(result.operationId);
+}
+
 /** Cancels auto-spin if it is currently active.
  *  Returns true if auto-spin was running (and has now been cancelled),
  *  false if nothing needed to be done.

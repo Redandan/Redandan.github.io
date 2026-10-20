@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>註冊 - Agora Market</title>
+    <script src="legacy_auth_guard.js"></script>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <style>
         :root {
@@ -915,6 +916,10 @@
         // 表單提交處理 - 使用 fetch 但支持重定向
         document.getElementById('registerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            if (!window.AgoraLegacyAuth || !window.AgoraLegacyAuth.allows()) {
+                showMessage('登入狀態已變更，請返回商城繼續。', 'warning');
+                return;
+            }
             
             console.log('🎉 [SUCCESS] Register form submit event triggered');
             console.log('🔍 [DEBUG] Starting registration process...');
@@ -955,6 +960,7 @@
             
             try {
                 // 發送註冊請求
+                window.AgoraLegacyAuth.requireActive();
                 const response = await fetch('https://agoramarketapi.purrtechllc.com/api/auth/register', {
                     method: 'POST',
                     headers: {
@@ -965,10 +971,12 @@
                     signal: AbortSignal.timeout(30000) // 30秒超時
                 });
                 
+                window.AgoraLegacyAuth.requireActive();
                 // 處理JSON響應
                 console.log('🔍 [DEBUG] API 響應狀態:', response.status);
                 
                 const result = await response.json();
+                window.AgoraLegacyAuth.requireActive();
                 console.log('🔍 [DEBUG] API 響應已解析:', {
                     success: result?.success === true,
                     loginResultPresent: !!result?.loginResult
@@ -988,7 +996,7 @@
                         // 提取 access token
                         const actualToken = result.loginResult.token;
                         if (actualToken) {
-                            localStorage.setItem('access_token', actualToken);
+                            window.AgoraLegacyAuth.setItem('access_token', actualToken);
                             console.log('✅ [SUCCESS] Access token 已保存到 localStorage:', {
                                 present: true
                             });
@@ -999,7 +1007,7 @@
                         // 提取 refresh token
                         const actualRefreshToken = result.loginResult.refreshToken;
                         if (actualRefreshToken) {
-                            localStorage.setItem('refresh_token', actualRefreshToken);
+                            window.AgoraLegacyAuth.setItem('refresh_token', actualRefreshToken);
                             console.log('✅ [SUCCESS] Refresh token 已保存到 localStorage:', {
                                 present: true
                             });
@@ -1010,7 +1018,7 @@
                         // 提取用戶信息
                         const userInfo = result.loginResult.userInfo;
                         if (userInfo) {
-                            localStorage.setItem('user_info', JSON.stringify(userInfo));
+                            window.AgoraLegacyAuth.setItem('user_info', JSON.stringify(userInfo));
                             console.log('✅ [SUCCESS] User info 已保存到 localStorage:', {
                                 present: true
                             });
@@ -1020,14 +1028,14 @@
                         
                         // 保存額外的用戶信息
                         if (result.loginResult.userId) {
-                            localStorage.setItem('user_id', result.loginResult.userId.toString());
+                            window.AgoraLegacyAuth.setItem('user_id', result.loginResult.userId.toString());
                             console.log('✅ [SUCCESS] User ID 已保存到 localStorage:', {
                                 present: true
                             });
                         }
                         
                         if (result.loginResult.username) {
-                            localStorage.setItem('username', result.loginResult.username);
+                            window.AgoraLegacyAuth.setItem('username', result.loginResult.username);
                             console.log('✅ [SUCCESS] Username 已保存到 localStorage:', {
                                 present: true
                             });
@@ -1054,6 +1062,7 @@
                     const allKeys = Object.keys(localStorage);
                     console.log('🔍 [DEBUG] localStorage 中的所有鍵:', allKeys);
                     
+                    window.AgoraLegacyAuth.requireActive();
                     // 發送註冊成功日誌到 Flutter 應用
                     try {
                         if (window.parent && window.parent.postMessage) {
@@ -1101,6 +1110,10 @@
                         
                         // 添加短暫延遲，確保所有操作完成
                         setTimeout(() => {
+                            if (!window.AgoraLegacyAuth.allows()) {
+                                showMessage('登入狀態已變更，請返回商城繼續。', 'warning');
+                                return;
+                            }
                             console.log('🚀 [INFO] 執行跳轉到:', targetUrl);
                             window.location.href = targetUrl;
                         }, 200);
@@ -1114,6 +1127,10 @@
                 }
                 
             } catch (error) {
+                if (error && error.name === 'LegacyAuthRetiredError') {
+                    showMessage('登入狀態已變更，請返回商城繼續。', 'warning');
+                    return;
+                }
                 console.error(
                     'Network error: errorType=' +
                     ((error && error.name) || 'UnknownError')
