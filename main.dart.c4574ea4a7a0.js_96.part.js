@@ -1,0 +1,22 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var B,C,A={
+eSB(){return B.cl("slot_game_detail","")},
+eHn(d,e){return new A.SU(e,d)},
+SU:function SU(d,e){this.c=d
+this.a=e},
+bUF:function bUF(d){this.a=d}}
+B=c[0]
+C=c[157]
+A=a.updateHolder(c[56],A)
+A.SU.prototype={
+u(d){return B.cE(A.f3l(),new A.bUF(this))}}
+var z=a.updateTypes(["F7()","B<@>()"])
+A.bUF.prototype={
+$0(){B.ci("slot_game_detail")
+return C.egX(null,this.a.c)},
+$S:z+0};(function installTearOffs(){var y=a._static_0
+y(A,"f3l","eSB",1)})();(function inheritance(){var y=a.inherit
+y(A.SU,B.x)
+y(A.bUF,B.bt)})()
+B.b_(b.typeUniverse,JSON.parse('{"SU":{"x":[],"m":[]}}'))};
+(a=>{a["ojDxq2EgKXkxkcVq40Ky0rHYM9Y="]=a.current})($__dart_deferred_initializers__);
