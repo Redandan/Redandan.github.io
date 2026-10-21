@@ -63,7 +63,7 @@ a { color: var(--primary-color); text-underline-offset: 3px; }
 .form-group label { display: block; font-weight: 500; margin-bottom: 8px; }
 .form-group input {
   display: block; width: 100%; min-width: 0; min-height: 48px;
-  padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 8px;
+  padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 12px;
   font: inherit; font-size: 16px; color: var(--text-primary); background: var(--input-bg);
 }
 .form-group input::placeholder { color: var(--text-secondary); opacity: 1; }
@@ -81,7 +81,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--primary-color);
 .turnstile-widget { margin-top: 16px; max-width: 100%; }
 .turnstile-status { color: var(--success-color); border: 1px solid currentColor; gap: 8px; }
 .submit-btn, .turnstile-refresh-btn {
-  min-height: 44px; padding: 12px 20px; border-radius: 8px; border: 0;
+  min-height: 44px; padding: 12px 20px; border-radius: 12px; border: 0;
   background: var(--primary-color); color: var(--on-primary); font: inherit; font-weight: 600; cursor: pointer;
 }
 .submit-btn { display: block; width: 100%; }
