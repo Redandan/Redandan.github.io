@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta name="source-commit" content="a6d7d396414153fb4d1485821f4acf639e0bdcea">
+<meta name="source-commit" content="27353a2c6e8c7d65a83aad7402c6450259c55b2b">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -118,7 +118,7 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.4980+4980">
+  <meta name="version" content="1.0.4981+4981">
   <script id="telegram-sdk-entry-loader">
     // Preserve synchronous SDK/viewport ordering inside Telegram only.
     // A normal browser/PWA must not depend on Telegram's network availability.
@@ -573,8 +573,8 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
-  <link rel="preload" href="flutter_bootstrap.a6d7d3964141.js" as="script">
-  <link rel="preload" href="main.dart.a6d7d3964141.js" as="script" fetchpriority="high">
+  <link rel="preload" href="flutter_bootstrap.27353a2c6e8c.js" as="script">
+  <link rel="preload" href="main.dart.27353a2c6e8c.js" as="script" fetchpriority="high">
   <link rel="preload" href="canvaskit/canvaskit.js" as="script">
   <link rel="preload" href="canvaskit/canvaskit.wasm" as="fetch" type="application/wasm" crossorigin>
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
@@ -1643,9 +1643,8 @@
         });
       }, { once: true });
 
-      // Normal routes retain their legacy fail-open behavior in ordinary
-      // browsers. Every installed iOS PWA route retains the startup shell until
-      // first paint; a slow login reload otherwise exposes an empty canvas.
+      // Every route keeps a usable startup surface until Flutter paints.
+      // A deadline offers retry; it is not evidence of a rendered frame.
       setTimeout(function() {
         if (document.body && document.body.classList.contains('flutter-ready')) return;
         if (window.__AGORA_STARTUP_PROGRESS__ && window.__AGORA_STARTUP_PROGRESS__.hasFailed()) return;
@@ -1658,16 +1657,12 @@
             window.__AGORA_STARTUP_PROGRESS__.setPhase('timeout', loadingText.textContent);
           }
         }
-        if (isStorefrontStartup() || document.documentElement.classList.contains('agora-ios-standalone-startup')) {
-          var retryButton = document.getElementById('startup-retry-button');
-          if (retryButton) {
-            retryButton.hidden = false;
-            retryButton.classList.add('is-visible');
-          }
-          console.warn('[LOADING_SCREEN] Page still loading; startup shell retained');
-          return;
+        var retryButton = document.getElementById('startup-retry-button');
+        if (retryButton) {
+          retryButton.hidden = false;
+          retryButton.classList.add('is-visible');
         }
-        revealFlutter('startup-timeout', true);
+        console.warn('[LOADING_SCREEN] Page still loading; startup shell retained');
       }, 8000);
     })();
   </script>
@@ -3523,7 +3518,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.a6d7d3964141.js";
+        script.src = "flutter_bootstrap.27353a2c6e8c.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
@@ -3826,7 +3821,7 @@
   <script src="web_vitals.js"></script>
   
   <!-- ?????????????? -->
-  <script src="offline_handler.a6d7d3964141.js"></script>
+  <script src="offline_handler.27353a2c6e8c.js"></script>
   
   <!-- GitHub Pages 404 ??????????????-->
   <script>
