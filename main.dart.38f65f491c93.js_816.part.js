@@ -1,0 +1,27 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var J,B,C,A={
+egc(d){var x=B.a_(["orderId",d],y.g,y.b)
+return new A.aQp("ReturnShippingRoute",new B.EJ(null,d),x,C.ae,null,"")},
+aQp:function aQp(d,e,f,g,h,i){var _=this
+_.a=d
+_.b=e
+_.c=f
+_.d=g
+_.e=h
+_.f=i},
+c_d(d){$.e1P.fi(0,new A.c_e(d))},
+c_e:function c_e(d){this.a=d}}
+J=c[1]
+B=c[0]
+C=c[2]
+A=a.updateHolder(c[145],A)
+A.aQp.prototype={}
+var z=a.updateTypes([])
+A.c_e.prototype={
+$2(d,e){return J.p(e.a,this.a)},
+$S:1733};(function inheritance(){var x=a.inherit
+x(A.aQp,B.bV)
+x(A.c_e,B.ca)})()
+B.b_(b.typeUniverse,JSON.parse('{"aQp":{"bV":["EJ"]}}'))
+var y={g:B.C("n"),b:B.C("@")};(function staticFields(){$.e1P=B.q(y.g,B.C("+owner,result(A,tQ)"))})()};
+(a=>{a["hQdcG/FoD81t/J8LvpVOfJpO+JQ="]=a.current})($__dart_deferred_initializers__);
