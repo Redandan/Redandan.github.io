@@ -1,0 +1,26 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var C,B,A={
+aaO(d){var y,x
+if(d==null)y=null
+else{x=d.toLowerCase()
+y=C.aU(x,"-","_")}if(y!=="en")x=(y==null?null:B.b.aR(y,"en_"))===!0
+else x=!0
+return x},
+buS(d,e){var y,x=A.e0n(d),w=new C.aH(Date.now(),0,!1).dt(x).a
+if(w<0)return C.dS("yyyy/MM/dd HH:mm",e).bt(x)
+if(B.h.bX(w,1e6)<60)return A.aaO(e)?"Just now":"\u525b\u525b"
+y=B.h.bX(w,6e7)
+if(y<60){w=""+y
+return A.aaO(e)?w+" minutes ago":w+" \u5206\u9418\u524d"}y=B.h.bX(w,36e8)
+if(y<24){w=""+y
+return A.aaO(e)?w+" hours ago":w+" \u5c0f\u6642\u524d"}w=B.h.bX(w,864e8)
+if(w===1)return A.aaO(e)?"Yesterday":"\u6628\u5929"
+if(w<7){w=""+w
+return A.aaO(e)?w+" days ago":w+" \u5929\u524d"}return C.dS("yyyy/MM/dd",e).bt(x)},
+e0n(d){if(!d.c)return d
+return d.fK()}}
+C=c[0]
+B=c[2]
+A=a.updateHolder(c[299],A)
+var z=a.updateTypes([])};
+(a=>{a["s/CIabu1pR402FiKuzROOWpJ9+o="]=a.current})($__dart_deferred_initializers__);

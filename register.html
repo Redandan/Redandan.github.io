@@ -5,9 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>註冊 - Agora Market</title>
     <script src="legacy_auth_guard.js"></script>
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-    <link rel="stylesheet" href="register.178aa1b94c9b.css">
-    <script src="register_ui.9549b1b840b6.js"></script>
+    <link rel="stylesheet" href="register.f9f031ea15ca.css">
+    <script src="register_ui.ffce7a4d3312.js"></script>
 </head>
 <body>
     <div class="container">
@@ -86,12 +85,10 @@
                 <div id="turnstileLoading">
                     <span data-i18n="securityLoading">正在載入安全驗證…</span>
                 </div>
-                <div class="cf-turnstile" 
+                <div id="turnstileError" class="turnstile-error" role="status" aria-live="polite" style="display: none;"></div>
+                <div class="turnstile-widget"
                      data-sitekey="0x4AAAAAAB6qPtHNy2aYT_6r" 
                      data-size="compact"
-                     data-callback="onTurnstileSuccess"
-                     data-error-callback="onTurnstileError"
-                     data-expired-callback="onTurnstileExpired"
                      style="display: none;">
                 </div>
                 <div id="turnstileStatus" class="turnstile-status" style="display: none;">
@@ -129,6 +126,12 @@
         function registerText(key) { return window.AgoraRegisterUI.text(key); }
         // Turnstile 相關變量
         let turnstileToken = null;
+        const turnstileLoadTimeoutMs = 15000;
+        let turnstileAttempt = 0;
+        let turnstileLoadTimer = null;
+        let turnstileScript = null;
+        let turnstileWidgetId = null;
+        let turnstilePhase = 'idle';
         let userSourceHost = null;
         
         // 主題切換
@@ -233,23 +236,96 @@
             }
         }
 
-        // 初始化 Turnstile
-        function initTurnstile() {
-            const checkTurnstile = setInterval(() => {
-                if (window.turnstile) {
-                    clearInterval(checkTurnstile);
-                    document.getElementById('turnstileLoading').style.display = 'none';
-                    document.querySelector('.cf-turnstile').style.display = 'block';
-                }
-            }, 100);
+        function clearTurnstileLoad() {
+            clearTimeout(turnstileLoadTimer);
+            turnstileLoadTimer = null;
+            if (turnstileScript) {
+                turnstileScript.onload = null;
+                turnstileScript.onerror = null;
+                turnstileScript.remove();
+                turnstileScript = null;
+            }
         }
+
+        function removeTurnstileWidget() {
+            if (turnstileWidgetId !== null && window.turnstile) {
+                try { window.turnstile.remove(turnstileWidgetId); } catch (_) { /* Already removed. */ }
+            }
+            turnstileWidgetId = null;
+        }
+
+        // A stalled third-party script must not delay this page's own deadline
+        // or its existing email registration alternative.
+        function initTurnstile() {
+            const attempt = ++turnstileAttempt;
+            clearTurnstileLoad();
+            removeTurnstileWidget();
+            turnstileToken = null;
+            turnstilePhase = 'loading';
+            document.getElementById('turnstileLoading').style.display = 'block';
+            document.getElementById('turnstileError').style.display = 'none';
+            document.getElementById('turnstileStatus').style.display = 'none';
+            document.querySelector('.turnstile-widget').style.display = 'none';
+            hideTurnstileRefreshButton();
+            const fail = () => {
+                if (attempt === turnstileAttempt) showTurnstileError(registerText('securityUnavailable'));
+            };
+            const render = () => {
+                if (attempt !== turnstileAttempt) return;
+                if (typeof window.turnstile?.render !== 'function') { fail(); return; }
+                clearTurnstileLoad();
+                try {
+                    const widget = document.querySelector('.turnstile-widget');
+                    widget.style.display = 'block';
+                    const current = callback => value => {
+                        if (attempt === turnstileAttempt) callback(value);
+                    };
+                    turnstileWidgetId = window.turnstile.render(widget, {
+                        sitekey: widget.dataset.sitekey,
+                        size: 'compact',
+                        callback: current(onTurnstileSuccess),
+                        'error-callback': current(onTurnstileError),
+                        'expired-callback': current(onTurnstileExpired)
+                    });
+                    if (attempt !== turnstileAttempt) { removeTurnstileWidget(); return; }
+                    document.getElementById('turnstileLoading').style.display = 'none';
+                    if (turnstilePhase === 'loading') turnstilePhase = 'ready';
+                } catch (_) { fail(); }
+            };
+            turnstileLoadTimer = setTimeout(fail, turnstileLoadTimeoutMs);
+            if (window.turnstile) {
+                render();
+            } else {
+                const script = document.createElement('script');
+                turnstileScript = script;
+                script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+                script.async = true;
+                script.onload = render;
+                script.onerror = fail;
+                document.head.appendChild(script);
+            }
+        }
+
+        window.addEventListener('pagehide', () => {
+            ++turnstileAttempt;
+            clearTurnstileLoad();
+            removeTurnstileWidget();
+            turnstileToken = null;
+            turnstilePhase = 'idle';
+        });
+        window.addEventListener('pageshow', event => {
+            if (event.persisted) initTurnstile();
+        });
 
         // Turnstile 成功回調
         function onTurnstileSuccess(token) {
+            clearTurnstileLoad();
+            turnstilePhase = 'verified';
             turnstileToken = token;
-            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('turnstileLoading').style.display = 'none';
+            document.getElementById('turnstileError').style.display = 'none';
             document.getElementById('turnstileStatus').style.display = 'flex';
-            document.querySelector('.cf-turnstile').style.display = 'none';
+            document.querySelector('.turnstile-widget').style.display = 'none';
             
             // 隱藏刷新按鈕
             hideTurnstileRefreshButton();
@@ -276,23 +352,20 @@
 
         // 顯示 Turnstile 錯誤並提供刷新選項
         function showTurnstileError(message) {
-            const turnstileContainer = document.querySelector('.turnstile-container');
-            const turnstileWidget = document.querySelector('.cf-turnstile');
-            const turnstileStatus = document.getElementById('turnstileStatus');
-            
-            // 隱藏成功狀態
-            if (turnstileStatus) {
-                turnstileStatus.style.display = 'none';
-            }
-            
-            // 顯示錯誤信息
-            showMessage(message, 'error');
-            
-            // 顯示刷新按鈕
+            ++turnstileAttempt;
+            clearTurnstileLoad();
+            removeTurnstileWidget();
+            turnstilePhase = 'error';
+            turnstileToken = null;
+            document.getElementById('turnstileLoading').style.display = 'none';
+            document.querySelector('.turnstile-widget').style.display = 'none';
+            document.getElementById('turnstileStatus').style.display = 'none';
+            const error = document.getElementById('turnstileError');
+            error.textContent = message;
+            error.style.display = 'block';
             showTurnstileRefreshButton();
-            
-            // 啟用提交按鈕（但會因為沒有 token 而失敗）
-            document.getElementById('submitBtn').disabled = false;
+            // The email alternative stays available while idle. Only the form's
+            // setButtonState owns submission locking, including during a retry.
         }
 
         // 顯示 Turnstile 刷新按鈕
@@ -322,36 +395,7 @@
 
         // 刷新 Turnstile
         function refreshTurnstile() {
-            console.log('Refreshing Turnstile...');
-            
-            // 清除之前的 token
-            turnstileToken = null;
-            
-            // 隱藏刷新按鈕
-            hideTurnstileRefreshButton();
-            
-            // 隱藏錯誤狀態
-            const turnstileStatus = document.getElementById('turnstileStatus');
-            if (turnstileStatus) {
-                turnstileStatus.style.display = 'none';
-            }
-            
-            // 重新渲染 Turnstile widget
-            if (window.turnstile) {
-                const turnstileWidget = document.querySelector('.cf-turnstile');
-                if (turnstileWidget) {
-                    // 重置 widget
-                    window.turnstile.reset(turnstileWidget);
-                }
-            }
-            
-            // 顯示載入狀態
-            document.getElementById('turnstileLoading').style.display = 'block';
-            
-            // 重新初始化
-            setTimeout(() => {
-                initTurnstile();
-            }, 500);
+            initTurnstile();
         }
 
         // 顯示消息
@@ -808,8 +852,8 @@
         }
 
         // 頁面載入時初始化
-        window.addEventListener('load', function() {
-            console.log('🎉 [SUCCESS] Register page window.load event triggered');
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('🎉 [SUCCESS] Register page DOMContentLoaded event triggered');
             console.log('🔍 [DEBUG] Register page fully loaded');
             
             // 發送日誌到 Flutter 應用

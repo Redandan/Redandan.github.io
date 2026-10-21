@@ -8,7 +8,7 @@
     'securityInfo','securityLoading','securitySuccess','register','registering','agreementIntro','agreement',
     'agreementMiddle','privacy','agreementEnd','themeToggle','backToLogin','refreshVerification',
     'securityFailed','securityExpired','registrationFailed','checkInputs','sessionChanged',
-    'usernamePasswordRequired','passwordMismatch','securityOrEmail','sessionSaveFailed','networkError'
+    'usernamePasswordRequired','passwordMismatch','securityOrEmail','sessionSaveFailed','networkError','securityUnavailable'
   ];
   const values = {
     'zh-TW': [
@@ -20,7 +20,8 @@
       '切換主題','返回登入','重新驗證','安全驗證失敗，請重新驗證','安全驗證已過期，請重新驗證',
       '註冊失敗，請稍後再試','註冊失敗，請檢查輸入資訊','登入狀態已變更，請返回商城繼續。',
       '請填寫用戶名和密碼','密碼與確認密碼不一致','請完成安全驗證或提供電子郵件地址',
-      '註冊成功但登入狀態未能保存，請重新登入','網路錯誤，請稍後再試'
+      '註冊成功但登入狀態未能保存，請重新登入','網路錯誤，請稍後再試',
+      '暫時無法載入安全驗證。您可以重新驗證，或填寫電子郵件繼續註冊。'
     ],
     'zh-CN': [
       '注册 - Agora Market','加入 Agora Market','创建账户，开始探索市集',
@@ -31,7 +32,8 @@
       '切换主题','返回登录','重新验证','安全验证失败，请重新验证','安全验证已过期，请重新验证',
       '注册失败，请稍后再试','注册失败，请检查输入信息','登录状态已变更，请返回商城继续。',
       '请填写用户名和密码','密码与确认密码不一致','请完成安全验证或提供电子邮件地址',
-      '注册成功但登录状态未能保存，请重新登录','网络错误，请稍后再试'
+      '注册成功但登录状态未能保存，请重新登录','网络错误，请稍后再试',
+      '暂时无法加载安全验证。您可以重新验证，或填写电子邮件继续注册。'
     ],
     en: [
       'Register - Agora Market','Join Agora Market','Create an account and explore the marketplace',
@@ -42,7 +44,8 @@
       'Switch theme','Back to login','Verify again','Verification failed. Please try again.','Verification expired. Please try again.',
       'Registration failed. Please try again later.','Registration failed. Please check your details.','Your sign-in status changed. Return to the marketplace to continue.',
       'Enter your username and password.','The passwords do not match.','Complete verification or provide an email address.',
-      'Your account was created, but sign-in could not be saved. Please sign in again.','Network error. Please try again later.'
+      'Your account was created, but sign-in could not be saved. Please sign in again.','Network error. Please try again later.',
+      'Security verification is unavailable. Try again, or enter an email address to continue registering.'
     ],
     th: [
       'สมัครสมาชิก - Agora Market','เข้าร่วม Agora Market','สร้างบัญชีเพื่อสำรวจตลาด',
@@ -53,7 +56,8 @@
       'เปลี่ยนธีม','กลับไปเข้าสู่ระบบ','ยืนยันอีกครั้ง','ยืนยันไม่สำเร็จ โปรดลองอีกครั้ง','การยืนยันหมดอายุ โปรดลองอีกครั้ง',
       'สมัครสมาชิกไม่สำเร็จ โปรดลองอีกครั้งภายหลัง','สมัครสมาชิกไม่สำเร็จ โปรดตรวจสอบข้อมูล','สถานะการเข้าสู่ระบบเปลี่ยนไป โปรดกลับไปที่ตลาดเพื่อดำเนินการต่อ',
       'โปรดระบุชื่อผู้ใช้และรหัสผ่าน','รหัสผ่านไม่ตรงกัน','โปรดยืนยันความปลอดภัยหรือระบุอีเมล',
-      'สร้างบัญชีแล้ว แต่บันทึกการเข้าสู่ระบบไม่ได้ โปรดเข้าสู่ระบบอีกครั้ง','เกิดข้อผิดพลาดเครือข่าย โปรดลองอีกครั้งภายหลัง'
+      'สร้างบัญชีแล้ว แต่บันทึกการเข้าสู่ระบบไม่ได้ โปรดเข้าสู่ระบบอีกครั้ง','เกิดข้อผิดพลาดเครือข่าย โปรดลองอีกครั้งภายหลัง',
+      'ไม่สามารถโหลดการยืนยันความปลอดภัยได้ โปรดยืนยันอีกครั้ง หรือป้อนอีเมลเพื่อสมัครสมาชิกต่อ'
     ],
     ja: [
       '登録 - Agora Market','Agora Market に参加','アカウントを作成してマーケットを見てみましょう',
@@ -64,7 +68,8 @@
       'テーマを切り替え','ログインに戻る','再確認','確認に失敗しました。もう一度お試しください。','確認の有効期限が切れました。もう一度お試しください。',
       '登録に失敗しました。後でもう一度お試しください。','入力内容を確認してください。','ログイン状態が変わりました。マーケットに戻ってください。',
       'ユーザー名とパスワードを入力してください。','パスワードが一致しません。','セキュリティ確認を完了するか、メールアドレスを入力してください。',
-      'アカウントは作成されましたが、ログインを保存できませんでした。再度ログインしてください。','ネットワークエラーです。後でもう一度お試しください。'
+      'アカウントは作成されましたが、ログインを保存できませんでした。再度ログインしてください。','ネットワークエラーです。後でもう一度お試しください。',
+      'セキュリティ確認を読み込めません。再試行するか、メールアドレスを入力して登録を続けてください。'
     ]
   };
   const thaiErrors = {
