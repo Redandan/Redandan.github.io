@@ -2,428 +2,77 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>註冊 - Agora Market</title>
     <script src="legacy_auth_guard.js"></script>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-    <style>
-        :root {
-            --primary-color: #667eea;
-            --secondary-color: #764ba2;
-            --text-primary: #333;
-            --text-secondary: #666;
-            --bg-primary: white;
-            --bg-secondary: #f8f9fa;
-            --border-color: #e1e5e9;
-            --input-bg: white;
-            --card-bg: white;
-            --shadow: rgba(0,0,0,0.1);
-            --success-color: #28a745;
-            --error-color: #dc3545;
-            --warning-color: #ffc107;
-        }
-        
-        [data-theme="dark"] {
-            --primary-color: #667eea;
-            --secondary-color: #764ba2;
-            --text-primary: #ffffff;
-            --text-secondary: #b0b0b0;
-            --bg-primary: #1a1a1a;
-            --bg-secondary: #2d2d2d;
-            --border-color: #404040;
-            --input-bg: #2d2d2d;
-            --card-bg: #2d2d2d;
-            --shadow: rgba(0,0,0,0.3);
-            --success-color: #28a745;
-            --error-color: #dc3545;
-            --warning-color: #ffc107;
-        }
-
-        /* 多語言支援 */
-        [lang="en"] .zh-text { display: none; }
-        [lang="zh-TW"] .en-text { display: none; }
-        [lang="zh-CN"] .en-text { display: none; }
-        [lang="ja"] .en-text { display: none; }
-        [lang="ja"] .zh-text { display: none; }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-primary);
-            transition: all 0.3s ease;
-        }
-
-        .container {
-            background: var(--card-bg);
-            padding: 2rem;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px var(--shadow);
-            width: 100%;
-            max-width: 450px;
-            position: relative;
-            transition: all 0.3s ease;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .logo {
-            font-size: 2.5rem;
-            font-weight: bold;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 0.5rem;
-        }
-
-        .title {
-            font-size: 1.5rem;
-            color: var(--text-primary);
-            margin-bottom: 0.5rem;
-        }
-
-        .subtitle {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--text-primary);
-            font-weight: 500;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 2px solid var(--border-color);
-            border-radius: 10px;
-            font-size: 1rem;
-            background: var(--input-bg);
-            color: var(--text-primary);
-            transition: all 0.3s ease;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .form-group input.error {
-            border-color: var(--error-color);
-            background-color: rgba(220, 53, 69, 0.05);
-            animation: shake 0.5s ease-in-out;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-
-        .error-message {
-            color: var(--error-color);
-            font-size: 0.8rem;
-            margin-top: 0.25rem;
-            display: none;
-            animation: fadeIn 0.3s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .required {
-            color: var(--error-color);
-        }
-
-        .turnstile-container {
-            margin: 1.5rem 0;
-            text-align: center;
-        }
-
-        .turnstile-info {
-            margin-bottom: 1rem;
-        }
-
-        .info-text {
-            background: rgba(102, 126, 234, 0.1);
-            border: 1px solid rgba(102, 126, 234, 0.3);
-            border-radius: 8px;
-            padding: 12px;
-            color: var(--primary-color);
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .info-icon {
-            font-size: 16px;
-        }
-
-        .turnstile-loading {
-            color: var(--text-secondary);
-            font-size: 14px;
-            margin: 10px 0;
-        }
-
-        .turnstile-status {
-            background: rgba(40, 167, 69, 0.1);
-            border: 1px solid rgba(40, 167, 69, 0.3);
-            border-radius: 8px;
-            padding: 12px;
-            color: var(--success-color);
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .turnstile-refresh-btn {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 10px 20px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 10px;
-            display: none;
-        }
-
-        .turnstile-refresh-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-        }
-
-        .turnstile-refresh-btn:active {
-            transform: translateY(0);
-        }
-
-        .status-icon {
-            font-size: 16px;
-        }
-
-        .submit-btn {
-            width: 100%;
-            padding: 0.75rem;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .submit-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-
-        .submit-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .loading {
-            display: none;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid transparent;
-            border-top: 2px solid white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .message {
-            margin-top: 1rem;
-            padding: 0.75rem;
-            border-radius: 10px;
-            text-align: center;
-            font-weight: 500;
-            display: none;
-        }
-
-        .message.success {
-            background: rgba(40, 167, 69, 0.1);
-            color: var(--success-color);
-            border: 1px solid rgba(40, 167, 69, 0.2);
-        }
-
-        .message.error {
-            background: rgba(220, 53, 69, 0.1);
-            color: var(--error-color);
-            border: 1px solid rgba(220, 53, 69, 0.2);
-        }
-
-        .message.warning {
-            background: rgba(255, 193, 7, 0.1);
-            color: var(--warning-color);
-            border: 1px solid rgba(255, 193, 7, 0.2);
-        }
-
-        /* 成功頁面相關樣式已移除，現在直接跳轉到主頁 */
-
-        .footer {
-            text-align: center;
-            margin-top: 2rem;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-
-        .footer a {
-            color: var(--primary-color);
-            text-decoration: none;
-        }
-
-        .footer a:hover {
-            text-decoration: underline;
-        }
-
-        .theme-toggle {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--text-primary);
-            transition: all 0.3s ease;
-        }
-
-        .theme-toggle:hover {
-            transform: scale(1.1);
-        }
-
-        @media (max-width: 480px) {
-            .container {
-                margin: 1rem;
-                padding: 1.5rem;
-            }
-            
-            .logo {
-                font-size: 2rem;
-            }
-            
-            .title {
-                font-size: 1.3rem;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="register.178aa1b94c9b.css">
+    <script src="register_ui.9549b1b840b6.js"></script>
 </head>
 <body>
     <div class="container">
-        <button class="theme-toggle" onclick="toggleTheme()" title="切換主題">
-            <span class="zh-text">🌙</span>
-            <span class="en-text">🌙</span>
-        </button>
+        <div class="toolbar">
+            <a class="back-link" href="./#/login"><span aria-hidden="true">←</span><span data-i18n="backToLogin">返回登入</span></a>
+            <button type="button" class="theme-toggle" onclick="toggleTheme()" title="切換主題" aria-label="切換主題"></button>
+        </div>
         
         <div class="header">
-            <div class="logo">🛒 Agora Market</div>
+            <div class="logo"><img src="icons/new_favicon/web-app-manifest-192x192.png" alt="" width="40" height="40"><span>Agora Market</span></div>
             <h1 class="title">
-                <span class="zh-text">🚀 加入 Agora Market</span>
-                <span class="en-text">🚀 Join Agora Market</span>
+                <span data-i18n="title">加入 Agora Market</span>
             </h1>
             <p class="subtitle">
-                <span class="zh-text">創建您的帳戶，開始精彩的購物體驗</span>
-                <span class="en-text">Create your account and start an amazing shopping experience</span>
+                <span data-i18n="subtitle">建立帳戶，開始探索市集</span>
             </p>
         </div>
 
         <form id="registerForm">
             <div class="form-group">
                 <label for="username">
-                    <span class="zh-text">用戶名</span>
-                    <span class="en-text">Username</span>
+                    <span data-i18n="username">用戶名</span>
                     <span class="required">*</span>
                 </label>
                 <input type="text" id="username" name="username" required 
-                       placeholder="請輸入用戶名（3-20個字符）">
+                       data-i18n-placeholder="usernamePlaceholder" placeholder="請輸入用戶名（3-20個字符）">
                 <div class="error-message" id="usernameError"></div>
             </div>
 
             <div class="form-group">
                 <label for="email">
-                    <span class="zh-text">電子郵件</span>
-                    <span class="en-text">Email</span>
+                    <span data-i18n="email">電子郵件</span>
                     <span class="required">*</span>
                 </label>
                 <input type="email" id="email" name="email" required 
-                       placeholder="請輸入電子郵件地址">
+                       data-i18n-placeholder="emailPlaceholder" placeholder="請輸入電子郵件地址">
                 <div class="error-message" id="emailError"></div>
             </div>
 
             <div class="form-group">
                 <label for="password">
-                    <span class="zh-text">密碼</span>
-                    <span class="en-text">Password</span>
+                    <span data-i18n="password">密碼</span>
                     <span class="required">*</span>
                 </label>
                 <input type="password" id="password" name="password" required 
-                       placeholder="請輸入密碼（8-128個字符）">
+                       data-i18n-placeholder="passwordPlaceholder" placeholder="請輸入密碼（8-128個字符）">
                 <div class="error-message" id="passwordError"></div>
             </div>
 
             <div class="form-group">
                 <label for="confirmPassword">
-                    <span class="zh-text">確認密碼</span>
-                    <span class="en-text">Confirm Password</span>
+                    <span data-i18n="confirmPassword">確認密碼</span>
                     <span class="required">*</span>
                 </label>
                 <input type="password" id="confirmPassword" name="confirmPassword" required 
-                       placeholder="請再次輸入密碼">
+                       data-i18n-placeholder="confirmPlaceholder" placeholder="請再次輸入密碼">
                 <div class="error-message" id="confirmPasswordError"></div>
             </div>
 
             <div class="form-group">
                 <label for="promoCode">
-                    <span class="zh-text">推廣碼（可選）</span>
-                    <span class="en-text">Promo Code (Optional)</span>
+                    <span data-i18n="promoCode">推廣碼（選填）</span>
                 </label>
                 <input type="text" id="promoCode" name="promoCode" 
-                       placeholder="請輸入推廣碼（可選）">
+                       data-i18n-placeholder="promoPlaceholder" placeholder="請輸入推廣碼（可選）">
             </div>
 
             <!-- Cloudflare Turnstile -->
@@ -431,16 +80,15 @@
                 <div class="turnstile-info">
                     <div class="info-text">
                         <span class="info-icon">🔒</span>
-                        <span class="zh-text">安全驗證（可選）：完成驗證後，電子郵件將變為可選欄位</span>
-                        <span class="en-text">Security verification (optional): Email becomes optional after verification</span>
+                        <span data-i18n="securityInfo">安全驗證（選填）：完成後，電子郵件可不填寫。</span>
                     </div>
                 </div>
                 <div id="turnstileLoading">
-                    <span class="zh-text">正在載入安全驗證...</span>
-                    <span class="en-text">Loading security verification...</span>
+                    <span data-i18n="securityLoading">正在載入安全驗證…</span>
                 </div>
                 <div class="cf-turnstile" 
                      data-sitekey="0x4AAAAAAB6qPtHNy2aYT_6r" 
+                     data-size="compact"
                      data-callback="onTurnstileSuccess"
                      data-error-callback="onTurnstileError"
                      data-expired-callback="onTurnstileExpired"
@@ -449,22 +97,19 @@
                 <div id="turnstileStatus" class="turnstile-status" style="display: none;">
                     <span class="status-icon">✅</span>
                     <span class="status-text">
-                        <span class="zh-text">安全驗證成功！電子郵件現在是可選的</span>
-                        <span class="en-text">Security verification successful! Email is now optional</span>
+                        <span data-i18n="securitySuccess">安全驗證成功，電子郵件可不填寫。</span>
                     </span>
                 </div>
             </div>
 
             <button type="submit" id="submitBtn" class="submit-btn">
                 <span id="btnText">
-                    <span class="zh-text">立即註冊</span>
-                    <span class="en-text">Register Now</span>
+                    <span data-i18n="register">立即註冊</span>
                 </span>
                 <div class="loading" id="loading">
                     <div class="spinner"></div>
                     <span>
-                        <span class="zh-text">註冊中...</span>
-                        <span class="en-text">Registering...</span>
+                        <span data-i18n="registering">註冊中…</span>
                     </span>
                 </div>
             </button>
@@ -473,12 +118,7 @@
         <div id="message" class="message"></div>
 
         <nav class="footer" aria-label="Legal links">
-            <span class="zh-text">
-                註冊即表示您同意<a href="./#/user-agreement" target="_blank" rel="noopener noreferrer">使用者協議</a>，並確認已閱讀<a href="./#/privacy-policy" target="_blank" rel="noopener noreferrer">隱私政策</a>。
-            </span>
-            <span class="en-text">
-                By registering, you agree to the <a href="./#/user-agreement" target="_blank" rel="noopener noreferrer">User Agreement</a> and acknowledge the <a href="./#/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
-            </span>
+            <span data-i18n="agreementIntro">註冊即表示您同意</span><a href="./#/user-agreement" target="_blank" rel="noopener noreferrer" data-i18n="agreement">使用者協議</a><span data-i18n="agreementMiddle">，並確認已閱讀</span><a href="./#/privacy-policy" target="_blank" rel="noopener noreferrer" data-i18n="privacy">隱私政策</a><span data-i18n="agreementEnd">。</span>
         </nav>
 
         <!-- 註冊成功頁面已移除，現在直接跳轉到主頁 -->
@@ -486,6 +126,7 @@
     </div>
 
     <script>
+        function registerText(key) { return window.AgoraRegisterUI.text(key); }
         // Turnstile 相關變量
         let turnstileToken = null;
         let userSourceHost = null;
@@ -498,7 +139,7 @@
             localStorage.setItem('theme', newTheme);
             
             const themeBtn = document.querySelector('.theme-toggle');
-            themeBtn.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+            window.AgoraRegisterUI.apply();
         }
 
         // 載入保存的主題
@@ -517,7 +158,7 @@
             document.documentElement.setAttribute('data-theme', theme);
             const themeBtn = document.querySelector('.theme-toggle');
             if (themeBtn) {
-                themeBtn.textContent = theme === 'dark' ? '☀️' : '🌙';
+                window.AgoraRegisterUI.apply();
             }
         }
 
@@ -544,16 +185,18 @@
                 localStorage.setItem('theme', actualTheme);
                 const themeBtn = document.querySelector('.theme-toggle');
                 if (themeBtn) {
-                    themeBtn.textContent = actualTheme === 'dark' ? '☀️' : '🌙';
+                    window.AgoraRegisterUI.apply();
                 }
                 console.log('Theme set from URL parameter:', theme, '->', actualTheme);
             }
             
             // 處理語言參數
             const lang = urlParams.get('lang');
-            if (lang && (lang === 'zh-TW' || lang === 'zh-CN' || lang === 'en' || lang === 'ja')) {
-                document.documentElement.setAttribute('lang', lang);
-                localStorage.setItem('language', lang);
+            if (lang) {
+                const normalized = window.AgoraRegisterUI.normalizeLocale(lang);
+                document.documentElement.setAttribute('lang', normalized);
+                localStorage.setItem('language', normalized);
+                window.AgoraRegisterUI.apply();
                 console.log('Language set from URL parameter:', lang);
             }
             
@@ -621,14 +264,14 @@
                 ((error && error.name) || 'UnknownError')
             );
             turnstileToken = null;
-            showTurnstileError('安全驗證失敗，請重新驗證');
+            showTurnstileError(registerText('securityFailed'));
         }
 
         // Turnstile 過期回調
         function onTurnstileExpired() {
             console.log('Turnstile verification expired');
             turnstileToken = null;
-            showTurnstileError('安全驗證已過期，請重新驗證');
+            showTurnstileError(registerText('securityExpired'));
         }
 
         // 顯示 Turnstile 錯誤並提供刷新選項
@@ -660,10 +303,7 @@
                 refreshBtn.id = 'turnstileRefreshBtn';
                 refreshBtn.type = 'button';
                 refreshBtn.className = 'turnstile-refresh-btn';
-                refreshBtn.innerHTML = `
-                    <span class="zh-text">🔄 重新驗證</span>
-                    <span class="en-text">🔄 Refresh Verification</span>
-                `;
+                refreshBtn.textContent = registerText('refreshVerification');
                 refreshBtn.onclick = refreshTurnstile;
                 
                 const turnstileContainer = document.querySelector('.turnstile-container');
@@ -857,7 +497,7 @@
             }
             
             // 如果沒有對應語言的翻譯，返回默認語言
-            return messages ? messages['zh-TW'] : '註冊失敗，請稍後再試';
+            return window.AgoraRegisterUI.errorMessage(errorCode) || (messages ? messages['en'] : registerText('registrationFailed'));
         }
 
         // 聚焦並高亮特定欄位
@@ -909,7 +549,7 @@
                     showMessage(error.message, 'error');
                 }
             } else {
-                showMessage('註冊失敗，請檢查輸入信息', 'error');
+                showMessage(registerText('checkInputs'), 'error');
             }
         }
 
@@ -917,7 +557,7 @@
         document.getElementById('registerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             if (!window.AgoraLegacyAuth || !window.AgoraLegacyAuth.allows()) {
-                showMessage('登入狀態已變更，請返回商城繼續。', 'warning');
+                showMessage(registerText('sessionChanged'), 'warning');
                 return;
             }
             
@@ -940,18 +580,18 @@
             
             // 基本驗證
             if (!registerData.username || !registerData.password) {
-                showMessage('請填寫用戶名和密碼', 'error');
+                showMessage(registerText('usernamePasswordRequired'), 'error');
                 return;
             }
             
             if (registerData.password !== registerData.confirmPassword) {
-                showMessage('密碼和確認密碼不匹配', 'error');
+                showMessage(registerText('passwordMismatch'), 'error');
                 return;
             }
             
             // Turnstile 驗證（如果沒有提供 email）
             if (!turnstileToken && (!registerData.email || registerData.email.trim() === '')) {
-                showMessage('請完成安全驗證或提供電子郵件地址', 'error');
+                showMessage(registerText('securityOrEmail'), 'error');
                 return;
             }
             
@@ -1111,7 +751,7 @@
                         // 添加短暫延遲，確保所有操作完成
                         setTimeout(() => {
                             if (!window.AgoraLegacyAuth.allows()) {
-                                showMessage('登入狀態已變更，請返回商城繼續。', 'warning');
+                                showMessage(registerText('sessionChanged'), 'warning');
                                 return;
                             }
                             console.log('🚀 [INFO] 執行跳轉到:', targetUrl);
@@ -1119,7 +759,7 @@
                         }, 200);
                     } else {
                         console.error('❌ [ERROR] JWT 保存驗證失敗，無法跳轉');
-                        showMessage('註冊成功但 JWT 保存失敗，請手動重新登入', 'warning');
+                        showMessage(registerText('sessionSaveFailed'), 'warning');
                     }
                     return;
                 } else {
@@ -1128,14 +768,14 @@
                 
             } catch (error) {
                 if (error && error.name === 'LegacyAuthRetiredError') {
-                    showMessage('登入狀態已變更，請返回商城繼續。', 'warning');
+                    showMessage(registerText('sessionChanged'), 'warning');
                     return;
                 }
                 console.error(
                     'Network error: errorType=' +
                     ((error && error.name) || 'UnknownError')
                 );
-                showMessage('網絡錯誤，請稍後再試', 'error');
+                showMessage(registerText('networkError'), 'error');
             } finally {
                 setButtonState(false);
             }
