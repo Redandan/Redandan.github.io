@@ -1,0 +1,63 @@
+/* Optional public-home startup layer, outside the transformed Flutter host. */
+html[data-agora-html-storefront="active"] #loading-screen { visibility: hidden; }
+#html-storefront {
+  --hs-bg: #f8f9fa; --hs-card: #fff; --hs-text: #1a1a1a;
+  --hs-muted: #6b7280; --hs-primary: #1565c0; --hs-line: #e6e7eb;
+  position: fixed; inset: 0; z-index: 10001; overflow: hidden; isolation: isolate;
+  background: var(--hs-bg); color: var(--hs-text);
+  font: 14px/1.4 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+  box-sizing: border-box; -webkit-text-size-adjust: 100%;
+}
+#html-storefront *, #html-storefront *::before, #html-storefront *::after { box-sizing: border-box; }
+#html-storefront button, #html-storefront a { -webkit-tap-highlight-color: transparent; }
+#html-storefront button {
+  color: inherit; font: inherit; cursor: pointer; border: 0; background: none;
+  touch-action: manipulation; min-height: 44px;
+}
+#html-storefront button:focus-visible, #html-storefront a:focus-visible { outline: 3px solid var(--hs-primary); outline-offset: -3px; }
+#html-storefront svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; flex: 0 0 auto; }
+.hs-scroll { position: relative; z-index: 0; height: 100%; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-width: none; padding-bottom: calc(88px + env(safe-area-inset-bottom)); }
+.hs-scroll::-webkit-scrollbar, .hs-categories::-webkit-scrollbar { display: none; }
+.hs-top { height: 60px; display: flex; gap: 8px; align-items: center; padding: 4px 12px 8px; }
+.hs-search { min-width: 0; flex: 1; height: 48px; border: 1px solid #d6d7df !important; border-radius: 8px; background: #e3e3eb !important; display: flex; align-items: center; gap: 10px; padding: 0 14px; color: #777982 !important; text-align: left; }
+.hs-search svg { width: 16px; height: 16px; }
+.hs-icon { width: 40px; padding: 8px; color: #656975 !important; }
+.hs-shortcuts { display: flex; gap: 8px; height: 64px; align-items: flex-start; padding: 6px 12px 10px; }
+.hs-categories { display: flex; gap: 8px; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.hs-category { white-space: nowrap; border: 1px solid #cdd0d6 !important; border-radius: 8px; padding: 0 14px; font-size: 12px !important; font-weight: 600 !important; }
+.hs-category[aria-pressed="true"] { background: #d5dce6 !important; border-color: #7896bd !important; color: #265c9c !important; }
+.hs-filter { border: 1px solid #83b4f5 !important; border-radius: 12px; color: var(--hs-primary) !important; display: flex; align-items: center; gap: 6px; padding: 0 10px; white-space: nowrap; font-weight: 600 !important; }
+.hs-section { padding: 8px 12px; }
+.hs-section h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 16px; line-height: 24px; font-weight: 800; }
+.hs-section h2 svg { color: #426ca8; width: 18px; height: 18px; }
+.hs-section p { margin: 3px 0 8px; font-size: 12px; color: var(--hs-muted); }
+.hs-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.hs-main { padding: 8px 12px; }
+.hs-card { display: flex; flex-direction: column; min-width: 0; overflow: hidden; border: 1px solid #ececef; border-radius: 8px; background: var(--hs-card); color: inherit; text-decoration: none; margin-bottom: 4px; }
+.hs-featured .hs-card { height: calc(var(--hs-featured-extent, (100vw - 36px) / 2 + 121px) - 4px); }
+.hs-main .hs-card { height: calc(var(--hs-main-extent, (100vw - 36px) / 2 + 121px) - 4px); }
+.hs-photo { width: 100%; aspect-ratio: 1; display: block; object-fit: cover; background: #fff; flex-shrink: 0; }
+.hs-info { padding: 12px; min-height: 112px; }
+.hs-title { height: 40px; line-height: 20px; font-size: 14px; font-weight: 500; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 0 0 8px; }
+.hs-price { font-size: 16px; line-height: 20px; font-weight: 700; color: #426ca8; font-variant-numeric: tabular-nums; }
+.hs-price small { font-size: 12px; font-weight: 500; }
+.hs-sales { display: flex; gap: 4px; align-items: center; margin-top: 4px; height: 17px; font-size: 12px; color: #505762; }
+.hs-sales svg { width: 12px; height: 12px; }
+.hs-sales.hs-unavailable { color: #c72525; }
+.hs-nav { position: absolute; z-index: 1; inset: auto 0 0; height: calc(84px + env(safe-area-inset-bottom)); padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(4,1fr); background: var(--hs-bg); }
+.hs-nav button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px !important; color: var(--hs-muted) !important; }
+.hs-nav button:first-child { color: var(--hs-primary) !important; font-weight: 600; }
+.hs-nav span { width: 64px; height: 32px; border-radius: 24px; display: grid; place-items: center; }
+.hs-nav button:first-child span { background: #e2e8f0; }
+.hs-status { position: absolute; z-index: 2; left: 12px; right: 12px; bottom: calc(92px + env(safe-area-inset-bottom)); background: var(--hs-card); border: 1px solid var(--hs-line); padding: 10px 12px; border-radius: 10px; box-shadow: 0 2px 12px #00000012; font-size: 13px; }
+.hs-status:empty { display: none; }
+.hs-status button { display: inline; color: var(--hs-primary) !important; font-weight: 600 !important; padding: 0 4px; }
+.hs-skeleton { height: 294px; background: linear-gradient(110deg, #e9edf2, #f4f6f8, #e9edf2); border-radius: 8px; }
+#html-storefront[data-theme="dark"] { --hs-bg: #0a0a0a; --hs-card: #242424; --hs-text: #f0f0f0; --hs-muted: #b0b0b0; --hs-line: #363636; }
+#html-storefront[data-theme="dark"] .hs-search { background: #303138 !important; border-color: #45454b !important; color: #c0c2cc !important; }
+#html-storefront[data-theme="dark"] .hs-card { border-color: #363636; }
+#html-storefront[data-theme="dark"] .hs-price { color: #a5c8ff; }
+#html-storefront[data-theme="dark"] .hs-sales { color: #b0b0b0; }
+#html-storefront[data-theme="dark"] .hs-skeleton { background: #242424; }
+#html-storefront[data-theme="dark"] .hs-category[aria-pressed="true"] { background: #253a55 !important; color: #b6d2ff !important; }

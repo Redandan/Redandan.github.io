@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta name="source-commit" content="7a543c23e5622eec436b422939162bf53658355f">
+<meta name="source-commit" content="8d3633e40eb5f2c1a360d3aa6a200e1a2c61768a">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -118,7 +118,7 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.5027+5027">
+  <meta name="version" content="1.0.5028+5028">
   <script id="telegram-sdk-entry-loader">
     // Preserve synchronous SDK/viewport ordering inside Telegram only.
     // A normal browser/PWA must not depend on Telegram's network availability.
@@ -573,8 +573,8 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
-  <link rel="preload" href="flutter_bootstrap.7a543c23e562.js" as="script">
-  <link rel="preload" href="main.dart.7a543c23e562.js" as="script" fetchpriority="high">
+  <link rel="preload" href="flutter_bootstrap.8d3633e40eb5.js" as="script">
+  <link rel="preload" href="main.dart.8d3633e40eb5.js" as="script" fetchpriority="high">
   <link rel="preload" href="canvaskit/canvaskit.js" as="script" crossorigin="anonymous">
   <script data-agora-startup-resources="true">
 (function(global) {
@@ -1175,6 +1175,32 @@
   </noscript>
 
   <!-- Loading screen lives outside #flutter-root so iOS PWA viewport transforms cannot move it. -->
+  <script>
+    // Local candidate only: normal entries and explicit deep links are unchanged.
+    (function () {
+      var url = new URL(location.href);
+      if (url.searchParams.get('htmlStorefront') !== '1' ||
+          url.pathname !== '/' || !/^(?:#\/?home)?\/?$/.test(url.hash) ||
+          innerWidth >= 650 || url.searchParams.size !== 1 ||
+          /Telegram/i.test(navigator.userAgent) || window.Telegram?.WebApp?.initData) return;
+      var css = document.createElement('link');
+      var revision = document.querySelector('meta[name="source-commit"]')?.content ||
+          document.querySelector('meta[name="version"]')?.content || '1';
+      var suffix = '?v=' + encodeURIComponent(revision);
+      // Fetch the small script alongside CSS; execute only after CSS is ready.
+      var preload = document.createElement('link');
+      preload.rel = 'preload'; preload.as = 'script';
+      preload.href = 'html_storefront.8d3633e40eb5.js' + suffix;
+      document.head.appendChild(preload);
+      css.rel = 'stylesheet'; css.href = 'html_storefront.8d3633e40eb5.css' + suffix;
+      css.onload = function () {
+        var script = document.createElement('script');
+        script.src = 'html_storefront.8d3633e40eb5.js' + suffix; script.defer = true;
+        document.head.appendChild(script);
+      };
+      document.head.appendChild(css);
+    })();
+  </script>
   <div id="loading-screen">
     <div class="loading-content">
       <div class="loading-brand">AgoraMarket</div>
@@ -3750,7 +3776,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.7a543c23e562.js";
+        script.src = "flutter_bootstrap.8d3633e40eb5.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
@@ -4053,7 +4079,7 @@
   <script src="web_vitals.js"></script>
   
   <!-- ?????????????? -->
-  <script src="offline_handler.7a543c23e562.js"></script>
+  <script src="offline_handler.8d3633e40eb5.js"></script>
   
   <!-- GitHub Pages 404 ??????????????-->
   <script>

@@ -1,0 +1,2170 @@
+((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
+$__dart_deferred_initializers__.current=function(a,b,c,$){var J,A,C,E,F,H,I,B={cju:function cju(d,e,f){var _=this
+_.a=d
+_.b=e
+_.c=f
+_.d=null},cjv:function cjv(d){this.a=d},cjw:function cjw(d){this.a=d},cjC:function cjC(d,e,f,g,h){var _=this
+_.a=d
+_.b=e
+_.c=f
+_.d=g
+_.e=h},cjr:function cjr(d){this.a=d},cjs:function cjs(d){this.a=d},cjt:function cjt(d){this.a=d},cjA:function cjA(d){this.a=d},cjB:function cjB(d){this.a=d},cjD:function cjD(d){this.a=d},cjE:function cjE(d){this.a=d},cjJ:function cjJ(d){this.a=d},
+eFf(d,e,f,g,h){return new B.bHo(f,h,d,g,e)},
+bHo:function bHo(d,e,f,g,h){var _=this
+_.a=d
+_.b=e
+_.c=f
+_.d=g
+_.e=h
+_.f=null
+_.r=0
+_.w=!1},
+bHs:function bHs(d,e){this.a=d
+this.b=e},
+bHr:function bHr(d,e,f,g,h){var _=this
+_.a=d
+_.b=e
+_.c=f
+_.d=g
+_.e=h},
+bHp:function bHp(d,e){this.a=d
+this.b=e},
+bHq:function bHq(d,e){this.a=d
+this.b=e},
+bHt:function bHt(d,e,f){this.a=d
+this.b=e
+this.c=f},
+cjI:function cjI(d){this.b=d},
+cjK:function cjK(d){this.a=d},
+ePj(d,e,f,g){var x=A.eim()
+return new B.a48(g,e,f,d,x)},
+a48:function a48(d,e,f,g,h){var _=this
+_.a=d
+_.b=e
+_.c=f
+_.d=g
+_.e=h},
+ePg(d,e,f,g,h){var x=null,w=A.b7("WebRTCService"),v=$.OH(),u=A.a([],y.d),t=A.a([],y.t),s=A.a([],y.L),r=y.i
+v=new B.FZ(h,e,g,f,w,v,u,A.q(y.N,y.k),t,s,new A.jm(x,x,r),new A.jm(x,x,r),new A.jm(x,x,y.R),new A.jm(x,x,y.c))
+v.r=new B.cjI(w)
+v.w=new B.cjK(w)
+v.x=new B.cjC(new B.cjB(v),new B.cjJ(v),new B.cjr(v),new B.cjD(v),new B.cjA(v))
+g.a4(v.gdnt())
+return v},
+akT(d){return B.ePh(d)},
+ePh(d){var x=0,w=A.l(y.H),v,u=2,t=[],s,r,q,p
+var $async$akT=A.h(function(e,f){if(e===1){t.push(f)
+x=u}for(;;)switch(x){case 0:if(d==null){x=1
+break}u=4
+x=7
+return A.c(d.aG(),$async$akT)
+case 7:u=2
+x=6
+break
+case 4:u=3
+q=t.pop()
+x=6
+break
+case 3:x=2
+break
+case 6:u=9
+r=d.at
+r===$&&A.e()
+r.close()
+x=12
+return A.c(A.di(null,y.H),$async$akT)
+case 12:u=2
+x=11
+break
+case 9:u=8
+p=t.pop()
+x=11
+break
+case 8:x=2
+break
+case 11:case 1:return A.j(v,w)
+case 2:return A.i(t.at(-1),w)}})
+return A.k($async$akT,w)},
+akU(d){return B.ePi(d)},
+ePi(d){var x=0,w=A.l(y.H),v,u=2,t=[],s,r,q,p,o,n,m
+var $async$akU=A.h(function(e,f){if(e===1){t.push(f)
+x=u}for(;;)switch(x){case 0:if(d==null){x=1
+break}r=d.c36(),q=r.length,p=0
+case 3:if(!(p<r.length)){x=5
+break}s=r[p]
+u=7
+x=10
+return A.c(s.hr(),$async$akU)
+case 10:u=2
+x=9
+break
+case 7:u=6
+n=t.pop()
+x=9
+break
+case 6:x=2
+break
+case 9:case 4:r.length===q||(0,A.a6)(r),++p
+x=3
+break
+case 5:u=12
+x=15
+return A.c(d.q(),$async$akU)
+case 15:u=2
+x=14
+break
+case 12:u=11
+m=t.pop()
+x=14
+break
+case 11:x=2
+break
+case 14:case 1:return A.j(v,w)
+case 2:return A.i(t.at(-1),w)}})
+return A.k($async$akU,w)},
+FZ:function FZ(d,e,f,g,h,i,j,k,l,m,n,o,p,q){var _=this
+_.a=d
+_.b=e
+_.c=f
+_.d=g
+_.e=h
+_.f=i
+_.x=_.w=_.r=$
+_.as=_.Q=_.z=_.y=null
+_.at=j
+_.ay=_.ax=0
+_.dx=_.db=_.cy=_.cx=_.CW=_.ch=!1
+_.ok=_.k4=_.k3=_.k2=_.k1=_.id=_.go=_.fy=_.fx=_.fr=_.dy=null
+_.p1=0
+_.p3=_.p2=!1
+_.p4=0
+_.ry=k
+_.to=l
+_.x1=m
+_.x2=n
+_.xr=o
+_.y1=p
+_.y2=q},
+cki:function cki(d,e){this.a=d
+this.b=e},
+ckh:function ckh(d,e,f,g){var _=this
+_.a=d
+_.b=e
+_.c=f
+_.d=g},
+ckg:function ckg(d,e,f){this.a=d
+this.b=e
+this.c=f},
+cjR:function cjR(d,e){this.a=d
+this.b=e},
+ck9:function ck9(d,e,f){this.a=d
+this.b=e
+this.c=f},
+cka:function cka(d,e,f){this.a=d
+this.b=e
+this.c=f},
+ckb:function ckb(d,e,f,g){var _=this
+_.a=d
+_.b=e
+_.c=f
+_.d=g},
+ck8:function ck8(d,e,f){this.a=d
+this.b=e
+this.c=f},
+cjV:function cjV(d,e,f){this.a=d
+this.b=e
+this.c=f},
+cjM:function cjM(d,e,f,g){var _=this
+_.a=d
+_.b=e
+_.c=f
+_.d=g},
+cjO:function cjO(d,e){this.a=d
+this.b=e},
+cjN:function cjN(d,e){this.a=d
+this.b=e},
+cjP:function cjP(d,e){this.a=d
+this.b=e},
+cjQ:function cjQ(d,e){this.a=d
+this.b=e},
+cjL:function cjL(d,e){this.a=d
+this.b=e},
+cke:function cke(d,e,f,g){var _=this
+_.a=d
+_.b=e
+_.c=f
+_.d=g},
+ckc:function ckc(d,e,f){this.a=d
+this.b=e
+this.c=f},
+ckd:function ckd(d,e,f){this.a=d
+this.b=e
+this.c=f},
+ckj:function ckj(d,e,f,g){var _=this
+_.a=d
+_.b=e
+_.c=f
+_.d=g},
+ckf:function ckf(d,e,f,g,h){var _=this
+_.a=d
+_.b=e
+_.c=f
+_.d=g
+_.e=h},
+cjS:function cjS(){},
+ck5:function ck5(d,e,f){this.a=d
+this.b=e
+this.c=f},
+ck1:function ck1(d,e){this.a=d
+this.b=e},
+ck2:function ck2(d,e){this.a=d
+this.b=e},
+ck0:function ck0(d,e,f){this.a=d
+this.b=e
+this.c=f},
+cjX:function cjX(d,e){this.a=d
+this.b=e},
+cjY:function cjY(d,e){this.a=d
+this.b=e},
+ck3:function ck3(d,e,f){this.a=d
+this.b=e
+this.c=f},
+ck_:function ck_(d,e,f,g){var _=this
+_.a=d
+_.b=e
+_.c=f
+_.d=g},
+ck4:function ck4(d,e,f){this.a=d
+this.b=e
+this.c=f},
+cjZ:function cjZ(d,e){this.a=d
+this.b=e},
+ck7:function ck7(d,e,f){this.a=d
+this.b=e
+this.c=f},
+ck6:function ck6(d,e){this.a=d
+this.b=e},
+cjW:function cjW(){},
+cjT:function cjT(d,e,f){this.a=d
+this.b=e
+this.c=f},
+cjU:function cjU(d,e,f){this.a=d
+this.b=e
+this.c=f},
+PB:function PB(d){this.a=d},
+bZK:function bZK(){},
+Aj:function Aj(d,e){this.e=d
+this.b=e},
+bNw:function bNw(d){this.a=d},
+bNx:function bNx(d){this.a=d},
+e2V(d){var x=new B.aLE(d)
+x.cRf(d)
+return x},
+aLE:function aLE(d){this.d=d
+this.c=null},
+bNt:function bNt(d){this.a=d},
+bNu:function bNu(d){this.a=d},
+bNv:function bNv(d){this.a=d},
+bNk:function bNk(){},
+bNm:function bNm(){},
+bNn:function bNn(){},
+bNo:function bNo(d){this.a=d},
+bNl:function bNl(d){this.a=d},
+eKd(d,e){var x=y.N
+x=new B.aPi(d,e,A.q(x,y.E),A.q(x,y.z))
+x.cRl(d,e)
+return x},
+aPi:function aPi(d,e,f,g){var _=this
+_.as=d
+_.at=e
+_.ax=f
+_.ay=g
+_.Q=_.e=_.d=_.b=_.cy=_.cx=_.CW=_.ch=null},
+bZM:function bZM(d){this.a=d},
+bZN:function bZN(d){this.a=d},
+bZO:function bZO(d){this.a=d},
+bZP:function bZP(d){this.a=d},
+bZQ:function bZQ(d){this.a=d},
+bZR:function bZR(d){this.a=d},
+bZS:function bZS(d){this.a=d},
+bZT:function bZT(d){this.a=d},
+bZL:function bZL(d){this.a=d},
+aPj:function aPj(){},
+e3A:function e3A(){},
+f3H(){return C.d.yU(A.a(["Android","webOS","iPhone","iPad","iPod","BlackBerry","Windows Phone"],y.S),new B.dV4())!==-1},
+dV4:function dV4(){},
+f3b(d){switch(d){case"new":return D.bzy
+case"checking":return D.bzz
+case"connected":return D.aaU
+case"completed":return D.bzA
+case"failed":return D.aaV
+case"disconnected":return D.bzC
+case"closed":return D.aaW
+case"count":return D.bzB}return D.aaW},
+f3c(d){switch(d){case"new":return D.aaX
+case"gathering":return D.bzD
+case"complete":return D.bzE}return D.aaX},
+f6L(d){switch(d){case"stable":return D.bzF
+case"have-local-offer":return D.bzG
+case"have-local-pranswer":return D.bzI
+case"have-remote-offer":return D.bzH
+case"have-remote-pranswer":return D.bzJ
+case"closed":return D.ab2}return D.ab2},
+f4U(d){switch(d){case"new":return D.ab_
+case"connecting":return D.ab0
+case"connected":return D.ab1
+case"closed":return D.Iw
+case"disconnected":return D.aaZ
+case"failed":return D.aaY}return D.Iw},
+Lw:function Lw(d,e){this.a=d
+this.b=e},
+agr:function agr(d,e){this.a=d
+this.b=e},
+AD:function AD(d,e){this.a=d
+this.b=e},
+vN:function vN(d,e){this.a=d
+this.b=e},
+bZJ:function bZJ(){},
+tM:function tM(){},
+a0r:function a0r(){},
+bNj:function bNj(){},
+xT:function xT(d,e,f){this.a=d
+this.b=e
+this.c=f},
+ags:function ags(){},
+agt:function agt(){},
+bZU:function bZU(){},
+Lv:function Lv(d,e){this.a=d
+this.b=e},
+agu:function agu(d){this.b=d}},D,K,G
+J=c[1]
+A=c[0]
+C=c[2]
+E=c[116]
+F=c[241]
+H=c[364]
+I=c[415]
+B=a.updateHolder(c[3],B)
+D=c[414]
+K=c[218]
+G=c[416]
+B.cju.prototype={
+bIN(d){this.d=d
+if(d==null)return
+this.a.m(C.i,"\ud83c\udfa4 [WebRTC] Starting audio level monitoring...",null,null)
+this.doD()},
+hr(){var x,w,v,u,t,s,r,q,p=this,o=null
+try{u=p.a
+u.m(C.i,"\ud83c\udfb5 [WebRTC] Stopping Web audio analysis...",o,o)
+t=p.d
+if(t!=null){x=t.zF()
+for(t=x,s=t.length,r=0;r<s;++r){w=t[r]
+w.c=null}}p.d=null
+u.m(C.i,"\u2705 [WebRTC] Web audio analysis stopped",o,o)}catch(q){v=A.u(q)
+p.a.m(C.t,"\u26a0\ufe0f [WebRTC] Failed to stop Web audio analysis: "+A.b(v),o,o)}},
+doD(){var x,w,v=null
+try{this.a.m(C.i,"\ud83c\udf10 [WebRTC] Web audio level monitoring started",v,v)
+this.dFR()}catch(w){x=A.u(w)
+this.a.m(C.E,"\u274c [WebRTC] Failed to start audio level monitoring: "+A.b(x),v,v)}},
+dFR(){var x,w,v,u,t=this,s=null
+try{w=t.a
+w.m(C.i,"\ud83c\udfb5 [WebRTC] Starting Web Audio API analysis...",s,s)
+v=t.d
+if(v!=null){if(v.zF().length===0){w.m(C.t,"\u26a0\ufe0f [WebRTC] No audio tracks in remote stream",s,s)
+t.byb()
+return}t.dFA()}else{w.m(C.t,"\u26a0\ufe0f [WebRTC] Web platform or remote stream not available, using fallback",s,s)
+t.byb()}}catch(u){x=A.u(u)
+w=t.a
+w.m(C.E,"\u274c [WebRTC] Failed to start Web Audio analysis: "+A.b(x),s,s)
+w.m(C.E,"\ud83d\udcca [WebRTC] Audio analysis error details: "+J.ab(x).l(0)+" - "+J.as(x),s,s)
+t.byb()}},
+dFA(){var x,w,v,u,t,s=this,r=null
+try{u=s.a
+u.m(C.i,"\ud83c\udfb5 [WebRTC] Starting Flutter WebRTC audio analysis...",r,r)
+x=s.d.zF()
+if(J.aD(x)!==0){w=J.kR(x)
+w.c=new B.cjv(s)
+u.m(C.i,"\u2705 [WebRTC] Flutter WebRTC audio analysis started",r,r)}}catch(t){v=A.u(t)
+s.a.m(C.t,"\u26a0\ufe0f [WebRTC] Failed to start Flutter WebRTC audio analysis: "+A.b(v),r,r)
+s.byb()}},
+byb(){this.a.m(C.i,"\ud83c\udfad [WebRTC] Starting simulated audio analysis...",null,null)
+A.lB(C.br,new B.cjw(this))}}
+B.cjC.prototype={}
+B.cjr.prototype={
+Qc(d){var x,w,v,u,t,s,r=this,q=null
+try{x=y.P.a(d)
+if(J.p(J.ax(x,"accepted"),!0)){u=r.a
+u=(u.gdQ()?u.fy:q)!=null}else u=!1
+t=r.a
+if(u){w=new B.Lv(A.bb(J.ax(x,"sdp")),"answer")
+u=t.gdQ()?t.fy:q
+u.alT(w).b4(new B.cjs(r),y.a).iP(new B.cjt(r))}else{t.lp("rejected")
+if(t.gdQ())t.nW()
+else A.di(q,y.H)}}catch(s){v=A.u(s)
+r.a.e.m(C.t,"WebRTC answer_handler failed: "+J.ab(v).l(0),q,q)}}}
+B.cjA.prototype={
+Qc(d){var x,w,v,u,t,s,r,q,p,o,n,m,l,k,j=null
+try{x=A.b6(d.i(0,"callId"))
+w="WEBRTC_CALL_ENDED_"+A.b(x)
+n=this.a
+m=n.gdQ()?n.ry:A.q(y.N,y.k)
+v=m.i(0,w)
+u=new A.aG(Date.now(),0,!1)
+if(x!=null&&v!=null&&u.dv(v).a<5e6)return
+if(x!=null){m=n.gdQ()?n.ry:A.q(y.N,y.k)
+m.h(0,w,u)
+if((n.gdQ()?n.ry:A.q(y.N,y.k)).a>100)(n.gdQ()?n.ry:A.q(y.N,y.k)).a2(0)}t=y.P.a(d)
+s=A.b6(J.ax(t,"callId"))
+m=J.ax(t,"fromUserId")
+r=m==null?j:J.as(m)
+m=J.ax(t,"toUserId")
+q=m==null?j:J.as(m)
+m=n.gdQ()?n.dy:j
+if(!J.p(r,m)){m=n.gdQ()?n.dy:j
+m=J.p(q,m)}else m=!0
+if(m)l=(n.gdQ()?n.fr:j)!=null
+else l=!1
+p=l
+if(s!=null){m=n.gdQ()?n.fr:j
+m=s===m}else m=!1
+if(m||p){if(n.gdQ()){m=n.Q
+if(m!=null)m.hw(0)}n.lp("ended")
+if(n.gdQ())n.nW()
+else A.di(j,y.H)}}catch(k){o=A.u(k)
+this.a.e.m(C.t,"WebRTC call_ended_handler failed: "+J.ab(o).l(0),j,j)}}}
+B.cjB.prototype={
+Qc(d){var x,w,v,u,t,s,r,q,p,o=null
+try{x=y.P.a(d)
+w=A.b6(J.ax(x,"callId"))
+s=J.ax(x,"fromUserId")
+v=s==null?o:J.as(s)
+s=J.ax(x,"toUserId")
+u=s==null?o:J.as(s)
+s=this.a
+r=!1
+if((s.gdQ()?s.dy:o)!=null){q=s.gdQ()?s.dy:o
+if(J.p(u,q)){r=s.gdQ()?s.dy:o
+r=!J.p(v,r)}}if(r){if(s.gdQ())s.fr=w
+if(s.gdQ())s.fx=v
+if(s.gdQ())s.db=!0}else{if((s.gdQ()?s.dy:o)!=null){r=s.gdQ()?s.dy:o
+r=J.p(v,r)}else r=!1
+if(r){if(s.gdQ())s.fr=w
+if(s.gdQ())s.cy=!0}}}catch(p){t=A.u(p)
+this.a.e.m(C.t,"WebRTC call_initiated_handler failed: "+J.ab(t).l(0),o,o)}}}
+B.cjD.prototype={
+Qc(d){var x,w,v,u,t,s,r,q,p,o,n=null,m="candidate",l="sdpMLineIndex"
+try{x=y.P.a(d)
+w=A.b6(J.ax(x,"callId"))
+r=J.ax(x,"fromUserId")
+v=r==null?n:J.as(r)
+r=J.ax(x,"toUserId")
+u=r==null?n:J.as(r)
+r=this.a
+q=!1
+if((r.gdQ()?r.dy:n)!=null){p=r.gdQ()?r.dy:n
+if(J.p(u,p)){q=r.gdQ()?r.dy:n
+q=!J.p(v,q)}}if(q){if((r.gdQ()?r.fr:n)!=null){q=r.gdQ()?r.fr:n
+q=J.p(w,q)}else q=!1
+if(q)if((r.gdQ()?r.fy:n)!=null){t=new B.xT(A.bb(J.ax(x,m)),A.b6(J.ax(x,"sdpMid")),A.eI(J.ax(x,l)))
+r=r.gdQ()?r.fy:n
+r.ax8(t).iP(new B.cjE(this))}else{r=r.gdQ()?r.to:A.a([],y.t)
+r.push(A.a_(["candidate",A.bb(J.ax(x,m)),"sdpMid",A.b6(J.ax(x,"sdpMid")),"sdpMLineIndex",A.eI(J.ax(x,l))],y.N,y.z))}}}catch(o){s=A.u(o)
+this.a.e.m(C.t,"WebRTC ice_candidate_handler failed: "+J.ab(s).l(0),n,n)}}}
+B.cjJ.prototype={
+e_U(d){var x,w,v,u,t,s,r,q
+try{x=A.b6(d.i(0,"callId"))
+w="WEBRTC_OFFER_"+A.b(x)
+s=this.a
+r=s.gdQ()?s.ry:A.q(y.N,y.k)
+v=r.i(0,w)
+u=new A.aG(Date.now(),0,!1)
+if(x!=null&&v!=null&&u.dv(v).a<5e6)return
+if(x!=null){r=s.gdQ()?s.ry:A.q(y.N,y.k)
+r.h(0,w,u)
+if((s.gdQ()?s.ry:A.q(y.N,y.k)).a>100)(s.gdQ()?s.ry:A.q(y.N,y.k)).a2(0)}this.dvr(d)}catch(q){t=A.u(q)
+this.a.e.m(C.t,"WebRTC offer_handler failed: "+J.ab(t).l(0),null,null)}},
+dvr(d){var x,w,v,u,t,s,r,q=null,p="callType",o="timestamp",n=y.P.a(d),m=J.ax(n,"fromUserId"),l=m==null?q:J.as(m)
+m=J.ax(n,"toUserId")
+w=m==null?q:J.as(m)
+m=this.a
+v=!1
+if((m.gdQ()?m.dy:q)!=null)if(w==(m.gdQ()?m.dy:q))v=l!=(m.gdQ()?m.dy:q)
+if(v){if(m.gdQ()&&m.db){v=m.gdQ()?m.fr:q
+u=J.ax(n,"callId")
+u=v==null?u==null:v===u
+v=u}else v=!1
+if(v){v=A.bb(J.ax(n,"sdp"))
+if(m.gdQ())m.k1=new B.Lv(v,"offer")
+return}v=A.b6(J.ax(n,"callId"))
+if(m.gdQ())m.fr=v
+if(m.gdQ())m.fx=l
+v=A.bb(J.ax(n,"sdp"))
+if(m.gdQ())m.k1=new B.Lv(v,"offer")
+if(m.gdQ())m.db=!0
+try{v=m.gdQ()?m.fr:q
+u=m.gdQ()?m.fx:q
+t=m.gdQ()?m.dy:q
+s=J.ax(n,p)
+if(s==null)s="audio"
+s=A.a_(["callId",v,"fromUserId",u,"toUserId",t,"callType",s,"timestamp",J.ax(n,o)],y.N,y.z)
+if(m.gdQ())m.xr.H(0,new A.jH(s,m.aIw(),y.W))}catch(r){x=A.u(r)
+m.e.m(C.t,"WebRTC offer_handler failed: "+J.ab(x).l(0),q,q)}v=m.gdQ()?m.fr:q
+u=m.gdQ()?m.fx:q
+t=m.gdQ()?m.dy:q
+s=J.ax(n,p)
+if(s==null)s="audio"
+s=A.a_(["callId",v,"fromUserId",u,"toUserId",t,"callType",s,"timestamp",J.ax(n,o)],y.N,y.z)
+if(m.gdQ()){v=m.Q
+if(v!=null)v.bIB(s)}m.lp("incoming")}}}
+B.bHo.prototype={
+bIB(d){var x,w,v,u=this
+if(!u.e.$0()||u.w)return
+x=++u.r
+w=u.cdO()
+if(w==null)return
+v=A.f(w,C.c,y.J)
+v.toString
+u.asj(d,w,v,x)},
+hw(d){++this.r
+this.cjZ()},
+cjZ(){var x=this.f
+if(x!=null){x.hw(0)
+this.f.q()}this.f=null},
+asj(d,e,f,g){return this.dbG(d,e,f,g)},
+dbG(a2,a3,a4,a5){var x=0,w=A.l(y.H),v,u=2,t=[],s=this,r,q,p,o,n,m,l,k,j,i,h,g,f,e,d,a0,a1
+var $async$asj=A.h(function(a7,a8){if(a7===1){t.push(a8)
+x=u}for(;;)switch(x){case 0:f={}
+e=new B.bHs(s,a5)
+d=A.bb(a2.i(0,"fromUserId"))
+a0=A.bb(a2.i(0,"callId"))
+f.a="User "+A.b(d)
+f.b=null
+u=4
+r=$.am().$1$0(y.U)
+k=r.bXo(s.d,e)
+q=k
+x=7
+return A.c(s.b.mc(),$async$asj)
+case 7:p=a8
+if(!e.$0()){x=1
+break}x=p!=null?8:9
+break
+case 8:x=10
+return A.c(q.Jg(p,0,100),$async$asj)
+case 10:o=a8
+if(!e.$0()){x=1
+break}for(j=J.aX(o);j.G();){n=j.gP()
+if(C.h.l(n.c)===d){i=n.x
+f.a=i==null?"User "+A.b(d):i
+f.b=n.y
+break}}case 9:u=2
+x=6
+break
+case 4:u=3
+a1=t.pop()
+m=A.u(a1)
+s.a.m(C.t,"WebRTC incoming_call_overlay failed: "+J.ab(m).l(0),null,null)
+x=6
+break
+case 3:x=2
+break
+case 6:if(!e.$0()||a3.e==null){x=1
+break}s.cjZ()
+s.f=A.vC(new B.bHr(f,s,a2,a4,a0),!1,!1)
+if(a3.e==null){s.f=null
+x=1
+break}try{g=A.Kt(a3,!1)
+g.toString
+j=s.f
+j.toString
+g.t7(0,j)}catch(a6){l=A.u(a6)
+s.a.m(C.t,"WebRTC incoming_call_overlay failed: "+J.ab(l).l(0),null,null)
+s.f=null}case 1:return A.j(v,w)
+case 2:return A.i(t.at(-1),w)}})
+return A.k($async$asj,w)},
+brj(d){return this.cS_(d)},
+cS_(d){var x=0,w=A.l(y.H),v,u=2,t=[],s=this,r,q,p,o,n
+var $async$brj=A.h(function(e,f){if(e===1){t.push(f)
+x=u}for(;;)switch(x){case 0:o=s.e
+if(!o.$0()||s.w){x=1
+break}s.w=!0
+u=4
+s.hw(0)
+x=7
+return A.c(s.c.$1(!0),$async$brj)
+case 7:r=f
+if(!o.$0()){x=1
+break}if(r)s.a_w(d)
+u=2
+x=6
+break
+case 4:u=3
+n=t.pop()
+q=A.u(n)
+s.a.m(C.t,"WebRTC incoming_call_overlay failed: "+J.ab(q).l(0),null,null)
+x=6
+break
+case 3:x=2
+break
+case 6:case 1:return A.j(v,w)
+case 2:return A.i(t.at(-1),w)}})
+return A.k($async$brj,w)},
+bwH(d){return this.dxT(d)},
+dxT(d){var x=0,w=A.l(y.H),v,u=2,t=[],s=this,r,q,p
+var $async$bwH=A.h(function(e,f){if(e===1){t.push(f)
+x=u}for(;;)switch(x){case 0:if(!s.e.$0()||s.w){x=1
+break}s.w=!0
+u=4
+s.hw(0)
+x=7
+return A.c(s.c.$1(!1),$async$bwH)
+case 7:u=2
+x=6
+break
+case 4:u=3
+p=t.pop()
+r=A.u(p)
+s.a.m(C.t,"WebRTC incoming_call_overlay failed: "+J.ab(r).l(0),null,null)
+x=6
+break
+case 3:x=2
+break
+case 6:case 1:return A.j(v,w)
+case 2:return A.i(t.at(-1),w)}})
+return A.k($async$bwH,w)},
+a_w(d){return this.dpa(d)},
+dpa(a2){var x=0,w=A.l(y.H),v,u=2,t=[],s=this,r,q,p,o,n,m,l,k,j,i,h,g,f,e,d,a0,a1
+var $async$a_w=A.h(function(a3,a4){if(a3===1){t.push(a4)
+x=u}for(;;)switch(x){case 0:d=s.e
+if(!d.$0()){x=1
+break}u=4
+i={}
+r=s.cdO()
+if(r==null){x=1
+break}q=A.bb(a2.i(0,"fromUserId"))
+i.a="User "+A.b(q)
+i.b=null
+u=8
+p=$.am().$1$0(y.U)
+h=p.bXo(s.d,d)
+o=h
+x=11
+return A.c(s.b.mc(),$async$a_w)
+case 11:n=a4
+if(!d.$0()){x=1
+break}x=n!=null?12:13
+break
+case 12:x=14
+return A.c(o.Jg(n,0,100),$async$a_w)
+case 14:m=a4
+if(!d.$0()){x=1
+break}for(g=J.aX(m);g.G();){l=g.gP()
+if(C.h.l(l.c)===q){f=l.x
+i.a=f==null?"User "+A.b(q):f
+i.b=l.y
+break}}case 13:u=4
+x=10
+break
+case 8:u=7
+a0=t.pop()
+k=A.u(a0)
+s.a.m(C.t,"WebRTC incoming_call_overlay failed: "+J.ab(k).l(0),null,null)
+x=10
+break
+case 7:x=4
+break
+case 10:if(!d.$0()||r.e==null){x=1
+break}d=y.z
+x=15
+return A.c(A.ac(r,!1).aK(A.K2(new B.bHt(i,s,a2),null,d),d),$async$a_w)
+case 15:u=2
+x=6
+break
+case 4:u=3
+a1=t.pop()
+j=A.u(a1)
+s.a.m(C.t,"WebRTC incoming_call_overlay failed: "+J.ab(j).l(0),null,null)
+x=6
+break
+case 3:x=2
+break
+case 6:case 1:return A.j(v,w)
+case 2:return A.i(t.at(-1),w)}})
+return A.k($async$a_w,w)},
+cdO(){var x,w,v,u,t=null
+try{x=$.bgZ()
+if($.ah.ac$.x.i(0,x)!=null){v=$.ah.ac$.x.i(0,x)
+v.toString
+return v}return t}catch(u){w=A.u(u)
+this.a.m(C.t,"WebRTC incoming_call_overlay failed: "+J.ab(w).l(0),t,t)
+return t}}}
+B.cjI.prototype={
+bBe(d){return this.dV4(d)},
+dV4(d){var x=0,w=A.l(y.A),v,u,t,s,r,q,p,o,n
+var $async$bBe=A.h(function(e,f){if(e===1)return A.i(f,w)
+for(;;)switch(x){case 0:o=A.a([],y.t)
+n=y.e.a(d.i(0,"iceServers"))
+if(n!=null)for(u=J.aX(n),t=y.P,s=y.N,r=y.z;u.G();){q=u.gP()
+if(t.b(q))o.push(A.a_(["urls",A.bb(q.i(0,"urls")),"username",A.b6(q.i(0,"username")),"credential",A.b6(q.i(0,"credential"))],s,r))}u=A.eI(d.i(0,"iceCandidatePoolSize"))
+p=A.a_(["iceServers",o,"iceCandidatePoolSize",u==null?10:u,"bundlePolicy","max-bundle","rtcpMuxPolicy","require","iceTransportPolicy","all"],y.N,y.z)
+x=3
+return A.c($.e8e().bVq(p,null),$async$bBe)
+case 3:v=f
+x=1
+break
+case 1:return A.j(v,w)}})
+return A.k($async$bBe,w)},
+bq2(d,e,f,g){return this.cFc(!0,!0,f,!0)},
+cFc(d,e,f,g){var x=0,w=A.l(y.E),v,u=2,t=[],s=this,r,q,p,o
+var $async$bq2=A.h(function(h,i){if(h===1){t.push(i)
+x=u}for(;;)switch(x){case 0:u=4
+q=s.b
+q.m(C.i,"\ud83c\udfa5 [WebRTC] Requesting user media (video: "+f+")...",null,null)
+q.m(C.i,"\ud83c\udf10 [WebRTC] Web platform: requesting media directly",null,null)
+x=7
+return A.c(s.bwU(!0,!0,f,!0),$async$bq2)
+case 7:q=i
+v=q
+x=1
+break
+u=2
+x=6
+break
+case 4:u=3
+o=t.pop()
+r=A.u(o)
+s.b.m(C.E,"\u274c [WebRTC] Failed to get user media: "+A.b(r),null,null)
+throw o
+x=6
+break
+case 3:x=2
+break
+case 6:case 1:return A.j(v,w)
+case 2:return A.i(t.at(-1),w)}})
+return A.k($async$bq2,w)},
+bwU(d,e,f,g){return this.dyE(!0,!0,f,!0)},
+dyE(d,e,f,g){var x=0,w=A.l(y.E),v,u=2,t=[],s=this,r,q,p,o,n,m,l,k,j,i
+var $async$bwU=A.h(function(h,a0){if(h===1){t.push(a0)
+x=u}for(;;)switch(x){case 0:u=4
+m=s.b
+m.m(C.i,"\ud83c\udf10 [WebRTC] Web platform: requesting media for first time",null,null)
+l=y.N
+k=A.a_(["echoCancellation",!0,"noiseSuppression",!0,"autoGainControl",!0],l,y.y)
+r=A.a_(["audio",k,"video",f&&A.a_(["mandatory",A.a_(["minWidth","640","minHeight","480","minFrameRate","30"],l,l),"facingMode","user","optional",[]],l,y.K)],l,y.z)
+m.m(C.i,"\ud83c\udfa4 [WebRTC] \ud83c\udf1f IMPORTANT: Browser will request microphone permission",null,null)
+m.m(C.i,'\ud83c\udfa4 [WebRTC] \ud83d\udccb User must click "Allow" when prompted',null,null)
+m.m(C.i,"\ud83c\udf10 [WebRTC] Requesting Web media with constraints: "+A.b(r),null,null)
+$.e8e()
+x=7
+return A.c(new B.bNk().adC(r),$async$bwU)
+case 7:q=a0
+m.m(C.i,"\u2705 [WebRTC] Web media obtained successfully",null,null)
+p=q.bHy()
+if(J.aD(p)!==0){m.m(C.i,"\ud83d\udcf9 [WebRTC] Video track found: "+A.b(J.kR(p).d.label),null,null)
+m.m(C.i,"\ud83d\udcf9 [WebRTC] Video track enabled: "+A.b(J.kR(p).d.enabled),null,null)}else m.m(C.i,"\ud83d\udcf9 [WebRTC] No video tracks found in stream (audio-only call)",null,null)
+o=q.zF()
+if(J.aD(o)!==0){m.m(C.i,"\ud83c\udfa4 [WebRTC] Audio track found: "+A.b(J.kR(o).d.label),null,null)
+m.m(C.i,"\ud83c\udfa4 [WebRTC] Audio track enabled: "+A.b(J.kR(o).d.enabled),null,null)}else m.m(C.t,"\u26a0\ufe0f [WebRTC] No audio tracks found in stream",null,null)
+v=q
+x=1
+break
+u=2
+x=6
+break
+case 4:u=3
+i=t.pop()
+n=A.u(i)
+m=s.b
+m.m(C.E,"\u274c [WebRTC] Web media request failed: "+A.b(n),null,null)
+m.m(C.E,"\ud83d\udccb [WebRTC] This will trigger browser permission dialog",null,null)
+throw i
+x=6
+break
+case 3:x=2
+break
+case 6:case 1:return A.j(v,w)
+case 2:return A.i(t.at(-1),w)}})
+return A.k($async$bwU,w)}}
+B.cjK.prototype={
+bEm(d){return this.e7c(d)},
+e7c(d){var x=0,w=A.l(y.y),v,u=2,t=[],s=this,r,q,p,o
+var $async$bEm=A.h(function(e,f){if(e===1){t.push(f)
+x=u}for(;;)switch(x){case 0:u=4
+s.a.m(C.i,"\ud83d\udd10 [WebRTC] Pre-checking permissions (video: "+d+")...",null,null)
+x=7
+return A.c(s.bKZ(d),$async$bEm)
+case 7:q=f
+v=q
+x=1
+break
+u=2
+x=6
+break
+case 4:u=3
+o=t.pop()
+r=A.u(o)
+s.a.m(C.E,"\u274c [WebRTC] Permission pre-check failed: "+A.b(r),null,null)
+v=!1
+x=1
+break
+x=6
+break
+case 3:x=2
+break
+case 6:case 1:return A.j(v,w)
+case 2:return A.i(t.at(-1),w)}})
+return A.k($async$bEm,w)},
+bKZ(d){return this.d0d(d)},
+d0d(d){var x=0,w=A.l(y.y),v,u=this,t,s,r
+var $async$bKZ=A.h(function(e,f){if(e===1)return A.i(f,w)
+for(;;)switch(x){case 0:try{s=u.a
+s.m(C.i,"\ud83c\udf10 [WebRTC] Checking Web platform permissions...",null,null)
+s.m(C.i,"\ud83d\udd14 [WebRTC] Web platform: Skipping permission pre-check",null,null)
+s.m(C.i,"\u2705 [WebRTC] Web platform - will request permissions during actual call",null,null)
+v=!0
+x=1
+break}catch(q){t=A.u(q)
+u.a.m(C.t,"\u26a0\ufe0f [WebRTC] Web platform permissions not available: "+A.b(t),null,null)
+v=!1
+x=1
+break}case 1:return A.j(v,w)}})
+return A.k($async$bKZ,w)}}
+B.a48.prototype={
+cpI(d,e){var x,w,v,u,t=null
+if(d!==409&&d!==426)return t
+try{x=C.G.bD(e,t)
+if(!y.P.b(x))return t
+w=null
+v=x.i(0,"code")
+A:{if("CALL_PROTOCOL_UPGRADE_REQUIRED"===v){w=D.NU
+break A}if("CALL_PEER_UPGRADE_REQUIRED"===v){w=D.at_
+break A}w=null
+break A}w=w
+return w}catch(u){if(y.Y.b(A.u(u)))return t
+else throw u}},
+Ft(d,e){return this.dCw(d,e)},
+dCw(d,e){var x=0,w=A.l(y.P),v,u=2,t=[],s=this,r,q,p,o,n,m,l,k,j
+var $async$Ft=A.h(function(f,g){if(f===1){t.push(g)
+x=u}for(;;)switch(x){case 0:s.Mw()
+r=null
+u=4
+n=A.a([],y.C)
+m=y.N
+q=A.q(m,y.z)
+J.dz(q,"clientId",s.c)
+J.fz(q,e)
+x=7
+return A.c(s.a.a.Y("/webrtc/session/"+d,"POST",n,q,A.q(m,m),A.q(m,m),"application/json").eR(C.fb),$async$Ft)
+case 7:r=g
+u=2
+x=6
+break
+case 4:u=3
+j=t.pop()
+q=A.u(j)
+if(q instanceof A.hy){p=q
+s.Mw()
+q=p.a
+n=p.b
+o=s.cpI(q,n)
+if(o!=null)throw A.o(o)
+throw j}else throw j
+x=6
+break
+case 3:x=2
+break
+case 6:s.Mw()
+if(r.b!==200){o=s.cpI(r.b,C.at.P_(r.w,!0))
+if(o!=null)throw A.o(o)
+throw A.o(A.ak(r.b,"CALL_REQUEST_REJECTED"))}k=C.G.bD(C.at.D(r.w),null)
+q=!0
+if(y.P.b(k))if(J.p(k.i(0,"success"),!0))if(J.p(k.i(0,"callProtocol"),2)){n=k.i(0,"callId")
+if(typeof n=="string"){m=A.az("^[a-f0-9]{32}$",!0,!1,!1,!1)
+n=m.b.test(n)}else n=!1
+if(n)if(e.i(0,"callId")!=null){q=e.i(0,"callId")
+n=k.i(0,"callId")
+n=q==null?n!=null:q!==n
+q=n}else q=!1}if(q)throw A.o(D.aO9)
+v=k
+x=1
+break
+case 1:return A.j(v,w)
+case 2:return A.i(t.at(-1),w)}})
+return A.k($async$Ft,w)},
+Mw(){if(!this.d.$0()||!A.c_(y.F.a($.au.i(0,$.cq()))))throw A.o(A.ak(409,"CALL_RETIRED"))},
+bw6(d,e){var x,w=null,v=!0
+if(d!=null)if(e!=null)if(d!==e){x=A.bM(d,w)
+if((x==null?0:x)>0){v=A.bM(e,w)
+v=(v==null?0:v)<=0}}if(v)throw A.o(D.aP4)
+return A.e2(e,w,w)},
+bqU(d,e){return this.cJT(d,e)},
+cJT(d,e){var x=0,w=A.l(y.N),v,u=this,t,s
+var $async$bqU=A.h(function(f,g){if(f===1)return A.i(g,w)
+for(;;)switch(x){case 0:s=A.az("^[a-f0-9]{32}$",!0,!1,!1,!1)
+s=s.b.test(d)
+if(!s)A.U(D.xr)
+x=3
+return A.c(u.Ft("status",A.a_(["callId",d,"toUserId",A.e2(e,null,null)],y.N,y.z)),$async$bqU)
+case 3:t=g.i(0,"state")
+if(!D.bFv.t(0,t))throw A.o(D.aOa)
+v=A.bb(t)
+x=1
+break
+case 1:return A.j(v,w)}})
+return A.k($async$bqU,w)},
+bqp(d,e,f,g){return this.cH5(d,e,f,g)},
+cH5(d,e,f,g){var x=0,w=A.l(y.T),v,u=this,t,s,r,q
+var $async$bqp=A.h(function(h,i){if(h===1)return A.i(i,w)
+for(;;)switch(x){case 0:u.Mw()
+t=u.bw6(e,g)
+s=f.a
+r=C.b.F(s)
+if(r.length===0)throw A.o(D.aOb)
+q=A
+x=3
+return A.c(u.Ft("offer",A.a_(["operationId",u.e,"toUserId",t,"sdp",s,"callType",d],y.N,y.z)),$async$bqp)
+case 3:v=q.bb(i.i(0,"callId"))
+x=1
+break
+case 1:return A.j(v,w)}})
+return A.k($async$bqp,w)},
+akb(d,e,f,g,h){return this.cGS(d,e,f,g,h)},
+cGS(d,e,f,g,h){var x=0,w=A.l(y.H),v=this,u,t
+var $async$akb=A.h(function(i,j){if(i===1)return A.i(j,w)
+for(;;)switch(x){case 0:v.Mw()
+if(typeof f=="string"){u=A.az("^[a-f0-9]{32}$",!0,!1,!1,!1)
+u=u.b.test(f)}else u=!1
+if(!u)A.U(D.xr)
+u=v.bw6(g,h)
+t=e==null?null:e.a
+x=2
+return A.c(v.Ft("answer",A.a_(["callId",f,"toUserId",u,"sdp",t==null?"":t,"accepted",d],y.N,y.z)),$async$akb)
+case 2:return A.j(null,w)}})
+return A.k($async$akb,w)},
+bqo(d,e,f,g){return this.cGY(d,e,f,g)},
+cGY(d,e,f,g){var x=0,w=A.l(y.H),v=1,u=[],t=this,s,r,q,p
+var $async$bqo=A.h(function(h,i){if(h===1){u.push(i)
+x=v}for(;;)switch(x){case 0:v=3
+t.Mw()
+if(typeof e=="string"){r=A.az("^[a-f0-9]{32}$",!0,!1,!1,!1)
+r=r.b.test(e)}else r=!1
+if(!r)A.U(D.xr)
+x=6
+return A.c(t.Ft("hangup",A.a_(["callId",e,"toUserId",t.bw6(f,g)],y.N,y.z)),$async$bqo)
+case 6:v=1
+x=5
+break
+case 3:v=2
+p=u.pop()
+s=A.u(p)
+t.b.m(C.t,"WebRTC signaling failed: "+J.ab(s).l(0),null,null)
+x=5
+break
+case 2:x=1
+break
+case 5:return A.j(null,w)
+case 1:return A.i(u.at(-1),w)}})
+return A.k($async$bqo,w)},
+akc(d,e,f,g,h){return this.cH0(d,e,f,g,h)},
+cH0(d,e,f,g,h){var x=0,w=A.l(y.H),v,u=this,t
+var $async$akc=A.h(function(i,j){if(i===1)return A.i(j,w)
+for(;;)switch(x){case 0:u.Mw()
+if(e==null){g.$1(d)
+x=1
+break}t=A.az("^[a-f0-9]{32}$",!0,!1,!1,!1)
+t=t.b.test(e)
+if(!t)A.U(D.xr)
+x=3
+return A.c(u.Ft("ice-candidate",A.a_(["callId",e,"toUserId",u.bw6(f,h),"candidate",d.a,"sdpMid",d.b,"sdpMLineIndex",d.c],y.N,y.z)),$async$akc)
+case 3:case 1:return A.j(v,w)}})
+return A.k($async$akc,w)}}
+B.FZ.prototype={
+gdQ(){if(!this.ch){var x=this.y
+x=x==null?null:x.gN()
+x=x===!0&&A.c_(y.F.a($.au.i(0,$.cq())))}else x=!1
+return x},
+O2(){return new B.cki(this,this.y)},
+a3f(d){var x=this.ay,w=this.O2()
+return new B.ckh(this,w,x,d?y.F.a($.au.i(0,$.cq())):null)},
+aIw(){return this.a3f(!0)},
+csd(){var x=this.ay
+return new B.ckg(this,this.O2(),x)},
+bs3(){return new B.cjR(this,this.a3f(!1))},
+dnu(){var x=this,w=x.y
+if(w==null||w.gN())return
+x.dy=null
+x.cqn()
+x.nW()},
+bqr(d){var x,w,v,u=this
+if(u.ch||!A.c_(y.F.a($.au.i(0,$.cq()))))return
+x=u.c
+w=x.Vh()
+if(w==null||C.h.l(w)!==d)return
+v=u.y
+if((v==null?null:v.gN())===!0&&u.dy===d){u.aVb()
+return}u.cqn()
+u.nW()
+v=u.y
+if(v!=null)v.q()
+x=A.ja(x,u.d)
+u.y=x
+if(!x.gN())return
+u.dy=d
+u.aVb()},
+cqn(){var x,w,v;++this.ax
+for(x=this.at,w=x.length,v=0;v<x.length;x.length===w||(0,A.a6)(x),++v)x[v].a7()
+C.d.a2(x)},
+aVb(){var x=0,w=A.l(y.H),v,u=this
+var $async$aVb=A.h(function(d,e){if(d===1)return A.i(e,w)
+for(;;)switch(x){case 0:if(!u.gdQ()||u.at.length!==0){x=1
+break}u.dGP()
+case 1:return A.j(v,w)}})
+return A.k($async$aVb,w)},
+dGP(){var x,w,v,u,t,s=this,r=s.O2(),q=s.ax,p=s.at,o=s.f,n=y.P
+p.push(o.b1V("CALL_CHANNEL_READY",n).h3(new B.ck9(s,r,q)))
+p.push(o.b1V("CALL_CHANNEL_LOST",n).h3(new B.cka(s,r,q)))
+for(x=["WEBRTC_OFFER","WEBRTC_ANSWER","WEBRTC_ICE_CANDIDATE","WEBRTC_CALL_INITIATED","WEBRTC_CALL_ENDED"],w=0;w<5;++w){v=x[w]
+u=o.b1V(v,n)
+t=new A.O0(new B.ckb(s,r,q,v),u.$ti.k("O0<1>"))
+t.a=u.a.dN(t.gctK(),null,null,null)
+p.push(t)}},
+dwS(d,e){var x,w,v,u=this,t=null,s="sdp",r="accepted",q=u.b,p=q.as?q.d:t
+if(p==null)q=t
+else{q=A.p3(e,y.N,y.z)
+q.M(0,"source")
+q=p.c3Z(d,q)}if(q==null)return
+x=e.i(0,"callId")
+q=e.i(0,"fromUserId")
+w=q==null?t:J.as(q)
+q=e.i(0,"toUserId")
+v=q==null?t:J.as(q)
+if(typeof x=="string"){q=x.length
+q=q===0||q>128}else q=!0
+if(q)return
+if(d==="WEBRTC_OFFER"){if(typeof e.i(0,s)!="string"||A.bb(e.i(0,s)).length===0)return
+if(u.fr===x)q=u.cy||u.dx||u.CW
+else q=!1
+if(q)return
+q=u.dy
+if(v!=q||w==null||w===q||A.bM(w,t)==null)return
+if(u.cx||u.fr!=null)q=u.fr!==x||u.fx!==w
+else q=!1
+if(q)return
+if(u.fr==null){if(!u.c75(w))return
+u.fr=x}}else if(d==="WEBRTC_CALL_INITIATED"){q=!0
+if(u.cx)if(w==u.dy)if(v==u.fx){q=u.fr
+q=q!=null&&x!==q}if(q)return}else{if(x!==u.fr||v!=u.dy||w!=u.fx)return
+if(u.CW)return
+q=!1
+if(d==="WEBRTC_ANSWER")if(A.fp(e.i(0,r))){if(J.p(e.i(0,r),!0))q=typeof e.i(0,s)!="string"||A.bb(e.i(0,s)).length===0}else q=!0
+if(q)return}A.qQ(u.a3f(!1),new B.cjV(u,d,e),y.a)},
+c75(d){var x,w,v=this,u=v.b,t=u.as?u.d:null
+if(t==null||t.b!==v.dy||t.c!==2)return!1;++v.ay
+v.p3=v.p2=v.CW=!1
+v.fx=d
+v.ry.a2(0)
+x=v.a3f(!1)
+u=v.y
+u.toString
+v.z=E.aGj(x,new B.cjM(v,u,x,t),y.n)
+w=v.e
+v.Q=B.eFf(new B.cjN(v,x),new B.cjO(v,x),w,u,v.c)
+v.as=new B.cju(w,new B.cjP(v,x),new B.cjQ(v,x))
+return!0},
+c6V(){var x=this
+if(x.k4!=null)return
+x.k4=A.dv(C.PL,new B.cjL(x,x.bs3()))},
+B1(d){return this.dLB(d)},
+dLB(d){var x=0,w=A.l(y.H),v,u=2,t=[],s=this,r,q,p,o,n,m,l,k,j,i,h
+var $async$B1=A.h(function(e,f){if(e===1){t.push(f)
+x=u}for(;;)switch(x){case 0:o=s.bs3()
+n=s.z
+m=s.fr
+l=s.fx
+k=s.b
+j=k.as?k.d:null
+i=new B.cke(s,o,d,j)
+k=!0
+if(n!=null)if(m!=null)if(l!=null)k=(j==null?null:j.c)!==2||!i.$0()
+if(k){x=1
+break}u=4
+x=7
+return A.c(n.bqU(m,l),$async$B1)
+case 7:r=f
+if(!i.$0()){x=1
+break}x=J.p(r,"ended")||J.p(r,"unknown")?8:10
+break
+case 8:s.lp("ended")
+x=11
+return A.c(s.nW(),$async$B1)
+case 11:x=9
+break
+case 10:if(J.p(r,"active")&&!s.db&&!s.p3&&!s.p2){k=s.ok
+if(k!=null)k.a7()
+s.ok=A.dv(C.cP,new B.ckc(s,i,d))}else{k=s.k4
+if(k!=null)k.a7()
+s.k4=null
+k=s.ok
+if(k!=null)k.a7()
+s.ok=null}case 9:u=2
+x=6
+break
+case 4:u=3
+h=t.pop()
+q=A.u(h)
+if(!i.$0()){x=1
+break}if(q instanceof A.hy)k=q.a===401||q.a===403
+else k=!1
+x=k?12:14
+break
+case 12:s.lp("ended")
+x=15
+return A.c(s.nW(),$async$B1)
+case 15:x=13
+break
+case 14:k=s.ok
+if(k!=null)k.a7()
+s.ok=A.dv(C.cP,new B.ckd(s,i,d))
+case 13:x=6
+break
+case 3:x=2
+break
+case 6:case 1:return A.j(v,w)
+case 2:return A.i(t.at(-1),w)}})
+return A.k($async$B1,w)},
+bHz(){var x=0,w=A.l(y.P),v,u
+var $async$bHz=A.h(function(d,e){if(d===1)return A.i(e,w)
+for(;;)switch(x){case 0:u=y.N
+v=A.a_(["iceServers",A.a([A.a_(["urls","stun:stun.l.google.com:19302"],u,u),A.a_(["urls","stun:stun1.l.google.com:19302"],u,u),A.a_(["urls","stun:stun2.l.google.com:19302"],u,u),A.a_(["urls","stun:stun3.l.google.com:19302"],u,u),A.a_(["urls","stun:stun4.l.google.com:19302"],u,u),A.a_(["urls","stun:stun.ekiga.net"],u,u),A.a_(["urls","stun:stun.ideasip.com"],u,u),A.a_(["urls","stun:stun.schlund.de"],u,u),A.a_(["urls","stun:stun.stunprotocol.org:3478"],u,u),A.a_(["urls","stun:stun.voiparound.com"],u,u),A.a_(["urls","stun:stun.voipbuster.com"],u,u),A.a_(["urls","stun:stun.voipstunt.com"],u,u),A.a_(["urls","stun:stun.counterpath.com"],u,u),A.a_(["urls","stun:stun.1und1.de"],u,u),A.a_(["urls","stun:stun.gmx.net"],u,u),A.a_(["urls","stun:stun.callwithus.com"],u,u),A.a_(["urls","stun:stun.counterpath.net"],u,u),A.a_(["urls","stun:stun.internetcalls.com"],u,u)],y.m),"iceCandidatePoolSize",10,"bundlePolicy","max-bundle","rtcpMuxPolicy","require","iceTransportPolicy","all","iceCandidateTimeout",30],u,y.z)
+x=1
+break
+case 1:return A.j(v,w)}})
+return A.k($async$bHz,w)},
+bqL(d,e){return this.cJh(d,e)},
+cJh(d,e){var x=0,w=A.l(y.y),v,u=this,t,s,r,q
+var $async$bqL=A.h(function(f,g){if(f===1)return A.i(g,w)
+for(;;)switch(x){case 0:s=u.O2()
+r=u.b
+q=r.as?r.d:null
+x=(q==null?null:q.c)==null?3:4
+break
+case 3:x=5
+return A.c(r.bFN(),$async$bqL)
+case 5:if(g==null||!s.$0()){v=!1
+x=1
+break}case 4:if(!u.gdQ()||u.cx||u.db||u.fr!=null||d===u.dy||A.bM(d,null)==null){v=!1
+x=1
+break}r=r.as?r.d:null
+if((r==null?null:r.c)!==2)throw A.o(D.NU)
+if(!u.c75(d)){v=!1
+x=1
+break}u.cx=!0
+t=u.bs3()
+v=E.aGj(t,new B.ckj(u,e,t,d),y.g)
+x=1
+break
+case 1:return A.j(v,w)}})
+return A.k($async$bqL,w)},
+xY(d,e){return this.dvh(d,e)},
+dvh(d,e){var x=0,w=A.l(y.y),v,u=this,t,s,r,q,p,o,n
+var $async$xY=A.h(function(f,g){if(f===1)return A.i(g,w)
+for(;;)switch(x){case 0:x=3
+return A.c(u.bHz(),$async$xY)
+case 3:n=g
+if(!d.$0()){v=!1
+x=1
+break}t=u.r
+t===$&&A.e()
+x=4
+return A.c(t.bBe(n),$async$xY)
+case 4:s=g
+x=!d.$0()?5:6
+break
+case 5:x=7
+return A.c(B.akT(s),$async$xY)
+case 7:v=!1
+x=1
+break
+case 6:u.fy=s
+x=8
+return A.c(t.bq2(!0,!0,e,!0),$async$xY)
+case 8:r=g
+x=!d.$0()?9:10
+break
+case 9:x=11
+return A.c(B.akU(r),$async$xY)
+case 11:v=!1
+x=1
+break
+case 10:u.go=r
+t=r.c36(),q=t.length,p=0
+case 12:if(!(p<t.length)){x=14
+break}o=t[p]
+if(!d.$0()){v=!1
+x=1
+break}x=15
+return A.c(s.bSW(o,r),$async$xY)
+case 15:case 13:t.length===q||(0,A.a6)(t),++p
+x=12
+break
+case 14:if(!d.$0()){v=!1
+x=1
+break}u.dD_(d,s)
+v=!0
+x=1
+break
+case 1:return A.j(v,w)}})
+return A.k($async$xY,w)},
+bzZ(d){return this.dOy(d)},
+dOy(d){var x=0,w=A.l(y.y),v,u=this,t,s,r
+var $async$bzZ=A.h(function(e,f){if(e===1)return A.i(f,w)
+for(;;)switch(x){case 0:if(!u.gdQ()||u.CW||u.fr==null||u.k1==null){v=!1
+x=1
+break}if(u.dx||u.cy){v=d
+x=1
+break}u.dx=!0
+t=u.bs3()
+s=u.z
+s.toString
+r=u.k1
+r.toString
+v=E.aGj(t,new B.ckf(u,d,s,t,r),y.g)
+x=1
+break
+case 1:return A.j(v,w)}})
+return A.k($async$bzZ,w)},
+as6(d){var x=0,w=A.l(y.H),v,u=this,t,s,r,q
+var $async$as6=A.h(function(e,f){if(e===1)return A.i(f,w)
+for(;;)switch(x){case 0:r=u.x1
+q=A.hM(r,!0,y.w)
+C.d.a2(r)
+r=q.length,t=0
+case 3:if(!(t<r)){x=5
+break}s=q[t]
+if(!d.$0()){x=1
+break}x=6
+return A.c(u.z.akc(s,u.fr,u.dy,new B.cjS(),u.fx),$async$as6)
+case 6:case 4:++t
+x=3
+break
+case 5:case 1:return A.j(v,w)}})
+return A.k($async$as6,w)},
+a5A(){var x=0,w=A.l(y.H),v,u=this,t,s,r,q,p,o,n,m,l,k
+var $async$a5A=A.h(function(d,e){if(d===1)return A.i(e,w)
+for(;;)switch(x){case 0:if(!u.gdQ()||u.CW){x=1
+break}t=u.aIw()
+s=u.z
+r=u.fr
+q=u.dy
+p=u.fx
+if(u.k2==null)o=null
+else{n=Date.now()
+m=u.k2
+m.toString
+o=C.h.bX(new A.aG(n,0,!1).dv(m).a,1000)}l=u.cjU()
+k=s==null?null:s.bqo(o,r,q,p)
+x=3
+return A.c(y.x.b(k)?k:A.fZ(k,y.H),$async$a5A)
+case 3:x=t.$0()?4:5
+break
+case 4:u.lp("ended")
+x=6
+return A.c(u.nW(),$async$a5A)
+case 6:case 5:x=7
+return A.c(l,$async$a5A)
+case 7:case 1:return A.j(v,w)}})
+return A.k($async$a5A,w)},
+c19(){var x,w,v,u,t
+if(!this.gdQ()||this.go==null)return!1
+x=this.go.zF()
+if(x.length===0)return!1
+w=!C.d.gR(x).d.enabled
+for(v=x.length,u=0;u<x.length;x.length===v||(0,A.a6)(x),++u){t=x[u]
+t.d.enabled=w}return w},
+dD_(d,e){var x=this,w=new B.ck5(x,d,e)
+e.Q=new B.ck1(x,w)
+e.e=new B.ck2(x,w)
+e.b=new B.ck3(x,w,e)
+e.d=new B.ck4(x,w,e)},
+by9(d,e){var x=this.k3
+if(x!=null)x.a7()
+this.k3=A.dv(C.x3,new B.ck7(this,d,e))},
+cjU(){var x,w,v,u=this
+u.CW=!0
+x=u.fy
+w=u.go
+u.id=u.go=u.fy=null
+v=u.Q
+if(v!=null)v.hw(0)
+u.Q=null
+v=u.as
+if(v!=null)v.hr()
+u.as=null
+v=u.k3
+if(v!=null)v.a7()
+u.k3=null
+u.p4=0
+v=y.H
+return A.fr(A.a([B.akT(x),B.akU(w)],y.O),v).b4(new B.cjW(),v)},
+nW(){var x,w,v=this;++v.ay;++v.p1
+x=v.k4
+if(x!=null)x.a7()
+v.k4=null
+x=v.ok
+if(x!=null)x.a7()
+v.ok=null
+v.p2=!1
+w=v.cjU()
+v.k2=v.k1=v.fx=v.fr=null
+v.dx=v.db=v.cy=v.cx=!1
+v.z=null
+v.ry.a2(0)
+C.d.a2(v.to)
+C.d.a2(v.x1)
+return w},
+lp(d){var x,w,v,u,t,s,r=this
+if(!r.gdQ())return
+x=D.bGe.t(0,d)
+w=r.ay
+v=r.O2()
+u=x?new B.cjT(r,v,w):r.aIw()
+t=A.a_(["state",d,"callId",r.fr,"userId",r.dy,"targetUserId",r.fx,"timestamp",new A.aG(Date.now(),0,!1).a_()],y.N,y.z)
+r.x2.H(0,new A.jH(t,u,y.W))
+s=y.X
+A.ayE(new B.cjU(r,t,u),A.a_([$.cq(),null],s,s),y.H)},
+gdQj(){var x=this.x2
+return new A.r8(new A.eY(x,A.D(x).k("eY<1>")),y.Z)},
+ge0z(){var x=this.xr
+return new A.r8(new A.eY(x,A.D(x).k("eY<1>")),y.Z)},
+ge8K(){var x=this.y1
+return new A.r8(new A.eY(x,A.D(x).k("eY<1>")),y._)},
+gbER(){return this.gdQ()?this.id:null},
+gdVw(){return this.gdQ()?this.dy:null},
+gdVv(){return this.gdQ()?this.fr:null},
+geb_(){return this.gdQ()?this.fx:null},
+ge1t(){return this.gdQ()&&this.db},
+$ie2l:1,
+$iabl:1}
+B.PB.prototype={
+l(d){return this.a?"CALL_PEER_UPGRADE_REQUIRED":"CALL_PROTOCOL_UPGRADE_REQUIRED"},
+$ibk:1}
+B.bZK.prototype={
+bVq(d,e){return this.dV3(d,e)},
+dV3(d,e){var x=0,w=A.l(y.A),v,u,t,s,r,q
+var $async$bVq=A.h(function(f,g){if(f===1)return A.i(g,w)
+for(;;)switch(x){case 0:t=y.z
+s=y.N
+r=A.a_(["mandatory",A.q(t,t),"optional",A.a([A.a_(["DtlsSrtpKeyAgreement",!0],s,y.y)],y.s)],s,y.K)
+q=b.G.RTCPeerConnection
+t=A.hp(r,s,t)
+t.v(0,d)
+u=new q(A.hm(A.bK(t)))
+t=J.as(u)
+v=B.eKd(C.MM.gbBI().ci(new A.jE(t)),u)
+x=1
+break
+case 1:return A.j(v,w)}})
+return A.k($async$bVq,w)}}
+B.Aj.prototype={
+zF(){var x=A.a([],y.Q),w=this.e.getAudioTracks()
+w=y.l.b(w)?w:new A.db(w,A.V(w).k("db<1,ca>"))
+J.nh(w,new B.bNw(x))
+return x},
+bHy(){var x=A.a([],y.Q),w=this.e.getVideoTracks()
+w=y.l.b(w)?w:new A.db(w,A.V(w).k("db<1,ca>"))
+J.nh(w,new B.bNx(x))
+return x},
+c36(){var x=A.O(this.zF(),y.G)
+C.d.v(x,this.bHy())
+return x}}
+B.aLE.prototype={
+cRf(d){var x=this,w=x.d
+w.addEventListener("ended",A.dQ(new B.bNt(x)))
+w.addEventListener("mute",A.dQ(new B.bNu(x)))
+w.addEventListener("unmute",A.dQ(new B.bNv(x)))},
+slT(d){this.d.enabled=d},
+hr(){var x=0,w=A.l(y.H),v=this
+var $async$hr=A.h(function(d,e){if(d===1)return A.i(e,w)
+for(;;)switch(x){case 0:v.d.stop()
+return A.j(null,w)}})
+return A.k($async$hr,w)}}
+B.bNk.prototype={
+adC(d){return this.cFb(d)},
+cFb(d){var x=0,w=A.l(y.E),v,u=2,t=[],s,r,q,p,o,n,m,l,k,j,i,h,g,f
+var $async$adC=A.h(function(a0,a1){if(a0===1){t.push(a1)
+x=u}for(;;)switch(x){case 0:u=4
+try{if(!B.f3H())if(y.f.b(d.i(0,"video"))&&J.ax(d.i(0,"video"),"facingMode")!=null)J.qp(d.i(0,"video"),"facingMode")
+d.cJ("video",new B.bNm())
+d.cJ("audio",new B.bNn())}catch(e){A.Oz("[getUserMedia] failed to remove facingMode from mediaConstraints")}try{if(y.P.b(d.i(0,"audio"))){i=y.z
+i=A.p3(d.i(0,"audio"),i,i).ao("optional")&&y.D.b(J.ax(d.i(0,"audio"),"optional"))}else i=!1
+if(i){s=J.ax(d.i(0,"audio"),"optional")
+r=A.q(y.N,y.z)
+J.nh(s,new B.bNo(r))
+J.qp(d.i(0,"audio"),"optional")
+J.fz(d.i(0,"audio"),r)}}catch(e){q=A.u(e)
+p=A.aO(e)
+A.Oz("[getUserMedia] failed to translate optional audio constraints, "+A.b(q)+", "+A.b(p))}i=b.G
+o=i.window.navigator.mediaDevices
+h=y.o
+x=o.getUserMedia!=null?7:9
+break
+case 7:n=A.bK(d)
+x=10
+return A.c(A.ff(o.getUserMedia(A.hm(n)),h),$async$adC)
+case 10:m=a1
+v=new B.Aj(m,"local")
+x=1
+break
+x=8
+break
+case 9:i=i.window.navigator.mediaDevices
+g=d.i(0,"audio")
+x=11
+return A.c(A.ff(i.getUserMedia({video:d.i(0,"video"),audio:g}),h),$async$adC)
+case 11:l=a1
+v=new B.Aj(l,"local")
+x=1
+break
+case 8:u=2
+x=6
+break
+case 4:u=3
+f=t.pop()
+k=A.u(f)
+i=J.as(k)
+throw A.o("Unable to getUserMedia: "+i)
+x=6
+break
+case 3:x=2
+break
+case 6:case 1:return A.j(v,w)
+case 2:return A.i(t.at(-1),w)}})
+return A.k($async$adC,w)}}
+B.aPi.prototype={
+cRl(d,e){var x=this,w=x.at
+w===$&&A.e()
+w.addEventListener("datachannel",A.dQ(new B.bZM(x)))
+w.addEventListener("icecandidate",A.dQ(new B.bZN(x)))
+w.addEventListener("iceconnectionstatechange",A.dQ(new B.bZO(x)))
+w.onicegatheringstatechange=A.dQ(new B.bZP(x))
+w.addEventListener("signalingstatechange",A.dQ(new B.bZQ(x)))
+if(!$.e8_())w.addEventListener("connectionstatechange",A.dQ(new B.bZR(x)))
+w.addEventListener("negotiationneeded",A.dQ(new B.bZS(x)))
+w.addEventListener("track",A.dQ(new B.bZT(x)))},
+bBd(){var x=0,w=A.l(y.v),v,u=this,t,s
+var $async$bBd=A.h(function(d,e){if(d===1)return A.i(e,w)
+for(;;)switch(x){case 0:s=u.at
+s===$&&A.e()
+x=3
+return A.c(A.ff(s.createOffer(A.hm(A.bK(A.q(y.N,y.z)))),y.B),$async$bBd)
+case 3:t=e
+v=new B.Lv(t.sdp,t.type)
+x=1
+break
+case 1:return A.j(v,w)}})
+return A.k($async$bBd,w)},
+bBa(){var x=0,w=A.l(y.v),v,u=this,t,s
+var $async$bBa=A.h(function(d,e){if(d===1)return A.i(e,w)
+for(;;)switch(x){case 0:s=u.at
+s===$&&A.e()
+x=3
+return A.c(A.ff(s.createAnswer(A.hm(A.bK(A.q(y.N,y.z)))),y.B),$async$bBa)
+case 3:t=e
+v=new B.Lv(t.sdp,t.type)
+x=1
+break
+case 1:return A.j(v,w)}})
+return A.k($async$bBa,w)},
+alR(d){return this.cHA(d)},
+cHA(d){var x=0,w=A.l(y.H),v=this,u
+var $async$alR=A.h(function(e,f){if(e===1)return A.i(f,w)
+for(;;)switch(x){case 0:u=v.at
+u===$&&A.e()
+x=2
+return A.c(A.ff(u.setLocalDescription({type:d.b,sdp:d.a}),y.X),$async$alR)
+case 2:return A.j(null,w)}})
+return A.k($async$alR,w)},
+alT(d){return this.cHN(d)},
+cHN(d){var x=0,w=A.l(y.H),v=this,u
+var $async$alT=A.h(function(e,f){if(e===1)return A.i(f,w)
+for(;;)switch(x){case 0:u=v.at
+u===$&&A.e()
+x=2
+return A.c(A.ff(u.setRemoteDescription({type:d.b,sdp:d.a}),y.X),$async$alT)
+case 2:return A.j(null,w)}})
+return A.k($async$alT,w)},
+ax8(d){return this.dNz(d)},
+dNz(d){var x=0,w=A.l(y.H),v=this,u,t
+var $async$ax8=A.h(function(e,f){if(e===1)return A.i(f,w)
+for(;;)switch(x){case 0:t=v.at
+t===$&&A.e()
+u=d.b
+u.toString
+x=2
+return A.c(A.ff(t.addIceCandidate({candidate:d.a,sdpMid:u,sdpMLineIndex:d.c}),y.X),$async$ax8)
+case 2:return A.j(null,w)}})
+return A.k($async$ax8,w)},
+aG(){var x=0,w=A.l(y.H),v,u=this,t
+var $async$aG=A.h(function(d,e){if(d===1)return A.i(e,w)
+for(;;)switch(x){case 0:t=u.at
+t===$&&A.e()
+t.close()
+v=A.di(null,y.H)
+x=1
+break
+case 1:return A.j(v,w)}})
+return A.k($async$aG,w)},
+bSW(d,e){return this.dO8(d,e)},
+dO8(d,e){var x=0,w=A.l(y.j),v,u=this,t
+var $async$bSW=A.h(function(f,g){if(f===1)return A.i(g,w)
+for(;;)switch(x){case 0:t=u.at
+t===$&&A.e()
+t.addTrack(d.d,e.e)
+v=new B.aPj()
+x=1
+break
+case 1:return A.j(v,w)}})
+return A.k($async$bSW,w)}}
+B.aPj.prototype={}
+B.e3A.prototype={}
+B.Lw.prototype={
+W(){return"RTCSignalingState."+this.b}}
+B.agr.prototype={
+W(){return"RTCIceGatheringState."+this.b}}
+B.AD.prototype={
+W(){return"RTCPeerConnectionState."+this.b}}
+B.vN.prototype={
+W(){return"RTCIceConnectionState."+this.b}}
+B.bZJ.prototype={}
+B.tM.prototype={
+ge6x(){return this.b},
+q(){var x=0,w=A.l(y.H),v
+var $async$q=A.h(function(d,e){if(d===1)return A.i(e,w)
+for(;;)switch(x){case 0:v=A.di(null,y.H)
+x=1
+break
+case 1:return A.j(v,w)}})
+return A.k($async$q,w)}}
+B.a0r.prototype={
+l(d){var x=this.d
+return"Track(id: "+A.b(x.id)+", kind: "+A.b(x.kind)+", label: "+A.b(x.label)+", enabled: "+A.b(x.enabled)+", muted: "+A.b(x.muted)+")"}}
+B.bNj.prototype={}
+B.xT.prototype={}
+B.ags.prototype={}
+B.agt.prototype={}
+B.bZU.prototype={}
+B.Lv.prototype={}
+B.agu.prototype={}
+var z=a.updateTypes(["~(xT)","Cx(L)","~()","a48()","b8(agu)","b8(xT)","b8(AD)","b8(vN)","Aj(@)"])
+B.cjv.prototype={
+$0(){this.a.a.m(C.i,"\ud83c\udfa4 [WebRTC] Audio track ended",null,null)},
+$S:16}
+B.cjw.prototype={
+$1(d){var x,w,v,u=this.a
+if(u.d==null||!u.b.$0()){d.a7()
+return}x=C.h.aA(Date.now(),3000)<1000
+try{u.c.$1(x)}catch(v){w=A.u(v)
+u.a.m(C.E,"\u274c [WebRTC] Failed to add speaking state: "+A.b(w),null,null)}},
+$S:43}
+B.cjs.prototype={
+$1(d){var x=this.a.a,w=Date.now()
+if(x.gdQ())x.k2=new A.aG(w,0,!1)
+x.lp("connected")},
+$S:34}
+B.cjt.prototype={
+$1(d){var x=this.a.a
+x.e.m(C.t,"WebRTC remote answer failed: "+J.ab(d).l(0),null,null)
+x.lp("failed")
+if(x.gdQ())x.nW()
+else A.di(null,y.H)},
+$S:38}
+B.cjE.prototype={
+$1(d){this.a.a.e.m(C.t,"WebRTC add candidate failed: "+J.ab(d).l(0),null,null)},
+$S:38}
+B.bHs.prototype={
+$0(){var x=this.a
+return x.e.$0()&&this.b===x.r&&!x.w},
+$S:1}
+B.bHr.prototype={
+$1(d){var x,w,v,u=this,t=null,s=A.G(16),r=A.a([new A.cs(0,C.aN,C.V.B(0.2),C.ui,10)],y.V),q=u.a,p=q.b,o=p==null
+p=!o?new A.lV(p,1,t,C.f1):t
+if(o){o=q.a
+o=A.d(o.length!==0?o[0].toUpperCase():"U",t,t,t,t,t,D.bSg,t,t,t)}else o=t
+o=A.j4(t,p,o,t,40)
+q=A.d(q.a,t,t,t,t,t,H.vb,t,t,t)
+p=u.c
+x=u.d
+w=u.b
+v=y.p
+return A.en(!1,C.an,!0,t,A.aM(A.W(t,A.w(A.a([o,C.n,q,C.v,A.d(J.p(p.i(0,"callType"),"video")?x.gbnF():x.gUT(),t,t,t,t,t,I.mu,t,t,t),C.a7,A.z(A.a([F.bBK(C.aE,G.U3,!1,new B.bHp(w,u.e),x.gaWC()),F.bBK(C.ak,G.Ts,!1,new B.bHq(w,p),x.gaFd())],v),C.l,t,C.jC,C.f,0,t,t)],v),C.l,t,C.e,C.H,0,C.j),C.o,t,t,new A.R(C.M,t,t,s,r,t,C.r),t,t,t,C.W,C.W,t,t,t),t,t,t),C.o,C.bi,0,t,t,t,t,t,C.bp)},
+$S:1773}
+B.bHp.prototype={
+$0(){return this.a.bwH(this.b)},
+$S:0}
+B.bHq.prototype={
+$0(){return this.a.brj(this.b)},
+$S:0}
+B.bHt.prototype={
+$1(d){var x=this.c,w=A.bb(x.i(0,"fromUserId")),v=this.a,u=v.a
+return K.ear(x,!1,this.b.e,v.b,w,u)},
+$S:z+1}
+B.cki.prototype={
+$0(){var x,w=this.a,v=!1
+if(!w.ch){x=this.b
+if(w.y==x){w=x==null?null:x.gN()
+w=w===!0}else w=v}else w=v
+return w},
+$S:1}
+B.ckh.prototype={
+$0(){var x=this
+return x.b.$0()&&x.c===x.a.ay&&A.c_(x.d)},
+$S:1}
+B.ckg.prototype={
+$0(){var x,w,v
+if(this.b.$0()){x=this.a
+w=x.ay
+v=this.c
+if(w!==v)x=w===v+1&&x.fr==null&&!x.cx
+else x=!0}else x=!1
+return x},
+$S:1}
+B.cjR.prototype={
+$0(){return this.b.$0()&&!this.a.CW},
+$S:1}
+B.ck9.prototype={
+$1(d){var x,w,v,u,t=this
+if(t.b.$0()){x=t.a
+x=t.c!==x.ax||!x.gdQ()||x.z==null||x.CW}else x=!0
+if(x)return
+x=t.a
+w=x.b
+v=w.as?w.d:null
+w=!0
+if(v!=null)if(v.a===d.i(0,"clientId")){w=v.c
+u=d.i(0,"callProtocol")
+u=w==null?u!=null:w!==u
+w=u}if(w)return
+if(v.c!==2||v.a!==x.z.c){x.lp("ended")
+x.nW()
+return}x.c6V()
+x.B1(++x.p1)},
+$S:25}
+B.cka.prototype={
+$1(d){var x,w=this,v=!0
+if(w.b.$0()){x=w.a
+if(w.c===x.ax)if(x.gdQ())if(!x.CW)if(x.z!=null)if(J.p(d.i(0,"clientId"),x.z.c)){v=x.b
+v=(v.as?v.d:null)!=null}}if(v)return
+v=w.a;++v.p1
+v.c6V()},
+$S:25}
+B.ckb.prototype={
+$1(d){var x,w=this,v=w.b
+if(v.$0()){x=w.a
+x=w.c!==x.ax||!x.gdQ()}else x=!0
+if(x)return
+E.aGj(v,new B.ck8(w.a,w.d,d),y.H)},
+$S:25}
+B.ck8.prototype={
+$0(){return this.a.dwS(this.b,this.c)},
+$S:0}
+B.cjV.prototype={
+$0(){var x,w,v=this
+switch(v.b){case"WEBRTC_OFFER":x=v.a.x
+x===$&&A.e()
+x.b.e_U(v.c)
+break
+case"WEBRTC_ANSWER":x=v.c
+if(J.p(x.i(0,"accepted"),!0))v.a.p3=!0
+w=v.a.x
+w===$&&A.e()
+w.c.Qc(x)
+break
+case"WEBRTC_ICE_CANDIDATE":x=v.a.x
+x===$&&A.e()
+x.d.Qc(v.c)
+break
+case"WEBRTC_CALL_INITIATED":x=v.a.x
+x===$&&A.e()
+x.a.Qc(v.c)
+break
+case"WEBRTC_CALL_ENDED":x=v.a.x
+x===$&&A.e()
+x.e.Qc(v.c)
+break}},
+$S:16}
+B.cjM.prototype={
+$0(){var x=this,w=x.a,v=x.c,u=x.b.ml(w.a.a,v)
+return B.ePj(v,w.e,x.d.a,new A.VP(u))},
+$S:z+3}
+B.cjO.prototype={
+$0(){return this.b.$0()&&!this.a.CW},
+$S:1}
+B.cjN.prototype={
+$1(d){return this.b.$0()?this.a.bzZ(d):A.di(!1,y.y)},
+$S:437}
+B.cjP.prototype={
+$0(){return this.b.$0()&&this.a.cy},
+$S:1}
+B.cjQ.prototype={
+$1(d){var x=this.b
+if(x.$0())this.a.y2.H(0,new A.jH(d,x,y.I))},
+$S:11}
+B.cjL.prototype={
+$0(){if(!this.b.$0())return
+var x=this.a
+x.lp("ended")
+x.nW()},
+$S:0}
+B.cke.prototype={
+$0(){var x,w=this,v=!1
+if(w.b.$0()){x=w.a
+if(w.c===x.p1){v=x.b
+v=v.as?v.d:null
+v=w.d==v}}return v},
+$S:1}
+B.ckc.prototype={
+$0(){if(this.b.$0())this.a.B1(this.c)},
+$S:0}
+B.ckd.prototype={
+$0(){if(this.b.$0())this.a.B1(this.c)},
+$S:0}
+B.ckj.prototype={
+$0(){var x=0,w=A.l(y.y),v,u=2,t=[],s=this,r,q,p,o,n,m,l,k,j,i,h,g,f
+var $async$$0=A.h(function(d,e){if(d===1){t.push(e)
+x=u}for(;;)switch(x){case 0:u=4
+k=s.a
+j=k.w
+j===$&&A.e()
+i=s.b
+h=i==="video"
+x=7
+return A.c(j.bEm(h),$async$$0)
+case 7:r=e
+j=s.c
+if(!j.$0()){v=!1
+x=1
+break}x=!r?8:9
+break
+case 8:x=10
+return A.c(k.nW(),$async$$0)
+case 10:v=!1
+x=1
+break
+case 9:x=11
+return A.c(k.xY(j,h),$async$$0)
+case 11:if(!e){v=!1
+x=1
+break}h=k.fy
+h.toString
+q=h
+h=k.z
+h.toString
+p=h
+x=12
+return A.c(q.bBd(),$async$$0)
+case 12:o=e
+if(!j.$0()){v=!1
+x=1
+break}x=13
+return A.c(q.alR(o),$async$$0)
+case 13:if(!j.$0()){v=!1
+x=1
+break}x=14
+return A.c(p.bqp(i,k.dy,o,s.d),$async$$0)
+case 14:n=e
+if(!j.$0()){v=!1
+x=1
+break}if(n!=null){i=k.fr
+i=i!=null&&i!==n}else i=!0
+if(i){k=A.aA("CALL_OFFER_FAILED")
+throw A.o(k)}k.fr=n
+k.cy=!0
+k.cx=!1
+if(k.k4!=null)k.B1(++k.p1)
+k.lp("initiated")
+x=15
+return A.c(k.as6(j),$async$$0)
+case 15:k=j.$0()
+v=k
+x=1
+break
+u=2
+x=6
+break
+case 4:u=3
+f=t.pop()
+m=A.u(f)
+x=s.c.$0()?16:17
+break
+case 16:k=s.a
+k.e.m(C.t,"WebRTC start failed: "+J.ab(m).l(0),null,null)
+k.lp("failed")
+l=k.csd()
+x=18
+return A.c(k.nW(),$async$$0)
+case 18:if(l.$0()&&m instanceof B.PB)throw f
+case 17:v=!1
+x=1
+break
+x=6
+break
+case 3:x=2
+break
+case 6:case 1:return A.j(v,w)
+case 2:return A.i(t.at(-1),w)}})
+return A.k($async$$0,w)},
+$S:44}
+B.ckf.prototype={
+$0(){var x=0,w=A.l(y.y),v,u=2,t=[],s=this,r,q,p,o,n,m,l,k,j,i,h,g
+var $async$$0=A.h(function(d,e){if(d===1){t.push(e)
+x=u}for(;;)switch(x){case 0:u=4
+x=!s.b?7:8
+break
+case 7:m=s.a
+x=9
+return A.c(s.c.akb(!1,null,m.fr,m.dy,m.fx),$async$$0)
+case 9:if(!s.d.$0()){v=!1
+x=1
+break}m.lp("rejected")
+x=10
+return A.c(m.nW(),$async$$0)
+case 10:v=!0
+x=1
+break
+case 8:m=s.a
+l=s.d
+x=11
+return A.c(m.xY(l,!1),$async$$0)
+case 11:if(!e){v=!1
+x=1
+break}k=m.fy
+k.toString
+r=k
+x=12
+return A.c(r.alT(s.e),$async$$0)
+case 12:if(!l.$0()){v=!1
+x=1
+break}k=m.to
+q=A.hM(k,!0,y.P)
+C.d.a2(k)
+k=q,j=k.length,i=0
+case 13:if(!(i<k.length)){x=15
+break}p=k[i]
+if(!l.$0()){v=!1
+x=1
+break}x=16
+return A.c(r.ax8(new B.xT(A.bb(J.ax(p,"candidate")),A.b6(J.ax(p,"sdpMid")),A.eI(J.ax(p,"sdpMLineIndex")))),$async$$0)
+case 16:case 14:k.length===j||(0,A.a6)(k),++i
+x=13
+break
+case 15:if(!l.$0()){v=!1
+x=1
+break}x=17
+return A.c(r.bBa(),$async$$0)
+case 17:o=e
+if(!l.$0()){v=!1
+x=1
+break}x=18
+return A.c(r.alR(o),$async$$0)
+case 18:if(!l.$0()){v=!1
+x=1
+break}x=19
+return A.c(s.c.akb(!0,o,m.fr,m.dy,m.fx),$async$$0)
+case 19:if(!l.$0()){v=!1
+x=1
+break}m.p2=!0
+x=20
+return A.c(m.as6(l),$async$$0)
+case 20:if(!l.$0()){v=!1
+x=1
+break}m.cy=!0
+m.dx=m.db=!1
+m.k2=new A.aG(Date.now(),0,!1)
+l=m.Q
+if(l!=null)l.hw(0)
+m.lp("accepted")
+v=!0
+x=1
+break
+u=2
+x=6
+break
+case 4:u=3
+g=t.pop()
+n=A.u(g)
+x=s.d.$0()?21:22
+break
+case 21:m=s.a
+m.e.m(C.t,"WebRTC answer failed: "+J.ab(n).l(0),null,null)
+m.lp("failed")
+x=23
+return A.c(m.nW(),$async$$0)
+case 23:case 22:v=!1
+x=1
+break
+x=6
+break
+case 3:x=2
+break
+case 6:case 1:return A.j(v,w)
+case 2:return A.i(t.at(-1),w)}})
+return A.k($async$$0,w)},
+$S:44}
+B.cjS.prototype={
+$1(d){},
+$S:z+0}
+B.ck5.prototype={
+$0(){return this.b.$0()&&this.a.fy===this.c},
+$S:1}
+B.ck1.prototype={
+$1(d){var x,w,v=this.b
+if(!v.$0()||d.b.length===0)return
+x=this.a
+w=C.d.gR(d.b)
+x.id=w
+x.y1.H(0,new A.jH(w,v,y.b))
+v=x.as
+if(v!=null)v.bIN(x.id)},
+$S:z+4}
+B.ck2.prototype={
+$1(d){var x,w=this.b
+if(!w.$0())return
+x=this.a
+if(x.db&&!x.p2){w=x.x1
+if(w.length<256)w.push(d)
+return}A.qQ(w,new B.ck0(x,d,w),y.H)},
+$S:z+5}
+B.ck0.prototype={
+$0(){var x=this.a,w=this.c
+x.z.akc(this.b,x.fr,x.dy,new B.cjX(x,w),x.fx).iP(new B.cjY(x,w))
+return null},
+$S:0}
+B.cjX.prototype={
+$1(d){if(this.b.$0()&&this.a.x1.length<256)this.a.x1.push(d)},
+$S:z+0}
+B.cjY.prototype={
+$1(d){if(this.b.$0())this.a.e.m(C.t,"WebRTC ice failed: "+J.ab(d).l(0),null,null)},
+$S:38}
+B.ck3.prototype={
+$1(d){var x=this.b
+if(!x.$0())return
+A.qQ(x,new B.ck_(this.a,d,x,this.c),y.a)},
+$S:z+6}
+B.ck_.prototype={
+$0(){var x,w,v=this
+switch(v.b.a){case 5:x=v.a
+w=x.k3
+if(w!=null)w.a7()
+x.lp("connected")
+break
+case 4:x=v.a
+x.by9(v.c,v.d)
+x.lp("connecting")
+break
+case 2:x=v.a
+x.by9(v.c,v.d)
+x.lp("disconnected")
+break
+case 1:x=v.a
+x.by9(v.c,v.d)
+x.lp("failed")
+break
+case 0:x=v.a
+x.lp("ended")
+x.nW()
+break
+default:break}},
+$S:16}
+B.ck4.prototype={
+$1(d){var x,w=this,v=w.b
+if(!v.$0())return
+if(d===D.aaV){x=w.c.at
+x===$&&A.e()
+x.restartIce()
+A.di(null,y.H).iP(new B.cjZ(w.a,v))}else if(d===D.aaU){v=w.a.k3
+if(v!=null)v.a7()}},
+$S:z+7}
+B.cjZ.prototype={
+$1(d){if(this.b.$0())this.a.e.m(C.t,"WebRTC restartIce failed: "+J.ab(d).l(0),null,null)},
+$S:38}
+B.ck7.prototype={
+$0(){var x,w,v,u=this.b
+if(!u.$0())return
+x=this.a
+if(x.p4++>=3){x.lp("failed")
+x.nW()
+return}w=this.c
+v=w.at
+v===$&&A.e()
+v.restartIce()
+A.di(null,y.H).iP(new B.ck6(x,u))
+if(u.$0())x.by9(u,w)},
+$S:0}
+B.ck6.prototype={
+$1(d){if(this.b.$0())this.a.e.m(C.t,"WebRTC retry failed: "+J.ab(d).l(0),null,null)},
+$S:38}
+B.cjW.prototype={
+$1(d){},
+$S:266}
+B.cjT.prototype={
+$0(){var x,w,v
+if(this.b.$0()){x=this.a
+w=x.ay
+v=this.c
+if(w!==v)x=w===v+1&&x.fr==null&&!x.cx
+else x=!0}else x=!1
+return x},
+$S:1}
+B.cjU.prototype={
+$0(){return this.a.f.uu("WEBRTC_STATE_CHANGE",this.b,this.c,"WebRTCService")},
+$S:0}
+B.bNw.prototype={
+$1(d){return this.a.push(B.e2V(d))},
+$S:13}
+B.bNx.prototype={
+$1(d){return this.a.push(B.e2V(d))},
+$S:13}
+B.bNt.prototype={
+$1(d){var x=this.a.c
+if(x!=null)x.$0()},
+$S:32}
+B.bNu.prototype={
+$1(d){},
+$S:32}
+B.bNv.prototype={
+$1(d){},
+$S:32}
+B.bNm.prototype={
+$0(){return!1},
+$S:1}
+B.bNn.prototype={
+$0(){return!1},
+$S:1}
+B.bNo.prototype={
+$1(d){d.b8(0,new B.bNl(this.a))},
+$S:25}
+B.bNl.prototype={
+$2(d,e){this.a.h(0,d,e)},
+$S:144}
+B.bZM.prototype={
+$1(d){},
+$S:10}
+B.bZN.prototype={
+$1(d){var x,w
+if(d.candidate!=null){x=this.a.e
+if(x!=null){w=d.candidate
+x.$1(new B.xT(w.candidate,w.sdpMid,w.sdpMLineIndex))}}},
+$S:10}
+B.bZO.prototype={
+$1(d){var x,w=this.a,v=w.at
+v===$&&A.e()
+v=B.f3b(v.iceConnectionState)
+w.cx=v
+x=w.d
+if(x!=null)x.$1(v)
+if($.e8_()){switch(w.cx.a){case 0:w.cy=D.ab_
+break
+case 1:w.cy=D.ab0
+break
+case 3:w.cy=D.ab1
+break
+case 5:w.cy=D.aaY
+break
+case 6:w.cy=D.aaZ
+break
+case 7:w.cy=D.Iw
+break
+default:break}v=w.b
+if(v!=null){w=w.cy
+w.toString
+v.$1(w)}}},
+$S:122}
+B.bZP.prototype={
+$1(d){var x=this.a,w=x.at
+w===$&&A.e()
+x.CW=B.f3c(w.iceGatheringState)},
+$S:122}
+B.bZQ.prototype={
+$1(d){var x=this.a,w=x.at
+w===$&&A.e()
+x.ch=B.f6L(w.signalingState)},
+$S:122}
+B.bZR.prototype={
+$1(d){var x=this.a,w=x.at
+w===$&&A.e()
+w=B.f4U(w.connectionState)
+x.cy=w
+x=x.b
+if(x!=null)x.$1(w)},
+$S:122}
+B.bZS.prototype={
+$1(d){},
+$S:122}
+B.bZT.prototype={
+$1(d){var x,w=this.a,v=w.Q
+if(v!=null){B.e2V(d.track)
+x=d.streams
+x=y.l.b(x)?x:new A.db(x,A.V(x).k("db<1,ca>"))
+w=J.dD(x,new B.bZL(w),y.h)
+w=A.O(w,w.$ti.k("ai.E"))
+v.$1(new B.agu(w))}},
+$S:10}
+B.bZL.prototype={
+$1(d){return new B.Aj(d,this.a.as)},
+$S:z+8}
+B.dV4.prototype={
+$1(d){return J.ea(b.G.window.navigator.userAgent,A.az(d,!1,!1,!1,!1))},
+$S:9};(function installTearOffs(){var x=a._instance_0u
+x(B.FZ.prototype,"gdnt","dnu",2)})();(function inheritance(){var x=a.inheritMany,w=a.inherit
+x(A.A,[B.cju,B.cjC,B.cjr,B.cjA,B.cjB,B.cjD,B.cjJ,B.bHo,B.cjI,B.cjK,B.a48,B.FZ,B.PB,B.bZJ,B.tM,B.a0r,B.bNj,B.ags,B.agt,B.bZU,B.xT,B.Lv,B.agu])
+x(A.bu,[B.cjv,B.bHs,B.bHp,B.bHq,B.cki,B.ckh,B.ckg,B.cjR,B.ck8,B.cjV,B.cjM,B.cjO,B.cjP,B.cjL,B.cke,B.ckc,B.ckd,B.ckj,B.ckf,B.ck5,B.ck0,B.ck_,B.ck7,B.cjT,B.cjU,B.bNm,B.bNn])
+x(A.bt,[B.cjw,B.cjs,B.cjt,B.cjE,B.bHr,B.bHt,B.ck9,B.cka,B.ckb,B.cjN,B.cjQ,B.cjS,B.ck1,B.ck2,B.cjX,B.cjY,B.ck3,B.ck4,B.cjZ,B.ck6,B.cjW,B.bNw,B.bNx,B.bNt,B.bNu,B.bNv,B.bNo,B.bZM,B.bZN,B.bZO,B.bZP,B.bZQ,B.bZR,B.bZS,B.bZT,B.bZL,B.dV4])
+w(B.bZK,B.bZJ)
+w(B.Aj,B.tM)
+w(B.aLE,B.a0r)
+w(B.bNk,B.bNj)
+w(B.bNl,A.c6)
+w(B.aPi,B.ags)
+w(B.aPj,B.agt)
+w(B.e3A,B.bZU)
+x(A.eD,[B.Lw,B.agr,B.AD,B.vN])})()
+A.b0(b.typeUniverse,JSON.parse('{"FZ":{"abl":[],"e2l":[]},"PB":{"bk":[]},"Aj":{"tM":[]},"aLE":{"a0r":[]},"aPi":{"ags":[]},"aPj":{"agt":[]}}'))
+var y=(function rtii(){var x=A.C
+return{J:x("bv"),U:x("CE"),M:x("bW<n>"),k:x("aG"),Y:x("c4"),g:x("F/"),x:x("B<~>"),V:x("v<cs>"),O:x("v<B<~>>"),m:x("v<a2<n,n>>"),s:x("v<a2<n,F>>"),t:x("v<a2<n,@>>"),Q:x("v<a0r>"),C:x("v<io>"),L:x("v<xT>"),d:x("v<fF<@>>"),S:x("v<n>"),p:x("v<m>"),o:x("ca"),l:x("a1<ca>"),D:x("a1<a2<n,@>>"),P:x("a2<n,@>"),f:x("a2<@,@>"),E:x("tM"),G:x("a0r"),h:x("Aj"),a:x("b8"),K:x("A"),Z:x("r8<a2<n,@>>"),_:x("r8<tM>"),W:x("jH<a2<n,@>>"),b:x("jH<tM>"),I:x("jH<F>"),w:x("xT"),A:x("ags"),j:x("agt"),v:x("Lv"),N:x("n"),i:x("jm<jH<a2<n,@>>>"),R:x("jm<jH<tM>>"),c:x("jm<jH<F>>"),y:x("F"),z:x("@"),B:x("ca?"),e:x("a1<@>?"),X:x("A?"),T:x("n?"),n:x("a48?"),F:x("F()?"),H:x("~")}})();(function constants(){D.NU=new B.PB(!1)
+D.at_=new B.PB(!0)
+D.xr=new A.c4("CALL_ID_REQUIRED",null,null)
+D.aO9=new A.c4("CALL_INVALID_RECEIPT",null,null)
+D.aOa=new A.c4("CALL_INVALID_STATE",null,null)
+D.aOb=new A.c4("CALL_SDP_REQUIRED",null,null)
+D.aP4=new A.c4("CALL_PARTICIPANT_REQUIRED",null,null)
+D.bzy=new B.vN(0,"RTCIceConnectionStateNew")
+D.bzz=new B.vN(1,"RTCIceConnectionStateChecking")
+D.bzA=new B.vN(2,"RTCIceConnectionStateCompleted")
+D.aaU=new B.vN(3,"RTCIceConnectionStateConnected")
+D.bzB=new B.vN(4,"RTCIceConnectionStateCount")
+D.aaV=new B.vN(5,"RTCIceConnectionStateFailed")
+D.bzC=new B.vN(6,"RTCIceConnectionStateDisconnected")
+D.aaW=new B.vN(7,"RTCIceConnectionStateClosed")
+D.aaX=new B.agr(0,"RTCIceGatheringStateNew")
+D.bzD=new B.agr(1,"RTCIceGatheringStateGathering")
+D.bzE=new B.agr(2,"RTCIceGatheringStateComplete")
+D.Iw=new B.AD(0,"RTCPeerConnectionStateClosed")
+D.aaY=new B.AD(1,"RTCPeerConnectionStateFailed")
+D.aaZ=new B.AD(2,"RTCPeerConnectionStateDisconnected")
+D.ab_=new B.AD(3,"RTCPeerConnectionStateNew")
+D.ab0=new B.AD(4,"RTCPeerConnectionStateConnecting")
+D.ab1=new B.AD(5,"RTCPeerConnectionStateConnected")
+D.bzF=new B.Lw(0,"RTCSignalingStateStable")
+D.bzG=new B.Lw(1,"RTCSignalingStateHaveLocalOffer")
+D.bzH=new B.Lw(2,"RTCSignalingStateHaveRemoteOffer")
+D.bzI=new B.Lw(3,"RTCSignalingStateHaveLocalPrAnswer")
+D.bzJ=new B.Lw(4,"RTCSignalingStateHaveRemotePrAnswer")
+D.ab2=new B.Lw(5,"RTCSignalingStateClosed")
+D.bog={ringing:0,active:1,ended:2,unknown:3}
+D.bFv=new A.bW(D.bog,4,y.M)
+D.bnZ={ended:0,rejected:1,failed:2,call_ended:3}
+D.bGe=new A.bW(D.bnZ,4,y.M)
+D.bSg=new A.ag(!0,null,null,null,null,null,24,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)})();(function lazyInitializers(){var x=a.lazyFinal
+x($,"fbJ","e8e",()=>new B.bZK())
+x($,"f92","e8_",()=>C.b.t(A.aT(A.aT(A.aT(A.C3(),"window"),"navigator"),"userAgent"),"Firefox"))})()};
+(a=>{a["JlFsbfZwkAK8/EumaLcNzIHfatc="]=a.current})($__dart_deferred_initializers__);
