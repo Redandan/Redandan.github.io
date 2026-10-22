@@ -1,0 +1,37 @@
+{
+  "upstream": "https://github.com/google/fonts",
+  "commit": "45e3d5269e4a17d823f6d84470bc084dc5ae46f6",
+  "modification": "Static weight 400, script coverage subset, renamed family; Latin remains the existing Roboto primary font.",
+  "fonts": [
+    {
+      "family": "Agora CJK",
+      "file": "agora-cjk.51b739be770a.woff2",
+      "bytes": 2521268,
+      "sha256": "51b739be770aa9dc9d3b7c01e7802c73c93ecfeb4fa09435fac56e28d52d23fc",
+      "original_sha256": "864727d210d54f2537bbe23b3a839436c3992af72de9322af5270897246bd44f",
+      "url": "https://raw.githubusercontent.com/google/fonts/45e3d5269e4a17d823f6d84470bc084dc5ae46f6/ofl/notosanstc/NotoSansTC%5Bwght%5D.ttf",
+      "license": "notosanstc-OFL.txt",
+      "glyphs": 17592
+    },
+    {
+      "family": "Agora Han Supplement",
+      "file": "agora-han-supplement.b861b4cf6b30.woff2",
+      "bytes": 1837628,
+      "sha256": "b861b4cf6b3087db860dcc32c6cae3aba33f2d1dc88da64c8758d75ca847254b",
+      "original_sha256": "a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da",
+      "url": "https://raw.githubusercontent.com/google/fonts/45e3d5269e4a17d823f6d84470bc084dc5ae46f6/ofl/notosanssc/NotoSansSC%5Bwght%5D.ttf",
+      "license": "notosanssc-OFL.txt",
+      "glyphs": 11657
+    },
+    {
+      "family": "Agora Thai",
+      "file": "agora-thai.013c801b78b9.woff2",
+      "bytes": 7988,
+      "sha256": "013c801b78b9544130cf1f12253cf172b77a9492937c1dbd875135767f1cc460",
+      "original_sha256": "5a1c559bb539583c8a1fd99d1c5b9491e5e14478c9cd2bd0970d5c3096cc9ef8",
+      "url": "https://raw.githubusercontent.com/google/fonts/45e3d5269e4a17d823f6d84470bc084dc5ae46f6/ofl/notosansthai/NotoSansThai%5Bwdth%2Cwght%5D.ttf",
+      "license": "notosansthai-OFL.txt",
+      "glyphs": 87
+    }
+  ]
+}

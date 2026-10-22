@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta name="source-commit" content="8ba38ac7c7de7f5c526bb3ea28306a0b2ced831f">
+<meta name="source-commit" content="d6fd79f1f5ada23d9355e4897454573350aa77b0">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -118,7 +118,7 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.5018+5018">
+  <meta name="version" content="1.0.5019+5019">
   <script id="telegram-sdk-entry-loader">
     // Preserve synchronous SDK/viewport ordering inside Telegram only.
     // A normal browser/PWA must not depend on Telegram's network availability.
@@ -573,8 +573,8 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
-  <link rel="preload" href="flutter_bootstrap.8ba38ac7c7de.js" as="script">
-  <link rel="preload" href="main.dart.8ba38ac7c7de.js" as="script" fetchpriority="high">
+  <link rel="preload" href="flutter_bootstrap.d6fd79f1f5ad.js" as="script">
+  <link rel="preload" href="main.dart.d6fd79f1f5ad.js" as="script" fetchpriority="high">
   <link rel="preload" href="canvaskit/canvaskit.js" as="script" crossorigin="anonymous">
   <link rel="preload" href="canvaskit/canvaskit.wasm" as="fetch" type="application/wasm" crossorigin>
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
@@ -1519,6 +1519,7 @@
       }
 
       function revealFlutter(reason, immediate) {
+        if (!storefrontFirstFrameReady || !entryPageReady) return;
         if (!document.body || document.body.classList.contains('flutter-ready')) return;
         if (window.__AGORA_STARTUP_PROGRESS__ && window.__AGORA_STARTUP_PROGRESS__.hasFailed()) return;
         if (window.__AGORA_STARTUP_PROGRESS__) {
@@ -1556,6 +1557,8 @@
       }
 
       var storefrontFirstFrameReady = false;
+      var entryPageReady = false;
+      var entryRevealScheduled = false;
       var storefrontShellReady = false;
       var storefrontRevealScheduled = false;
       var storefrontIsIOSWebKit = isIOSWebKitStorefront();
@@ -1593,9 +1596,30 @@
       }
 
       window.addEventListener('agora-storefront-shell-ready', function(event) {
+        entryPageReady = true;
         storefrontShellReady = true;
         scheduleStorefrontReveal(event.type);
       }, { once: true });
+
+      function scheduleEntryReveal(reason) {
+        if (isStorefrontStartup()) {
+          scheduleStorefrontReveal(reason);
+          return;
+        }
+        if (!storefrontFirstFrameReady || !entryPageReady || entryRevealScheduled) return;
+        entryRevealScheduled = true;
+        requestAnimationFrame(function() {
+          requestAnimationFrame(function() { revealFlutter(reason, true); });
+        });
+      }
+
+      window.addEventListener('agora-entry-page-ready', function() {
+        entryPageReady = true;
+        scheduleEntryReveal('entry-page-ready');
+      }, { once: true });
+      window.addEventListener('agora-startup-reveal-request', function() {
+        scheduleEntryReveal('entry-reveal-request');
+      });
 
       window.addEventListener('agora-storefront-preview-visible', function () {
         if (window.__AGORA_BOOT_TIMING__) window.__AGORA_BOOT_TIMING__.mark('snapshotReady');
@@ -1612,6 +1636,7 @@
         // Keep the shell callback as the fast path, and use catalog completion
         // only as a fail-open readiness fallback.
         if (!storefrontShellReady) storefrontShellReady = true;
+        entryPageReady = true;
         scheduleStorefrontReveal(event.type + '-shell-fallback');
       }
 
@@ -1628,6 +1653,7 @@
       // frame and the product page's painted-shell signal. Catalog data and
       // product images continue loading progressively after that reveal.
       window.addEventListener('flutter-first-frame', function() {
+        storefrontFirstFrameReady = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('firstFrame');
         }
@@ -1636,11 +1662,7 @@
           scheduleStorefrontReveal('storefront-ready');
           return;
         }
-        requestAnimationFrame(function() {
-          requestAnimationFrame(function() {
-            revealFlutter('first-frame', true);
-          });
-        });
+        scheduleEntryReveal('localized-first-frame');
       }, { once: true });
 
       // Every route keeps a usable startup surface until Flutter paints.
@@ -3518,7 +3540,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.8ba38ac7c7de.js";
+        script.src = "flutter_bootstrap.d6fd79f1f5ad.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
@@ -3821,7 +3843,7 @@
   <script src="web_vitals.js"></script>
   
   <!-- ?????????????? -->
-  <script src="offline_handler.8ba38ac7c7de.js"></script>
+  <script src="offline_handler.d6fd79f1f5ad.js"></script>
   
   <!-- GitHub Pages 404 ??????????????-->
   <script>
