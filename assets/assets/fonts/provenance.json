@@ -32,6 +32,18 @@
       "url": "https://raw.githubusercontent.com/google/fonts/45e3d5269e4a17d823f6d84470bc084dc5ae46f6/ofl/notosansthai/NotoSansThai%5Bwdth%2Cwght%5D.ttf",
       "license": "notosansthai-OFL.txt",
       "glyphs": 87
+    },
+    {
+      "family": "Roboto",
+      "file": "roboto.35b02ca266b7.woff2",
+      "bytes": 63464,
+      "sha256": "35b02ca266b79eb4996590f15817425a1ce9ebf48f84471843233ff614656bf2",
+      "original_sha256": "35b02ca266b79eb4996590f15817425a1ce9ebf48f84471843233ff614656bf2",
+      "url": "https://fonts.gstatic.com/s/roboto/v32/KFOmCnqEu92Fr1Me4GZLCzYlKw.woff2",
+      "license": "roboto-LICENSE.txt",
+      "license_text": "Apache License",
+      "glyphs": 896,
+      "modification": "None; exact default Roboto asset used by the pinned Flutter CanvasKit engine."
     }
   ]
 }

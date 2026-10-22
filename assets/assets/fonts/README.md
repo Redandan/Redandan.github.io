@@ -6,9 +6,11 @@ existing Roboto primary font. This prevents Chinese and Thai first-paint glyphs
 from depending on a later external fallback-font download. Native platforms keep
 their existing font selection.
 
-The three regular-weight subsets total 4,366,884 bytes. The Han supplement covers
+The three script subsets plus the unmodified default Roboto asset total 4,430,348 bytes.
+Roboto matches the pinned CanvasKit engine's regular font exactly. It is loaded
+locally even when the engine's external default-font request fails. The Han supplement covers
 characters absent from the Traditional Chinese font, including Simplified Chinese
-UI text. Family names are renamed for the derived subsets. Original SIL OFL
+UI text. Family names are renamed for the derived subsets. Original SIL OFL and Apache
 licenses, pinned upstream revision, download hashes and output hashes are retained
 in this directory. Asset filenames include their content hashes.
 
