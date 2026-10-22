@@ -52,7 +52,8 @@
       try {
         var response = await fetchImpl(url, { method: 'GET', mode: 'cors',
           credentials: mirror ? 'omit' : 'same-origin',
-          cache: mirror ? 'force-cache' : 'default', priority: 'high',
+          cache: mirror ? 'force-cache' : 'default',
+          priority: /^font\//.test(item.contentType) ? 'low' : 'high',
           signal: controller.signal });
         controller.signal.throwIfAborted();
         record.headersAt = clock();

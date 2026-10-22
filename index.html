@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta name="source-commit" content="3662f553389fdfed62b738178f51a6c61e4c58a6">
+<meta name="source-commit" content="ffc66f770b619f39baea890b9ba62facb884ea50">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -118,7 +118,7 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.5029+5029">
+  <meta name="version" content="1.0.5030+5030">
   <script id="telegram-sdk-entry-loader">
     // Preserve synchronous SDK/viewport ordering inside Telegram only.
     // A normal browser/PWA must not depend on Telegram's network availability.
@@ -573,8 +573,8 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
-  <link rel="preload" href="flutter_bootstrap.3662f553389f.js" as="script">
-  <link rel="preload" href="main.dart.3662f553389f.js" as="script" fetchpriority="high">
+  <link rel="preload" href="flutter_bootstrap.ffc66f770b61.js" as="script">
+  <link rel="preload" href="main.dart.ffc66f770b61.js" as="script" fetchpriority="high">
   <link rel="preload" href="canvaskit/canvaskit.js" as="script" crossorigin="anonymous">
   <script data-agora-startup-resources="true">
 (function(global) {
@@ -631,7 +631,8 @@
       try {
         var response = await fetchImpl(url, { method: 'GET', mode: 'cors',
           credentials: mirror ? 'omit' : 'same-origin',
-          cache: mirror ? 'force-cache' : 'default', priority: 'high',
+          cache: mirror ? 'force-cache' : 'default',
+          priority: /^font\//.test(item.contentType) ? 'low' : 'high',
           signal: controller.signal });
         controller.signal.throwIfAborted();
         record.headersAt = clock();
@@ -779,7 +780,7 @@
   global.AgoraStartupResources = { create: create };
 })(globalThis);
 
-(function(){var loader=window.AgoraStartupResources.create({"mirrorBase":"https://raw.githubusercontent.com/Redandan/Redandan.github.io/0fdf8722c8e2a77c483abde46d937e8996605284/","mirrorCommit":"0fdf8722c8e2a77c483abde46d937e8996605284","resources":[{"asset":"canvaskit/canvaskit.wasm","sha256":"42e392d69fd05a8540cb1b2cd9b88ab2115659c9378c136d1377b3595e703839","bytes":7155824,"contentType":"application/wasm"},{"asset":"assets/assets/fonts/agora-cjk.51b739be770a.woff2","sha256":"51b739be770aa9dc9d3b7c01e7802c73c93ecfeb4fa09435fac56e28d52d23fc","bytes":2521268,"contentType":"font/woff2"},{"asset":"assets/assets/fonts/agora-han-supplement.b861b4cf6b30.woff2","sha256":"b861b4cf6b3087db860dcc32c6cae3aba33f2d1dc88da64c8758d75ca847254b","bytes":1837628,"contentType":"font/woff2"},{"asset":"assets/assets/fonts/agora-thai.013c801b78b9.woff2","sha256":"013c801b78b9544130cf1f12253cf172b77a9492937c1dbd875135767f1cc460","bytes":7988,"contentType":"font/woff2"},{"asset":"assets/assets/fonts/roboto.35b02ca266b7.woff2","sha256":"35b02ca266b79eb4996590f15817425a1ce9ebf48f84471843233ff614656bf2","bytes":63464,"contentType":"font/woff2"}],"idleTimeoutMs":6000,"hedgeDelayMs":8000,"totalTimeoutMs":90000,"fontManifest":[{"family":"MaterialIcons","fonts":[{"asset":"fonts/MaterialIcons-Regular.otf"}]},{"family":"packages/cupertino_icons/CupertinoIcons","fonts":[{"asset":"packages/cupertino_icons/assets/CupertinoIcons.ttf"}]},{"family":"Roboto","fonts":[{"asset":"assets/fonts/roboto.35b02ca266b7.woff2","weight":400}]}]},window.fetch.bind(window),document.baseURI,function(error){window.__AGORA_STARTUP_RESOURCE_ERROR__=error;window.dispatchEvent(new Event("agora-startup-failed"));});window.__AGORA_STARTUP_RESOURCES__=loader;window.__AGORA_STARTUP_RESOURCE_TIMING__=loader.events;loader.start();})();
+(function(){var loader=window.AgoraStartupResources.create({"mirrorBase":"https://raw.githubusercontent.com/Redandan/Redandan.github.io/3f1cd8a0472b02a70a22eca75224ae0233be8800/","mirrorCommit":"3f1cd8a0472b02a70a22eca75224ae0233be8800","resources":[{"asset":"canvaskit/canvaskit.wasm","sha256":"42e392d69fd05a8540cb1b2cd9b88ab2115659c9378c136d1377b3595e703839","bytes":7155824,"contentType":"application/wasm"},{"asset":"assets/assets/fonts/agora-cjk.9db2981893f9.ttf","sha256":"9db2981893f967060e318d78d5c9d277a6228ecddc6fae65ae2238c276cbe0a4","bytes":6132344,"contentType":"font/ttf"},{"asset":"assets/assets/fonts/agora-han-supplement.122ab7574d87.ttf","sha256":"122ab7574d878e936fc2261446e11badeb5e02733b55be93761f183c693316b7","bytes":4221416,"contentType":"font/ttf"},{"asset":"assets/assets/fonts/agora-thai.9823987121fe.ttf","sha256":"9823987121fee585b7dfbc72512bc6380f980f99e9dd509d96aa0fb5955308b0","bytes":17220,"contentType":"font/ttf"},{"asset":"assets/assets/fonts/roboto.4c1ba107cc1c.ttf","sha256":"4c1ba107cc1c355ca07b9afd1bc0c13cae0356051787b307df9f82ce520fd683","bytes":168260,"contentType":"font/ttf"}],"mirrorReady":true,"mirrorStatus":"PASS","idleTimeoutMs":6000,"hedgeDelayMs":8000,"totalTimeoutMs":90000,"fontManifest":[{"family":"MaterialIcons","fonts":[{"asset":"fonts/MaterialIcons-Regular.otf"}]},{"family":"packages/cupertino_icons/CupertinoIcons","fonts":[{"asset":"packages/cupertino_icons/assets/CupertinoIcons.ttf"}]},{"family":"Roboto","fonts":[{"asset":"assets/fonts/roboto.4c1ba107cc1c.ttf","weight":400}]}]},window.fetch.bind(window),document.baseURI,function(error){window.__AGORA_STARTUP_RESOURCE_ERROR__=error;window.dispatchEvent(new Event("agora-startup-failed"));});window.__AGORA_STARTUP_RESOURCES__=loader;window.__AGORA_STARTUP_RESOURCE_TIMING__=loader.events;loader.start();})();
 </script>
   <!-- Release preparation replaces these binary hints with verified, cancellable
        streaming fetches at the same position. flutter run retains the hints. -->
@@ -1141,6 +1142,55 @@
       #noscript-marketplace .category-link { background: #eaf2ff; color: #003f88; }
     </style>
   </noscript>
+  <script data-agora-product-detail-preload>
+(function(global) {
+  'use strict';
+  // Register only the compiler's existing deferred initializers. Native Dart
+  // still initializes them and owns routing, API decoding and every action.
+  function create(config) {
+    const state={status:'disabled',startedAt:null,loadedAt:null,failedAt:null};
+    if(!config || config.protocol!==1 ||
+       !/^startup-product-detail\.[0-9a-f]{12}\.js$/.test(config.asset||'') ||
+       !/^sha256-[A-Za-z0-9+/]{43}=$/.test(config.integrity||''))return state;
+    state.status='waiting-for-html-paint';
+    let painted=false,started=false;
+    function active() {
+      if(document.visibilityState!=='visible' ||
+         document.documentElement.getAttribute('data-agora-html-storefront')!=='active')return false;
+      try{return JSON.parse(global.__AGORA_HTML_STOREFRONT__?.capture()||'null')?.protocol===2;}
+      catch{return false;}
+    }
+    function start() {
+      if(!painted || started || !active())return;
+      started=true;
+      global.removeEventListener('agora-html-primary-paint',paint);
+      document.removeEventListener('visibilitychange',start);
+      const script=document.createElement('script');
+      script.src=new URL(config.asset,document.baseURI).href;
+      script.async=true;script.fetchPriority='low';
+      script.integrity=config.integrity;script.crossOrigin='anonymous';
+      script.dataset.agoraProductDetailPreload='true';
+      script.addEventListener('load',()=>{state.status='registered';state.loadedAt=performance.now();},{once:true});
+      script.addEventListener('error',()=>{
+        // Failure does not alter the native loader or its individual chunks.
+        state.status='failed';state.failedAt=performance.now();
+      },{once:true});
+      state.status='loading';state.startedAt=performance.now();
+      document.head.appendChild(script);
+    }
+    function paint(event) {
+      try{if(JSON.parse(event.detail).protocol!==2)return;}catch{return;}
+      painted=true;start();
+    }
+    global.addEventListener('agora-html-primary-paint',paint);
+    document.addEventListener('visibilitychange',start);
+    return state;
+  }
+  global.AgoraProductDetailPreload={create};
+})(window);
+
+window.__AGORA_PRODUCT_DETAIL_PRELOAD__=window.AgoraProductDetailPreload.create({"asset":"startup-product-detail.2d3431fab8bc.js","integrity":"sha256-LTQx+ri8D4HczW0WFeeJLjVHpKr0ti/pLGJ0rtlCOis=","parts":72,"protocol":1});
+</script>
 </head>
 <body>
   <noscript>
@@ -1190,12 +1240,12 @@
       // Fetch the small script alongside CSS; execute only after CSS is ready.
       var preload = document.createElement('link');
       preload.rel = 'preload'; preload.as = 'script';
-      preload.href = 'html_storefront.js' + suffix;
+      preload.href = 'html_storefront.ffc66f770b61.js' + suffix;
       document.head.appendChild(preload);
-      css.rel = 'stylesheet'; css.href = 'html_storefront.css' + suffix;
+      css.rel = 'stylesheet'; css.href = 'html_storefront.ffc66f770b61.css' + suffix;
       css.onload = function () {
         var script = document.createElement('script');
-        script.src = 'html_storefront.js' + suffix; script.defer = true;
+        script.src = 'html_storefront.ffc66f770b61.js' + suffix; script.defer = true;
         document.head.appendChild(script);
       };
       document.head.appendChild(css);
@@ -3776,7 +3826,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.3662f553389f.js";
+        script.src = "flutter_bootstrap.ffc66f770b61.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
@@ -4079,7 +4129,7 @@
   <script src="web_vitals.js"></script>
   
   <!-- ?????????????? -->
-  <script src="offline_handler.3662f553389f.js"></script>
+  <script src="offline_handler.ffc66f770b61.js"></script>
   
   <!-- GitHub Pages 404 ??????????????-->
   <script>

@@ -5,45 +5,557 @@
   "fonts": [
     {
       "family": "Agora CJK",
-      "file": "agora-cjk.51b739be770a.woff2",
-      "bytes": 2521268,
-      "sha256": "51b739be770aa9dc9d3b7c01e7802c73c93ecfeb4fa09435fac56e28d52d23fc",
+      "file": "agora-cjk.9db2981893f9.ttf",
+      "bytes": 6132344,
+      "sha256": "9db2981893f967060e318d78d5c9d277a6228ecddc6fae65ae2238c276cbe0a4",
       "original_sha256": "864727d210d54f2537bbe23b3a839436c3992af72de9322af5270897246bd44f",
       "url": "https://raw.githubusercontent.com/google/fonts/45e3d5269e4a17d823f6d84470bc084dc5ae46f6/ofl/notosanstc/NotoSansTC%5Bwght%5D.ttf",
       "license": "notosanstc-OFL.txt",
-      "glyphs": 17592
+      "glyphs": 17592,
+      "woff2Source": {
+        "family": "Agora CJK",
+        "file": "agora-cjk.51b739be770a.woff2",
+        "bytes": 2521268,
+        "sha256": "51b739be770aa9dc9d3b7c01e7802c73c93ecfeb4fa09435fac56e28d52d23fc",
+        "original_sha256": "864727d210d54f2537bbe23b3a839436c3992af72de9322af5270897246bd44f",
+        "url": "https://raw.githubusercontent.com/google/fonts/45e3d5269e4a17d823f6d84470bc084dc5ae46f6/ofl/notosanstc/NotoSansTC%5Bwght%5D.ttf",
+        "license": "notosanstc-OFL.txt",
+        "glyphs": 17592
+      },
+      "container": "TrueType SFNT",
+      "conversion": {
+        "family": "Agora CJK",
+        "sourceFile": "agora-cjk.51b739be770a.woff2",
+        "sourceSha256": "51b739be770aa9dc9d3b7c01e7802c73c93ecfeb4fa09435fac56e28d52d23fc",
+        "sourceBytes": 2521268,
+        "file": "agora-cjk.9db2981893f9.ttf",
+        "sha256": "9db2981893f967060e318d78d5c9d277a6228ecddc6fae65ae2238c276cbe0a4",
+        "bytes": 6132344,
+        "contentType": "font/ttf",
+        "glyphCount": 17579,
+        "mappedCodepoints": 17592,
+        "glyphOrderEqual": true,
+        "cmapEqual": true,
+        "horizontalMetricsEqual": true,
+        "tableSetEqual": true,
+        "rawTableDifferences": [
+          {
+            "tag": "head",
+            "reason": "Only checkSumAdjustment changes for the SFNT file checksum."
+          }
+        ],
+        "tables": [
+          {
+            "tag": "BASE",
+            "sourceSha256": "8fc4a94e4a39c46aead8cf703a69e79975ce4d28190680a1fa095981712d4491",
+            "outputSha256": "8fc4a94e4a39c46aead8cf703a69e79975ce4d28190680a1fa095981712d4491"
+          },
+          {
+            "tag": "GPOS",
+            "sourceSha256": "842f4075778fd38f2af1086b03ea6f6ab058b1b5043ec825748c650e273161ca",
+            "outputSha256": "842f4075778fd38f2af1086b03ea6f6ab058b1b5043ec825748c650e273161ca"
+          },
+          {
+            "tag": "GSUB",
+            "sourceSha256": "b70bbe6c0339186324ec479e91866479f6366de0bc57576ee064b1045f287c30",
+            "outputSha256": "b70bbe6c0339186324ec479e91866479f6366de0bc57576ee064b1045f287c30"
+          },
+          {
+            "tag": "OS/2",
+            "sourceSha256": "7337e039f1fb08677134366aaff58918a253448431f517d886001d87f6600996",
+            "outputSha256": "7337e039f1fb08677134366aaff58918a253448431f517d886001d87f6600996"
+          },
+          {
+            "tag": "STAT",
+            "sourceSha256": "c344390a0895ba75ea01b8ce449ef9633301b10db58290f71c85c6952092bee6",
+            "outputSha256": "c344390a0895ba75ea01b8ce449ef9633301b10db58290f71c85c6952092bee6"
+          },
+          {
+            "tag": "cmap",
+            "sourceSha256": "bf1e767678cc689d5a248541327013d1600c8e3a59a6c14080ba0dad8ee6355d",
+            "outputSha256": "bf1e767678cc689d5a248541327013d1600c8e3a59a6c14080ba0dad8ee6355d"
+          },
+          {
+            "tag": "gasp",
+            "sourceSha256": "4ca731f86ad506ac0e320283dc9461926346de3c4d91d539ea7f6620d3826940",
+            "outputSha256": "4ca731f86ad506ac0e320283dc9461926346de3c4d91d539ea7f6620d3826940"
+          },
+          {
+            "tag": "glyf",
+            "sourceSha256": "d8eed4aafadf20a663cb4edbde6025eaa225d918559e558797f190fa7bcd5b29",
+            "outputSha256": "d8eed4aafadf20a663cb4edbde6025eaa225d918559e558797f190fa7bcd5b29"
+          },
+          {
+            "tag": "head",
+            "sourceSha256": "8b67c33432edde588a6098e356b8dc28abbdb3748e933a5026b9f40bedba94d6",
+            "outputSha256": "492869bf28756422a745492fd9125da91c6beb22ed63e82abc61e6e0049143ba"
+          },
+          {
+            "tag": "hhea",
+            "sourceSha256": "d74a76afc39b2ee327222cde68490b1b92c5f8860645ea2aa4971e10d8743b5f",
+            "outputSha256": "d74a76afc39b2ee327222cde68490b1b92c5f8860645ea2aa4971e10d8743b5f"
+          },
+          {
+            "tag": "hmtx",
+            "sourceSha256": "0219d01ab7cbc1d2990fd290ba142d9c59c953682bcc9e4a2912041f16702f92",
+            "outputSha256": "0219d01ab7cbc1d2990fd290ba142d9c59c953682bcc9e4a2912041f16702f92"
+          },
+          {
+            "tag": "loca",
+            "sourceSha256": "c754b17762ee8b01f8f7c28a27ba0d2e5849b68bf63bb2dc39cb9cfa42b54e15",
+            "outputSha256": "c754b17762ee8b01f8f7c28a27ba0d2e5849b68bf63bb2dc39cb9cfa42b54e15"
+          },
+          {
+            "tag": "maxp",
+            "sourceSha256": "db809de6438ed1680d9a0d56ea1993092fc1165d88ecebab01d812eee1e7d36a",
+            "outputSha256": "db809de6438ed1680d9a0d56ea1993092fc1165d88ecebab01d812eee1e7d36a"
+          },
+          {
+            "tag": "name",
+            "sourceSha256": "12c9e7d2cd3795ee86df176bb739ac909494b38067344ba80cf9e5550d145595",
+            "outputSha256": "12c9e7d2cd3795ee86df176bb739ac909494b38067344ba80cf9e5550d145595"
+          },
+          {
+            "tag": "post",
+            "sourceSha256": "22dd499f08932214bde96943f3882f3619324478217095c049b68a57c6c10693",
+            "outputSha256": "22dd499f08932214bde96943f3882f3619324478217095c049b68a57c6c10693"
+          },
+          {
+            "tag": "prep",
+            "sourceSha256": "907c4106ff9989c1805827d5581bdf107a253b098cb71eb374f5e47c35604452",
+            "outputSha256": "907c4106ff9989c1805827d5581bdf107a253b098cb71eb374f5e47c35604452"
+          },
+          {
+            "tag": "vhea",
+            "sourceSha256": "847afcafeb0dbe0f533cd556264fce8a2aa92058b60d0be1aa9c505b670f26e5",
+            "outputSha256": "847afcafeb0dbe0f533cd556264fce8a2aa92058b60d0be1aa9c505b670f26e5"
+          },
+          {
+            "tag": "vmtx",
+            "sourceSha256": "062296886b7a75252ae8f7c2b93b5a91fbae8ed4ed87244758ed8075fdbbb9a2",
+            "outputSha256": "062296886b7a75252ae8f7c2b93b5a91fbae8ed4ed87244758ed8075fdbbb9a2"
+          }
+        ]
+      }
     },
     {
       "family": "Agora Han Supplement",
-      "file": "agora-han-supplement.b861b4cf6b30.woff2",
-      "bytes": 1837628,
-      "sha256": "b861b4cf6b3087db860dcc32c6cae3aba33f2d1dc88da64c8758d75ca847254b",
+      "file": "agora-han-supplement.122ab7574d87.ttf",
+      "bytes": 4221416,
+      "sha256": "122ab7574d878e936fc2261446e11badeb5e02733b55be93761f183c693316b7",
       "original_sha256": "a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da",
       "url": "https://raw.githubusercontent.com/google/fonts/45e3d5269e4a17d823f6d84470bc084dc5ae46f6/ofl/notosanssc/NotoSansSC%5Bwght%5D.ttf",
       "license": "notosanssc-OFL.txt",
-      "glyphs": 11657
+      "glyphs": 11657,
+      "woff2Source": {
+        "family": "Agora Han Supplement",
+        "file": "agora-han-supplement.b861b4cf6b30.woff2",
+        "bytes": 1837628,
+        "sha256": "b861b4cf6b3087db860dcc32c6cae3aba33f2d1dc88da64c8758d75ca847254b",
+        "original_sha256": "a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da",
+        "url": "https://raw.githubusercontent.com/google/fonts/45e3d5269e4a17d823f6d84470bc084dc5ae46f6/ofl/notosanssc/NotoSansSC%5Bwght%5D.ttf",
+        "license": "notosanssc-OFL.txt",
+        "glyphs": 11657
+      },
+      "container": "TrueType SFNT",
+      "conversion": {
+        "family": "Agora Han Supplement",
+        "sourceFile": "agora-han-supplement.b861b4cf6b30.woff2",
+        "sourceSha256": "b861b4cf6b3087db860dcc32c6cae3aba33f2d1dc88da64c8758d75ca847254b",
+        "sourceBytes": 1837628,
+        "file": "agora-han-supplement.122ab7574d87.ttf",
+        "sha256": "122ab7574d878e936fc2261446e11badeb5e02733b55be93761f183c693316b7",
+        "bytes": 4221416,
+        "contentType": "font/ttf",
+        "glyphCount": 11652,
+        "mappedCodepoints": 11657,
+        "glyphOrderEqual": true,
+        "cmapEqual": true,
+        "horizontalMetricsEqual": true,
+        "tableSetEqual": true,
+        "rawTableDifferences": [
+          {
+            "tag": "head",
+            "reason": "Only checkSumAdjustment changes for the SFNT file checksum."
+          }
+        ],
+        "tables": [
+          {
+            "tag": "BASE",
+            "sourceSha256": "8fc4a94e4a39c46aead8cf703a69e79975ce4d28190680a1fa095981712d4491",
+            "outputSha256": "8fc4a94e4a39c46aead8cf703a69e79975ce4d28190680a1fa095981712d4491"
+          },
+          {
+            "tag": "GPOS",
+            "sourceSha256": "9c0ed2420aa3cee1513a071c8497b54246165c6cf343de417b93a5aefac5d9c5",
+            "outputSha256": "9c0ed2420aa3cee1513a071c8497b54246165c6cf343de417b93a5aefac5d9c5"
+          },
+          {
+            "tag": "GSUB",
+            "sourceSha256": "02bed48c4ad30323bf23af4cd905fe5935b2deefa5b8cbe8541747e8f8ae3efe",
+            "outputSha256": "02bed48c4ad30323bf23af4cd905fe5935b2deefa5b8cbe8541747e8f8ae3efe"
+          },
+          {
+            "tag": "OS/2",
+            "sourceSha256": "ba78bc8a5105fbd61c8046ec66586951cbae22ec9d7af015579fd74d8814e717",
+            "outputSha256": "ba78bc8a5105fbd61c8046ec66586951cbae22ec9d7af015579fd74d8814e717"
+          },
+          {
+            "tag": "STAT",
+            "sourceSha256": "c344390a0895ba75ea01b8ce449ef9633301b10db58290f71c85c6952092bee6",
+            "outputSha256": "c344390a0895ba75ea01b8ce449ef9633301b10db58290f71c85c6952092bee6"
+          },
+          {
+            "tag": "cmap",
+            "sourceSha256": "0d5686ad2b74253c4146714c7b9358dfdea8a8a24aa23572c62ac77680bafa33",
+            "outputSha256": "0d5686ad2b74253c4146714c7b9358dfdea8a8a24aa23572c62ac77680bafa33"
+          },
+          {
+            "tag": "gasp",
+            "sourceSha256": "4ca731f86ad506ac0e320283dc9461926346de3c4d91d539ea7f6620d3826940",
+            "outputSha256": "4ca731f86ad506ac0e320283dc9461926346de3c4d91d539ea7f6620d3826940"
+          },
+          {
+            "tag": "glyf",
+            "sourceSha256": "859617a777fddbc16310609822628ae806022861b7f3f99106fb9069f9274359",
+            "outputSha256": "859617a777fddbc16310609822628ae806022861b7f3f99106fb9069f9274359"
+          },
+          {
+            "tag": "head",
+            "sourceSha256": "48d7b35399fcb8af30498e3ea04251397a8df792480cf8ca0f2a48d15e97cf85",
+            "outputSha256": "0ab2c437e97e00d5ab223767bfc99132ed97d07a5311321d456f4786de2e392c"
+          },
+          {
+            "tag": "hhea",
+            "sourceSha256": "7ccfa047ef0e43ac891f23693072123a3bfcef964d92ac2aafe1a11b233812b9",
+            "outputSha256": "7ccfa047ef0e43ac891f23693072123a3bfcef964d92ac2aafe1a11b233812b9"
+          },
+          {
+            "tag": "hmtx",
+            "sourceSha256": "fa0c5295c50fd54bb2bd289fead25e66fc342179769ed33502a01abdcbe4a47d",
+            "outputSha256": "fa0c5295c50fd54bb2bd289fead25e66fc342179769ed33502a01abdcbe4a47d"
+          },
+          {
+            "tag": "loca",
+            "sourceSha256": "05f53c292a21798564cb24053a46a732c3461d96077d27ec0883cee60aedd2a4",
+            "outputSha256": "05f53c292a21798564cb24053a46a732c3461d96077d27ec0883cee60aedd2a4"
+          },
+          {
+            "tag": "maxp",
+            "sourceSha256": "0adcef2184505c1d7f595b989659a512e898908f2d93ba4b776137208465e280",
+            "outputSha256": "0adcef2184505c1d7f595b989659a512e898908f2d93ba4b776137208465e280"
+          },
+          {
+            "tag": "name",
+            "sourceSha256": "794890cd0f997c5ae4014d2e38e396a69a8cc799aeb254b909fb360a9916a7aa",
+            "outputSha256": "794890cd0f997c5ae4014d2e38e396a69a8cc799aeb254b909fb360a9916a7aa"
+          },
+          {
+            "tag": "post",
+            "sourceSha256": "22dd499f08932214bde96943f3882f3619324478217095c049b68a57c6c10693",
+            "outputSha256": "22dd499f08932214bde96943f3882f3619324478217095c049b68a57c6c10693"
+          },
+          {
+            "tag": "prep",
+            "sourceSha256": "907c4106ff9989c1805827d5581bdf107a253b098cb71eb374f5e47c35604452",
+            "outputSha256": "907c4106ff9989c1805827d5581bdf107a253b098cb71eb374f5e47c35604452"
+          },
+          {
+            "tag": "vhea",
+            "sourceSha256": "40503fab480db3dc3de31f70adf64f2df9e80987eec34c4fa6879bbe565a1591",
+            "outputSha256": "40503fab480db3dc3de31f70adf64f2df9e80987eec34c4fa6879bbe565a1591"
+          },
+          {
+            "tag": "vmtx",
+            "sourceSha256": "e8b8a5baa87a6f1c16e572d2448b7c99195c5c61bb126caf06bf1a27a04a9548",
+            "outputSha256": "e8b8a5baa87a6f1c16e572d2448b7c99195c5c61bb126caf06bf1a27a04a9548"
+          }
+        ]
+      }
     },
     {
       "family": "Agora Thai",
-      "file": "agora-thai.013c801b78b9.woff2",
-      "bytes": 7988,
-      "sha256": "013c801b78b9544130cf1f12253cf172b77a9492937c1dbd875135767f1cc460",
+      "file": "agora-thai.9823987121fe.ttf",
+      "bytes": 17220,
+      "sha256": "9823987121fee585b7dfbc72512bc6380f980f99e9dd509d96aa0fb5955308b0",
       "original_sha256": "5a1c559bb539583c8a1fd99d1c5b9491e5e14478c9cd2bd0970d5c3096cc9ef8",
       "url": "https://raw.githubusercontent.com/google/fonts/45e3d5269e4a17d823f6d84470bc084dc5ae46f6/ofl/notosansthai/NotoSansThai%5Bwdth%2Cwght%5D.ttf",
       "license": "notosansthai-OFL.txt",
-      "glyphs": 87
+      "glyphs": 87,
+      "woff2Source": {
+        "family": "Agora Thai",
+        "file": "agora-thai.013c801b78b9.woff2",
+        "bytes": 7988,
+        "sha256": "013c801b78b9544130cf1f12253cf172b77a9492937c1dbd875135767f1cc460",
+        "original_sha256": "5a1c559bb539583c8a1fd99d1c5b9491e5e14478c9cd2bd0970d5c3096cc9ef8",
+        "url": "https://raw.githubusercontent.com/google/fonts/45e3d5269e4a17d823f6d84470bc084dc5ae46f6/ofl/notosansthai/NotoSansThai%5Bwdth%2Cwght%5D.ttf",
+        "license": "notosansthai-OFL.txt",
+        "glyphs": 87
+      },
+      "container": "TrueType SFNT",
+      "conversion": {
+        "family": "Agora Thai",
+        "sourceFile": "agora-thai.013c801b78b9.woff2",
+        "sourceSha256": "013c801b78b9544130cf1f12253cf172b77a9492937c1dbd875135767f1cc460",
+        "sourceBytes": 7988,
+        "file": "agora-thai.9823987121fe.ttf",
+        "sha256": "9823987121fee585b7dfbc72512bc6380f980f99e9dd509d96aa0fb5955308b0",
+        "bytes": 17220,
+        "contentType": "font/ttf",
+        "glyphCount": 117,
+        "mappedCodepoints": 87,
+        "glyphOrderEqual": true,
+        "cmapEqual": true,
+        "horizontalMetricsEqual": true,
+        "tableSetEqual": true,
+        "rawTableDifferences": [
+          {
+            "tag": "head",
+            "reason": "Only checkSumAdjustment changes for the SFNT file checksum."
+          }
+        ],
+        "tables": [
+          {
+            "tag": "GDEF",
+            "sourceSha256": "913afb72c8d048d832494db1815d745d86bf1e927f981a84670a15e8e1b8716a",
+            "outputSha256": "913afb72c8d048d832494db1815d745d86bf1e927f981a84670a15e8e1b8716a"
+          },
+          {
+            "tag": "GPOS",
+            "sourceSha256": "8a705b2b954af7e91a7390ddaf0164d748a8fda981497e618a5380feef6df612",
+            "outputSha256": "8a705b2b954af7e91a7390ddaf0164d748a8fda981497e618a5380feef6df612"
+          },
+          {
+            "tag": "GSUB",
+            "sourceSha256": "d595ec7fbd233d8e147559fa509d482aa241d695ec112b61afcb6d3e898502ad",
+            "outputSha256": "d595ec7fbd233d8e147559fa509d482aa241d695ec112b61afcb6d3e898502ad"
+          },
+          {
+            "tag": "OS/2",
+            "sourceSha256": "44864f784c47a451f657b56948837164ed55d43c5f3bf6d5a8c85202710e47a5",
+            "outputSha256": "44864f784c47a451f657b56948837164ed55d43c5f3bf6d5a8c85202710e47a5"
+          },
+          {
+            "tag": "STAT",
+            "sourceSha256": "703a128befd81674d3b64d8d56ae4d24e7d6f27c5a5771d6a4c4a1e685766ade",
+            "outputSha256": "703a128befd81674d3b64d8d56ae4d24e7d6f27c5a5771d6a4c4a1e685766ade"
+          },
+          {
+            "tag": "cmap",
+            "sourceSha256": "ec2a0210948c7aeee39a37f20896bfbdd6f88f7c3f38967a760ac638fd657484",
+            "outputSha256": "ec2a0210948c7aeee39a37f20896bfbdd6f88f7c3f38967a760ac638fd657484"
+          },
+          {
+            "tag": "gasp",
+            "sourceSha256": "4ca731f86ad506ac0e320283dc9461926346de3c4d91d539ea7f6620d3826940",
+            "outputSha256": "4ca731f86ad506ac0e320283dc9461926346de3c4d91d539ea7f6620d3826940"
+          },
+          {
+            "tag": "glyf",
+            "sourceSha256": "a5f1c976bbadbdfa2640bff745a8fa90db0712506a2f608449599ddd1ea49f5d",
+            "outputSha256": "a5f1c976bbadbdfa2640bff745a8fa90db0712506a2f608449599ddd1ea49f5d"
+          },
+          {
+            "tag": "head",
+            "sourceSha256": "9c90a11daca5a8ccc5bf0d880ef5998a0cb03c22f235047d591470a08289b97e",
+            "outputSha256": "cd5fcb2d3df955b5fd6876bc9db2c71ced73ad84958386076904c89a404dfd15"
+          },
+          {
+            "tag": "hhea",
+            "sourceSha256": "23418fc125d556af761ca4982413d5bbed1261b0dd59bad94b945661147436f4",
+            "outputSha256": "23418fc125d556af761ca4982413d5bbed1261b0dd59bad94b945661147436f4"
+          },
+          {
+            "tag": "hmtx",
+            "sourceSha256": "5cd63fa6c42ef013ac8cd1a3addd8a6f2f2f97b35b90cf3da8e50ed64878be8d",
+            "outputSha256": "5cd63fa6c42ef013ac8cd1a3addd8a6f2f2f97b35b90cf3da8e50ed64878be8d"
+          },
+          {
+            "tag": "loca",
+            "sourceSha256": "b76290299b57d7ba92aa4d17c41c65f1faf590a9f9bc8075f2df8b0ffc6a6cff",
+            "outputSha256": "b76290299b57d7ba92aa4d17c41c65f1faf590a9f9bc8075f2df8b0ffc6a6cff"
+          },
+          {
+            "tag": "maxp",
+            "sourceSha256": "5643921360b270a8a5e8deb2b32a02b07897308a9594b3ae55b1b209c80a4758",
+            "outputSha256": "5643921360b270a8a5e8deb2b32a02b07897308a9594b3ae55b1b209c80a4758"
+          },
+          {
+            "tag": "name",
+            "sourceSha256": "ac93af23468b4a486ba707fb70162fcb489d797565695e920d541bbd73046337",
+            "outputSha256": "ac93af23468b4a486ba707fb70162fcb489d797565695e920d541bbd73046337"
+          },
+          {
+            "tag": "post",
+            "sourceSha256": "4fdc83d5e42fe44650fe86f15a645d5cc926d07355ba945e1ede42737607bf83",
+            "outputSha256": "4fdc83d5e42fe44650fe86f15a645d5cc926d07355ba945e1ede42737607bf83"
+          },
+          {
+            "tag": "prep",
+            "sourceSha256": "907c4106ff9989c1805827d5581bdf107a253b098cb71eb374f5e47c35604452",
+            "outputSha256": "907c4106ff9989c1805827d5581bdf107a253b098cb71eb374f5e47c35604452"
+          }
+        ]
+      }
     },
     {
       "family": "Roboto",
-      "file": "roboto.35b02ca266b7.woff2",
-      "bytes": 63464,
-      "sha256": "35b02ca266b79eb4996590f15817425a1ce9ebf48f84471843233ff614656bf2",
+      "file": "roboto.4c1ba107cc1c.ttf",
+      "bytes": 168260,
+      "sha256": "4c1ba107cc1c355ca07b9afd1bc0c13cae0356051787b307df9f82ce520fd683",
       "original_sha256": "35b02ca266b79eb4996590f15817425a1ce9ebf48f84471843233ff614656bf2",
       "url": "https://fonts.gstatic.com/s/roboto/v32/KFOmCnqEu92Fr1Me4GZLCzYlKw.woff2",
       "license": "roboto-LICENSE.txt",
       "license_text": "Apache License",
       "glyphs": 896,
-      "modification": "None; exact default Roboto asset used by the pinned Flutter CanvasKit engine."
+      "modification": "None; exact default Roboto asset used by the pinned Flutter CanvasKit engine.",
+      "woff2Source": {
+        "family": "Roboto",
+        "file": "roboto.35b02ca266b7.woff2",
+        "bytes": 63464,
+        "sha256": "35b02ca266b79eb4996590f15817425a1ce9ebf48f84471843233ff614656bf2",
+        "original_sha256": "35b02ca266b79eb4996590f15817425a1ce9ebf48f84471843233ff614656bf2",
+        "url": "https://fonts.gstatic.com/s/roboto/v32/KFOmCnqEu92Fr1Me4GZLCzYlKw.woff2",
+        "license": "roboto-LICENSE.txt",
+        "license_text": "Apache License",
+        "glyphs": 896,
+        "modification": "None; exact default Roboto asset used by the pinned Flutter CanvasKit engine."
+      },
+      "container": "TrueType SFNT",
+      "conversion": {
+        "family": "Roboto",
+        "sourceFile": "roboto.35b02ca266b7.woff2",
+        "sourceSha256": "35b02ca266b79eb4996590f15817425a1ce9ebf48f84471843233ff614656bf2",
+        "sourceBytes": 63464,
+        "file": "roboto.4c1ba107cc1c.ttf",
+        "sha256": "4c1ba107cc1c355ca07b9afd1bc0c13cae0356051787b307df9f82ce520fd683",
+        "bytes": 168260,
+        "contentType": "font/ttf",
+        "glyphCount": 1294,
+        "mappedCodepoints": 896,
+        "glyphOrderEqual": true,
+        "cmapEqual": true,
+        "horizontalMetricsEqual": true,
+        "tableSetEqual": true,
+        "rawTableDifferences": [
+          {
+            "tag": "cmap",
+            "reason": "Equivalent cmap serialization; every subtable and mapping is identical."
+          },
+          {
+            "tag": "head",
+            "reason": "Only checkSumAdjustment changes for the SFNT file checksum."
+          }
+        ],
+        "tables": [
+          {
+            "tag": "GDEF",
+            "sourceSha256": "89a474e066065c8a77e198654f12453a7414e5da33979f38688edd40a67b4231",
+            "outputSha256": "89a474e066065c8a77e198654f12453a7414e5da33979f38688edd40a67b4231"
+          },
+          {
+            "tag": "GPOS",
+            "sourceSha256": "19eab025b28ed3573de2600c9d21985f2bc12dbea2aea9f05dff4f0d08918f63",
+            "outputSha256": "19eab025b28ed3573de2600c9d21985f2bc12dbea2aea9f05dff4f0d08918f63"
+          },
+          {
+            "tag": "GSUB",
+            "sourceSha256": "bb1e772fd0abb34c81d484201a940165669398fc7bbc7f4b1d788c352fafa885",
+            "outputSha256": "bb1e772fd0abb34c81d484201a940165669398fc7bbc7f4b1d788c352fafa885"
+          },
+          {
+            "tag": "OS/2",
+            "sourceSha256": "ea5518f0461473ddbb50811b34deb4ca3c4e35500752f0bf53fade742a0e5cc5",
+            "outputSha256": "ea5518f0461473ddbb50811b34deb4ca3c4e35500752f0bf53fade742a0e5cc5"
+          },
+          {
+            "tag": "cmap",
+            "sourceSha256": "b1d9b97fddd1ac07bf532f1691d7bf7c4b5ae34882440ca66226e946bc57acbd",
+            "outputSha256": "71bc5d66b9733ccb23129b5220d15fabe6cd8a705ac69d2f98468b8830a18ab2"
+          },
+          {
+            "tag": "cvt ",
+            "sourceSha256": "cf36c4618b85d263c0db1b04efac2d335b8cd37d98433ac8a4e8c8e591695e06",
+            "outputSha256": "cf36c4618b85d263c0db1b04efac2d335b8cd37d98433ac8a4e8c8e591695e06"
+          },
+          {
+            "tag": "fpgm",
+            "sourceSha256": "dcc4c09fde7cd3c40c25c96ad362a3fa9cb5bfa6f09f416c404540a898230a13",
+            "outputSha256": "dcc4c09fde7cd3c40c25c96ad362a3fa9cb5bfa6f09f416c404540a898230a13"
+          },
+          {
+            "tag": "gasp",
+            "sourceSha256": "13dd2c70c90f4503fca1f41b6a192f6b0c39e0b26fd507ab5c6d97f7dea9c277",
+            "outputSha256": "13dd2c70c90f4503fca1f41b6a192f6b0c39e0b26fd507ab5c6d97f7dea9c277"
+          },
+          {
+            "tag": "glyf",
+            "sourceSha256": "a64a2b863d05d6b87282cae68d57bcaf69ee518b8dfbd1fb6a0652ace09542c0",
+            "outputSha256": "a64a2b863d05d6b87282cae68d57bcaf69ee518b8dfbd1fb6a0652ace09542c0"
+          },
+          {
+            "tag": "hdmx",
+            "sourceSha256": "1561d18104a91436204af41d5ad8864cbca29774689fd6b524e27fb4f65bd71f",
+            "outputSha256": "1561d18104a91436204af41d5ad8864cbca29774689fd6b524e27fb4f65bd71f"
+          },
+          {
+            "tag": "head",
+            "sourceSha256": "154170eead36d0f2fa9bea8a50b2c7e3eae45a6e5bbe820d08c59869ff927d26",
+            "outputSha256": "7377e5d8b958198d032e80247b77d88c7feef8e7d26b81b0ea6b43669597c2f9"
+          },
+          {
+            "tag": "hhea",
+            "sourceSha256": "1d08ef89fc039db2378db08c655ec9d4e3188b087666ba0691a414b95de56e73",
+            "outputSha256": "1d08ef89fc039db2378db08c655ec9d4e3188b087666ba0691a414b95de56e73"
+          },
+          {
+            "tag": "hmtx",
+            "sourceSha256": "348ee5771e8f74513cd3a388a01a65f8d8e8c0645dd665e606350d0c2c8632e4",
+            "outputSha256": "348ee5771e8f74513cd3a388a01a65f8d8e8c0645dd665e606350d0c2c8632e4"
+          },
+          {
+            "tag": "loca",
+            "sourceSha256": "a59c0debbe53ab8fd4cf91d70890f3c28e4c680103a7103adb011544231141f6",
+            "outputSha256": "a59c0debbe53ab8fd4cf91d70890f3c28e4c680103a7103adb011544231141f6"
+          },
+          {
+            "tag": "maxp",
+            "sourceSha256": "672c1ec9687cd5c6e9335206be182139d3d5277628887e76c6ef85c72f0185fe",
+            "outputSha256": "672c1ec9687cd5c6e9335206be182139d3d5277628887e76c6ef85c72f0185fe"
+          },
+          {
+            "tag": "name",
+            "sourceSha256": "c581789c09ea529dcadc0d8685435dcebb39d470d522a26e68921efba5c30c05",
+            "outputSha256": "c581789c09ea529dcadc0d8685435dcebb39d470d522a26e68921efba5c30c05"
+          },
+          {
+            "tag": "post",
+            "sourceSha256": "0215ee02e6b7c4de5c8d18804643d9fb8b63810ed4a843d6551dfa4a4ca927de",
+            "outputSha256": "0215ee02e6b7c4de5c8d18804643d9fb8b63810ed4a843d6551dfa4a4ca927de"
+          },
+          {
+            "tag": "prep",
+            "sourceSha256": "5a22fb8ae3ead3afb2ba74c9010edd041cd108fabcd7086ad5d355b62f1fb99e",
+            "outputSha256": "5a22fb8ae3ead3afb2ba74c9010edd041cd108fabcd7086ad5d355b62f1fb99e"
+          }
+        ]
+      }
     }
-  ]
+  ],
+  "sfntConversion": {
+    "protocol": 1,
+    "script": "scripts/prepare_startup_font_sfnt.py",
+    "tool": "fontTools",
+    "version": "4.62.1",
+    "operation": "WOFF2 to TrueType SFNT; no subsetting or semantic font changes",
+    "options": {
+      "recalcBBoxes": false,
+      "recalcTimestamp": false,
+      "reorderTables": true,
+      "decodeGlyphOrderAndCmap": true
+    },
+    "sourceFilesRetained": true,
+    "originalModificationFieldsDescribeWoff2Sources": true,
+    "semantics": "Only the container changes. All decoded table bytes are identical except each listed checksum or cmap serialization difference; complete glyph order, cmap and horizontal metrics are also compared. No subsetting, family renaming, feature deletion, registration-order or primary-font changes."
+  }
 }
