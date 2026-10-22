@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta name="source-commit" content="5c444324e7960b70551b2de50dd1be7c026af2ad">
+<meta name="source-commit" content="eb6f2e67005140b33f9f66f764c70ae289a72349">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -118,7 +118,7 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.5020+5020">
+  <meta name="version" content="1.0.5021+5021">
   <script id="telegram-sdk-entry-loader">
     // Preserve synchronous SDK/viewport ordering inside Telegram only.
     // A normal browser/PWA must not depend on Telegram's network availability.
@@ -573,10 +573,16 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
-  <link rel="preload" href="flutter_bootstrap.5c444324e796.js" as="script">
-  <link rel="preload" href="main.dart.5c444324e796.js" as="script" fetchpriority="high">
+  <link rel="preload" href="flutter_bootstrap.eb6f2e670051.js" as="script">
+  <link rel="preload" href="main.dart.eb6f2e670051.js" as="script" fetchpriority="high">
   <link rel="preload" href="canvaskit/canvaskit.js" as="script" crossorigin="anonymous">
   <link rel="preload" href="canvaskit/canvaskit.wasm" as="fetch" type="application/wasm" crossorigin>
+  <!-- FontLoader requires these before runApp. Fetch them alongside the engine,
+       using the same fetch credentials so Flutter consumes the preload once. -->
+  <link rel="preload" href="assets/assets/fonts/roboto.35b02ca266b7.woff2" as="fetch" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/assets/fonts/agora-cjk.51b739be770a.woff2" as="fetch" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/assets/fonts/agora-han-supplement.b861b4cf6b30.woff2" as="fetch" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/assets/fonts/agora-thai.013c801b78b9.woff2" as="fetch" type="font/woff2" crossorigin>
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
   <!-- API server preconnect ?????? DNS+TLS handshake???????????API ??????100-200ms -->
   <link rel="preconnect" href="https://agoramarketapi.purrtechllc.com" crossorigin>
@@ -3540,7 +3546,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.5c444324e796.js";
+        script.src = "flutter_bootstrap.eb6f2e670051.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
@@ -3843,7 +3849,7 @@
   <script src="web_vitals.js"></script>
   
   <!-- ?????????????? -->
-  <script src="offline_handler.5c444324e796.js"></script>
+  <script src="offline_handler.eb6f2e670051.js"></script>
   
   <!-- GitHub Pages 404 ??????????????-->
   <script>

@@ -21,7 +21,13 @@ python scripts/prepare_startup_fonts.py
 python scripts/check_startup_font_coverage.py
 ```
 
-After regeneration, update `lib/core/startup/startup_fonts.dart` to the generated
+The HTML entry preloads all four required assets as `fetch` with `crossorigin`,
+matching Flutter's asset fetch. Downloads overlap the engine and main bundle;
+`FontLoader` still completes before `runApp`, preserving first-paint glyph coverage.
+Do not use `as="font"`: these bytes are consumed by Flutter's fetch, not CSS.
+
+After regeneration, update `lib/core/startup/startup_fonts.dart` and the matching
+`assets/assets/fonts/` preload URLs in `web/index.html` to the generated
 filenames and remove superseded font assets from this directory. Do not fetch fonts
 during a release build. Validate first-paint rendering with external fonts blocked,
 delayed startup assets, all supported locales, and the popular-keyword chip width.
