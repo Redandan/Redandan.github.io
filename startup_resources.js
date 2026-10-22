@@ -9,6 +9,7 @@
     var disposed = false;
     var failed = false;
     var controllers = new Set();
+    var hedgeTimers = new Set();
     var fontManifestUrl = new URL('assets/FontManifest.json', baseURI).href;
     var fontManifest = config.fontManifest ? JSON.stringify(config.fontManifest) : null;
     var clock = function() { return performance.now(); };
@@ -22,7 +23,7 @@
       return error;
     }
 
-    async function download(item, mirror) {
+    async function download(item, mirror, attemptControllers) {
       var url = new URL(item.asset, mirror ? config.mirrorBase : baseURI).href;
       var record = { asset: item.asset, attempt: mirror ? 'mirror' : 'primary',
         origin: new URL(url).origin, start: clock(), bytes: 0, maxGapMs: 0,
@@ -30,6 +31,7 @@
       events.push(record);
       var controller = new AbortController();
       controllers.add(controller);
+      attemptControllers.add(controller);
       var idleTimer, totalTimer, reason, reader;
       var lastProgress = clock();
       function abort(code) {
@@ -81,24 +83,69 @@
         record.sha256 = hash;
         return bytes;
       } catch (error) {
-        controller.abort();
+        var failure = reason || (controller.signal.aborted && controller.signal.reason) || error;
+        controller.abort(failure);
         if (reader) reader.cancel().catch(function() {});
         record.status = 'failed';
-        record.error = (reason || error).code || (reason || error).name || 'FETCH_FAILED';
+        record.error = failure.code || failure.name || 'FETCH_FAILED';
         record.end = clock();
-        throw reason || error;
+        throw failure;
       } finally {
         clearTimeout(idleTimer);
         clearTimeout(totalTimer);
         controllers.delete(controller);
+        attemptControllers.delete(controller);
       }
     }
 
     function prepare(entry) {
       if (!entry.promise) {
-        entry.promise = download(entry.item, false).catch(function() {
-          if (disposed) throw fault('CANCELLED');
-          return download(entry.item, true);
+        entry.promise = new Promise(function(resolve, reject) {
+          var settled = false, mirrorStarted = false, failures = 0;
+          var attemptControllers = new Set();
+          var hedgeTimer;
+          function clearHedge() {
+            clearTimeout(hedgeTimer);
+            hedgeTimers.delete(hedgeTimer);
+          }
+          function start(mirror) {
+            if (settled) return;
+            if (disposed) {
+              settled = true;
+              clearHedge();
+              reject(fault('CANCELLED'));
+              return;
+            }
+            if (mirror) {
+              if (mirrorStarted) return;
+              mirrorStarted = true;
+              clearHedge();
+            }
+            download(entry.item, mirror, attemptControllers).then(function(bytes) {
+              if (settled) return;
+              settled = true;
+              clearHedge();
+              // A healthy but slow primary stays alive until a verified winner
+              // exists. A bad/slow mirror cannot discard useful primary work.
+              attemptControllers.forEach(function(controller) {
+                controller.abort(fault('RACE_LOST'));
+              });
+              resolve(bytes);
+            }, function(error) {
+              if (settled) return;
+              failures++;
+              if (disposed || failures === 2) {
+                settled = true;
+                clearHedge();
+                reject(error);
+              } else if (!mirror) {
+                start(true);
+              }
+            });
+          }
+          hedgeTimer = setTimeout(function() { start(true); }, config.hedgeDelayMs || 8000);
+          hedgeTimers.add(hedgeTimer);
+          start(false);
         });
         // Warm-up errors may occur before Flutter consumes this asset. Keep a
         // rejection handler attached and report the terminal state exactly once.
@@ -143,6 +190,8 @@
       },
       release: function() {
         disposed = true;
+        hedgeTimers.forEach(clearTimeout);
+        hedgeTimers.clear();
         controllers.forEach(function(controller) { controller.abort(fault('CANCELLED')); });
         resources.clear();
       }

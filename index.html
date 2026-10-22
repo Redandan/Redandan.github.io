@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta name="source-commit" content="a08c4e0fbd8162f6c2a8eb20032eb8684212230c">
+<meta name="source-commit" content="c0a9dcc85f79430542f46edb5bc58effdcb88852">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -118,7 +118,7 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.5023+5023">
+  <meta name="version" content="1.0.5024+5024">
   <script id="telegram-sdk-entry-loader">
     // Preserve synchronous SDK/viewport ordering inside Telegram only.
     // A normal browser/PWA must not depend on Telegram's network availability.
@@ -573,8 +573,8 @@
   <meta name="msapplication-tap-highlight" content="no">
   
   <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
-  <link rel="preload" href="flutter_bootstrap.a08c4e0fbd81.js" as="script">
-  <link rel="preload" href="main.dart.a08c4e0fbd81.js" as="script" fetchpriority="high">
+  <link rel="preload" href="flutter_bootstrap.c0a9dcc85f79.js" as="script">
+  <link rel="preload" href="main.dart.c0a9dcc85f79.js" as="script" fetchpriority="high">
   <link rel="preload" href="canvaskit/canvaskit.js" as="script" crossorigin="anonymous">
   <script data-agora-startup-resources="true">
 (function(global) {
@@ -588,6 +588,7 @@
     var disposed = false;
     var failed = false;
     var controllers = new Set();
+    var hedgeTimers = new Set();
     var fontManifestUrl = new URL('assets/FontManifest.json', baseURI).href;
     var fontManifest = config.fontManifest ? JSON.stringify(config.fontManifest) : null;
     var clock = function() { return performance.now(); };
@@ -601,7 +602,7 @@
       return error;
     }
 
-    async function download(item, mirror) {
+    async function download(item, mirror, attemptControllers) {
       var url = new URL(item.asset, mirror ? config.mirrorBase : baseURI).href;
       var record = { asset: item.asset, attempt: mirror ? 'mirror' : 'primary',
         origin: new URL(url).origin, start: clock(), bytes: 0, maxGapMs: 0,
@@ -609,6 +610,7 @@
       events.push(record);
       var controller = new AbortController();
       controllers.add(controller);
+      attemptControllers.add(controller);
       var idleTimer, totalTimer, reason, reader;
       var lastProgress = clock();
       function abort(code) {
@@ -660,24 +662,69 @@
         record.sha256 = hash;
         return bytes;
       } catch (error) {
-        controller.abort();
+        var failure = reason || (controller.signal.aborted && controller.signal.reason) || error;
+        controller.abort(failure);
         if (reader) reader.cancel().catch(function() {});
         record.status = 'failed';
-        record.error = (reason || error).code || (reason || error).name || 'FETCH_FAILED';
+        record.error = failure.code || failure.name || 'FETCH_FAILED';
         record.end = clock();
-        throw reason || error;
+        throw failure;
       } finally {
         clearTimeout(idleTimer);
         clearTimeout(totalTimer);
         controllers.delete(controller);
+        attemptControllers.delete(controller);
       }
     }
 
     function prepare(entry) {
       if (!entry.promise) {
-        entry.promise = download(entry.item, false).catch(function() {
-          if (disposed) throw fault('CANCELLED');
-          return download(entry.item, true);
+        entry.promise = new Promise(function(resolve, reject) {
+          var settled = false, mirrorStarted = false, failures = 0;
+          var attemptControllers = new Set();
+          var hedgeTimer;
+          function clearHedge() {
+            clearTimeout(hedgeTimer);
+            hedgeTimers.delete(hedgeTimer);
+          }
+          function start(mirror) {
+            if (settled) return;
+            if (disposed) {
+              settled = true;
+              clearHedge();
+              reject(fault('CANCELLED'));
+              return;
+            }
+            if (mirror) {
+              if (mirrorStarted) return;
+              mirrorStarted = true;
+              clearHedge();
+            }
+            download(entry.item, mirror, attemptControllers).then(function(bytes) {
+              if (settled) return;
+              settled = true;
+              clearHedge();
+              // A healthy but slow primary stays alive until a verified winner
+              // exists. A bad/slow mirror cannot discard useful primary work.
+              attemptControllers.forEach(function(controller) {
+                controller.abort(fault('RACE_LOST'));
+              });
+              resolve(bytes);
+            }, function(error) {
+              if (settled) return;
+              failures++;
+              if (disposed || failures === 2) {
+                settled = true;
+                clearHedge();
+                reject(error);
+              } else if (!mirror) {
+                start(true);
+              }
+            });
+          }
+          hedgeTimer = setTimeout(function() { start(true); }, config.hedgeDelayMs || 8000);
+          hedgeTimers.add(hedgeTimer);
+          start(false);
         });
         // Warm-up errors may occur before Flutter consumes this asset. Keep a
         // rejection handler attached and report the terminal state exactly once.
@@ -722,6 +769,8 @@
       },
       release: function() {
         disposed = true;
+        hedgeTimers.forEach(clearTimeout);
+        hedgeTimers.clear();
         controllers.forEach(function(controller) { controller.abort(fault('CANCELLED')); });
         resources.clear();
       }
@@ -730,7 +779,7 @@
   global.AgoraStartupResources = { create: create };
 })(globalThis);
 
-(function(){var loader=window.AgoraStartupResources.create({"mirrorBase":"https://raw.githubusercontent.com/Redandan/Redandan.github.io/0fdf8722c8e2a77c483abde46d937e8996605284/","mirrorCommit":"0fdf8722c8e2a77c483abde46d937e8996605284","resources":[{"asset":"canvaskit/canvaskit.wasm","sha256":"42e392d69fd05a8540cb1b2cd9b88ab2115659c9378c136d1377b3595e703839","bytes":7155824,"contentType":"application/wasm"},{"asset":"assets/assets/fonts/agora-cjk.51b739be770a.woff2","sha256":"51b739be770aa9dc9d3b7c01e7802c73c93ecfeb4fa09435fac56e28d52d23fc","bytes":2521268,"contentType":"font/woff2"},{"asset":"assets/assets/fonts/agora-han-supplement.b861b4cf6b30.woff2","sha256":"b861b4cf6b3087db860dcc32c6cae3aba33f2d1dc88da64c8758d75ca847254b","bytes":1837628,"contentType":"font/woff2"},{"asset":"assets/assets/fonts/agora-thai.013c801b78b9.woff2","sha256":"013c801b78b9544130cf1f12253cf172b77a9492937c1dbd875135767f1cc460","bytes":7988,"contentType":"font/woff2"},{"asset":"assets/assets/fonts/roboto.35b02ca266b7.woff2","sha256":"35b02ca266b79eb4996590f15817425a1ce9ebf48f84471843233ff614656bf2","bytes":63464,"contentType":"font/woff2"}],"idleTimeoutMs":6000,"totalTimeoutMs":90000,"fontManifest":[{"family":"MaterialIcons","fonts":[{"asset":"fonts/MaterialIcons-Regular.otf"}]},{"family":"packages/cupertino_icons/CupertinoIcons","fonts":[{"asset":"packages/cupertino_icons/assets/CupertinoIcons.ttf"}]},{"family":"Roboto","fonts":[{"asset":"assets/fonts/roboto.35b02ca266b7.woff2","weight":400}]}]},window.fetch.bind(window),document.baseURI,function(error){window.__AGORA_STARTUP_RESOURCE_ERROR__=error;window.dispatchEvent(new Event("agora-startup-failed"));});window.__AGORA_STARTUP_RESOURCES__=loader;window.__AGORA_STARTUP_RESOURCE_TIMING__=loader.events;loader.start();})();
+(function(){var loader=window.AgoraStartupResources.create({"mirrorBase":"https://raw.githubusercontent.com/Redandan/Redandan.github.io/0fdf8722c8e2a77c483abde46d937e8996605284/","mirrorCommit":"0fdf8722c8e2a77c483abde46d937e8996605284","resources":[{"asset":"canvaskit/canvaskit.wasm","sha256":"42e392d69fd05a8540cb1b2cd9b88ab2115659c9378c136d1377b3595e703839","bytes":7155824,"contentType":"application/wasm"},{"asset":"assets/assets/fonts/agora-cjk.51b739be770a.woff2","sha256":"51b739be770aa9dc9d3b7c01e7802c73c93ecfeb4fa09435fac56e28d52d23fc","bytes":2521268,"contentType":"font/woff2"},{"asset":"assets/assets/fonts/agora-han-supplement.b861b4cf6b30.woff2","sha256":"b861b4cf6b3087db860dcc32c6cae3aba33f2d1dc88da64c8758d75ca847254b","bytes":1837628,"contentType":"font/woff2"},{"asset":"assets/assets/fonts/agora-thai.013c801b78b9.woff2","sha256":"013c801b78b9544130cf1f12253cf172b77a9492937c1dbd875135767f1cc460","bytes":7988,"contentType":"font/woff2"},{"asset":"assets/assets/fonts/roboto.35b02ca266b7.woff2","sha256":"35b02ca266b79eb4996590f15817425a1ce9ebf48f84471843233ff614656bf2","bytes":63464,"contentType":"font/woff2"}],"idleTimeoutMs":6000,"hedgeDelayMs":8000,"totalTimeoutMs":90000,"fontManifest":[{"family":"MaterialIcons","fonts":[{"asset":"fonts/MaterialIcons-Regular.otf"}]},{"family":"packages/cupertino_icons/CupertinoIcons","fonts":[{"asset":"packages/cupertino_icons/assets/CupertinoIcons.ttf"}]},{"family":"Roboto","fonts":[{"asset":"assets/fonts/roboto.35b02ca266b7.woff2","weight":400}]}]},window.fetch.bind(window),document.baseURI,function(error){window.__AGORA_STARTUP_RESOURCE_ERROR__=error;window.dispatchEvent(new Event("agora-startup-failed"));});window.__AGORA_STARTUP_RESOURCES__=loader;window.__AGORA_STARTUP_RESOURCE_TIMING__=loader.events;loader.start();})();
 </script>
   <!-- Release preparation replaces these binary hints with verified, cancellable
        streaming fetches at the same position. flutter run retains the hints. -->
@@ -3701,7 +3750,7 @@
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.a08c4e0fbd81.js";
+        script.src = "flutter_bootstrap.c0a9dcc85f79.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
@@ -4004,7 +4053,7 @@
   <script src="web_vitals.js"></script>
   
   <!-- ?????????????? -->
-  <script src="offline_handler.a08c4e0fbd81.js"></script>
+  <script src="offline_handler.c0a9dcc85f79.js"></script>
   
   <!-- GitHub Pages 404 ??????????????-->
   <script>

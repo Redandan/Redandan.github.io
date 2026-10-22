@@ -34,6 +34,7 @@
     }
   ],
   "idleTimeoutMs": 6000,
+  "hedgeDelayMs": 8000,
   "totalTimeoutMs": 90000,
   "fontManifest": [
     {
