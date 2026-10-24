@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta name="source-commit" content="2af04ac3e87a288ca0a71639ea5395981b411f7d">
+<meta name="source-commit" content="a41ebffe7d35fd5072570b85eeaf4e9b7ab7b71d">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -118,7 +118,7 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.5033+5033">
+  <meta name="version" content="1.0.5034+5034">
   <script id="telegram-sdk-entry-loader">
     // Preserve synchronous SDK/viewport ordering inside Telegram only.
     // A normal browser/PWA must not depend on Telegram's network availability.
@@ -581,29 +581,80 @@
           url.pathname !== '/' || !/^(?:(?:#\/?home)?\/?|#\/products\/[1-9]\d*)$/.test(url.hash) ||
           innerWidth >= 650 || url.searchParams.size > (mode === '1' ? 1 : 0) ||
           /Telegram/i.test(navigator.userAgent) || window.Telegram?.WebApp?.initData) return;
-      try {
-        // Presence only: never parse credentials or select a signed-in user.
-        for (var i = 0; i < localStorage.length; i++) {
-          var key = localStorage.key(i);
-          if (['flutter.auth_token', 'flutter.refresh_token', 'access_token', 'refresh_token'].includes(key) ||
-              key && key.startsWith('agora.webSession')) return;
-        }
-      } catch (_) { return; }
+      // Public reading never depends on account selection or credential values.
+      // Only defer native work until actual content paints; errors/actions keep
+      // the original app reachable even when the HTML reader cannot finish.
+      var callbacks = [], pendingPaint = null, deadline;
+      var state = { waiting: true, releasedAt: null, reason: null };
+      function release(reason) {
+        if (!state.waiting) return;
+        state.waiting = false; state.reason = reason; state.releasedAt = performance.now();
+        clearTimeout(deadline);
+        window.removeEventListener('agora-html-primary-paint', homePaint);
+        window.removeEventListener('agora-html-detail-readable', detailPaint);
+        window.removeEventListener('agora-html-priority', nativeIntent);
+        document.removeEventListener('visibilitychange', visiblePaint);
+        callbacks.splice(0).forEach(function (callback) { callback(); });
+      }
+      function snapshot() {
+        try { return JSON.parse(window.__AGORA_HTML_STOREFRONT__?.capture() || 'null'); }
+        catch (_) { return null; }
+      }
+      function visiblePaint() {
+        if (document.visibilityState !== 'visible' || !pendingPaint) return;
+        var current = snapshot();
+        if (current?.protocol !== 2) return;
+        if (pendingPaint.id) {
+          if (location.hash !== '#/products/' + pendingPaint.id ||
+              current.intent?.type !== 'product' || current.intent.id !== pendingPaint.id) return;
+        } else if (current.intent?.type === 'product' ||
+                   !/^(?:#\/?home)?\/?$/.test(location.hash)) return;
+        release(pendingPaint.id ? 'html-detail-readable' : 'html-home-readable');
+      }
+      function homePaint(event) {
+        try { if (JSON.parse(event.detail).protocol !== 2) return; } catch (_) { return; }
+        pendingPaint = {}; visiblePaint();
+      }
+      function detailPaint(event) {
+        try {
+          var signal = JSON.parse(event.detail);
+          if (signal.type !== 'readable' || !Number.isSafeInteger(signal.id) || signal.id <= 0) return;
+          // An older product's late image must not release the current route.
+          if (location.hash !== '#/products/' + signal.id) return;
+          pendingPaint = { id: signal.id }; visiblePaint();
+        } catch (_) {}
+      }
+      function nativeIntent(event) {
+        try {
+          var signal = JSON.parse(event.detail);
+          if (signal.protocol === 2 && signal.intent &&
+              (signal.intent.type !== 'product' || signal.intent.preview === false)) release('native-intent');
+        } catch (_) {}
+      }
+      window.__AGORA_HTML_STARTUP_GATE__ = {
+        state: state, release: release,
+        run: function (callback) { if (state.waiting) callbacks.push(callback); else callback(); }
+      };
+      window.addEventListener('agora-html-primary-paint', homePaint);
+      window.addEventListener('agora-html-detail-readable', detailPaint);
+      window.addEventListener('agora-html-priority', nativeIntent);
+      document.addEventListener('visibilitychange', visiblePaint);
+      deadline = setTimeout(function () { release('html-timeout'); }, 8000);
       var revision = document.querySelector('meta[name="source-commit"]')?.content ||
           document.querySelector('meta[name="version"]')?.content || '1';
       var suffix = '?v=' + encodeURIComponent(revision);
       window.__AGORA_HTML_ENTRY__ = { suffix: suffix };
-      [['script', 'html_storefront.2af04ac3e87a.js'], ['style', 'html_storefront.2af04ac3e87a.css']].forEach(function (asset) {
+      [['script', 'html_storefront.a41ebffe7d35.js'], ['style', 'html_storefront.a41ebffe7d35.css']].forEach(function (asset) {
         var preload = document.createElement('link');
         preload.rel = 'preload'; preload.as = asset[0]; preload.href = asset[1] + suffix;
         preload.fetchPriority = 'high'; document.head.appendChild(preload);
       });
     })();
   </script>
-  <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
-  <link rel="preload" href="flutter_bootstrap.2af04ac3e87a.js" as="script">
-  <link rel="preload" href="main.dart.2af04ac3e87a.js" as="script" fetchpriority="high">
-  <link rel="preload" href="canvaskit/canvaskit.js" as="script" crossorigin="anonymous">
+  <!-- Eligible HTML readers start native downloads after their first real paint. -->
+  <link rel="preload" data-agora-startup-href="flutter_bootstrap.a41ebffe7d35.js" as="script">
+  <link rel="preload" data-agora-startup-href="main.dart.a41ebffe7d35.js" as="script" fetchpriority="high">
+  <link rel="preload" data-agora-startup-href="canvaskit/canvaskit.js" as="script" crossorigin="anonymous">
   <script data-agora-startup-resources="true">
 (function(global) {
   'use strict';
@@ -808,7 +859,7 @@
   global.AgoraStartupResources = { create: create };
 })(globalThis);
 
-(function(){var loader=window.AgoraStartupResources.create({"mirrorBase":"https://raw.githubusercontent.com/Redandan/Redandan.github.io/3f1cd8a0472b02a70a22eca75224ae0233be8800/","mirrorCommit":"3f1cd8a0472b02a70a22eca75224ae0233be8800","resources":[{"asset":"canvaskit/canvaskit.wasm","sha256":"42e392d69fd05a8540cb1b2cd9b88ab2115659c9378c136d1377b3595e703839","bytes":7155824,"contentType":"application/wasm"},{"asset":"assets/assets/fonts/agora-cjk.9db2981893f9.ttf","sha256":"9db2981893f967060e318d78d5c9d277a6228ecddc6fae65ae2238c276cbe0a4","bytes":6132344,"contentType":"font/ttf"},{"asset":"assets/assets/fonts/agora-han-supplement.122ab7574d87.ttf","sha256":"122ab7574d878e936fc2261446e11badeb5e02733b55be93761f183c693316b7","bytes":4221416,"contentType":"font/ttf"},{"asset":"assets/assets/fonts/agora-thai.9823987121fe.ttf","sha256":"9823987121fee585b7dfbc72512bc6380f980f99e9dd509d96aa0fb5955308b0","bytes":17220,"contentType":"font/ttf"},{"asset":"assets/assets/fonts/roboto.4c1ba107cc1c.ttf","sha256":"4c1ba107cc1c355ca07b9afd1bc0c13cae0356051787b307df9f82ce520fd683","bytes":168260,"contentType":"font/ttf"}],"mirrorReady":true,"mirrorStatus":"PASS","idleTimeoutMs":6000,"hedgeDelayMs":8000,"totalTimeoutMs":90000,"fontManifest":[{"family":"MaterialIcons","fonts":[{"asset":"fonts/MaterialIcons-Regular.otf"}]},{"family":"packages/cupertino_icons/CupertinoIcons","fonts":[{"asset":"packages/cupertino_icons/assets/CupertinoIcons.ttf"}]},{"family":"Roboto","fonts":[{"asset":"assets/fonts/roboto.4c1ba107cc1c.ttf","weight":400}]}]},window.fetch.bind(window),document.baseURI,function(error){window.__AGORA_STARTUP_RESOURCE_ERROR__=error;window.dispatchEvent(new Event("agora-startup-failed"));});window.__AGORA_STARTUP_RESOURCES__=loader;window.__AGORA_STARTUP_RESOURCE_TIMING__=loader.events;loader.start();})();
+(function(){var loader=window.AgoraStartupResources.create({"mirrorBase":"https://raw.githubusercontent.com/Redandan/Redandan.github.io/3f1cd8a0472b02a70a22eca75224ae0233be8800/","mirrorCommit":"3f1cd8a0472b02a70a22eca75224ae0233be8800","resources":[{"asset":"canvaskit/canvaskit.wasm","sha256":"42e392d69fd05a8540cb1b2cd9b88ab2115659c9378c136d1377b3595e703839","bytes":7155824,"contentType":"application/wasm"},{"asset":"assets/assets/fonts/agora-cjk.9db2981893f9.ttf","sha256":"9db2981893f967060e318d78d5c9d277a6228ecddc6fae65ae2238c276cbe0a4","bytes":6132344,"contentType":"font/ttf"},{"asset":"assets/assets/fonts/agora-han-supplement.122ab7574d87.ttf","sha256":"122ab7574d878e936fc2261446e11badeb5e02733b55be93761f183c693316b7","bytes":4221416,"contentType":"font/ttf"},{"asset":"assets/assets/fonts/agora-thai.9823987121fe.ttf","sha256":"9823987121fee585b7dfbc72512bc6380f980f99e9dd509d96aa0fb5955308b0","bytes":17220,"contentType":"font/ttf"},{"asset":"assets/assets/fonts/roboto.4c1ba107cc1c.ttf","sha256":"4c1ba107cc1c355ca07b9afd1bc0c13cae0356051787b307df9f82ce520fd683","bytes":168260,"contentType":"font/ttf"}],"mirrorReady":true,"mirrorStatus":"PASS","idleTimeoutMs":6000,"hedgeDelayMs":8000,"totalTimeoutMs":90000,"fontManifest":[{"family":"MaterialIcons","fonts":[{"asset":"fonts/MaterialIcons-Regular.otf"}]},{"family":"packages/cupertino_icons/CupertinoIcons","fonts":[{"asset":"packages/cupertino_icons/assets/CupertinoIcons.ttf"}]},{"family":"Roboto","fonts":[{"asset":"assets/fonts/roboto.4c1ba107cc1c.ttf","weight":400}]}]},window.fetch.bind(window),document.baseURI,function(error){window.__AGORA_STARTUP_RESOURCE_ERROR__=error;window.dispatchEvent(new Event("agora-startup-failed"));});window.__AGORA_STARTUP_RESOURCES__=loader;window.__AGORA_STARTUP_RESOURCE_TIMING__=loader.events;var gate=window.__AGORA_HTML_STARTUP_GATE__;if(gate)gate.run(function(){loader.start();});else loader.start();})();
 </script>
   <!-- Release preparation replaces these binary hints with verified, cancellable
        streaming fetches at the same position. flutter run retains the hints. -->
@@ -816,6 +867,18 @@
   
   
   
+  <script>
+    (function () {
+      function preloadNative() {
+        document.querySelectorAll('link[data-agora-startup-href]').forEach(function (link) {
+          link.href = link.getAttribute('data-agora-startup-href');
+          link.removeAttribute('data-agora-startup-href');
+        });
+      }
+      var gate = window.__AGORA_HTML_STARTUP_GATE__;
+      if (gate) gate.run(preloadNative); else preloadNative();
+    })();
+  </script>
   <!-- Fix 2: Removed pwa_viewport_fix.js preload - conflicts with visualViewport root model -->
   <!-- API server preconnect ?????? DNS+TLS handshake???????????API ??????100-200ms -->
   <link rel="preconnect" href="https://agoramarketapi.purrtechllc.com" crossorigin>
@@ -1232,7 +1295,7 @@
   global.AgoraProductDetailPreload={create};
 })(window);
 
-window.__AGORA_PRODUCT_DETAIL_PRELOAD__=window.AgoraProductDetailPreload.create({"asset":"startup-product-detail.b8ff2666092e.js","integrity":"sha256-uP8mZgkuXL/7ngND6nnZ9Y2WKlOfq5GKD83prWYMPWg=","parts":71,"protocol":1});
+window.__AGORA_PRODUCT_DETAIL_PRELOAD__=window.AgoraProductDetailPreload.create({"asset":"startup-product-detail.cc5eb4c20b77.js","integrity":"sha256-zF60wgt3/SvK73hS9fvnQBuB/GxppsGn7TSIHh5UJqc=","parts":71,"protocol":1});
 </script>
 </head>
 <body>
@@ -1275,12 +1338,14 @@ window.__AGORA_PRODUCT_DETAIL_PRELOAD__=window.AgoraProductDetailPreload.create(
       if (!entry) return;
       var suffix = entry.suffix;
       var css = document.createElement('link');
-      css.rel = 'stylesheet'; css.fetchPriority = 'high'; css.href = 'html_storefront.2af04ac3e87a.css' + suffix;
+      css.rel = 'stylesheet'; css.fetchPriority = 'high'; css.href = 'html_storefront.a41ebffe7d35.css' + suffix;
       css.onload = function () {
         var script = document.createElement('script');
-        script.src = 'html_storefront.2af04ac3e87a.js' + suffix; script.defer = true;
+        script.src = 'html_storefront.a41ebffe7d35.js' + suffix; script.defer = true;
+        script.onerror = function () { window.__AGORA_HTML_STARTUP_GATE__?.release('script-error'); };
         document.head.appendChild(script);
       };
+      css.onerror = function () { window.__AGORA_HTML_STARTUP_GATE__?.release('stylesheet-error'); };
       document.head.appendChild(css);
     })();
   </script>
@@ -3859,7 +3924,7 @@ window.__AGORA_PRODUCT_DETAIL_PRELOAD__=window.AgoraProductDetailPreload.create(
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.2af04ac3e87a.js";
+        script.src = "flutter_bootstrap.a41ebffe7d35.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
@@ -4128,12 +4193,16 @@ window.__AGORA_PRODUCT_DETAIL_PRELOAD__=window.AgoraProductDetailPreload.create(
       function startFlutter() {
         // Versioned bootstrap/main filenames already prevent stale code from
         // starting. Fresh clients never wait for cache cleanup.
-        loadFlutterBootstrap();
-        window.addEventListener(
-          'flutter-first-frame',
-          scheduleStaleRuntimeCacheReset,
-          { once: true }
-        );
+        function boot() {
+          loadFlutterBootstrap();
+          window.addEventListener(
+            'flutter-first-frame',
+            scheduleStaleRuntimeCacheReset,
+            { once: true }
+          );
+        }
+        var gate = window.__AGORA_HTML_STARTUP_GATE__;
+        if (gate) gate.run(boot); else boot();
       }
 
       if (navigator.serviceWorker && navigator.serviceWorker.controller) {
@@ -4162,7 +4231,7 @@ window.__AGORA_PRODUCT_DETAIL_PRELOAD__=window.AgoraProductDetailPreload.create(
   <script src="web_vitals.js"></script>
   
   <!-- ?????????????? -->
-  <script src="offline_handler.2af04ac3e87a.js"></script>
+  <script src="offline_handler.a41ebffe7d35.js"></script>
   
   <!-- GitHub Pages 404 ??????????????-->
   <script>
