@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta name="source-commit" content="e29bdddffdba70ebed3268c549c9ba54a35e8ac6">
+<meta name="source-commit" content="2af04ac3e87a288ca0a71639ea5395981b411f7d">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -118,7 +118,7 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.5032+5032">
+  <meta name="version" content="1.0.5033+5033">
   <script id="telegram-sdk-entry-loader">
     // Preserve synchronous SDK/viewport ordering inside Telegram only.
     // A normal browser/PWA must not depend on Telegram's network availability.
@@ -593,7 +593,7 @@
           document.querySelector('meta[name="version"]')?.content || '1';
       var suffix = '?v=' + encodeURIComponent(revision);
       window.__AGORA_HTML_ENTRY__ = { suffix: suffix };
-      [['script', 'html_storefront.e29bdddffdba.js'], ['style', 'html_storefront.e29bdddffdba.css']].forEach(function (asset) {
+      [['script', 'html_storefront.2af04ac3e87a.js'], ['style', 'html_storefront.2af04ac3e87a.css']].forEach(function (asset) {
         var preload = document.createElement('link');
         preload.rel = 'preload'; preload.as = asset[0]; preload.href = asset[1] + suffix;
         preload.fetchPriority = 'high'; document.head.appendChild(preload);
@@ -601,8 +601,8 @@
     })();
   </script>
   <!-- Start the versioned Flutter entrypoint and its required local renderer early. -->
-  <link rel="preload" href="flutter_bootstrap.e29bdddffdba.js" as="script">
-  <link rel="preload" href="main.dart.e29bdddffdba.js" as="script" fetchpriority="high">
+  <link rel="preload" href="flutter_bootstrap.2af04ac3e87a.js" as="script">
+  <link rel="preload" href="main.dart.2af04ac3e87a.js" as="script" fetchpriority="high">
   <link rel="preload" href="canvaskit/canvaskit.js" as="script" crossorigin="anonymous">
   <script data-agora-startup-resources="true">
 (function(global) {
@@ -1193,6 +1193,7 @@
       if(!painted || started || !active())return;
       started=true;
       global.removeEventListener('agora-html-primary-paint',paint);
+      global.removeEventListener('agora-html-detail-readable',detailPaint);
       document.removeEventListener('visibilitychange',start);
       const script=document.createElement('script');
       script.src=new URL(config.asset,document.baseURI).href;
@@ -1211,14 +1212,27 @@
       try{if(JSON.parse(event.detail).protocol!==2)return;}catch{return;}
       painted=true;start();
     }
+    function detailPaint(event) {
+      try {
+        const signal=JSON.parse(event.detail);
+        const snapshot=JSON.parse(global.__AGORA_HTML_STOREFRONT__?.capture()||'null');
+        if(signal.type!=='readable' || !Number.isSafeInteger(signal.id) || signal.id<=0 ||
+           snapshot?.protocol!==2 || snapshot.intent?.type!=='product' ||
+           snapshot.intent.preview!==true || snapshot.intent.id!==signal.id)return;
+      } catch { return; }
+      // Direct links do not render home cards. Wait for their real detail
+      // reading event before spending bandwidth on the unchanged native code.
+      painted=true;start();
+    }
     global.addEventListener('agora-html-primary-paint',paint);
+    global.addEventListener('agora-html-detail-readable',detailPaint);
     document.addEventListener('visibilitychange',start);
     return state;
   }
   global.AgoraProductDetailPreload={create};
 })(window);
 
-window.__AGORA_PRODUCT_DETAIL_PRELOAD__=window.AgoraProductDetailPreload.create({"asset":"startup-product-detail.d205effd4b46.js","integrity":"sha256-0gXv/UtGX+mGGE2IZydpzlLFhVZKEad50kZd3ijpU+g=","parts":71,"protocol":1});
+window.__AGORA_PRODUCT_DETAIL_PRELOAD__=window.AgoraProductDetailPreload.create({"asset":"startup-product-detail.b8ff2666092e.js","integrity":"sha256-uP8mZgkuXL/7ngND6nnZ9Y2WKlOfq5GKD83prWYMPWg=","parts":71,"protocol":1});
 </script>
 </head>
 <body>
@@ -1261,10 +1275,10 @@ window.__AGORA_PRODUCT_DETAIL_PRELOAD__=window.AgoraProductDetailPreload.create(
       if (!entry) return;
       var suffix = entry.suffix;
       var css = document.createElement('link');
-      css.rel = 'stylesheet'; css.fetchPriority = 'high'; css.href = 'html_storefront.e29bdddffdba.css' + suffix;
+      css.rel = 'stylesheet'; css.fetchPriority = 'high'; css.href = 'html_storefront.2af04ac3e87a.css' + suffix;
       css.onload = function () {
         var script = document.createElement('script');
-        script.src = 'html_storefront.e29bdddffdba.js' + suffix; script.defer = true;
+        script.src = 'html_storefront.2af04ac3e87a.js' + suffix; script.defer = true;
         document.head.appendChild(script);
       };
       document.head.appendChild(css);
@@ -3845,7 +3859,7 @@ window.__AGORA_PRODUCT_DETAIL_PRELOAD__=window.AgoraProductDetailPreload.create(
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.e29bdddffdba.js";
+        script.src = "flutter_bootstrap.2af04ac3e87a.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
@@ -4148,7 +4162,7 @@ window.__AGORA_PRODUCT_DETAIL_PRELOAD__=window.AgoraProductDetailPreload.create(
   <script src="web_vitals.js"></script>
   
   <!-- ?????????????? -->
-  <script src="offline_handler.e29bdddffdba.js"></script>
+  <script src="offline_handler.2af04ac3e87a.js"></script>
   
   <!-- GitHub Pages 404 ??????????????-->
   <script>
