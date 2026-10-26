@@ -2,7 +2,7 @@
   "protocol": 1,
   "main": {
     "compilerUri": "main.dart.js",
-    "sha256": "0af8701ca25c9459c23810ed55292db0fd3fd68182707a3641e849d7da6e1ba4",
+    "sha256": "8b6396dbbd7ba8b39b5befcc6a06e98d94eeb10fc2761186d3a56bed2d1e45e9",
     "phase": "input before publication asset renaming"
   },
   "libraries": [
@@ -10,19 +10,19 @@
     "app_localizations_zh"
   ],
   "bundle": {
-    "asset": "startup-product-detail.20a9359b8b2d.js",
-    "sha256": "20a9359b8b2d85bbbf8bc41a9f78085cb97c5b0019d711d2bd8b1ad625dd7dbb",
-    "integrity": "sha256-IKk1m4sthbu/i8Qan3gIXLl8WwAZ1xHSvYsa1iXdfbs=",
-    "bytes": 941318
+    "asset": "startup-product-detail.fea373857a91.js",
+    "sha256": "fea373857a91def39b0d93e2a1c16d2d9fa01c181599ae7cee90b332468d55b5",
+    "integrity": "sha256-/qNzhXqR3vObDZPiocFtLZ+gHBgVma587pCzMkaNVbU=",
+    "bytes": 943557
   },
   "parts": [
     {
       "order": 0,
       "index": 179,
       "compilerUri": "main.dart.js_171.part.js",
-      "nativeHash": "6vcXdKFqqVPQYJO6nj3faxGLjWo=",
+      "nativeHash": "5shVe/lYU/O7RMgK5Pr3EFOFus4=",
       "bytes": 861,
-      "sha256": "9184eb15c7cbddbb91a6a7d84c587428daf9d0ff51a1b04808c3eadde4c7c7df"
+      "sha256": "b91ace7356a0ea714680ae869e4d5cb1114d3f1e96852ed8de09f5357753a9e8"
     },
     {
       "order": 1,
@@ -68,9 +68,9 @@
       "order": 6,
       "index": 182,
       "compilerUri": "main.dart.js_97.part.js",
-      "nativeHash": "i0s2vAAztHlgzC2BNnTcQ3lxK2s=",
+      "nativeHash": "nJamOi2dZqDrWsVqkewInDkvzDY=",
       "bytes": 4823,
-      "sha256": "3c5a48ba79acb2ce5d0de5cb068f4a096a8405d64268f9494d1122ace707e504"
+      "sha256": "4b63082b4717c12c0db5c132cdb53940815d15f4b400f7ed1aa03e266bd50bc4"
     },
     {
       "order": 7,
@@ -132,9 +132,9 @@
       "order": 14,
       "index": 64,
       "compilerUri": "main.dart.js_167.part.js",
-      "nativeHash": "DMyf+xmNZDETfCG6+uQK+QDycUQ=",
+      "nativeHash": "JtB25xKjHyaljMpTw/Tvg2Kwe/M=",
       "bytes": 2506,
-      "sha256": "da0ababfedf0c0081dbe0625f447363d1938fb98d4e500592541d70d2b742c0d"
+      "sha256": "3372d51d140103f9f76176b06a871b958d7b21c1b2294ea2f5a06fa01eb5d057"
     },
     {
       "order": 15,
@@ -172,9 +172,9 @@
       "order": 19,
       "index": 68,
       "compilerUri": "main.dart.js_129.part.js",
-      "nativeHash": "wsdr/WN31u3/w9M0+EEhAcJvxNQ=",
+      "nativeHash": "NiSQ69ELglR9P/xulx/svEaKM5w=",
       "bytes": 323,
-      "sha256": "f196fdfe8adf37d17b388aa4236e055a204cfccaee6f8a6f4548c2666a85835c"
+      "sha256": "35a1b96fadac568346c06a151504eeb327950067072f8b353acb400040f282c3"
     },
     {
       "order": 20,
@@ -188,9 +188,9 @@
       "order": 21,
       "index": 200,
       "compilerUri": "main.dart.js_166.part.js",
-      "nativeHash": "we5x3dCzvOuEZJxtXgR4xeu3Aj4=",
+      "nativeHash": "t+30uNn560tpylS1e9pzPcjcbfY=",
       "bytes": 1409,
-      "sha256": "e9e9a047c95486ddde38080b1846b28ad9bf73fbe015954447874f9d384f0e6c"
+      "sha256": "7290f8aa899a049bb851bde7663fd6fa69d3e67edbd65225a836889d22d2d4cd"
     },
     {
       "order": 22,
@@ -204,25 +204,25 @@
       "order": 23,
       "index": 70,
       "compilerUri": "main.dart.js_140.part.js",
-      "nativeHash": "6N9jrb6u9d6pkRLS4DacCJzFShM=",
+      "nativeHash": "6KFiGpvB1ltjR5FJXgIwcF856Mw=",
       "bytes": 9334,
-      "sha256": "d8ba8170fa50e4035f3bd032986c8889677ebde3b8c7da615a67737b41bed3fc"
+      "sha256": "1072fc48d9718151589153c68511634eeead557d96a39690d9525f7c4c77d12e"
     },
     {
       "order": 24,
       "index": 204,
       "compilerUri": "main.dart.js_165.part.js",
-      "nativeHash": "6NgJYdld+jnLcsZiQDv+4pAsh9s=",
+      "nativeHash": "biEKF3rSaI0WdVJbMqD2DQ53lyQ=",
       "bytes": 10031,
-      "sha256": "cc82e4aa58b04bc31362e589b0f02ba75bd975a8f6196fb8e6389c06976eb33f"
+      "sha256": "bb72ecb1234b5e7258ee2b065b647178f46946ca9fe46fb675851b583f498960"
     },
     {
       "order": 25,
       "index": 281,
       "compilerUri": "main.dart.js_128.part.js",
-      "nativeHash": "zD2BCkt7v/snbUQdF7ehrV15Dbs=",
+      "nativeHash": "bwjCrzsx4O2hmOzCL4dcxq02Smc=",
       "bytes": 323,
-      "sha256": "b3bf3ed22d2ece04f2d3e737892ec0eb3e844eae4add088cda5d5dc99d35b6df"
+      "sha256": "69feadecdf3b56ac4b7d6244e58913bf2b427c7e2a7e6fc8e9a57a9cb5b42e17"
     },
     {
       "order": 26,
@@ -236,9 +236,9 @@
       "order": 27,
       "index": 489,
       "compilerUri": "main.dart.js_70.part.js",
-      "nativeHash": "qhtNuWt/oePC/LuDhm7Kwa3zAVc=",
+      "nativeHash": "TedEqcizc++hlBe7JeW66/Ssq9I=",
       "bytes": 642,
-      "sha256": "6c4d536276ea20f563bc08d32c15153c4c71987604bdae0fff3d6957358efa89"
+      "sha256": "7daf1b452ca04b67bcb0c7c7b99479d1dac65d803ea003d99f5cc6ecb188bfb8"
     },
     {
       "order": 28,
@@ -260,9 +260,9 @@
       "order": 30,
       "index": 239,
       "compilerUri": "main.dart.js_121.part.js",
-      "nativeHash": "Bq5xtwTWgwA1c2nzYRoeLldHu8I=",
+      "nativeHash": "HLvFlE+OqkpbV6jlEiXuEFvmAsc=",
       "bytes": 910,
-      "sha256": "9aecb76d959629e7d530fe9675dd186fb157041ace20e1233a0699ff8ff5c37f"
+      "sha256": "9e7cd93d889cd32d4840e7f7a55f17d210586c1e66d2d994bb6182db96830036"
     },
     {
       "order": 31,
@@ -284,17 +284,17 @@
       "order": 33,
       "index": 555,
       "compilerUri": "main.dart.js_83.part.js",
-      "nativeHash": "oasA4Dz7C8iVftdaHJoZOGKNOQQ=",
+      "nativeHash": "D8tMHbkdrLerxgNCd02G/nONMT4=",
       "bytes": 588,
-      "sha256": "d92db88e7e1a05ed679de5e00cafc2aff411a8b96e59edbf55afca94f6c880cf"
+      "sha256": "6417c49528862ea6aa0bc88bd3df584ecde57006c27ce6d51dcda3612ed4a7f3"
     },
     {
       "order": 34,
       "index": 246,
       "compilerUri": "main.dart.js_139.part.js",
-      "nativeHash": "AnZ8qXz4FuI8NeXpDQAO4NErEb4=",
+      "nativeHash": "8zK4wxk0crEXQ50/0Iagf1OnKv8=",
       "bytes": 6650,
-      "sha256": "ff3b7b139ad31268aef6a2cdf534a40d4ea767a32011458f2f8d22d238015f52"
+      "sha256": "4f8d2fedb2f687497ae38e29368a429310c9fb522ff655a5f3414c59f52bf6aa"
     },
     {
       "order": 35,
@@ -308,9 +308,9 @@
       "order": 36,
       "index": 152,
       "compilerUri": "main.dart.js_133.part.js",
-      "nativeHash": "IP9vZUUZrzuUZWu/RF0r834179M=",
+      "nativeHash": "C4LqboP+xPmscDNbUPYJggc90JY=",
       "bytes": 1104,
-      "sha256": "3ccc3a082f44c6ac61affaab535e0d4c9544b26dd717d8456193ae0330290aa5"
+      "sha256": "9ecd0c5cb6d54ac589da4ec4229a2c0ec2e7a9cde47a634aea23f873c2e4de5a"
     },
     {
       "order": 37,
@@ -324,9 +324,9 @@
       "order": 38,
       "index": 99,
       "compilerUri": "main.dart.js_100.part.js",
-      "nativeHash": "gFV4sWRElHmVFmltqb+dVZ8N+u4=",
+      "nativeHash": "5dknNH59Kc54vrKMrX2icMoRbuo=",
       "bytes": 1441,
-      "sha256": "919bc08183fb44e11b373c086e5278461178baf85f19d4b8ce47e4172a546449"
+      "sha256": "90ee10f7e2c95973555dcbf18d90d4139164402a54318ebe5fc254447118881e"
     },
     {
       "order": 39,
@@ -348,9 +348,9 @@
       "order": 41,
       "index": 539,
       "compilerUri": "main.dart.js_109.part.js",
-      "nativeHash": "cFoMQGLY84U6g5myK5SxGqz06Ns=",
+      "nativeHash": "MGZlgE+AdtMK9h/lSzkl5BcVEYc=",
       "bytes": 518,
-      "sha256": "c997b6efef86abb1ea9bb88f654c8b4fd6976ed6047e807361c9fe41768a5be5"
+      "sha256": "d48adcb47fb02c1440327819efdaaa62930c701540938b03bd18851b7081694b"
     },
     {
       "order": 42,
@@ -372,9 +372,9 @@
       "order": 44,
       "index": 300,
       "compilerUri": "main.dart.js_170.part.js",
-      "nativeHash": "t4vM5Bg/cA4aCn7oLXKtrl9rAm0=",
+      "nativeHash": "1+ThN6sbQ0OUw/wYbbltww4Y/TE=",
       "bytes": 334,
-      "sha256": "6ebdd67e6964defe314f799f1e4c79b6dcec81005aec10ce25c9f1bcbf9710fd"
+      "sha256": "33ecd4b6315eb3623e5c0c771689409bdf9f9e100509283a3109a55c23da80c4"
     },
     {
       "order": 45,
@@ -388,9 +388,9 @@
       "order": 46,
       "index": 251,
       "compilerUri": "main.dart.js_122.part.js",
-      "nativeHash": "V8LOMgPxFe/WWiIz10vHooR64V0=",
-      "bytes": 15115,
-      "sha256": "b3336d937e3797fba92e7e581faf7168050c678d62e127491f9aaeedd86681da"
+      "nativeHash": "pYm7moQ7eUHihZcQ7db8Q0gdQOo=",
+      "bytes": 15117,
+      "sha256": "e23314481afe574627a974bdb9d0eeeb51066f0b31d5b0f5a4a41dcb4caf8d1d"
     },
     {
       "order": 47,
@@ -404,17 +404,17 @@
       "order": 48,
       "index": 462,
       "compilerUri": "main.dart.js_105.part.js",
-      "nativeHash": "cBGaZpX5MDRr56aERkXB+1/RRe0=",
+      "nativeHash": "HmyE0u7jZaMWv+Osu2DS5GC9mRE=",
       "bytes": 1050,
-      "sha256": "9cf31942ee7602b9f79620f961461359d1345c43ae9c535a3857be44d4021fc4"
+      "sha256": "36c67fa8fbb8493df49240e03e43362f2e2085af38654e682c670116a50bbd52"
     },
     {
       "order": 49,
       "index": 440,
       "compilerUri": "main.dart.js_162.part.js",
-      "nativeHash": "kRC8LFOT9oWuQD7s2JZxHK4u6xk=",
+      "nativeHash": "28Yp1SO7bpS0KB2XlTyFDs54u3s=",
       "bytes": 317,
-      "sha256": "d4758e320f56e7eae1eaf8158c42538fcc70d2a32097e5eaa3515a70e7ca4594"
+      "sha256": "8e20da572c957a690e30359ddd37515d7ab6f546d17e371236b136a83c1778c1"
     },
     {
       "order": 50,
@@ -428,9 +428,9 @@
       "order": 51,
       "index": 269,
       "compilerUri": "main.dart.js_106.part.js",
-      "nativeHash": "9Y2t0NG6Dr2bURLDl2ZjnKkrGJo=",
+      "nativeHash": "fDAA7ZCu9qmqq+rF8E/Ac//Rqdw=",
       "bytes": 802,
-      "sha256": "ad31110b5f1d99387de3ff5283bf506032d1fbbb538970c785b7e018300da512"
+      "sha256": "d2696cf05e03606a7b474f7d05f0f46c9bad3f2af8a7544b8a220cf65a4bccab"
     },
     {
       "order": 52,
@@ -444,25 +444,25 @@
       "order": 53,
       "index": 557,
       "compilerUri": "main.dart.js_80.part.js",
-      "nativeHash": "e724KB6vv26sChKOLI44w/2HGxw=",
-      "bytes": 22379,
-      "sha256": "6821b89cc204e3c90c65aa1a7af768a34d2c2814b6daf48182f027b1af8c7074"
+      "nativeHash": "EUHSv36E0ac/c10BBDKCo1A0HkI=",
+      "bytes": 24059,
+      "sha256": "7713cdc4663fbb31dc1b1918236bb1b88ba70dc5d3b9d690e16be1ea99d919dc"
     },
     {
       "order": 54,
       "index": 558,
       "compilerUri": "main.dart.js_138.part.js",
-      "nativeHash": "ZALTHDeZhXMIIPpDM9XUsUq93pc=",
+      "nativeHash": "i2WEr6lVFQ7j0F2I1dOD7ozhsyU=",
       "bytes": 721,
-      "sha256": "07a09a5e92db1f68f92027d6ece59fd98c4fdfe999eb2ad240793582351c1b03"
+      "sha256": "d20fcfe88083c9f9f7bdb48570472e4ce621fd272de3484899f445859f177c3c"
     },
     {
       "order": 55,
       "index": 548,
       "compilerUri": "main.dart.js_102.part.js",
-      "nativeHash": "Ye2hmSTN95FQA/37sCB8nGMRKPk=",
+      "nativeHash": "iz6/SiabWhYzBUrmIbEUnSnA6Yg=",
       "bytes": 691,
-      "sha256": "b63189665cddcd3952323f739d02ea1b20969919bfb4c2144542b09db79bf545"
+      "sha256": "ea84acc4e51ad5574cc77ab63643bf2332bf656458e1ecca868338711afec12d"
     },
     {
       "order": 56,
@@ -476,9 +476,9 @@
       "order": 57,
       "index": 340,
       "compilerUri": "main.dart.js_172.part.js",
-      "nativeHash": "7NNUwR+TQ5FQKgk2M/oXi7GQyGQ=",
+      "nativeHash": "xNVIG3v38yEIsjxu3e20mtMQcMY=",
       "bytes": 335,
-      "sha256": "d513e433f6fd65fedf36abf6f0f4f8afefb55bd15174e70df9ba18644bf26836"
+      "sha256": "aecc38ca812aab8ee9fbd8a48ae67c715119d9f176a1ceb5f5832da76c2d7696"
     },
     {
       "order": 58,
@@ -492,17 +492,17 @@
       "order": 59,
       "index": 260,
       "compilerUri": "main.dart.js_119.part.js",
-      "nativeHash": "iseTKD4sFDDU4Y/Mn0FcqMec8+Q=",
+      "nativeHash": "nlInyh6pMHU05XwiRc6u7loykHc=",
       "bytes": 372,
-      "sha256": "eb1506da8c3695948e7c92e986ce333aa330bd2d7ddeef2c1eeae75213a231ac"
+      "sha256": "713a3ac8142a4f7c99ab2527506dd5ed129c908b7a3a76578e98be549c624319"
     },
     {
       "order": 60,
       "index": 559,
       "compilerUri": "main.dart.js_145.part.js",
-      "nativeHash": "sTgcuf8WmLpsdeY+Bt2q3143Xmk=",
+      "nativeHash": "3ND5V0hT+praRpxuBUqlVlatqxk=",
       "bytes": 350,
-      "sha256": "32a2b00a19a6824373e1ced4a55dad29d1929362cbf838d6858a7dba53df1784"
+      "sha256": "88661c21fb86819175ebe5b62bd1c498f648e26bceda206c9303737e25d057fe"
     },
     {
       "order": 61,
@@ -516,17 +516,17 @@
       "order": 62,
       "index": 561,
       "compilerUri": "main.dart.js_96.part.js",
-      "nativeHash": "nM8M3E1/dx3U3inj7XNXoKZMOxc=",
-      "bytes": 12933,
-      "sha256": "646c62ed4e49e6ecd2ad0952680c8d189f19394e55817a5759945a3bc0f14448"
+      "nativeHash": "WVMFayWizTwwmV3JNu5m776HaeM=",
+      "bytes": 13490,
+      "sha256": "cefac23ef707ece19d53404e94bde9f2fb11e1be580bf3b09d4b4b0b9ae18e2e"
     },
     {
       "order": 63,
       "index": 532,
       "compilerUri": "main.dart.js_159.part.js",
-      "nativeHash": "nH7NJArZD5RRqJzNTdMKXvzTiYw=",
+      "nativeHash": "vjQv4E+sFfMM6RNzovbc6o0jKcQ=",
       "bytes": 330,
-      "sha256": "2bf9e707387bb9ebdadee754874ec4fe727eb03a605a9e86817c089aa4b3ce3d"
+      "sha256": "0098ebf417a4b408130f449c4086252c1312b0981c505c4f0bb0b94aa6eb36c2"
     },
     {
       "order": 64,
@@ -540,49 +540,49 @@
       "order": 65,
       "index": 495,
       "compilerUri": "main.dart.js_156.part.js",
-      "nativeHash": "vDTmsgIplBtEdVmZ1dAnyEbPNBU=",
+      "nativeHash": "+7t5lGZW4b0KSnQ3eo1ly2JUiaI=",
       "bytes": 324,
-      "sha256": "aa98be7d9fbd976aaf2c67a8ad12d7d15a9bc163990d1f20f7c737befe3bc0cc"
+      "sha256": "bafe02d0630bb4748898559a4fb5ffedf768db7acaf0af2c418f2d322ea168db"
     },
     {
       "order": 66,
       "index": 449,
       "compilerUri": "main.dart.js_114.part.js",
-      "nativeHash": "NcfE38Ma9bjafsZf1E3Pm8Kt5rU=",
+      "nativeHash": "75ZBCBnBBBX5IEjo5eRoJrf68Ec=",
       "bytes": 330,
-      "sha256": "b2c253cbdfceea814b1658f31f809c17fbc8b950a1bfc34c33a29d180fb23651"
+      "sha256": "f14c2cbaa6d41231922c81865f38d7baba2ad4c121de72c211d98d63023c742d"
     },
     {
       "order": 67,
       "index": 107,
       "compilerUri": "main.dart.js_161.part.js",
-      "nativeHash": "DlgEp2d44dSmTCPy2SnXJ8Sd6GE=",
+      "nativeHash": "ngR1aBp6rB9TWD8UOEPy94IKq1M=",
       "bytes": 318,
-      "sha256": "cc8a537099db1afaa79c744c4dc131086c4db4baf5c9de8fb25bf0ca124ac7ba"
+      "sha256": "7b9abc1bec7e7679daea266fc0dee9cb401172cb8296c3ee9247ff8524e10d7f"
     },
     {
       "order": 68,
       "index": 562,
       "compilerUri": "main.dart.js_99.part.js",
-      "nativeHash": "7ooTzd5ev+gqDQ8/8h7EPXnL7yU=",
+      "nativeHash": "xB8cVFjzCqmzuS4r0HIj41j0FnM=",
       "bytes": 117453,
-      "sha256": "97aef71747417dda430dd43fe3d7785dbc66c4bd7501490df85ebca8460eea9b"
+      "sha256": "91256ed7ff3b1290aaa00feea79f6149f1647ef0ef51107514f140fb4fa50a70"
     },
     {
       "order": 69,
       "index": 11,
       "compilerUri": "main.dart.js_901.part.js",
-      "nativeHash": "TN6Y7NG2bhbPuL4qt3fBVGRyapw=",
+      "nativeHash": "VVRAAzFqtkFparKxQOM0JC9sRMY=",
       "bytes": 406,
-      "sha256": "aed58d1a6235234a864294597463bcc6c3d2a820ac2c0724d799e7ea55770d6d"
+      "sha256": "4c0759942afad93cb3adc5bab7bcce2ec62324205ef5b5a39b5ac50e944ae637"
     },
     {
       "order": 70,
       "index": 14,
       "compilerUri": "main.dart.js_904.part.js",
-      "nativeHash": "JpJ8vhaoXncxw8JrBUPb5JpJxGY=",
+      "nativeHash": "e0EGqUFTBhpiVhcyNiUlVN0y9aM=",
       "bytes": 713404,
-      "sha256": "bec7f08f4499f4015100ac4a31132a49c1310800f445baa652889f7287345164"
+      "sha256": "c7f5b0b5ccf90b0afe2934cae162e8e2975712f088124af85b6fd5fa48ad4b58"
     }
   ],
   "semantics": "Exact compiler bytes; initializer registration only. Original loadLibrary owns initialization. compilerUri fields describe build inputs, not runtime URLs."

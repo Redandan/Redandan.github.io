@@ -1,3 +1,155 @@
+/* Public, ephemeral product reading. All account and commerce actions stay in the app. */
+(() => {
+  'use strict';
+  window.createAgoraProductDetail = ({root, api, locale, headersReady, retired, openNative, goHome, nativeUnavailable=()=>false}) => {
+    const panel=document.createElement('section');
+    panel.className='hs-detail';panel.hidden=true;panel.setAttribute('aria-label','商品詳情');
+    panel.innerHTML='<header class="hs-detail-header"><button data-detail-back aria-label="返回商品列表">←</button><span>商品詳情</span></header><div class="hs-detail-scroll" tabindex="-1"></div><footer class="hs-detail-footer"><button data-detail-native>檢視完整選項與購買</button><span role="status" aria-live="polite"></span></footer>';
+    root.appendChild(panel);
+    const content=panel.querySelector('.hs-detail-scroll'),button=panel.querySelector('[data-detail-native]'),notice=panel.querySelector('[role="status"]');
+    const reads=new Map(),metrics=[];
+    let selected=null,epoch=0,stopped=false,nativeFailed=false,nativePending=false,imageTimer=null;
+    const cancelImageTimer=()=>{clearTimeout(imageTimer);imageTimer=null;};
+    const alive=()=>!stopped&&!retired();
+    const current=(id,version)=>alive()&&selected===id&&epoch===version;
+    const node=(tag,value,cls)=>{const e=document.createElement(tag);if(value!=null)e.textContent=String(value);if(cls)e.className=cls;return e;};
+    const imageUrl=value=>{try{const u=new URL(value);return u.protocol==='https:'?u.href:'';}catch{return '';}};
+    const valid=p=>p&&Number.isSafeInteger(p.id)&&typeof p.title==='string'&&p.title.trim().length>0;
+    const canonical=o=>JSON.stringify(Object.entries(o).map(([k,v])=>[k.toLowerCase(),v]).sort(([a],[b])=>a.localeCompare(b)));
+    function get(id,{retry=false}={}) {
+      if(!alive())return Promise.resolve(null);
+      if(!retry&&reads.has(id))return reads.get(id).promise;
+      reads.get(id)?.controller.abort();
+      const entry={at:null,body:null,used:false,controller:new AbortController()};
+      reads.set(id,entry);
+      entry.promise=(async()=>{
+        const headers=await headersReady;
+        if(!alive()||reads.get(id)!==entry)return null;
+        entry.headers=headers;
+        const timeout=setTimeout(()=>entry.controller.abort(),12000);
+        try {
+          const response=await fetch(`${api}/products/${id}`,{method:'GET',credentials:'omit',priority:'high',headers,signal:entry.controller.signal});
+          if(!response.ok)throw Error(response.status===404?'not-found':'unavailable');
+          const body=await response.json();
+          if(!alive()||reads.get(id)!==entry)return null;
+          if(!valid(body)||body.id!==id)throw Error('invalid-product');
+          entry.body=body;entry.at=performance.now();return body;
+        } finally {clearTimeout(timeout);}
+      })();
+      // A native read can join the same promise, including while it is pending.
+      entry.promise.catch(()=>{});
+      return entry.promise;
+    }
+    function readable(id,version,image) {
+      if(!current(id,version)||document.visibilityState!=='visible')return;
+      if(image&&(!image.complete||image.naturalWidth<=0))return;
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        if(!current(id,version)||panel.dataset.ready==='true'||(image&&image.naturalWidth<=0))return;
+        panel.dataset.ready='true';
+        const mark={type:'readable',id,at:performance.now(),image:!!image};metrics.push(mark);
+        window.dispatchEvent(new CustomEvent('agora-html-detail-readable',{detail:JSON.stringify(mark)}));
+      }));
+    }
+    function showProduct(p,id,version) {
+      if(!current(id,version))return;
+      cancelImageTimer();delete panel.dataset.imageError;delete panel.dataset.ready;
+      const title=p.translationAvailable&&p.localizedTitle||p.title;
+      const description=String(p.translationAvailable&&p.localizedDescription||p.description||'').trim();
+      const body=node('article',null,'hs-detail-content');
+      const photos=(Array.isArray(p.imageUrls)?p.imageUrls:[]).map((value,index)=>({src:imageUrl(value),index})).filter(p=>p.src);
+      let firstImage=null;
+      if(photos.length){
+        const image=node('img',null,'hs-detail-photo');image.alt=title;image.width=600;image.height=600;image.decoding='async';image.fetchPriority='high';image.src=photos[0].src;
+        let settled=false,recovery=null,retried=false;
+        const showRecovery=failed=>{
+          if(settled||!current(id,version)||!image.isConnected)return;
+          cancelImageTimer();
+          recovery?.remove();
+          recovery=node('div',null,'hs-detail-image-error');
+          recovery.appendChild(node('p',failed?'商品圖片暫時無法顯示':'商品圖片仍在載入，你可以繼續閱讀或重試圖片。'));
+          const retry=node('button','重新載入圖片');retry.addEventListener('click',()=>{if(current(id,version))showProduct(p,id,version);});recovery.appendChild(retry);
+          if(failed){settled=true;image.replaceWith(recovery);image.removeAttribute('src');}
+          else image.after(recovery);
+          panel.dataset.imageError='true';
+        };
+        image.addEventListener('load',()=>{
+          if(settled||!current(id,version)||!image.isConnected)return;
+          settled=true;cancelImageTimer();recovery?.remove();delete panel.dataset.imageError;readable(id,version,image);
+        },{once:true});
+        image.addEventListener('error',()=>{
+          if(settled||!current(id,version)||!image.isConnected)return;
+          if(retried){showRecovery(true);return;}
+          retried=true;metrics.push({type:'image-retry',id,at:performance.now()});
+          const src=image.currentSrc||image.src;image.removeAttribute('src');
+          setTimeout(()=>{if(!settled&&current(id,version)&&image.isConnected)image.src=src;},250);
+        });
+        // A slow connection is still allowed to finish. Do not discard its
+        // downloaded bytes or mistake a timeout for a decoded, painted image.
+        imageTimer=setTimeout(()=>showRecovery(false),12000);
+        image.dataset.readingAnchor='image';image.dataset.imageIndex=String(photos[0].index);firstImage=image;body.appendChild(image);
+      }else body.appendChild(node('div','商品未提供圖片','hs-detail-image-empty'));
+      const heading=node('h1',title);heading.dataset.readingAnchor='title';body.appendChild(heading);
+      const price=typeof p.priceUsdt==='number'?p.priceUsdt:p.price;
+      body.appendChild(node('p','商品標示金額','hs-detail-note'));
+      body.appendChild(node('p',Number.isFinite(price)?`${price.toFixed(2)} USDT`:'請於完整商品頁確認價格','hs-detail-price'));
+      if(Number.isFinite(p.stock))body.appendChild(node('p',`商品庫存資料：${p.stock}`,'hs-detail-stock'));
+      body.appendChild(node('h2','商品說明'));
+      // Descriptions are untrusted API text; never execute embedded markup.
+      const paragraph=node('p',description||'此商品未提供說明。','hs-detail-description');if(description)paragraph.dataset.readingAnchor='description';body.appendChild(paragraph);
+      body.appendChild(node('p','規格、資格及最新購買條件請於完整商品頁確認。','hs-detail-note'));
+      for(const {src,index} of photos.slice(1)){
+        const image=node('img',null,'hs-detail-extra-photo');image.src=src;image.loading='lazy';image.decoding='async';image.alt=title;image.width=600;image.height=600;image.dataset.readingAnchor='image';image.dataset.imageIndex=String(index);body.appendChild(image);
+      }
+      content.replaceChildren(body);content.scrollTop=0;button.disabled=nativePending;notice.textContent=nativePending?'正在開啟完整商品頁…':nativeFailed?'完整商品頁暫時無法開啟，你仍可閱讀商品或重試。':'';
+      readable(id,version,firstImage);
+    }
+    async function open(id,{retry=false}={}) {
+      if(!alive()||!Number.isSafeInteger(id)||id<=0)return;
+      for(const [other,entry] of reads)if(other!==id){entry.controller.abort();reads.delete(other);}
+      cancelImageTimer();const version=++epoch;selected=id;panel.hidden=false;root.dataset.view='detail';
+      panel.dataset.productId=String(id);delete panel.dataset.ready;delete panel.dataset.imageError;
+      nativePending=false;nativeFailed=!!nativeUnavailable();notice.textContent=nativeFailed?'完整商品頁暫時無法開啟，你仍可閱讀商品或重試。':'';button.disabled=false;button.textContent=nativeFailed?'重新開啟完整商品頁':'檢視完整選項與購買';
+      content.replaceChildren(node('p','正在讀取商品詳情…','hs-detail-loading'));content.scrollTop=0;
+      try {
+        const product=await get(id,{retry});if(product)showProduct(product,id,version);
+      } catch(error) {
+        if(!current(id,version))return;
+        const errorView=node('div',null,'hs-detail-error');
+        errorView.appendChild(node('h1',error.message==='not-found'?'找不到商品':'商品詳情暫時無法載入'));
+        const retryButton=node('button','重試');retryButton.addEventListener('click',()=>open(id,{retry:true}));errorView.appendChild(retryButton);content.replaceChildren(errorView);
+      }
+    }
+    panel.querySelector('[data-detail-back]').addEventListener('click',()=>goHome());
+    button.addEventListener('click',()=>{if(!alive()||selected==null||nativePending)return;nativePending=true;button.disabled=true;notice.textContent='正在開啟完整商品頁…';openNative(selected,nativeFailed);});
+    const visible=()=>{if(selected!=null&&panel.querySelector('.hs-detail-content'))readable(selected,epoch,panel.querySelector('.hs-detail-photo'));};
+    document.addEventListener('visibilitychange',visible);
+    return {
+      open,metrics,
+      get selected(){return selected;},
+      close(){cancelImageTimer();++epoch;selected=null;panel.hidden=true;delete root.dataset.view;},
+      prepared(id){if(selected!==id)return;nativeFailed=false;if(!nativePending){button.textContent='檢視完整選項與購買';notice.textContent='';}},
+      failed(){nativeFailed=true;nativePending=false;button.disabled=false;button.textContent='重新開啟完整商品頁';notice.textContent='完整商品頁暫時無法開啟，你仍可閱讀商品或重試。';},
+      async read(q){
+        if(!alive()||q.method!=='GET'||q.body)return null;
+        const u=new URL(q.url),match=u.pathname.match(/^\/api\/products\/([1-9]\d*)$/);
+        if(u.origin!=='https://agoramarketapi.purrtechllc.com'||u.search||!match)return null;
+        const id=Number(match[1]),entry=reads.get(id);
+        if(!entry||entry.used||selected!==id)return null;
+        const expected=await headersReady;
+        if(canonical(q.headers||{})!==canonical(expected))return null;
+        try {
+          const body=await entry.promise;
+          if(!body||!alive()||selected!==id||entry.used||reads.get(id)!==entry)return null;
+          if(performance.now()-entry.at>30000){entry.used=true;metrics.push({type:'read-expired',id,at:performance.now()});return null;}
+          entry.used=true;metrics.push({type:'read-adopted',id,at:performance.now()});return JSON.stringify(body);
+        }catch{return null;}
+      },
+      retire(){cancelImageTimer();stopped=true;++epoch;document.removeEventListener('visibilitychange',visible);for(const entry of reads.values())entry.controller.abort();reads.clear();},
+    };
+  };
+})();
+
+/* AGORA_HTML_STOREFRONT_MAIN */
 /* Opt-in HTML public catalogue. Product actions are queued for existing Flutter handlers. */
 (() => {
   'use strict';
@@ -8,7 +160,18 @@
   };
   // The first candidate follows the existing Traditional Chinese storefront.
   const locale = preference('language') || 'zh-TW';
-  if(locale!=='zh-TW')return;
+  if(locale!=='zh-TW'){window.__AGORA_HTML_STARTUP_GATE__?.release('unsupported-locale');return;}
+  // Read key presence only, never account values. Public HTML stays available
+  // for signed-in visitors while their unchanged SDK selects its own session.
+  function anonymousContext() {
+    try {
+      for(let i=0;i<localStorage.length;i++) {
+        const key=localStorage.key(i);
+        if(['flutter.auth_token','flutter.refresh_token','access_token','refresh_token'].includes(key) || key?.startsWith('agora.webSession'))return false;
+      }
+      return true;
+    } catch { return false; }
+  }
   const maxAge = 5 * 60 * 1000;
   const root = document.createElement('section');
   root.id = 'html-storefront'; root.setAttribute('aria-label', '商品列表');
@@ -37,8 +200,20 @@
   const scroll = root.querySelector('.hs-scroll');
   const status = root.querySelector('.hs-status');
   let revision = 0, pointer = false, lastMotion = 0, intent = null;
+  let publicModel = null;
   let flutterModel = null, prepared = null, timer = null, committed = false, reconciling = false, explicitReset = false;
-  let priorityId = null, detailReadyId = null;
+  let priorityId = null, detailReadyId = null, detailPrepared = null;
+  let detailPreview = null;
+  let engineFailed = !!window.__AGORA_STARTUP_RESOURCE_ERROR__;
+  let detailHistoryOwned = false;
+  let readsRetired = false;
+  const catalogueControllers = new Set();
+  function retireReads() {
+    readsRetired=true;
+    for(const controller of catalogueControllers)controller.abort();
+    catalogueControllers.clear();detailPreview?.retire();
+  }
+  let primaryPaintReported = false;
   const prepareRetryLimit=8;
   let prepareRevision=null,prepareAttempts=0;
   let homeRestore = null, homeRestoreTimer = null;
@@ -76,6 +251,19 @@
       if(p.stock<=0 && !(p.sales>0))sales.classList.add('hs-unavailable');info.appendChild(sales);
     }
     a.appendChild(info);
+    if(i<2 && src) {
+      // Do not compete with the first product image or delay its first paint.
+      const report=()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        if(primaryPaintReported || committed || !a.isConnected ||
+           !img.complete || img.naturalWidth<=0 || document.visibilityState!=='visible')return;
+        const bounds=a.getBoundingClientRect(),viewport=scroll.getBoundingClientRect();
+        if(bounds.top<viewport.top || bounds.bottom>viewport.bottom)return;
+        primaryPaintReported=true;timing.primaryPaint=performance.now();
+        send('primary-paint',{protocol:2});
+      }));
+      img.addEventListener('load',report,{once:true});
+      if(img.complete && img.naturalWidth>0)report();
+    }
     return a;
   }
   function anchor() {
@@ -84,9 +272,61 @@
     const first=cards.find(e=>e.getBoundingClientRect().bottom>top+8);
     return {anchorId:first?Number(first.dataset.productId):null,anchorTop:first?.getBoundingClientRect().top??null};
   }
+  function detailAnchor() {
+    const viewport=root.querySelector('.hs-detail-scroll');
+    if(!viewport || viewport.scrollTop<1 || intent?.preview===false)return {kind:'start',top:0};
+    const bounds=viewport.getBoundingClientRect();
+    // Flutter global positions are local to its view, not the document. The
+    // host can have an iOS safe-area offset or a CSS viewport transform.
+    const host=flutterRoot?.querySelector('flutter-view')||flutterRoot;
+    const frame=host?.getBoundingClientRect(),height=host?.clientHeight;
+    const appTop=y=>frame?.height>0&&height>0?(y-frame.top)*height/frame.height:y;
+    const nodes=[...viewport.querySelectorAll('[data-reading-anchor]')];
+    const visible=nodes.filter(e=>{const r=e.getBoundingClientRect();return Math.min(r.bottom,bounds.bottom)-Math.max(r.top,bounds.top)>=24;});
+    // Preserve the latest visible reading passage, rather than a pixel count
+    // through unrelated native shipping/seller/access panels.
+    const focus=(bounds.top+bounds.bottom)/2;
+    const e=visible.find(e=>e.dataset.readingAnchor==='image' && e.getBoundingClientRect().top<=focus && e.getBoundingClientRect().bottom>focus) ||
+      visible.find(e=>e.dataset.readingAnchor==='description') ||
+      visible.find(e=>e.dataset.readingAnchor==='title') ||
+      visible.find(e=>e.getBoundingClientRect().bottom>bounds.top+24);
+    if(!e)return null;
+    const r=e.getBoundingClientRect(),kind=e.dataset.readingAnchor;
+    if(kind==='image') {
+      const y=Math.max(r.top,Math.min(r.bottom,Math.max(bounds.top,r.top)+Math.min(100,(Math.min(bounds.bottom,r.bottom)-Math.max(bounds.top,r.top))/2)));
+      return {kind,top:appTop(y),imageIndex:Number(e.dataset.imageIndex),fraction:(y-r.top)/r.height};
+    }
+    const text=e.firstChild;if(!text || text.nodeType!==Node.TEXT_NODE || !text.length)return null;
+    let hash=2166136261;for(let i=0;i<text.length;i++)hash=Math.imul(hash^text.data.charCodeAt(i),16777619)>>>0;
+    let character=0;
+    if(r.top<bounds.top) {
+      const x=r.left+Math.min(8,r.width/2),y=bounds.top+Math.min(16,(Math.min(r.bottom,bounds.bottom)-bounds.top)/2);
+      const caret=document.caretPositionFromPoint?.(x,y),range=!caret&&document.caretRangeFromPoint?.(x,y);
+      if(caret?.offsetNode===text)character=caret.offset;
+      else if(range?.startContainer===text)character=range.startOffset;
+    }
+    character=Math.min(character,text.length-1);
+    const range=document.createRange();range.setStart(text,character);range.setEnd(text,character+(text.data.codePointAt(character)>0xffff?2:1));
+    const top=range.getBoundingClientRect().top;
+    return {kind,top:appTop(top),character,textHash:hash};
+  }
+  function matchingDetailAnchor(a,b) {
+    if(!a || !b || a.kind!==b.kind || (a.character||0)!==(b.character||0) ||
+        (a.textHash||0)!==(b.textHash||0) || (a.imageIndex||0)!==(b.imageIndex||0) ||
+        Math.abs((a.fraction||0)-(b.fraction||0))>=0.00001)return false;
+    if(a.kind!=='image')return Math.abs(a.top-b.top)<=2;
+    // A vertical photo stack becomes a carousel. Require the same selected
+    // photo and a visible reading point, without an artificial leading gap.
+    if(a.positionPolicy!=='image-visible' || !['top','fraction','imageTop','imageBottom','viewportTop','viewportBottom'].every(k=>Number.isFinite(a[k])) ||
+        !Number.isInteger(a.imageIndex) || a.viewportBottom<=a.viewportTop || a.imageBottom<=a.imageTop)return false;
+    const visible=Math.min(a.imageBottom,a.viewportBottom)-Math.max(a.imageTop,a.viewportTop);
+    return a.top>=a.viewportTop-2 && a.top<=a.viewportBottom+2 && a.imageTop<=a.viewportTop+24 &&
+      visible>=Math.min(24,a.viewportBottom-a.viewportTop);
+  }
   function capture() {
     return {protocol:2, revision, ...anchor(), offset:scroll.scrollTop, busy:pointer || performance.now()-lastMotion<250 || reconciling,
-      width:innerWidth,height:innerHeight,intent,explicitReset};
+      width:innerWidth,height:innerHeight,intent,explicitReset,
+      detailOffset:root.querySelector('.hs-detail-scroll')?.scrollTop||0,detailAnchor:detailAnchor()};
   }
   metrics.homeRestores=[];metrics.homeRestoreCancellations=[];
   window.__AGORA_HTML_STOREFRONT__={
@@ -110,17 +350,24 @@
     },
   };
   function send(type, payload) { window.dispatchEvent(new CustomEvent(`agora-html-${type}`,{detail:JSON.stringify(payload)})); }
+  const nativeAction=()=>intent && ['search','filter','favorite','cart','chat','tab','category'].includes(intent.type);
   function request() {
     clearTimeout(timer); if(committed)return;
     timer=setTimeout(()=>{
       if(intent?.type==='product') {
         send('priority',capture());
         if(flutterModel)send('prepare',capture());
+        if(detailReadyId===intent.id)send('prepare-detail',capture());
         commitWhenVisible();request();
       }
-      else if(!capture().busy && flutterModel) {
+      else if(!capture().busy && (flutterModel || nativeAction())) {
         // A busy/stale/missing-anchor attempt can return without prepared.
         // Retry the same stable view finitely; never relax geometry or reset it.
+        // Downloading the engine is not a failed native handoff attempt.
+        // Keep the latest click queued until its receiver can actually paint.
+        if(nativeAction()&&!document.body.classList.contains('flutter-ready')) {
+          send('prepare',capture());request();return;
+        }
         if(prepared?.revision===revision){commitWhenVisible();return;}
         if(prepareRevision!==revision){prepareRevision=revision;prepareAttempts=0;}
         if(prepareAttempts>=prepareRetryLimit){showContinue('已保留目前瀏覽位置。');return;}
@@ -131,6 +378,11 @@
   }
   function render(model, source) {
     if(committed)return;
+    if(source==='flutter'&&!anonymousContext()){
+      if(!publicModel)return;
+      model={...publicModel,featuredExtent:model.featuredExtent,mainExtent:model.mainExtent};
+    }
+    if(source!=='flutter')publicModel=model;
     const before=anchor(), offset=scroll.scrollTop;
     const featured=(model.recommendations||[]).filter(validProduct).slice(0,4);
     const featuredIds=new Set(featured.map(p=>p.id));
@@ -170,14 +422,20 @@
       else fallback();
     }); status.appendChild(button);
   }
-  function fallback() {
+  function fallback(keepRoute=false) {
     const url=new URL(location.href);url.searchParams.delete('htmlStorefront');
-    if(intent?.type==='product')url.hash=`/products/${intent.id}`;
+    url.searchParams.set('htmlStorefront','0');
+    if(!keepRoute&&intent?.type==='product')url.hash=`/products/${intent.id}`;
     location.replace(url.href);
   }
   function queue(next) {
+    if(next.type==='product' && detailPreview && next.preview!==false){
+      next={...next,preview:true};
+      if(location.hash!==`#/products/${next.id}`){history.pushState({...history.state,agoraHtmlProduct:next.id},'',`#/products/${next.id}`);detailHistoryOwned=true;}
+      if(detailPreview.selected!==next.id)detailPreview.open(next.id);
+    }
     const sameProduct=next.type==='product' && intent?.type==='product' && next.id===intent.id;
-    intent=next; revision++; prepared=null;
+    intent=next; revision++; prepared=null;detailPrepared=null;
     // A repeated tap changes the quiet-period revision, not the loaded route.
     if(!sameProduct)detailReadyId=null;
     metrics.intents.push({...next,at:performance.now()});
@@ -198,8 +456,14 @@
   window.addEventListener('resize',()=>{revision++;prepared=null;lastMotion=performance.now();request();});
   function receive(event) { try{return JSON.parse(event.detail);}catch{return null;} }
   window.addEventListener('agora-html-catalog',event=>{
-    const model=receive(event);if(!model || committed)return;
+    let model=receive(event);if(!model || committed)return;
     flutterModel=model;timing.flutterCatalog=performance.now();
+    if(!anonymousContext() && !model.failed) {
+      // Layout extents may be reconciled, but account-specific product data
+      // must never replace the independently fetched public reading model.
+      if(!publicModel)return;
+      model={...publicModel,featuredExtent:model.featuredExtent,mainExtent:model.mainExtent};
+    }
     if(model.failed) {showContinue('商品暫時無法更新。');return;}
     if(intent?.type==='product')return;
     // Do not move a card under a finger or during momentum scrolling.
@@ -211,11 +475,16 @@
   });
   function commitWhenVisible() {
     const detail=intent?.type==='product';
+    // The HTML reader is temporary. Reveal the fully painted native detail
+    // automatically, after it has restored the current reading offset.
+    if(detail && detailPreview && (detailPrepared?.revision!==revision || detailPrepared.id!==intent.id ||
+        !matchingDetailAnchor(detailPrepared.anchor,detailAnchor())))return;
     if(committed || !document.body.classList.contains('flutter-ready') || capture().busy)return;
     if(detail ? detailReadyId!==intent.id || priorityId!==intent.id : !prepared || prepared.revision!==revision)return;
     const expected=revision;
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
       if(expected!==revision || capture().busy || committed)return;
+      if(detail && detailPreview && !matchingDetailAnchor(detailPrepared?.anchor,detailAnchor())){detailPrepared=null;request();return;}
       // Commit while the bridge is active; Flutter validates the latest revision.
       if(detail && (detailReadyId!==intent?.id || priorityId!==intent?.id))return;
       if(!detail)send('commit',{revision,intent});
@@ -229,8 +498,9 @@
         },60000);
       }
       committed=true;timing.handoff=performance.now();
+      retireReads();
       root.remove();document.documentElement.setAttribute('data-agora-html-storefront','complete');
-      if(detail)send('restore-home',homeRestore);
+      if(detail){send('restore-home',homeRestore);send('detail-committed',{id:intent.id,revision});}
       if(flutterRoot)flutterRoot.inert=false;
       clearTimeout(timer);observer.disconnect();imageObserver?.disconnect();
       window.removeEventListener('pointerup',release);window.removeEventListener('pointercancel',release);
@@ -239,6 +509,10 @@
   window.addEventListener('agora-html-prepared',event=>{
     if(intent?.type==='product')return;
     const value=receive(event);if(!value || value.revision!==revision)return;
+    if(nativeAction()) {
+      if(value.intentReady!==true)return;
+      prepared=value;metrics.preparations.push(value);commitWhenVisible();return;
+    }
     // An aligned first card is insufficient: every visible row must line up.
     const visible=[...root.querySelectorAll('[data-product-id]')].filter(e=>{const r=e.getBoundingClientRect();return r.bottom>0 && r.top<innerHeight-84;});
     const deltas=visible.map(e=>{
@@ -256,6 +530,7 @@
   window.addEventListener('agora-html-route-started',event=>{
     const value=receive(event);if(!value || value.id!==intent?.id)return;
     priorityId=value.id;timing.detailRoute=performance.now();
+    commitWhenVisible();
   });
   window.addEventListener('agora-html-route-cancelled',()=>{
     priorityId=null;detailReadyId=null;
@@ -263,33 +538,44 @@
     request();
   });
   window.addEventListener('agora-html-detail-ready',event=>{
-    const value=receive(event);if(!value || value.id!==intent?.id || priorityId!==value.id)return;
-    detailReadyId=value.id;timing.detailPainted=performance.now();
+    const value=receive(event);if(!value || value.id!==intent?.id)return;
+    detailReadyId=value.id;timing.detailPainted=performance.now();detailPreview?.prepared(value.id);
     // The URL now identifies the real detail route. Re-enter the existing
     // non-home reveal gate only after its image/content/access controls paint.
     window.dispatchEvent(new Event('agora-startup-reveal-request'));
     commitWhenVisible();
   });
-  window.addEventListener('agora-html-detail-failed',event=>{
-    const value=receive(event);if(value?.id===intent?.id && intent?.type==='product')showContinue('商品暫時無法開啟。');
+  window.addEventListener('agora-html-detail-prepared',event=>{
+    const value=receive(event);
+    if(intent?.type!=='product' || value?.id!==intent.id || value.revision!==revision ||
+        !Number.isFinite(value.offset) || value.offset<0 || capture().busy ||
+        !matchingDetailAnchor(value.anchor,detailAnchor()))return;
+    detailPrepared=value;commitWhenVisible();
   });
+  root.addEventListener('scroll',event=>{
+    if(!event.target.matches?.('.hs-detail-scroll'))return;
+    lastMotion=performance.now();revision++;detailPrepared=null;request();
+  },true);
+  window.addEventListener('agora-html-detail-failed',event=>{
+    const value=receive(event);if(value?.id===intent?.id && intent?.type==='product'){
+      detailPreview?.failed();showContinue('商品暫時無法開啟。');
+    }
+  });
+  window.addEventListener('agora-startup-failed',()=>{engineFailed=true;detailPreview?.failed();});
   const observer=new MutationObserver(commitWhenVisible);observer.observe(document.body,{attributes:true,attributeFilter:['class']});
   window.addEventListener('hashchange',()=>{
+    if(detailPreview && !committed){
+      const match=location.hash.match(/^#\/products\/([1-9]\d*)$/);
+      if(match){if(intent?.id!==Number(match[1]))queue({type:'product',id:Number(match[1])});return;}
+      if(/^(?:#\/?home)?\/?$/.test(location.hash)&&detailPreview.selected!=null){detailPreview.close();intent=null;revision++;startHomeReads();send('priority',capture());request();return;}
+    }
     if(priorityId && location.hash===`#/products/${priorityId}`)return;
     if(priorityId && /^(?:#\/?home)?\/?$/.test(location.hash)) {
       intent=null;revision++;send('priority',capture());return;
     }
     if(!committed && !/^(?:#\/?home)?\/?$/.test(location.hash)) {intent=null;fallback();}
   });
-  setTimeout(()=>{if(!committed)showContinue('完整商店仍在載入，你可以繼續瀏覽。');},25000);
-  // Only anonymous public responses are cached. Flutter/account data never enter this cache.
-  try {
-    const raw=localStorage.getItem(cacheKey);
-    if(raw && raw.length<=256*1024) {
-      const cached=JSON.parse(raw),age=Date.now()-cached.savedAt;
-      if(cached.schema===1 && cached.api===api && cached.locale===locale && age>=0 && age<maxAge)render(cached.model,'snapshot');
-    }
-  }catch{}
+  setTimeout(()=>{if(!committed){showContinue('完整商店仍在載入，你可以繼續瀏覽。');if(!document.body.classList.contains('flutter-ready')&&!detailReadyId){engineFailed=true;detailPreview?.failed();}}},25000);
   // Match the normal SDK's unfiltered first-page request, including its null
   // fields. Unknown future fields, filters, auth or device contexts fail closed.
   const searchBody=Object.fromEntries('page size startDate endDate keyword sortBy sortDirection id sellerId status category postalCode longitude latitude tag inStock productType sourceRegion sourcePlatform viewerCountryCode locale'.split(' ').map(k=>[k,k==='page'?1:k==='size'?10:null]));
@@ -324,21 +610,36 @@
     return headers;
   }
   const headersReady=publicHeaders();
+  if(typeof window.createAgoraProductDetail==='function'){
+    detailPreview=window.createAgoraProductDetail({root,api,locale,headersReady,retired:()=>committed||readsRetired,
+      nativeUnavailable:()=>!document.body.classList.contains('flutter-ready')&&(engineFailed||!!window.__AGORA_STARTUP_RESOURCE_ERROR__),
+      openNative:(id,retry)=>{if(retry)fallback();else queue({type:'product',id,preview:false});},
+      goHome:()=>{if(detailHistoryOwned){history.back();}else{location.hash='/home';}},
+    });
+    window.__AGORA_HTML_STOREFRONT__.detailMetrics=detailPreview.metrics;
+    const entry=location.hash.match(/^#\/products\/([1-9]\d*)$/);
+    if(entry)queue({type:'product',id:Number(entry[1])});
+  }
   window.__AGORA_HTML_STOREFRONT__.read=async raw=>{
     try {
-      if(committed)return null;
+      if(!anonymousContext())return null;
+      if(committed||readsRetired)return null;
       const q=JSON.parse(raw),url=new URL(q.url),h=Object.fromEntries(Object.entries(q.headers||{}).map(([k,v])=>[k.toLowerCase(),v]));
+      if(detailPreview && /^\/api\/products\/[1-9]\d*$/.test(url.pathname)){
+        const body=await detailPreview.read(q);return anonymousContext()?body:null;
+      }
       const kind=url.href===`${api}/products/search`&&q.method==='POST'&&canonical(JSON.parse(q.body))===canonical(searchBody)?'search':
         url.origin+url.pathname===`${api}/products/recommendations`&&q.method==='GET'&&url.searchParams.size===2&&url.searchParams.get('scene')==='HOME'&&url.searchParams.get('limit')==='12'?'recs':null;
       if(!kind || consumed.has(kind))return null;
       const expected=Object.fromEntries(Object.entries(await headersReady).map(([k,v])=>[k.toLowerCase(),v]));
+      if(committed||readsRetired)return null;
       if(kind==='search')expected['content-type']='application/json; charset=utf-8';
       const actual={...h};if(actual['content-type']==='application/json')actual['content-type']='application/json; charset=utf-8';
       if(canonical(actual)!==canonical(expected)){
         metrics.shareMisses.push({kind,reason:'request-context',fields:[...new Set([...Object.keys(actual),...Object.keys(expected)])].filter(k=>actual[k]!==expected[k])});return null;
       }
       const entry=await Promise.race([fresh.get(kind),new Promise(r=>setTimeout(()=>r(null),200))]);
-      if(!entry || consumed.has(kind) || committed || performance.now()-entry.at>30000)return null;
+      if(!entry || !anonymousContext() || consumed.has(kind) || committed || readsRetired || performance.now()-entry.at>30000)return null;
       consumed.add(kind);metrics.sharedReads.push({kind,at:performance.now()});return JSON.stringify(entry.body);
     }catch{return null;}
   };
@@ -364,19 +665,43 @@
       render(model,'network');
     });
   }
-  for(const [kind,path,method,body] of [['search','/products/search','POST',searchBody],['recs','/products/recommendations?scene=HOME&limit=12','GET',null]]) {
-    const read=headersReady.then(async headers=>{
-      const controller=new AbortController(),deadline=setTimeout(()=>controller.abort(),12000);
-      try {
-        const response=await fetch(api+path,{credentials:'omit',method,headers:body?{...headers,'Content-Type':'application/json; charset=utf-8'}:headers,body:body?JSON.stringify(body):undefined,signal:controller.signal});
-        if(!response.ok)throw Error(`${kind}-${response.status}`);
-        const result=await response.json();if(kind==='search')livePage=result;else liveRecs=result;
-        paintLive();return {body:result,at:performance.now()};
-      }finally{clearTimeout(deadline);}
-    }).catch(error=>{metrics.failures.push(String(error));if(timing.htmlProducts===null)showContinue('商品正在載入。');return null;});
-    fresh.set(kind,read);
+  let homeReadsStarted=false;
+  function startHomeReads() {
+    if(homeReadsStarted||committed||readsRetired)return;
+    homeReadsStarted=true;
+    // Only anonymous public responses are cached. Flutter/account data never enter this cache.
+    try {
+      const raw=localStorage.getItem(cacheKey);
+      if(raw && raw.length<=256*1024) {
+        const cached=JSON.parse(raw),age=Date.now()-cached.savedAt;
+        if(cached.schema===1 && cached.api===api && cached.locale===locale && age>=0 && age<maxAge)render(cached.model,'snapshot');
+      }
+    }catch{}
+    for(const [kind,path,method,body] of [['search','/products/search','POST',searchBody],['recs','/products/recommendations?scene=HOME&limit=12','GET',null]]) {
+      const read=headersReady.then(async headers=>{
+        if(committed||readsRetired)return null;
+        const controller=new AbortController(),deadline=setTimeout(()=>controller.abort(),12000);
+        catalogueControllers.add(controller);
+        try {
+          const response=await fetch(api+path,{credentials:'omit',method,headers:body?{...headers,'Content-Type':'application/json; charset=utf-8'}:headers,body:body?JSON.stringify(body):undefined,signal:controller.signal});
+          if(!response.ok)throw Error(`${kind}-${response.status}`);
+          const result=await response.json();if(kind==='search')livePage=result;else liveRecs=result;
+          if(committed||readsRetired)return null;
+          paintLive();return {body:result,at:performance.now()};
+        }finally{clearTimeout(deadline);catalogueControllers.delete(controller);}
+      }).catch(error=>{if(!committed&&!readsRetired){metrics.failures.push(String(error));if(timing.htmlProducts===null)showContinue('商品正在載入。');}return null;});
+      fresh.set(kind,read);
+    }
   }
+  // A direct product visit needs its detail and image first. Fetch the home
+  // catalogue only when the visitor actually opens the list.
+  if(intent?.type!=='product')startHomeReads();
   // CSS/script may finish after a cached Flutter startup. Its existing home
   // listener rebuilds handoff keys and republishes any completed catalog.
   send('mounted',capture());
+  window.addEventListener('pagehide',event=>{if(!event.persisted)retireReads();});
+  window.addEventListener('pageshow',event=>{if(event.persisted&&!committed&&readsRetired)fallback(true);});
+  window.addEventListener('storage',event=>{
+    if(event.key===null||['flutter.auth_token','flutter.refresh_token','access_token','refresh_token','flutter.language'].includes(event.key)||event.key.startsWith('agora.webSession')){retireReads();fallback(true);}
+  });
 })();

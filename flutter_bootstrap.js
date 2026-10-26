@@ -33,7 +33,7 @@ addEventListener("message", eventListener);
 if (!window._flutter) {
   window._flutter = {};
 }
-_flutter.buildConfig = {"engineRevision":"425cfb54d01a9472b3e81d9e76fd63a4a44cfbcb","builds":[{"compileTarget":"dart2js","renderer":"canvaskit","mainJsPath":"main.dart.1.0.1993.js"},{}]};
+_flutter.buildConfig = {"engineRevision":"425cfb54d01a9472b3e81d9e76fd63a4a44cfbcb","builds":[{"compileTarget":"dart2js","renderer":"canvaskit","mainJsPath":"main.dart.js"},{}]};
 
 
 // Start Flutter inside the viewport host that index.html sizes for Telegram.
@@ -60,7 +60,21 @@ function reportStartupFailure(error) {
 const rendererUrl = new URL('canvaskit.wasm',
   new URL(flutterConfig.canvasKitBaseUrl, document.baseURI)).href;
 const originalFetch = window.fetch;
+// Release builds insert an integrity-pinned binary manifest here. Ordinary
+// flutter run keeps the existing local renderer behavior.
+const startupResourceConfig = /* AGORA_STARTUP_RESOURCE_CONFIG_START */ {"mirrorBase":"https://raw.githubusercontent.com/Redandan/Redandan.github.io/3f1cd8a0472b02a70a22eca75224ae0233be8800/","mirrorCommit":"3f1cd8a0472b02a70a22eca75224ae0233be8800","resources":[{"asset":"canvaskit/canvaskit.wasm","sha256":"42e392d69fd05a8540cb1b2cd9b88ab2115659c9378c136d1377b3595e703839","bytes":7155824,"contentType":"application/wasm"},{"asset":"assets/assets/fonts/agora-cjk.9db2981893f9.ttf","sha256":"9db2981893f967060e318d78d5c9d277a6228ecddc6fae65ae2238c276cbe0a4","bytes":6132344,"contentType":"font/ttf"},{"asset":"assets/assets/fonts/agora-han-supplement.122ab7574d87.ttf","sha256":"122ab7574d878e936fc2261446e11badeb5e02733b55be93761f183c693316b7","bytes":4221416,"contentType":"font/ttf"},{"asset":"assets/assets/fonts/agora-thai.9823987121fe.ttf","sha256":"9823987121fee585b7dfbc72512bc6380f980f99e9dd509d96aa0fb5955308b0","bytes":17220,"contentType":"font/ttf"},{"asset":"assets/assets/fonts/roboto.4c1ba107cc1c.ttf","sha256":"4c1ba107cc1c355ca07b9afd1bc0c13cae0356051787b307df9f82ce520fd683","bytes":168260,"contentType":"font/ttf"}],"mirrorReady":true,"mirrorStatus":"PASS","idleTimeoutMs":6000,"hedgeDelayMs":8000,"totalTimeoutMs":90000,"fontManifest":[{"family":"MaterialIcons","fonts":[{"asset":"fonts/MaterialIcons-Regular.otf"}]},{"family":"packages/cupertino_icons/CupertinoIcons","fonts":[{"asset":"packages/cupertino_icons/assets/CupertinoIcons.ttf"}]},{"family":"Roboto","fonts":[{"asset":"assets/fonts/roboto.4c1ba107cc1c.ttf","weight":400}]}]} /* AGORA_STARTUP_RESOURCE_CONFIG_END */;
+const startupResources = window.__AGORA_STARTUP_RESOURCES__ || (startupResourceConfig && window.AgoraStartupResources
+  ? window.AgoraStartupResources.create(startupResourceConfig,
+      originalFetch.bind(window), document.baseURI, reportStartupFailure)
+  : null);
+if (startupResources) {
+  window.__AGORA_STARTUP_RESOURCE_TIMING__ = startupResources.events;
+  startupResources.start();
+}
 function fetchStartupResource(input) {
+  if (startupResources && startupResources.handles(input, arguments[1])) {
+    return startupResources.fetch(input, arguments[1]);
+  }
   const result = originalFetch.apply(this, arguments);
   const url = typeof input === 'string' || input instanceof URL ? String(input) : input.url;
   if (new URL(url, document.baseURI).href !== rendererUrl) return result;
@@ -74,12 +88,14 @@ function fetchStartupResource(input) {
 }
 window.fetch = fetchStartupResource;
 function releaseStartupFetch() {
+  startupResources?.release();
   if (window.fetch === fetchStartupResource) window.fetch = originalFetch;
 }
 window.addEventListener('agora-startup-visible', releaseStartupFetch, { once: true });
 window.addEventListener('agora-startup-failed', releaseStartupFetch, { once: true });
 
 try {
+  if (window.__AGORA_STARTUP_RESOURCE_ERROR__) throw window.__AGORA_STARTUP_RESOURCE_ERROR__;
   Promise.resolve(_flutter.loader.load({
     config: flutterConfig,
     onEntrypointLoaded: async function(engineInitializer) {

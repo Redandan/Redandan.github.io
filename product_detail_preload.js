@@ -19,6 +19,7 @@
       if(!painted || started || !active())return;
       started=true;
       global.removeEventListener('agora-html-primary-paint',paint);
+      global.removeEventListener('agora-html-detail-readable',detailPaint);
       document.removeEventListener('visibilitychange',start);
       const script=document.createElement('script');
       script.src=new URL(config.asset,document.baseURI).href;
@@ -37,7 +38,20 @@
       try{if(JSON.parse(event.detail).protocol!==2)return;}catch{return;}
       painted=true;start();
     }
+    function detailPaint(event) {
+      try {
+        const signal=JSON.parse(event.detail);
+        const snapshot=JSON.parse(global.__AGORA_HTML_STOREFRONT__?.capture()||'null');
+        if(signal.type!=='readable' || !Number.isSafeInteger(signal.id) || signal.id<=0 ||
+           snapshot?.protocol!==2 || snapshot.intent?.type!=='product' ||
+           snapshot.intent.preview!==true || snapshot.intent.id!==signal.id)return;
+      } catch { return; }
+      // Direct links do not render home cards. Wait for their real detail
+      // reading event before spending bandwidth on the unchanged native code.
+      painted=true;start();
+    }
     global.addEventListener('agora-html-primary-paint',paint);
+    global.addEventListener('agora-html-detail-readable',detailPaint);
     document.addEventListener('visibilitychange',start);
     return state;
   }

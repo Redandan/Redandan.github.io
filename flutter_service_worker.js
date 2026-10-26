@@ -8,7 +8,7 @@
 
 'use strict';
 
-const BUILD_VERSION = '75676c4592c1';
+const BUILD_VERSION = '4d3dc02ab644';
 const LEGACY_FLUTTER_CACHES = new Set([
   'flutter-app-cache',
   'flutter-temp-cache',
@@ -16,6 +16,7 @@ const LEGACY_FLUTTER_CACHES = new Set([
 ]);
 
 function isStaleRuntimeCache(key) {
+  if (key.startsWith('agora-buyer-static:')) return false;
   return key.startsWith('agora-') || LEGACY_FLUTTER_CACHES.has(key);
 }
 

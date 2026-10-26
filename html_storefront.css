@@ -61,3 +61,25 @@ html[data-agora-html-storefront="active"] #loading-screen { visibility: hidden; 
 #html-storefront[data-theme="dark"] .hs-sales { color: #b0b0b0; }
 #html-storefront[data-theme="dark"] .hs-skeleton { background: #242424; }
 #html-storefront[data-theme="dark"] .hs-category[aria-pressed="true"] { background: #253a55 !important; color: #b6d2ff !important; }
+.hs-detail[hidden] { display: none; }
+.hs-detail { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--hs-bg); padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+.hs-detail-header { display: flex; align-items: center; gap: 12px; flex: 0 0 52px; padding: 0 12px; border-bottom: 1px solid var(--hs-line); font-weight: 600; }
+.hs-detail-header button { width: 44px; font-size: 24px !important; }
+.hs-detail-scroll { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; touch-action: pan-y; }
+.hs-detail-content { max-width: 650px; margin: auto; overflow-wrap: anywhere; }
+.hs-detail-photo,.hs-detail-extra-photo { display: block; width: 100%; height: auto; object-fit: contain; background: var(--hs-card); }
+.hs-detail-photo { aspect-ratio: 1; }
+.hs-detail-content h1 { font-size: 22px; line-height: 1.4; margin: 16px; }
+.hs-detail-content h2 { font-size: 17px; margin: 24px 16px 8px; }
+.hs-detail-content p { margin: 12px 16px; }
+.hs-detail-description { white-space: pre-wrap; }
+.hs-detail-price { font-size: 24px; font-weight: 700; color: var(--hs-primary); }
+.hs-detail-stock,.hs-detail-note { color: var(--hs-muted); }
+.hs-detail-footer { flex-shrink: 0; padding: 10px 16px; background: var(--hs-card); border-top: 1px solid var(--hs-line); }
+.hs-detail-footer button { width: 100%; background: #1565c0 !important; color: white !important; border-radius: 8px; padding: 12px; font-weight: 600 !important; }
+.hs-detail-footer button:disabled { opacity: .65; cursor: progress; }
+.hs-detail-footer [role="status"] { display: block; font-size: 12px; text-align: center; margin-top: 4px; }
+.hs-detail-loading,.hs-detail-error,.hs-detail-image-empty,.hs-detail-image-error { padding: 24px 16px; }
+.hs-detail-error button,.hs-detail-image-error button { color: var(--hs-primary) !important; border: 1px solid var(--hs-line) !important; padding: 8px 24px; border-radius: 8px; }
+#html-storefront[data-view="detail"] > .hs-scroll,#html-storefront[data-view="detail"] > .hs-nav,#html-storefront[data-view="detail"] > .hs-status { visibility: hidden; }
+#html-storefront[data-theme="dark"] .hs-detail-price { color: #a5c8ff; }

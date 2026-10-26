@@ -1,0 +1,127 @@
+<!doctype html>
+<html data-agora-entry="buyer" lang="zh-Hant" data-theme="light">
+<head><script>try{sessionStorage.setItem("agora_entry_presentation","buyer");}catch{}</script><base href="/buyer/">
+  <meta charset="utf-8">
+  <meta name="referrer" content="strict-origin">
+  <script id="web-session-oauth-entry">
+    // Runs before resource loaders and analytics. The callback proof belongs
+    // only to this document: never persist it or recover it from a saved URL.
+    (function () {
+      'use strict';
+      var keys = ['webSessionVersion', 'bindingVersion', 'flowId', 'completionCode'];
+      function bindingMarked(url) {
+        var fragment = url.hash.slice(1);
+        var split = fragment.indexOf('?');
+        return url.searchParams.has('bindingVersion') ||
+          new URLSearchParams(split < 0 ? fragment : fragment.slice(split + 1)).has('bindingVersion');
+      }
+      function marked(url) {
+        var fragment = url.hash.slice(1);
+        var split = fragment.indexOf('?');
+        var hash = new URLSearchParams(split < 0 ? fragment : fragment.slice(split + 1));
+        return keys.some(function (key) { return url.searchParams.has(key) || hash.has(key); });
+      }
+      var current = new URL(window.location.href);
+      var direct = marked(current);
+      var saved = false;
+      var binding = bindingMarked(current);
+      try {
+        var savedPath = sessionStorage.getItem('_404_redirect_path');
+        saved = !!savedPath && marked(new URL(savedPath, current.origin));
+        if (!direct && saved) binding = bindingMarked(new URL(savedPath, current.origin));
+        if (direct || saved) sessionStorage.removeItem('_404_redirect_path');
+      } catch (_) {}
+      if (!direct && !saved) return;
+
+      var callback = {status: 'invalid'};
+      var params = current.searchParams;
+      var exact = direct && current.origin === 'https://agoramarket.purrtechllc.com' &&
+        current.pathname === '/oauth2-callback' && !current.hash &&
+        Array.from(params.keys()).every(function (key) { return keys.indexOf(key) >= 0; }) &&
+        params.getAll(binding ? 'bindingVersion' : 'webSessionVersion').length === 1 &&
+        params.get(binding ? 'bindingVersion' : 'webSessionVersion') === '2' &&
+        !params.has(binding ? 'webSessionVersion' : 'bindingVersion') &&
+        params.getAll('flowId').length === 1 &&
+        /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(params.get('flowId') || '') &&
+        params.getAll('completionCode').length <= 1;
+      if (exact && !params.has('completionCode')) {
+        callback = {status: 'providerFailure', flowId: params.get('flowId')};
+      } else if (exact && /^[A-Za-z0-9_-]{43}$/.test(params.get('completionCode') || '')) {
+        callback = {status: 'ready', flowId: params.get('flowId'), completionCode: params.get('completionCode')};
+      }
+      // Drop the full URL, query and browser history state before any later
+      // loader can inspect them. Even invalid input is never given to legacy.
+      try {
+        window.history.replaceState(null, '', '/oauth2-callback');
+      } catch (_) {
+        callback = {status: 'invalid'};
+        window.location.replace('/index.html?' + (binding ? 'bindingVersion' : 'webSessionVersion') + '=2');
+      }
+      if (binding) callback.purpose = 'binding';
+      current = params = savedPath = null;
+      Object.defineProperty(window, '__AGORA_WEB_SESSION_OAUTH_ENTRY__', {value: true});
+      Object.defineProperty(window, '__AGORA_WEB_SESSION_BINDING_ENTRY__', {value: binding});
+      Object.defineProperty(window, '__AGORA_TAKE_WEB_SESSION_OAUTH__', {
+        value: function () {
+          if (binding) return null;
+          var value = callback;
+          callback = null;
+          return value === null ? null : JSON.stringify(value);
+        }
+      });
+      Object.defineProperty(window, '__AGORA_TAKE_WEB_SESSION_BINDING__', {
+        value: function () {
+          if (!binding) return null;
+          var value = callback;
+          callback = null;
+          return value === null ? null : JSON.stringify(value);
+        }
+      });
+      function discard() { callback = null; }
+      window.addEventListener('pagehide', discard);
+      window.addEventListener('popstate', discard);
+      window.addEventListener('hashchange', discard);
+    })();
+  </script>
+  <script id="buyer-legacy-oauth-entry">
+  (()=>{'use strict';
+    if(window.__AGORA_WEB_SESSION_OAUTH_ENTRY__||window.__AGORA_WEB_SESSION_BINDING_ENTRY__)return;
+    let url=new URL(location.href),proof=null;
+    if(url.pathname!=='/oauth2-callback'||(!url.searchParams.has('tokenId')&&!url.searchParams.has('error')))return;
+    const params=url.searchParams,token=params.get('tokenId');
+    proof={status:'invalid'};
+    if(!url.hash&&!params.has('error')&&Array.from(params.keys()).every(k=>k==='tokenId')&&params.getAll('tokenId').length===1&&/^[A-Za-z0-9_-]{16,256}$/.test(token||''))proof={status:'ready',tokenId:token};
+    try{history.replaceState(null,'','/oauth2-callback');}catch{proof={status:'invalid'};}
+    url=null;
+    Object.defineProperty(window,'__AGORA_BUYER_LEGACY_OAUTH_ENTRY__',{value:true});
+    // The marker carries purpose only. Its original account is checked by the
+    // SDK adapter before confirmation; a stale marker must never become login.
+    try{if(sessionStorage.getItem('agora_buyer_legacy_google_binding_v1')!==null)Object.defineProperty(window,'__AGORA_BUYER_LEGACY_BINDING_ENTRY__',{value:true});}catch{Object.defineProperty(window,'__AGORA_BUYER_LEGACY_BINDING_ENTRY__',{value:true});}
+    Object.defineProperty(window,'__AGORA_TAKE_BUYER_LEGACY_OAUTH__',{value:()=>{const value=proof;proof=null;return value===null?null:JSON.stringify(value);}});
+    for(const event of['pagehide','popstate','hashchange'])addEventListener(event,()=>{proof=null;});
+  })();
+  </script>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f8f9fa">
+  <script>(()=>{try{const read=(k,d)=>JSON.parse(localStorage.getItem('flutter.'+k))??d;const dark=read('system_theme',true)?matchMedia('(prefers-color-scheme: dark)').matches:read('dark_mode',false);document.documentElement.dataset.theme=dark?'dark':'light';document.querySelector('meta[name=theme-color]').content=dark?'#0a0a0a':'#f8f9fa';}catch{}})();</script>
+  <meta name="source-commit" content="4d3dc02ab64415185210b43a9de82c17479f7485">
+  <meta name="app-version" content="1.0.5038">
+  <meta name="app-build-number" content="5038">
+  <meta name="application-name" content="AgoraMarket 買家">
+  <title>AgoraMarket｜買家</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="./assets/4d3dc02ab644/app.css">
+  <script type="module" src="./assets/4d3dc02ab644/app.js"></script>
+</head>
+<body>
+  <div id="buyer-app">
+    <header id="buyer-header"><a href="#/" class="brand">AgoraMarket<span>買家</span></a></header>
+    <main id="buyer-main" tabindex="-1" aria-live="polite"><div class="loading" role="status">正在載入商品…</div></main>
+    <nav id="buyer-nav" aria-label="主要導覽"></nav>
+  </div>
+  <div id="buyer-toast" role="status" hidden></div>
+  <noscript>請開啟 JavaScript 以瀏覽商品與使用購物功能。</noscript>
+</body>
+</html>

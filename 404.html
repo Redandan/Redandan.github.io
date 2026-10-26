@@ -1,70 +1,91 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="referrer" content="strict-origin">
-  <title>Redirecting...</title>
-  <script>
-    // GitHub Pages SPA 路由支持
-    // 将所有 404 请求重定向到 index.html，让 Flutter 路由系统处理
-    (function() {
-      var path = window.location.pathname;
-      var search = window.location.search;
-      var hash = window.location.hash;
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="referrer" content="strict-origin"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="version" content="1.0.5038+5038"><meta name="source-commit" content="4d3dc02ab64415185210b43a9de82c17479f7485"><title>AgoraMarket</title><link rel="manifest" href="/manifest.json"><style>html{margin:0;background:#f8f9fa;color:#1a1a1a;font:16px/1.5 system-ui}body{margin:0;background:inherit;color:inherit}body{padding:max(20px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}a{color:inherit}</style><script>try{const r=(k,d)=>JSON.parse(localStorage.getItem('flutter.'+k))??d,dark=r('system_theme',true)?matchMedia('(prefers-color-scheme: dark)').matches:r('dark_mode',false);if(dark){document.documentElement.style.background='#0a0a0a';document.documentElement.style.color='#f0f0f0';}}catch{}</script></head><body><p id="entry-status" role="status">正在開啟 AgoraMarket…</p><a href="/buyer/">開啟買家首頁</a><script>globalThis.__AGORA_SPLIT_ENTRY__={"source_commit":"4d3dc02ab64415185210b43a9de82c17479f7485","documents":{"buyer":"6563c83fd5d2d6133b917ada21a559f02cf9a5f59bc0d2859fc945e17c484bdc","flutter":"c39f98d879dbdb399d5f997d5cfd34d83a3511775a224adc20b995a1d4f5d999"}};
+/* Public entry routing only. Presentation hints never select an account, grant
+ * a role, copy credentials, or change the backend's original authorization. */
+(function(root){
+ 'use strict';
+ const proofKeys=['webSessionVersion','bindingVersion','flowId','completionCode','tokenId'];
+ function parts(raw,origin){
+  if(typeof raw!=='string'||!raw.startsWith('/')||raw.startsWith('//')||raw.includes('\\')||/[\x00-\x1f\x7f]/.test(raw))return null;
+  let segments;try{segments=raw.split('?')[0].split('/').map(decodeURIComponent);}catch{return null;}
+  if(segments.some(p=>p==='.'||p==='..'||p.includes('/')||p.includes('\\')||/[\x00-\x1f\x7f]/.test(p)))return null;
+  let route;try{route=new URL(raw,origin);}catch{return null;}
+  if(route.origin!==origin||route.hash)return null;
+  return route;
+ }
+ function classify(href,presentation){
+  const url=new URL(href),fragment=url.hash.slice(1),split=fragment.indexOf('?'),hashQuery=new URLSearchParams(split<0?fragment:fragment.slice(split+1));
+  const proof=proofKeys.some(k=>url.searchParams.has(k)||hashQuery.has(k));
+  // Proof stays in this one canonical callback document until its original
+  // inline parser takes it. It is never copied to a new URL or storage.
+  if(url.pathname==='/oauth2-callback'||proof){return {kind:'callback',presentation:presentation==='flutter'?'flutter':'buyer',invalidPath:url.pathname!=='/oauth2-callback'||!!url.hash};}
+  const raw=fragment||url.pathname+url.search,route=parts(raw,url.origin);
+  if(!route)return {kind:'buyer',route:'/'};
+  const segments=route.pathname.split('/').filter(Boolean);
+  if(['admin','seller','delivery'].includes(segments[0])||(segments[0]==='tg'&&segments[1]==='group'&&segments[2]==='admin')||route.pathname==='/support/workbench')return {kind:'flutter',route:route.pathname+route.search};
+  return {kind:'buyer',route:normalizeBuyerRoute(route.pathname+route.search,url.origin)};
+ }
+ function normalizeBuyerRoute(raw,origin){
+  const route=parts(raw,origin);if(!route)return '/';let path=route.pathname;
+  if(path==='/index.html'||path==='/buyer'||path==='/buyer/'||path==='/buyer/index.html')path='/';
+  path=path.replace(/^\/store\/(\d+)$/, '/stores/$1').replace(/^\/preview\/products\/(\d+)$/, '/products/$1').replace(/^\/preview\/store\/(\d+)$/, '/stores/$1').replace(/^\/storefront\/home\/(\d+)$/, '/stores/$1/home');
+  // AddAddressRoute is now a dedicated editor, preserving its legacy URL.
+  if(/^\/address\/add\/?$/.test(path)){path='/addresses';route.searchParams.set('new','1');}
+  if(path==='/avatar-edit'){path='/profile/edit';route.searchParams.set('avatar','1');}
+  const aliases={'/edit-profile':'/profile/edit','/avatar-edit':'/profile/edit','/address':'/addresses','/address/add':'/addresses','/account-bindings':'/bindings','/creator-subscriptions':'/subscriptions','/web-push-settings':'/settings/notifications','/wallet/stake-form':'/wallet/stake','/chats':'/chat','/help/chatgpt-mcp':'/help/mcp','/help/mcp-tools':'/help/mcp'};
+  path=aliases[path]||path;
+  path=path.replace(/^\/orders\/([^/]+)\/rating$/,'/orders/$1/review');
+  const afterSales=path.match(/^\/orders\/([^/]+)\/(refund(?:\/(request|review|shipping))?|dispute\/request)$/);
+  if(afterSales){path='/orders/'+afterSales[1]+(afterSales[3]==='review'?'':'/return');if(afterSales[3]!=='review')route.searchParams.set('kind',afterSales[2]==='dispute/request'?'OPEN_DISPUTE':afterSales[3]==='shipping'?'UPDATE_RETURN_SHIPPING':'REQUEST_RETURN');}
+  return path+route.search;
+ }
+ function buyerLocation(href){
+  const input=new URL(href),decision=classify(href);
+  if(decision.kind!=='buyer')throw Error('Only ordinary buyer entries may navigate');
+  const target=new URL('/buyer/',input.origin),language=input.searchParams.get('lang')?.trim();
+  // Carry only the supported presentation parameter. Callback proofs and
+  // arbitrary query data never travel through this ordinary navigation.
+  if(/^(?:zh(?:[-_](?:TW|CN|Hant|Hans))?|en(?:[-_]US)?|th(?:[-_]TH)?)$/i.test(language||''))target.searchParams.set('lang',language);
+  target.hash=decision.route;
+  return target.pathname+target.search+target.hash;
+ }
+ root.AgoraBuyerEntry=Object.freeze({classify,normalizeBuyerRoute,buyerLocation});
+})(typeof globalThis!=='undefined'?globalThis:window);
 
-      // Pages is not a v2 callback origin. Do not copy a one-time proof into
-      // sessionStorage or forward it through the generic SPA redirect.
-      var fragment = hash.slice(1);
-      var split = fragment.indexOf('?');
-      var query = new URLSearchParams(search);
-      var fragmentQuery = new URLSearchParams(split < 0 ? fragment : fragment.slice(split + 1));
-      if (['webSessionVersion', 'bindingVersion', 'flowId', 'completionCode'].some(function (key) {
-        return query.has(key) || fragmentQuery.has(key);
-      })) {
-        try { sessionStorage.removeItem('_404_redirect_path'); } catch (_) {}
-        try { window.history.replaceState(null, '', '/oauth2-callback'); } catch (_) {}
-        var binding = query.has('bindingVersion') || fragmentQuery.has('bindingVersion');
-        window.location.replace('/index.html?' + (binding ? 'bindingVersion' : 'webSessionVersion') + '=2');
-        return;
-      }
-      
-      // 防止循环重定向：检查是否已经包含 /index.html
-      if (path.indexOf('/index.html') !== -1) {
-        // 如果路径已经包含 index.html，说明已经重定向过了
-        // 提取原始路径（去掉 /index.html 前缀）
-        var originalPath = path.replace(/\/index\.html/g, '');
-        if (!originalPath) {
-          originalPath = '/';
-        }
-        
-        // 保存原始路径到 sessionStorage，供 Flutter 应用使用
-        try {
-          sessionStorage.setItem('_404_redirect_path', originalPath + search + hash);
-        } catch (e) {
-          console.error('Failed to save redirect path:', e);
-        }
-        
-        // 直接重定向到 /index.html，不带任何路径
-        window.location.replace('/index.html');
-        return;
-      }
-      
-      // 第一次访问：保存原始路径和查询参数
-      try {
-        var fullPath = path + search + hash;
-        sessionStorage.setItem('_404_redirect_path', fullPath);
-      } catch (e) {
-        console.error('Failed to save redirect path:', e);
-      }
-      
-      // 直接重定向到 /index.html（不带路径，避免循环）
-      window.location.replace('/index.html');
-    })();
-  </script>
-  <noscript><meta http-equiv="refresh" content="0; url=/index.html"></noscript>
-</head>
-<body>
-  <p>Redirecting to <a href="/index.html">home page</a>...</p>
-</body>
-</html>
+/* Generated root/404 loader. Ordinary buyer entries navigate to /buyer/;
+ * only explicit management routes load the preserved Flutter document. */
+(async()=>{
+ 'use strict';
+ const config=globalThis.__AGORA_SPLIT_ENTRY__,key='agora_entry_presentation';let hint;
+ try{hint=sessionStorage.getItem(key);}catch{}
+ const decision=AgoraBuyerEntry.classify(location.href,hint);
+ async function replaceDocument(kind){
+  const source=kind==='flutter'?'/flutter.html':'/buyer/index.html';
+  const response=await fetch(source,{cache:'no-store',credentials:'omit',referrerPolicy:'strict-origin'});
+  if(!response.ok)throw Error('Entry document unavailable');
+  if(new URL(response.url).origin!==location.origin)throw Error('Entry origin changed');
+  const bytes=await response.arrayBuffer(),hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),v=>v.toString(16).padStart(2,'0')).join('');
+  if(!config||hash!==config.documents[kind])throw Error('Entry version changed');
+  const html=new TextDecoder().decode(bytes);
+  if(!html.includes('data-agora-entry="'+kind+'"'))throw Error('Entry document invalid');
+  try{sessionStorage.setItem(key,kind);}catch{}
+  // These bytes are the same-origin build artifact. No URL, proof or account
+  // data is interpolated into HTML; its original inline callback parser runs.
+  document.open();document.write(html);document.close();
+ }
+ try{
+  if(decision.kind==='callback'){
+   // Drop every supplied proof on a noncanonical path before presenting a
+   // definite invalid entry. The sentinel lacks the required flow/code.
+   if(decision.invalidPath){history.replaceState(null,'','/oauth2-callback?webSessionVersion=2');await replaceDocument('buyer');return;}
+   await replaceDocument(decision.presentation);return;
+  }
+  try{sessionStorage.removeItem('_404_redirect_path');}catch{}
+  if(decision.kind==='flutter'){await replaceDocument('flutter');return;}
+  try{sessionStorage.setItem(key,'buyer');}catch{}
+  location.replace(AgoraBuyerEntry.buyerLocation(location.href));
+ }catch{
+  const target=document.querySelector('#entry-status');if(target)target.textContent='入口暫時無法載入，請重新整理或開啟買家首頁。';
+ }
+})();
 
+</script></body></html>

@@ -196,6 +196,9 @@
       : stateValue.status === 'pending'
         ? `上一局 ${stateValue.amount} USDT 的結果尚未確認。先查詢結果；如需重試，將使用原本的同一局。`
         : '目前無法確認上一局的結果。請重新查詢後再繼續遊戲。';
+    if (stateValue.status === 'pending' && stateValue.retryAvailable === false) {
+      text.textContent = `上一局 ${stateValue.amount} USDT 的結果尚未確認。目前無法查詢原回合收據，請聯絡客服並保留操作編號：${stateValue.operationId}`;
+    }
     card.append(text);
     const button = (label, action) => {
       const b = document.createElement('button'); b.type = 'button'; b.textContent = label;
@@ -213,7 +216,7 @@
       });
     } else {
       button('重新查詢結果', () => _recoverSpin());
-      if (stateValue.status === 'pending') {
+      if (stateValue.status === 'pending' && stateValue.retryAvailable !== false) {
         button(`重試同一局（${stateValue.amount} USDT）`, () => _recoverSpin(stateValue.operationId));
       }
     }

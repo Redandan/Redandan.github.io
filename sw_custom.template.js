@@ -16,6 +16,7 @@ const LEGACY_FLUTTER_CACHES = new Set([
 ]);
 
 function isStaleRuntimeCache(key) {
+  if (key.startsWith('agora-buyer-static:')) return false;
   return key.startsWith('agora-') || LEGACY_FLUTTER_CACHES.has(key);
 }
 
