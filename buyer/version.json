@@ -1,10 +1,10 @@
 {
   "app_name": "agora_buyer_html",
-  "version": "1.0.5042",
-  "build_number": "5042",
-  "source_commit": "86a308f8d454102ff622cc0f9e80ff34fe6cc2ae",
+  "version": "1.0.5043",
+  "build_number": "5043",
+  "source_commit": "2b437579b6eab67c08a95d49c77c699849210b1d",
   "source_dirty": false,
-  "asset_path": "assets/86a308f8d454",
+  "asset_path": "assets/2b437579b6ea",
   "web_session_flags": {
     "AGORA_WEB_SESSION_V2_ENABLED": false,
     "AGORA_WEB_SESSION_V2_RECOVERY_AVAILABLE": false,
