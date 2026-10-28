@@ -1,4 +1,4 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="referrer" content="strict-origin"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="version" content="1.0.5039+5039"><meta name="source-commit" content="cf38601049e1348d9d26e7d96b44150e27bb62d6"><title>AgoraMarket</title><link rel="manifest" href="/manifest.json"><style>html{margin:0;background:#f8f9fa;color:#1a1a1a;font:16px/1.5 system-ui}body{margin:0;background:inherit;color:inherit}body{padding:max(20px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}a{color:inherit}</style><script>try{const r=(k,d)=>JSON.parse(localStorage.getItem('flutter.'+k))??d,dark=r('system_theme',true)?matchMedia('(prefers-color-scheme: dark)').matches:r('dark_mode',false);if(dark){document.documentElement.style.background='#0a0a0a';document.documentElement.style.color='#f0f0f0';}}catch{}</script></head><body><p id="entry-status" role="status">正在開啟 AgoraMarket…</p><a href="/buyer/">開啟買家首頁</a><script>globalThis.__AGORA_SPLIT_ENTRY__={"source_commit":"cf38601049e1348d9d26e7d96b44150e27bb62d6","documents":{"buyer":"a352c5416662230f2ef3af47391ba7b6bc0cac0836fae9e11ff24d52ff3e0974","flutter":"faac1498d55df8f23db34ca7e8bc3ddc589f168e3136df730777aad56f18e0e7"}};
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="referrer" content="strict-origin"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="version" content="1.0.5040+5040"><meta name="source-commit" content="c7c030b371585a74e241e346e8b4e6a636b3be10"><title>AgoraMarket</title><link rel="manifest" href="/manifest.json"><style>html{margin:0;background:#f8f9fa;color:#1a1a1a;font:16px/1.5 system-ui}body{margin:0;background:inherit;color:inherit}body{padding:max(20px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}a{color:inherit}</style><script>try{const r=(k,d)=>JSON.parse(localStorage.getItem('flutter.'+k))??d,dark=r('system_theme',true)?matchMedia('(prefers-color-scheme: dark)').matches:r('dark_mode',false);if(dark){document.documentElement.style.background='#0a0a0a';document.documentElement.style.color='#f0f0f0';}}catch{}</script></head><body><p id="entry-status" role="status">正在開啟 AgoraMarket…</p><a href="/buyer/">開啟買家首頁</a><script>globalThis.__AGORA_SPLIT_ENTRY__={"source_commit":"c7c030b371585a74e241e346e8b4e6a636b3be10","documents":{"buyer":"9ae72b83bfc77281aedeafcce4f49eda39c7eb9c20d8ac98218f93ba97930df4","flutter":"7a40f83223b71dd853727af6b763c1cd0dabb00823a860faa0e6d74484b9a3ee"}};
 /* Public entry routing only. Presentation hints never select an account, grant
  * a role, copy credentials, or change the backend's original authorization. */
 (function(root){
@@ -38,13 +38,16 @@
   if(afterSales){path='/orders/'+afterSales[1]+(afterSales[3]==='review'?'':'/return');if(afterSales[3]!=='review')route.searchParams.set('kind',afterSales[2]==='dispute/request'?'OPEN_DISPUTE':afterSales[3]==='shipping'?'UPDATE_RETURN_SHIPPING':'REQUEST_RETURN');}
   return path+route.search;
  }
- function buyerLocation(href){
+ function buyerLocation(href,source){
   const input=new URL(href),decision=classify(href);
   if(decision.kind!=='buyer')throw Error('Only ordinary buyer entries may navigate');
   const target=new URL('/buyer/',input.origin),language=input.searchParams.get('lang')?.trim();
   // Carry only the supported presentation parameter. Callback proofs and
   // arbitrary query data never travel through this ordinary navigation.
   if(/^(?:zh(?:[-_](?:TW|CN|Hant|Hans))?|en(?:[-_]US)?|th(?:[-_]TH)?)$/i.test(language||''))target.searchParams.set('lang',language);
+  // A public build identity avoids a stale /buyer/ HTTP document on the
+  // root-to-buyer handoff. It is never taken from arbitrary incoming data.
+  if(typeof source==='string'&&/^[0-9a-f]{40}$/.test(source))target.searchParams.set('__agora_build',source.slice(0,12));
   target.hash=decision.route;
   return target.pathname+target.search+target.hash;
  }
@@ -82,7 +85,7 @@
   try{sessionStorage.removeItem('_404_redirect_path');}catch{}
   if(decision.kind==='flutter'){await replaceDocument('flutter');return;}
   try{sessionStorage.setItem(key,'buyer');}catch{}
-  location.replace(AgoraBuyerEntry.buyerLocation(location.href));
+  location.replace(AgoraBuyerEntry.buyerLocation(location.href,config?.source_commit));
  }catch{
   const target=document.querySelector('#entry-status');if(target)target.textContent='入口暫時無法載入，請重新整理或開啟買家首頁。';
  }
