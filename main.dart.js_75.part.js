@@ -1,23 +1,9 @@
 ((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
-$__dart_deferred_initializers__.current=function(a,b,c,$){var A,C,B={Sz:function Sz(d,e){this.a=d
-this.b=e}}
+$__dart_deferred_initializers__.current=function(a,b,c,$){var A,B,C={
+vD(d,e,f,g,h){var y=null
+return new A.W9(B.bU_,!0,g,y,y,y,h,B.p,y,!1,y,!0,y,new A.ajh(f,d,h,y,y),e)}}
 A=c[0]
-C=c[2]
-B=a.updateHolder(c[244],B)
-B.Sz.prototype={
-p(d,e){var x
-if(e==null)return!1
-if(this!==e)x=e instanceof B.Sz&&e.a===this.a&&e.b===this.b
-else x=!0
-return x},
-gj(d){var x=C.b.gj(this.a),w=C.b.gj(this.b)
-return x+w},
-l(d){return"OrderCancelParam[orderId="+this.a+", reason="+this.b+"]"},
-A(){var x=A.q(y.g,y.b)
-x.h(0,"orderId",this.a)
-x.h(0,"reason",this.b)
-return x}}
-var z=a.updateTypes([]);(function inheritance(){var x=a.inherit
-x(B.Sz,A.B)})()
-var y={g:A.D("n"),b:A.D("@")}};
-(a=>{a["j6t4eC1zLS4ah09NY+7URPH9qrI="]=a.current})($__dart_deferred_initializers__);
+B=c[2]
+C=a.updateHolder(c[234],C)
+var z=a.updateTypes([])};
+(a=>{a["R9+mlVrX8bnnshiF9Q2Q3NGEg8s="]=a.current})($__dart_deferred_initializers__);

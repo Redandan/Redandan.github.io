@@ -1,6 +1,17 @@
 ((a,b)=>{a[b]=a[b]||{}})(self,"$__dart_deferred_initializers__")
-$__dart_deferred_initializers__.current=function(a,b,c,$){var A,B
-A=c[0]
-B=c[569]
-var z=a.updateTypes([]);(function constants(){B.JD=new A.b_(112,16,6,null,null)})()};
-(a=>{a["f/fAV3b96liJ/Dml/wegD74FI/8="]=a.current})($__dart_deferred_initializers__);
+$__dart_deferred_initializers__.current=function(a,b,c,$){var B,C,A={aIZ:function aIZ(d,e,f,g,h,i){var _=this
+_.a=d
+_.b=e
+_.c=f
+_.d=g
+_.e=h
+_.f=i}},D
+B=c[0]
+C=c[2]
+A=a.updateHolder(c[140],A)
+D=c[685]
+A.aIZ.prototype={}
+var z=a.updateTypes([]);(function inheritance(){var y=a.inherit
+y(A.aIZ,B.cu)})()
+B.b0(b.typeUniverse,JSON.parse('{"aIZ":{"cu":["~"]}}'));(function constants(){D.a7Y=new A.aIZ("SecuritySettingsRoute",null,C.ad,C.ad,null,"")})()};
+(a=>{a["Oep83oJKDabB9fq07g82k+ZHxvQ="]=a.current})($__dart_deferred_initializers__);

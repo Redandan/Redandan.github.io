@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html data-agora-entry="flutter" lang="zh-Hant">
-<head><script>try{sessionStorage.setItem("agora_entry_presentation","flutter");}catch{}</script><meta name="source-commit" content="4d3dc02ab64415185210b43a9de82c17479f7485">
+<head><script>try{sessionStorage.setItem("agora_entry_presentation","flutter");}catch{}</script><meta name="source-commit" content="cf38601049e1348d9d26e7d96b44150e27bb62d6">
   <base href="/">
 
   <meta charset="UTF-8">
@@ -117,7 +117,7 @@
   <link rel="alternate" hreflang="en" href="https://agoramarket.purrtechllc.com/marketplace-en.html">
   <link rel="alternate" hreflang="x-default" href="https://agoramarket.purrtechllc.com/">
   <link rel="alternate" type="application/atom+xml" title="Agora Market 最新商品" href="https://agoramarket.purrtechllc.com/feed.xml">
-  <meta name="version" content="1.0.5038+5038">
+  <meta name="version" content="1.0.5039+5039">
   <script id="telegram-sdk-entry-loader">
     // Preserve synchronous SDK/viewport ordering inside Telegram only.
     // A normal browser/PWA must not depend on Telegram's network availability.
@@ -651,8 +651,8 @@
     })();
   </script>
   <!-- Eligible HTML readers start native downloads after their first real paint. -->
-  <link rel="preload" data-agora-startup-href="flutter_bootstrap.4d3dc02ab644.js" as="script">
-  <link rel="preload" data-agora-startup-href="main.dart.4d3dc02ab644.js" as="script" fetchpriority="high">
+  <link rel="preload" data-agora-startup-href="flutter_bootstrap.cf38601049e1.js" as="script">
+  <link rel="preload" data-agora-startup-href="main.dart.cf38601049e1.js" as="script" fetchpriority="high">
   <link rel="preload" data-agora-startup-href="canvaskit/canvaskit.js" as="script" crossorigin="anonymous">
   <script data-agora-startup-resources="true">
 (function(global) {
@@ -1233,69 +1233,7 @@
       #noscript-marketplace .category-link { background: #eaf2ff; color: #003f88; }
     </style>
   </noscript>
-  <script data-agora-product-detail-preload>
-(function(global) {
-  'use strict';
-  // Register only the compiler's existing deferred initializers. Native Dart
-  // still initializes them and owns routing, API decoding and every action.
-  function create(config) {
-    const state={status:'disabled',startedAt:null,loadedAt:null,failedAt:null};
-    if(!config || config.protocol!==1 ||
-       !/^startup-product-detail\.[0-9a-f]{12}\.js$/.test(config.asset||'') ||
-       !/^sha256-[A-Za-z0-9+/]{43}=$/.test(config.integrity||''))return state;
-    state.status='waiting-for-html-paint';
-    let painted=false,started=false;
-    function active() {
-      if(document.visibilityState!=='visible' ||
-         document.documentElement.getAttribute('data-agora-html-storefront')!=='active')return false;
-      try{return JSON.parse(global.__AGORA_HTML_STOREFRONT__?.capture()||'null')?.protocol===2;}
-      catch{return false;}
-    }
-    function start() {
-      if(!painted || started || !active())return;
-      started=true;
-      global.removeEventListener('agora-html-primary-paint',paint);
-      global.removeEventListener('agora-html-detail-readable',detailPaint);
-      document.removeEventListener('visibilitychange',start);
-      const script=document.createElement('script');
-      script.src=new URL(config.asset,document.baseURI).href;
-      script.async=true;script.fetchPriority='low';
-      script.integrity=config.integrity;script.crossOrigin='anonymous';
-      script.dataset.agoraProductDetailPreload='true';
-      script.addEventListener('load',()=>{state.status='registered';state.loadedAt=performance.now();},{once:true});
-      script.addEventListener('error',()=>{
-        // Failure does not alter the native loader or its individual chunks.
-        state.status='failed';state.failedAt=performance.now();
-      },{once:true});
-      state.status='loading';state.startedAt=performance.now();
-      document.head.appendChild(script);
-    }
-    function paint(event) {
-      try{if(JSON.parse(event.detail).protocol!==2)return;}catch{return;}
-      painted=true;start();
-    }
-    function detailPaint(event) {
-      try {
-        const signal=JSON.parse(event.detail);
-        const snapshot=JSON.parse(global.__AGORA_HTML_STOREFRONT__?.capture()||'null');
-        if(signal.type!=='readable' || !Number.isSafeInteger(signal.id) || signal.id<=0 ||
-           snapshot?.protocol!==2 || snapshot.intent?.type!=='product' ||
-           snapshot.intent.preview!==true || snapshot.intent.id!==signal.id)return;
-      } catch { return; }
-      // Direct links do not render home cards. Wait for their real detail
-      // reading event before spending bandwidth on the unchanged native code.
-      painted=true;start();
-    }
-    global.addEventListener('agora-html-primary-paint',paint);
-    global.addEventListener('agora-html-detail-readable',detailPaint);
-    document.addEventListener('visibilitychange',start);
-    return state;
-  }
-  global.AgoraProductDetailPreload={create};
-})(window);
-
-window.__AGORA_PRODUCT_DETAIL_PRELOAD__=window.AgoraProductDetailPreload.create({"asset":"startup-product-detail.fea373857a91.js","integrity":"sha256-/qNzhXqR3vObDZPiocFtLZ+gHBgVma587pCzMkaNVbU=","parts":71,"protocol":1});
-</script>
+  <!-- AGORA_PRODUCT_DETAIL_PRELOAD -->
 </head>
 <body>
   <noscript>
@@ -3924,7 +3862,7 @@ window.__AGORA_PRODUCT_DETAIL_PRELOAD__=window.AgoraProductDetailPreload.create(
 
       function loadFlutterBootstrap() {
         var script = document.createElement('script');
-        script.src = "flutter_bootstrap.4d3dc02ab644.js";
+        script.src = "flutter_bootstrap.cf38601049e1.js";
         script.async = true;
         if (window.__AGORA_STARTUP_PROGRESS__) {
           window.__AGORA_STARTUP_PROGRESS__.setPhase('bootstrap');
@@ -4238,7 +4176,7 @@ window.__AGORA_PRODUCT_DETAIL_PRELOAD__=window.AgoraProductDetailPreload.create(
   <script src="web_vitals.js"></script>
 
   <!-- ?????????????? -->
-  <script src="offline_handler.4d3dc02ab644.js"></script>
+  <script src="offline_handler.cf38601049e1.js"></script>
 
   <!-- GitHub Pages 404 ??????????????-->
   <script>
