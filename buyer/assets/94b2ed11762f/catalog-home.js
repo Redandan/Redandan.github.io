@@ -1,0 +1,49 @@
+import{bindActivityFeed}from'./catalog-activity.js';
+import{homeRecommendations,selectHomeRecommendations,recommendationMarkup,bindRecommendationLayout}from'./catalog-recommendations.js';
+import{escape,icon,productCard,list,positiveId,route}from'./ui.js';
+import{categories,catalogText as t,readFilters,filterRoute,filterCount,searchBody,categoryValue}from'./catalog-core.js';
+import{filterDialog,bindFilters}from'./catalog-search.js';
+import{materialIcon}from'./material-icons.js';
+
+const label=key=>escape(t(key));
+const touchButton=(action,icon,labelText)=>`<button type="button" class="secondary" data-action="${action}" aria-label="${escape(labelText)}">${materialIcon(icon)}</button>`;
+export async function home(ctx){
+ const filters=readFilters(ctx.query),size=innerWidth>=1100?24:innerWidth>=650?16:10,keyword=filters.keyword||'',selected=categoryValue(filters.category);
+ const searchUrl=filterRoute(filters,'/search'),shortcuts=[['favorite','/favorites','favorite_border'],['cart','/cart','shopping_cart_outlined'],['messages','/chat','chat_bubble_outline']];
+ const ordered=[...categories.filter(c=>c.value===selected&&selected),...categories.filter(c=>!selected||c.value!==selected)];
+ const chips=ordered.map(category=>`<button type="button" class="secondary" data-home-category="${escape(category.name)}" aria-pressed="${category.value===selected}" aria-label="${escape(t('productListCategorySemantic',{categoryName:t(category.label)}))}">${escape(t(category.shortLabel||category.label))}</button>`).join('');
+ const filterButton=`<button type="button" class="secondary catalog-home-filter" data-action="catalog-filters" aria-label="${label('filter')}">${materialIcon('tune')}<span>${label('filter')}${filterCount(filters)?' · '+filterCount(filters):''}</span></button>`;
+ ctx.header(t('searchProducts'),false,{shortcuts:false,titleMarkup:`<div class="catalog-home-toolbar"><a class="catalog-home-brand" href="#/" aria-label="AgoraMarket">Agora<span>Market</span></a><div class="catalog-home-search"><a href="${route(searchUrl)}">${materialIcon('search_rounded')}<span>${escape(keyword||t('searchProducts'))}</span></a>${keyword?touchButton('home-clear-keyword','close',t('clearSearch')):''}</div><div class="catalog-home-shortcuts">${shortcuts.map(([key,path,name])=>`<a href="${route(path)}" aria-label="${label(key)}" title="${label(key)}">${materialIcon(name)}</a>`).join('')}</div>${filterButton}<div class="catalog-home-categories"><div class="catalog-home-category-strip">${chips}</div>${touchButton('home-categories','grid_view_rounded',t('productCategories'))}</div></div>`});
+ const selectedChips=['keyword','category','brand','inStock','productType','sourceRegion','sourcePlatform'].filter(key=>filters[key]).map(key=>{const value=key==='category'?(categories.find(c=>c.value===selected)?.label?t(categories.find(c=>c.value===selected).label):filters[key]):key==='inStock'?t('inStock'):key==='productType'?t({PHYSICAL:'productTypePhysical',DIGITAL_SERVICE:'productTypeDigital',CREATOR_SUBSCRIPTION:'productTypeCreatorSubscription'}[filters[key]]):filters[key];return`<button type="button" class="secondary" data-home-remove="${key}" aria-label="${escape(t('clearFilters')+': '+value)}">${escape(value)} ×</button>`;}).join('');
+ ctx.render(`<section class="welcome catalog-home"><section class="catalog-home-overview"><div><h1>${escape(keyword?t('productListSearchScope',{keyword}):selected?t('productListCategoryProducts'):t('productListOverview'))}</h1><p id="catalog-result-count">${label('productListUpdatingProducts')}</p></div><div class="product-trust-points">${[['payments_outlined','productListUsdtPricing'],['local_shipping_outlined','productListPlatformDelivery'],['inventory_2_outlined','productListInventoryVisible']].map(([name,key])=>`<span>${materialIcon(name)}${label(key)}</span>`).join('')}</div></section>${selectedChips?`<div class="catalog-home-active catalog-chips">${selectedChips}</div>`:''}<div id="home-recommendation-host" hidden></div><div id="catalog-results" class="product-grid" aria-busy="true"><div role="status">${label('productListUpdatingProducts')}</div></div><div id="catalog-pagination" role="status"></div>${filterDialog(filters)}<dialog id="catalog-category-dialog" class="catalog-filter-dialog" aria-labelledby="catalog-category-title"><header>${touchButton('home-category-close','close',t('close'))}<h2 id="catalog-category-title">${label('productCategories')}</h2></header><div class="catalog-home-category-picker">${categories.map(category=>`<button type="button" class="secondary" data-home-category="${escape(category.name)}" aria-pressed="${category.value===selected}"><span class="catalog-category-symbol">${materialIcon(category.icon)}</span><span>${escape(t(category.label))}</span></button>`).join('')}</div></dialog></section>`);
+ const updateActivity=bindActivityFeed(ctx),updateRecommendationLayout=bindRecommendationLayout(ctx);
+ bindFilters(ctx,filters);const picker=ctx.find('#catalog-category-dialog');ctx.action('home-categories',()=>picker.showModal());ctx.action('home-category-close',()=>picker.close());ctx.cleanup(()=>{if(picker.open)picker.close();});
+ ctx.action('home-clear-keyword',()=>{const next={...filters};delete next.keyword;ctx.go(filterRoute(next));});
+ const onChoice=event=>{const chosen=event.target.closest('[data-home-category]'),remove=event.target.closest('[data-home-remove]');if(chosen){if(picker.open)picker.close();ctx.go(filterRoute({...filters,category:chosen.dataset.homeCategory==='all'?undefined:chosen.dataset.homeCategory}));}if(remove){const next={...filters};delete next[remove.dataset.homeRemove];ctx.go(filterRoute(next));}};
+ document.querySelector('#buyer-header').addEventListener('click',onChoice,{signal:ctx.signal});ctx.find('.catalog-home').addEventListener('click',onChoice,{signal:ctx.signal});
+ picker.addEventListener('click',event=>{if(event.target===picker){const r=picker.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)picker.close();}},{signal:ctx.signal});
+ // Original ProductListPage: scroll past 24px, advance 160px between
+ // requests, preload within clamp(viewport * 2.2, 900, 2400). A first
+ // visible page never drains the catalogue without scroll progress.
+ const recommendationRequest=Object.keys(filters).length===0?homeRecommendations(ctx):Promise.resolve(null);let featuredInitialized=false;
+ const main=document.querySelector('#buyer-main');let hasScrolled=false,lastTriggerOffset=0,loadFrame=0;
+ function scheduleMore(){if(loadFrame||!ctx.active())return;loadFrame=requestAnimationFrame(()=>{loadFrame=0;if(!ctx.active())return;const top=main.scrollTop;if(top>24)hasScrolled=true;if(!hasScrolled||busy||!hasMore||top-lastTriggerOffset<160)return;const preload=Math.max(900,Math.min(2400,main.clientHeight*2.2));if(main.scrollHeight-main.clientHeight-top<preload){lastTriggerOffset=top;void load();}});}
+ main.addEventListener('scroll',scheduleMore,{passive:true,signal:ctx.signal});ctx.cleanup(()=>cancelAnimationFrame(loadFrame));
+ let page=1,busy=false,hasMore=true;const seen=new Set();let count=0;
+ async function load(){
+  if(busy||!hasMore||!ctx.active())return;busy=true;const pagination=ctx.find('#catalog-pagination');pagination.textContent=t('productListUpdatingProducts');
+  try{
+   const response=await ctx.api.publicRequest('/products/search',{method:'POST',body:searchBody(filters,page,size),signal:AbortSignal.any([ctx.signal,AbortSignal.timeout(15000)])});if(!ctx.active())return;
+   const values=list(response);
+   if(page===1&&!featuredInitialized&&values.length){const result=await recommendationRequest;if(!ctx.active())return;const featured=selectHomeRecommendations(values,result);featuredInitialized=true;for(const product of featured)seen.add(String(product.id));const host=ctx.find('#home-recommendation-host');host.innerHTML=recommendationMarkup(featured,result||{});host.hidden=!featured.length;updateRecommendationLayout();}
+   const unique=values.filter(product=>{const id=positiveId(product?.id);if(!id||seen.has(id))return false;seen.add(id);return true;});
+   const grid=ctx.find('#catalog-results');if(page===1)grid.innerHTML='';grid.insertAdjacentHTML('beforeend',unique.map(product=>productCard(product,{density:'listing',share:true,sales:true})).join(''));grid.setAttribute('aria-busy','false');count+=unique.length;updateActivity();
+   if(!count)grid.innerHTML=`<section class="empty"><h2>${label('productListNoMatchingProducts')}</h2><p>${label('productListNoMatchingProductsDescription')}</p><div class="inline-actions"><a class="secondary" href="${route('/demands'+(keyword?'?keyword='+encodeURIComponent(keyword):''))}">${label('productListCreateDemand')}</a><button type="button" class="secondary" data-action="catalog-filters">${label('filter')}</button></div></section>`;
+   hasMore=typeof response?.last==='boolean'?!response.last:values.length>=size;page++;
+   ctx.find('#catalog-result-count').textContent=t('productListLoadedCount',{count});pagination.innerHTML=hasMore?`<button type="button" class="secondary" data-action="home-more">${label('txtaf90a08fec')}</button>`:`<p>${label('listEndReached')}</p>`;
+   document.dispatchEvent(new CustomEvent('agora-buyer-catalog-visible'));
+  }catch(error){if(!ctx.active()||error.name==='AbortError')return;const grid=ctx.find('#catalog-results');grid.setAttribute('aria-busy','false');if(!count)grid.innerHTML=`<section class="empty"><h2>${label('productLoadFailed')}</h2><p>${escape(error.message||t('tryAgainLater'))}</p></section>`;pagination.innerHTML=`<button type="button" class="secondary" data-action="home-more">${label('retry')}</button>`;}
+  finally{busy=false;scheduleMore();}
+ }
+ ctx.action('home-more',load);await load();
+}
