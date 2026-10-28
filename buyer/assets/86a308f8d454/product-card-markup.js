@@ -1,0 +1,16 @@
+import{catalogText as t}from'./catalog-core.js';
+import{materialIcon as mi}from'./material-icons.js';
+// Dependencies are passed by ui.js so the shared renderer has no module cycle.
+export function renderProductCard(product,options,{escape,positiveId,imageUrl,title,route}){
+ const id=positiveId(product.id);if(!id)return'';options=options&&typeof options==='object'?options:{};
+ const listing=options.density==='listing',name=title(product),url=imageUrl(product.thumbnailUrl||product.imageUrls?.[0]||product.imageUrl),rawPrice=product.priceUsdt??product.price,price=rawPrice!=null&&Number.isFinite(Number(rawPrice))?Number(rawPrice).toFixed(2):'—',stock=product.stockQuantity??product.stock,stockKey=typeof stock==='number'&&stock<=0?'productCardOutOfStock':typeof stock==='number'&&stock<=3?'productCardLowStock':null;
+ const metadata=[{icon:'visibility_outlined',label:String(Number.isFinite(product.viewCount)?product.viewCount:0),views:true}];
+ if(options.sales!==false&&Number(product.salesCount)>0)metadata.push({icon:'shopping_bag_outlined',label:t('productCardSoldCount',{count:product.salesCount})});
+ if(stockKey)metadata.push({icon:Number(stock)<=0?'remove_shopping_cart_outlined':'inventory_2_outlined',label:t(stockKey),warning:true});
+ if(!listing&&product.enablePlatformDelivery===true)metadata.push({icon:'local_shipping_outlined',label:t('productCardPlatformDelivery')});
+ if(!listing&&product.productType==='DIGITAL_SERVICE')metadata.push({icon:'cloud_done_outlined',label:t('productCardDigitalDelivery')});
+ if(product.productType==='CREATOR_SUBSCRIPTION')metadata.push({icon:'workspace_premium_outlined',label:t('productCardCreatorSubscription')});
+ const rating=!listing&&typeof product.rating==='number'&&product.rating>0?`<span class="card-rating">${mi('star_rounded')}<strong>${escape(product.rating.toFixed(1))}</strong>${Number(product.reviewCount)>0?`<span>(${escape(product.reviewCount)})</span>`:''}</span>`:'';
+ const card=`<a class="product-card ${listing?'card-listing':'card-standard'}" href="${route('/products/'+id)}" data-product-id="${id}" aria-label="${escape(t('productCardOpenDetails',{title:name})+', '+price+' USDT'+(stockKey?', '+t(stockKey):''))}"><div class="product-picture"><div class="product-card-placeholder" aria-hidden="true">${mi('inventory_2_outlined')}<span>${escape(t('productCardImagePlaceholder'))}</span></div>${url?`<img src="${escape(url)}" alt="${escape(name)}" loading="lazy" decoding="async">`:''}${rating}</div><div class="product-card-info"><h3>${escape(name)}</h3><div class="price">${escape(price)} <small>USDT</small></div><div class="product-card-metadata" aria-label="${escape(metadata.map(item=>item.label).join(', '))}">${metadata.map(item=>`<span class="card-metadata-item${item.views?' card-views':''}${item.warning?' card-warning':''}" title="${escape(item.label)}">${mi(item.icon)}<span>${escape(item.label)}</span></span>`).join('')}</div></div></a>`;
+ return options.share?`<div class="product-card-frame">${card}<button type="button" class="product-card-share" data-action="product-card-share" data-share-title="${escape(name)}" data-share-price="${escape(price)}" data-share-product="${id}" aria-label="${escape(t('share')+': '+name)}" title="${escape(t('share'))}"><span>${mi('share_outlined')}</span></button></div>`:card;
+}
