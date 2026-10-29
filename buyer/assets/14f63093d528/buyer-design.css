@@ -1,0 +1,283 @@
+/* Buyer-wide presentation contract. Business state, input ownership, viewport
+   sizing and safe-area recovery remain owned by their existing controllers. */
+:root {
+  --bg:#f4f6fa; --surface:#fff; --surface-2:#edf1f8; --text:#18243b;
+  --muted:#53647d; --line:#dce4ef; --primary:#2459d6; --on-primary:#fff;
+  --header:var(--surface); --nav:var(--surface); --nav-active:var(--primary);
+  --nav-inactive:var(--muted); --nav-indicator:#e9f0ff; --input:#f7f9fc;
+  --scheme-surface:var(--surface); --scheme-on-surface:var(--text);
+  --on-surface-variant:var(--muted); --body-medium:var(--text);
+  --surface-highest:var(--surface-2); --scheme-surface-container-highest:var(--surface-2);
+  --surface-low:#f7f9fc; --surface-lowest:var(--surface); --outline:#b8c5d8;
+  --outline-base:#71829a; --outline-variant:var(--line); --input-border:var(--outline);
+  --primary-container:#e9f0ff; --on-primary-container:#2049a2;
+  --secondary-container:#edf1f8; --on-secondary-container:#35465f;
+  --scheme-secondary:#526888; --on-secondary:#fff;
+  --scheme-tertiary:#5d557a; --error:#b3263e; --danger:var(--error);
+  --error-container:#ffedf0; --on-error-container:#8c1d30;
+  --rating:#846020; --wallet-positive:#176d50;
+  --inverse-surface:#253249; --on-inverse-surface:#fff;
+  --buyer-shadow:0 4px 18px #18356808;
+  --buyer-hover-shadow:0 12px 28px #18356812;
+  --buyer-radius:18px; --buyer-control-radius:14px;
+  --buyer-font-small:12px; --buyer-font-body:14px; --buyer-font-title:20px;
+}
+:root[data-theme=dark] {
+  --bg:#10151f; --surface:#1a2230; --surface-2:#242f41; --text:#eef3fc;
+  --muted:#b4c0d3; --line:#344257; --primary:#a9c4ff; --on-primary:#132b56;
+  --nav-indicator:#253651; --input:#141c29; --surface-low:#151d29;
+  --outline:#6b7d98; --outline-base:#8d9db5;
+  --primary-container:#253651; --on-primary-container:#c2d5ff;
+  --secondary-container:#29374c; --on-secondary-container:#d3deef;
+  --scheme-secondary:#bdcee8; --on-secondary:#172c46;
+  --scheme-tertiary:#cfbfe9; --error:#ffb0bd; --error-container:#462331;
+  --on-error-container:#ffd9e0; --rating:#f0ca7b; --wallet-positive:#87d8b5;
+  --inverse-surface:#d9e4f6; --on-inverse-surface:#18243b;
+  --buyer-shadow:0 4px 18px #00000014;
+  --buyer-hover-shadow:0 12px 28px #00000030;
+}
+
+/* Re-declare aliases at both theme specificities. The legacy dark selector
+   otherwise wins over light-root aliases even when this stylesheet loads later. */
+:root,:root[data-theme=dark] {
+  --header:var(--surface); --nav:var(--surface); --nav-active:var(--primary);
+  --nav-inactive:var(--muted); --scheme-surface:var(--surface);
+  --scheme-on-surface:var(--text); --on-surface-variant:var(--muted);
+  --body-medium:var(--text); --surface-highest:var(--surface-2);
+  --scheme-surface-container-highest:var(--surface-2); --surface-lowest:var(--surface);
+  --outline-variant:var(--line); --input-border:var(--outline); --danger:var(--error);
+}
+
+/* Interaction states never replace button labels or alter disabled guards. */
+:where(#buyer-app button,#buyer-app a.primary,#buyer-app a.secondary) { position:relative; }
+#buyer-app :is(button,.primary,.secondary) { border-radius:var(--buyer-control-radius); min-height:44px; min-width:44px; }
+#buyer-app :is(a,button,input,select,textarea,summary,[tabindex]):focus-visible {
+  outline:3px solid var(--primary); outline-offset:3px;
+}
+#buyer-app :is(input,select,textarea):not([type=checkbox]):not([type=radio]):not([type=hidden]) {
+  border-radius:12px; caret-color:var(--primary);
+}
+#buyer-app :is(button,a.primary,a.secondary)[aria-busy=true] { cursor:progress; }
+#buyer-app button[aria-busy=true]::after {
+  content:""; position:absolute; bottom:1px; left:10%; width:30%; height:2px;
+  border-radius:2px; background:currentColor; animation:buyer-progress 1.1s ease-in-out infinite;
+  pointer-events:none;
+}
+@keyframes buyer-progress { 0%,100% { left:10%; opacity:.35; } 50% { left:60%; opacity:.9; } }
+#buyer-toast { border-radius:14px; background:var(--inverse-surface); color:var(--on-inverse-surface); box-shadow:var(--buyer-hover-shadow); line-height:1.6; }
+
+/* Every shell uses the same navigation, including orders, wallet and profile. */
+#buyer-app #buyer-header { background:var(--header); border-color:var(--line); }
+#buyer-app #buyer-header h1 { color:var(--text); font-weight:700; }
+#buyer-app #buyer-nav { background:var(--nav); border-color:var(--line); }
+#buyer-app .nav-items a { color:var(--nav-inactive); }
+#buyer-app .nav-items a[aria-current=page] { color:var(--nav-active); font-weight:700; }
+#buyer-app .nav-items a[aria-current=page] .nav-icon { background:var(--nav-indicator); }
+#buyer-app .nav-icon { border-radius:12px; }
+#buyer-app .page-actions { background:var(--surface); border-color:var(--line); }
+#buyer-app .buyer-sidebar-header { border-color:var(--line); }
+
+/* Surface primitives cover all fifteen feature groups. Existing semantic
+   warning/success colors are reapplied below rather than flattened to a card. */
+#buyer-app :is(.panel,.list-row,.cart-store-group,.cart-item,.checkout-card,
+  .order-native-card,.order-info-panel,.order-refund-card,.order-return-card,
+  .wallet-hero,.wallet-safety,.deposit-card,.withdraw-card,.staking-card,
+  .transaction-history-row,.transaction-detail-summary,.favorite-native-card,
+  .profile-native-section,.profile-role-card,.security-card,.binding-native-card,
+  .devices-card,.promo-native-card,.betting-card,.demand-card,.notification-card,
+  .download-native-hero,.information-faq-category,.information-question,
+  .game-access-card,.store-post-card,.native-auth-card,.secondary-flow-card,
+  .push-native-card,.download-state-panel,.information-about-hero,.information-legal-section) {
+  background:var(--surface); color:var(--text); border-color:var(--line);
+  border-radius:var(--buyer-radius); box-shadow:var(--buyer-shadow);
+}
+#buyer-app :is(.panel h1,.panel h2,.profile-native-section h2,.cart-store-header h2,
+  .wallet-recent-header h2,.transaction-detail-intro h2) { letter-spacing:-.25px; }
+#buyer-app :is(.cart-item,.order-native-card,.favorite-native-card,.binding-native-card,
+  .promo-native-card,.profile-role-card) { outline-color:var(--line); }
+#buyer-app :is(.row-between,.inline-actions,.stack,.list,.panel,.detail,
+  .chat-sessions-page,.chat-session,.chat-session-link,.chat-session-copy,
+  .buyer-cart-page,.buyer-checkout-page,.order-native-detail,.buyer-wallet-page) { min-width:0; }
+#buyer-app :is(.muted,.form-help,.wallet-transaction-state,.message-preview) { color:var(--muted); }
+#buyer-app :is(.badge,.order-native-status,.deposit-state,.withdraw-state,.transaction-chip) { border-radius:999px; }
+#buyer-app :is(.cart-recovery,.cart-unimported,.cart-group-warning,.cart-item-warning,
+  .cart-cross-store-warning,.checkout-warning,.deposit-pending-card,.withdraw-pending-card,
+  .staking-attempt-summary,.staking-legacy-attempt,.promo-unknown,.order-info-banner) {
+  background:var(--primary-container); color:var(--on-primary-container); border-color:var(--line);
+  border-radius:14px; line-height:1.65;
+}
+#buyer-app :is(.error-panel,.wallet-load-error,.binding-load-error,.promo-load-error,
+  .native-auth-error,.recovery-error,.transaction-detail-unavailable) {
+  background:var(--surface); color:var(--text); border:1px solid var(--line); border-radius:20px;
+}
+#buyer-app :is(.form-error,.error-message,[role=alert]):not(:empty) { color:var(--error); line-height:1.6; }
+#buyer-app :is(.empty,.cart-empty-state,.favorite-native-empty,.order-native-empty,
+  .transaction-empty,.address-empty,.checkout-empty,.bindings-empty) {
+  text-align:center; line-height:1.65; color:var(--text); border-radius:20px;
+}
+#buyer-app :is(.empty,.cart-empty-state,.favorite-native-empty,.order-native-empty,.transaction-empty) p { color:var(--muted); }
+
+/* Dialog content keeps the existing sizing/placement and inner scroll owner. */
+#buyer-app :is(dialog,.profile-settings-dialog,.native-dialog) {
+  background:var(--surface); color:var(--text); border-color:var(--line);
+  box-shadow:0 24px 80px #07152d38;
+}
+#buyer-app :is(.profile-settings-dialog,.native-dialog,.shipping-dialog,.address-map-dialog,
+  .favorites-native-dialog,.security-password-dialog,.binding-native-dialog) { border-radius:22px; }
+#buyer-app dialog::backdrop { background:#0c172466; }
+#buyer-app :is(dialog h2,.profile-settings-dialog h2) { font-weight:700; letter-spacing:-.3px; }
+#buyer-app :is(.profile-dialog-content,.native-dialog-content):focus-visible { outline-offset:-3px; }
+#buyer-app :is(.profile-dialog-actions,.native-dialog-actions) { gap:10px; }
+
+/* Authentication, recovery, profile and security. */
+#buyer-app :is(.buyer-login,.native-auth-flow) {
+  --secondary-container:var(--surface-2); --on-secondary-container:var(--text);
+  --auth-outline:var(--outline); --on-secondary:var(--text);
+}
+#buyer-app .buyer-login .login-native-notice { background:var(--surface-2); color:var(--text); }
+#buyer-app .buyer-login .login-native-field { background:var(--input); box-shadow:inset 0 0 0 1px var(--outline); }
+#buyer-app .buyer-login .login-native-field>span:last-of-type { background:var(--input); color:var(--muted); }
+#buyer-app .buyer-login .login-native-field>input { background:transparent; color:var(--text); }
+#buyer-app .login-provider { background:var(--surface); color:var(--text); border-color:var(--line); border-radius:14px; }
+#buyer-app .login-native-submit { background:var(--primary); color:var(--on-primary); }
+#buyer-app .buyer-registration { background:var(--bg); color:var(--text); }
+#buyer-app .buyer-registration .container { background:var(--surface); border-color:var(--line); border-radius:22px; box-shadow:var(--buyer-shadow); }
+#buyer-app .buyer-registration :is(input,select) { background:var(--input); color:var(--text); border-color:var(--outline); }
+#buyer-app .buyer-registration :is(h1,label,.header p,.footer) { color:var(--text); }
+#buyer-app .buyer-registration :is(.btn-primary,button[type=submit]) { background:var(--primary); color:var(--on-primary); }
+#buyer-app .profile-native-tile { background:transparent; color:var(--text); border-color:var(--line); }
+#buyer-app .profile-access-header,#buyer-app .profile-member-header { background:var(--surface); color:var(--text); }
+#buyer-app :is(.profile-settings-heading,.profile-tile-subtitle,.security-section-description,.binding-native-help) { color:var(--muted); }
+#buyer-app .security-password-field>input { background:var(--input); color:var(--text); border-color:var(--outline); }
+#buyer-app .security-password-field>span { color:var(--muted); }
+
+/* Cart, checkout, address management and order/after-sales. */
+#buyer-app .cart-item { background:var(--surface); outline-color:var(--line); }
+#buyer-app .cart-store-footer { border-color:var(--line); gap:12px; }
+#buyer-app .cart-store-footer>div { min-width:0; flex:1; }
+#buyer-app :is(.cart-unit-price,.cart-store-footer strong,.cart-selection-amount,
+  .checkout-product-price,.checkout-total,.order-native-price,.wallet-total,
+  .wallet-metrics strong,.wallet-tx-amount,.transaction-detail-money,
+  .transaction-history-money) { font-variant-numeric:tabular-nums; }
+#buyer-app .checkout-shipping-card { background:var(--surface); color:var(--muted); border-color:var(--line); border-radius:14px; }
+#buyer-app .checkout-shipping-price { color:var(--text); }
+#buyer-app .checkout-shipping-option:has(input:checked) .checkout-shipping-card { border-color:var(--primary); }
+#buyer-app .checkout-shipping-check { background:var(--primary); color:var(--on-primary); }
+#buyer-app .checkout-add-address { background:var(--primary-container); color:var(--on-primary-container); border-color:var(--primary); border-radius:14px; }
+#buyer-app :is(.address-provider,.address-native-card,.address-editor-card,.address-search-result) { border-radius:18px; background:var(--surface); border-color:var(--line); }
+#buyer-app .order-native-detail .panel,#buyer-app .order-native-return>.panel { background:var(--surface); border-color:var(--line); }
+#buyer-app #buyer-main .order-next-summary em { color:var(--muted); font-style:normal; }
+#buyer-app .order-next-summary>span { background:var(--surface-2); border-color:var(--line); }
+#buyer-app .order-next-summary :is(b,strong) { font-variant-numeric:tabular-nums; }
+#buyer-app .order-next-summary>span:first-child { display:flex; flex-wrap:wrap; gap:6px; }
+#buyer-app .order-next-summary>span:first-child em { white-space:nowrap; }
+#buyer-app :is(.order-native-review,.order-native-return) :is(input,textarea) { background:var(--input); border-color:var(--outline); }
+
+/* Wallet, deposits, withdrawals, staking and transaction records. */
+#buyer-app .wallet-metrics { background:var(--surface-2); border-color:var(--line); border-radius:14px; }
+#buyer-app .wallet-hero { border-color:var(--line); }
+#buyer-app :is(.wallet-safety,.wallet-extra-actions,.deposit-protocol,.withdraw-confirm-summary,.staking-position) { background:var(--surface-2); color:var(--text); }
+#buyer-app :is(.deposit-address,.withdraw-confirm-address,.transaction-detail-value) { overflow-wrap:anywhere; }
+#buyer-app :is(.deposit-input-frame,.withdraw-amount-frame,.staking-amount-input) { border-color:var(--outline); background:var(--input); border-radius:14px; }
+#buyer-app :is(.withdraw-network-card,.transaction-detail-row) { border-color:var(--line); }
+#buyer-app .wallet-actions>a { border-radius:16px; }
+#buyer-app .transaction-detail-summary { --transaction-tone:var(--primary); }
+#buyer-app .buyer-amount-fit { display:block; min-width:0; max-width:100%; white-space:nowrap; overflow-wrap:normal; word-break:normal; }
+#buyer-app .buyer-amount-fit[data-amount-overflow=true] { overflow-x:auto; scrollbar-width:thin; }
+
+/* Communications, notifications, support and discussion panels. */
+#buyer-app .chat-sessions-page #chat-sessions { width:100%; min-width:0; }
+#buyer-app .chat-session { width:100%; max-width:100%; min-width:0; border-color:var(--line); }
+#buyer-app .chat-session-link { width:100%; max-width:100%; min-width:0; }
+#buyer-app .chat-session-copy { flex:1 1 0; width:0; min-width:0; }
+#buyer-app .chat-session-copy :is(h3,p) { max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#buyer-app .chat-session-trailing { max-width:70px; }
+#buyer-app .chat-session-menu .inline-actions { background:var(--surface); color:var(--text); border:1px solid var(--line); border-radius:14px; }
+#buyer-app :is(.chat-compose,.chat-toolbar,.communications-tabs) { border-color:var(--line); background:var(--surface); }
+#buyer-app .chat-compose textarea { background:var(--input); border-color:var(--outline); }
+#buyer-app .communications-tabs>button { border-radius:12px 12px 0 0; }
+#buyer-app :is(.message,.message-bubble,.quick-chat-panel,.call-panel,.issue-card,.support-card,.board-card,.mcp-card) { border-radius:16px; border-color:var(--line); }
+#buyer-app :is(.notification-card,.issue-card,.support-card,.board-card,.mcp-card) { background:var(--surface); color:var(--text); }
+
+/* Demand, promotion, creator subscriptions, game access and information. */
+#buyer-app :is(.demand-card,.betting-card,.game-access-card,.promo-native-card) { border-radius:18px; }
+#buyer-app :is(.creator-product .panel,.game-access-card,.slot-toolbar) { line-height:1.65; }
+#buyer-app .creator-product .gallery { overflow:hidden; border-radius:20px; }
+#buyer-app .creator-product .price { color:var(--text); font-variant-numeric:tabular-nums; }
+#buyer-app .creator-price-note { padding:12px; margin:12px 0; border-radius:12px; background:var(--primary-container); color:var(--on-primary-container); font-size:14px; line-height:1.7; }
+#buyer-app .creator-signin-state { border:1px solid var(--line); border-radius:16px; padding:16px; background:var(--surface-2); }
+#buyer-app :is(.download-native-hero,.information-legal,.information-guidelines) { color:var(--text); line-height:1.75; }
+#buyer-app .information-question { box-shadow:none; }
+#buyer-app .information-quick-action { background:var(--surface); color:var(--text); border:1px solid var(--line); border-radius:18px; box-shadow:var(--buyer-shadow); }
+#buyer-app .information-quick-action strong { color:var(--text); opacity:1; }
+#buyer-app .information-quick-action :is(small,p) { color:var(--muted); opacity:1; }
+#buyer-app :is(.information-legal,.information-guidelines) :is(h1,h2,h3) { letter-spacing:-.3px; }
+#buyer-app :is(.information-version,.download-native-hero) { border-color:var(--line); }
+#buyer-app :is(.order-native-detail,.order-native-return,.order-native-review,.order-native-dialog) {
+  --order-surface:var(--surface); --order-on-surface:var(--text);
+  --order-primary:var(--primary); --order-on-primary:var(--on-primary);
+  --order-secondary:var(--scheme-secondary); --order-on-secondary:var(--on-secondary);
+  --order-on-variant:var(--muted); --order-highest:var(--surface-2);
+  --order-outline:var(--outline); --order-outline-variant:var(--line);
+  --order-input:var(--input); --order-input-border:var(--outline);
+}
+#buyer-app .order-native-price small { opacity:1; color:var(--muted); }
+
+/* Loading placeholders share the loaded card footprint and stay noninteractive. */
+.buyer-loading { grid-column:1/-1; width:100%; min-width:0; }
+.buyer-loading-label { margin:8px 0 16px; color:var(--muted); font-size:14px; line-height:1.6; }
+.buyer-skeleton-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.buyer-skeleton-card { overflow:hidden; border:1px solid var(--line); border-radius:18px; background:var(--surface); padding-bottom:14px; }
+.buyer-skeleton-card i { display:block; background:var(--surface-2); border-radius:6px; height:14px; margin:12px 14px 0; animation:buyer-skeleton 1.6s ease-in-out infinite; }
+.buyer-skeleton-card i:first-child { aspect-ratio:1; height:auto; margin:0; border-radius:0; }
+.buyer-skeleton-card i:last-child { width:45%; height:20px; }
+.buyer-loading[data-layout=page] .buyer-skeleton-grid { grid-template-columns:1fr; }
+.buyer-loading[data-layout=page] .buyer-skeleton-card { padding:18px; }
+.buyer-loading[data-layout=page] .buyer-skeleton-card i:first-child { aspect-ratio:auto; height:52px; margin:0 0 16px; border-radius:10px; }
+@keyframes buyer-skeleton { 50% { opacity:.45; } }
+.catalog-sort { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); }
+.catalog-sort select { min-height:44px; max-width:160px; padding:8px 32px 8px 12px; border-color:var(--line); background:var(--surface); font-size:13px; }
+.product-fulfillment { padding:16px; border:1px solid var(--line); border-radius:18px; background:var(--surface); color:var(--muted); line-height:1.6; }
+
+@media(hover:hover) and (pointer:fine) {
+  #buyer-app :is(.secondary,.profile-native-tile,.list-row):not(:disabled):hover { background:var(--surface-2); }
+  #buyer-app .nav-items>a:not([aria-current]):hover { background:var(--surface-2); color:var(--text); }
+}
+@media(min-width:769px) {
+  #buyer-app[data-shell=true] #buyer-nav { background:var(--surface); border-right-color:var(--line); }
+  #buyer-app[data-shell=true] .buyer-sidebar-header { padding:28px 20px 24px; }
+  #buyer-app[data-shell=true] .buyer-main-flow { padding:24px 24px 8px; font-weight:500; letter-spacing:1px; }
+  #buyer-app[data-shell=true] .nav-items { padding:0 12px; background:transparent; gap:4px; }
+  #buyer-app[data-shell=true] .nav-items>a { position:relative; min-height:54px; padding:12px; border-radius:14px; margin:0; font-weight:500; }
+  #buyer-app[data-shell=true] .nav-items>a[aria-current=page] { background:var(--primary-container); font-weight:700; }
+  #buyer-app[data-shell=true] .nav-items>a[aria-current=page]::before { content:""; position:absolute; left:0; top:18px; bottom:18px; width:3px; border-radius:0 3px 3px 0; background:var(--primary); }
+  #buyer-app[data-shell=true] .nav-items .nav-icon { width:32px; height:30px; background:transparent; }
+}
+@media(max-width:768px) {
+  #buyer-app .catalog-home-toolbar { padding-top:6px; padding-bottom:8px; row-gap:6px; }
+  #buyer-app .catalog-home-overview { padding:14px 16px 4px; gap:10px; align-items:center; }
+  #buyer-app .catalog-home-overview h1 { font-size:20px; line-height:26px; }
+  #buyer-app .home-recommendations { margin-top:12px; margin-bottom:10px; }
+  #buyer-app .home-recommendations[data-layout=grid] .home-recommendation-products { display:flex; gap:12px; overflow-x:auto; padding-bottom:8px; overscroll-behavior-x:contain; }
+  #buyer-app .home-recommendations[data-layout=grid] .product-card-frame { flex:0 0 min(68%,220px); }
+  #buyer-app .home-recommendations[data-layout=grid] .product-card .product-picture { max-height:150px; aspect-ratio:auto; }
+  #buyer-app .home-recommendations[data-layout=grid] .product-picture>img { height:150px; }
+  #buyer-app .home-recommendations[data-layout=grid] .product-card h3 { margin-bottom:6px; }
+  #buyer-app .home-recommendations[data-layout=grid] .product-card-info { padding:10px 12px; }
+  #buyer-app .catalog-home-overview>div:first-child { flex:1; min-width:0; }
+}
+@container(min-width:720px) { .catalog-home .buyer-skeleton-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@container(min-width:1024px) { .catalog-home .buyer-skeleton-grid { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+@container(min-width:1440px) { .catalog-home .buyer-skeleton-grid { grid-template-columns:repeat(5,minmax(0,1fr)); } }
+@media(prefers-reduced-motion:reduce) {
+  #buyer-app *,#buyer-app *::before,#buyer-app *::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; }
+}
+
+#buyer-app .betting-badges .betting-featured { background:var(--primary-container); color:var(--on-primary-container); }
+.home-recommendations[data-layout=compact] .product-card { padding-right:64px; }
+
+#buyer-app .favorite-native-info p { color:var(--muted); opacity:1; }
+#buyer-app .promo-native-code { background:var(--primary-container); }
+#buyer-app .promo-native-code strong { color:var(--on-primary-container); }
+
+#buyer-app .product-purchase-actions button { min-height:48px; }
