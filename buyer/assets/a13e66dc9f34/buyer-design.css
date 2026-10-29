@@ -1,0 +1,16 @@
+/* Compatibility for states added after the original 5042 presentation.
+   The original app.css owns all existing page visuals. */
+.buyer-read-error { overflow-wrap:anywhere; }
+.buyer-read-error p { line-height:1.5; }
+.favorites-read-tools { display:flex; justify-content:flex-end; margin:0 0 12px; }
+.creator-image-empty { min-height:240px; width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:24px; background:var(--surface-2); color:var(--muted); text-align:center; line-height:1.6; }
+.creator-image-empty .catalog-material-icon { font-size:48px; }
+.product-fulfillment { padding:16px; border:1px solid var(--line); border-radius:16px; background:var(--surface); color:var(--muted); line-height:1.6; }
+#buyer-network { position:fixed; z-index:35; top:calc(var(--buyer-content-top,0px) + 12px); right:max(12px,env(safe-area-inset-right,0px)); width:min(380px,calc(var(--buyer-content-width,100vw) - 24px)); max-height:calc(var(--buyer-content-height,100dvh) - 24px); overflow:auto; padding:16px; border:1px solid var(--line); border-radius:16px; background:var(--surface); color:var(--text); box-shadow:0 8px 35px #0004; overflow-wrap:anywhere; }
+#buyer-network[hidden] { display:none; }
+#buyer-network h2 { margin:0 0 8px; font-size:16px; line-height:1.5; }
+#buyer-network p { margin:0 0 12px; font-size:14px; line-height:1.6; color:var(--muted); }
+#buyer-network .network-controls { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:8px; }
+#buyer-network button { position:relative; min-width:44px; min-height:44px; }
+#buyer-network button:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
+@media(prefers-reduced-motion:reduce) { #buyer-network *,#buyer-network *::before,#buyer-network *::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }

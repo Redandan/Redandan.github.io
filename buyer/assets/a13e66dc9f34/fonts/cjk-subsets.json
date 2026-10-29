@@ -1,0 +1,428 @@
+{
+  "source_sha256": "51b739be770aa9dc9d3b7c01e7802c73c93ecfeb4fa09435fac56e28d52d23fc",
+  "source_bytes": 2521268,
+  "characters": 17592,
+  "metric_equivalence": true,
+  "blocks": [
+    {
+      "file": "fonts/cjk/cjk-17.7a36cae8d9cc.woff2",
+      "start": 11776,
+      "end": 12287,
+      "bytes": 32696,
+      "characters": 341
+    },
+    {
+      "file": "fonts/cjk/cjk-18.f157f4c07d4b.woff2",
+      "start": 12288,
+      "end": 12799,
+      "bytes": 63836,
+      "characters": 485
+    },
+    {
+      "file": "fonts/cjk/cjk-19.9d4e38a37e18.woff2",
+      "start": 12800,
+      "end": 13311,
+      "bytes": 57336,
+      "characters": 510
+    },
+    {
+      "file": "fonts/cjk/cjk-1a.f5dc53cc9add.woff2",
+      "start": 13312,
+      "end": 13823,
+      "bytes": 9260,
+      "characters": 52
+    },
+    {
+      "file": "fonts/cjk/cjk-1b.e50b2a00de92.woff2",
+      "start": 13824,
+      "end": 14335,
+      "bytes": 15352,
+      "characters": 68
+    },
+    {
+      "file": "fonts/cjk/cjk-1c.d636298ec159.woff2",
+      "start": 14336,
+      "end": 14847,
+      "bytes": 8456,
+      "characters": 38
+    },
+    {
+      "file": "fonts/cjk/cjk-1d.576c702c9d29.woff2",
+      "start": 14848,
+      "end": 15359,
+      "bytes": 11332,
+      "characters": 52
+    },
+    {
+      "file": "fonts/cjk/cjk-1e.02e9532cb65c.woff2",
+      "start": 15360,
+      "end": 15871,
+      "bytes": 13380,
+      "characters": 53
+    },
+    {
+      "file": "fonts/cjk/cjk-1f.7fa47c36fcfa.woff2",
+      "start": 15872,
+      "end": 16383,
+      "bytes": 11728,
+      "characters": 55
+    },
+    {
+      "file": "fonts/cjk/cjk-20.18a6d4119bee.woff2",
+      "start": 16384,
+      "end": 16895,
+      "bytes": 9380,
+      "characters": 43
+    },
+    {
+      "file": "fonts/cjk/cjk-21.a8c544e26224.woff2",
+      "start": 16896,
+      "end": 17407,
+      "bytes": 7892,
+      "characters": 28
+    },
+    {
+      "file": "fonts/cjk/cjk-22.dbadd35085ec.woff2",
+      "start": 17408,
+      "end": 17919,
+      "bytes": 13216,
+      "characters": 60
+    },
+    {
+      "file": "fonts/cjk/cjk-23.ae4d42bb8631.woff2",
+      "start": 17920,
+      "end": 18431,
+      "bytes": 7056,
+      "characters": 27
+    },
+    {
+      "file": "fonts/cjk/cjk-24.a523fa7b4d8b.woff2",
+      "start": 18432,
+      "end": 18943,
+      "bytes": 9256,
+      "characters": 36
+    },
+    {
+      "file": "fonts/cjk/cjk-25.c3c448cf02e2.woff2",
+      "start": 18944,
+      "end": 19455,
+      "bytes": 8076,
+      "characters": 30
+    },
+    {
+      "file": "fonts/cjk/cjk-26.48f6999beb0f.woff2",
+      "start": 19456,
+      "end": 19967,
+      "bytes": 9652,
+      "characters": 33
+    },
+    {
+      "file": "fonts/cjk/cjk-27.8d9a6278a96e.woff2",
+      "start": 19968,
+      "end": 20479,
+      "bytes": 40148,
+      "characters": 357
+    },
+    {
+      "file": "fonts/cjk/cjk-28.cd513f6a948a.woff2",
+      "start": 20480,
+      "end": 20991,
+      "bytes": 59780,
+      "characters": 379
+    },
+    {
+      "file": "fonts/cjk/cjk-29.30d0127a944a.woff2",
+      "start": 20992,
+      "end": 21503,
+      "bytes": 52340,
+      "characters": 352
+    },
+    {
+      "file": "fonts/cjk/cjk-2a.bd8ee335825e.woff2",
+      "start": 21504,
+      "end": 22015,
+      "bytes": 52280,
+      "characters": 407
+    },
+    {
+      "file": "fonts/cjk/cjk-2b.14ae35f80695.woff2",
+      "start": 22016,
+      "end": 22527,
+      "bytes": 58720,
+      "characters": 374
+    },
+    {
+      "file": "fonts/cjk/cjk-2c.b3538911ff46.woff2",
+      "start": 22528,
+      "end": 23039,
+      "bytes": 62760,
+      "characters": 391
+    },
+    {
+      "file": "fonts/cjk/cjk-2d.0d3519fb1208.woff2",
+      "start": 23040,
+      "end": 23551,
+      "bytes": 74260,
+      "characters": 405
+    },
+    {
+      "file": "fonts/cjk/cjk-2e.4b53f2109b12.woff2",
+      "start": 23552,
+      "end": 24063,
+      "bytes": 54400,
+      "characters": 364
+    },
+    {
+      "file": "fonts/cjk/cjk-2f.044cc47491bf.woff2",
+      "start": 24064,
+      "end": 24575,
+      "bytes": 60852,
+      "characters": 375
+    },
+    {
+      "file": "fonts/cjk/cjk-30.14eb12dede4d.woff2",
+      "start": 24576,
+      "end": 25087,
+      "bytes": 70720,
+      "characters": 394
+    },
+    {
+      "file": "fonts/cjk/cjk-31.03dcd8a125c3.woff2",
+      "start": 25088,
+      "end": 25599,
+      "bytes": 57124,
+      "characters": 388
+    },
+    {
+      "file": "fonts/cjk/cjk-32.5608c4964f82.woff2",
+      "start": 25600,
+      "end": 26111,
+      "bytes": 77088,
+      "characters": 391
+    },
+    {
+      "file": "fonts/cjk/cjk-33.12ba4a6e6280.woff2",
+      "start": 26112,
+      "end": 26623,
+      "bytes": 55036,
+      "characters": 397
+    },
+    {
+      "file": "fonts/cjk/cjk-34.684cd562b74d.woff2",
+      "start": 26624,
+      "end": 27135,
+      "bytes": 65556,
+      "characters": 390
+    },
+    {
+      "file": "fonts/cjk/cjk-35.ac9f73eaa5e3.woff2",
+      "start": 27136,
+      "end": 27647,
+      "bytes": 80412,
+      "characters": 383
+    },
+    {
+      "file": "fonts/cjk/cjk-36.c27879b2b9d6.woff2",
+      "start": 27648,
+      "end": 28159,
+      "bytes": 59360,
+      "characters": 412
+    },
+    {
+      "file": "fonts/cjk/cjk-37.bf9dc1a8938b.woff2",
+      "start": 28160,
+      "end": 28671,
+      "bytes": 79564,
+      "characters": 412
+    },
+    {
+      "file": "fonts/cjk/cjk-38.103849226ac3.woff2",
+      "start": 28672,
+      "end": 29183,
+      "bytes": 80524,
+      "characters": 409
+    },
+    {
+      "file": "fonts/cjk/cjk-39.8e5f2c1532d9.woff2",
+      "start": 29184,
+      "end": 29695,
+      "bytes": 70528,
+      "characters": 403
+    },
+    {
+      "file": "fonts/cjk/cjk-3a.152cc77691ac.woff2",
+      "start": 29696,
+      "end": 30207,
+      "bytes": 70324,
+      "characters": 409
+    },
+    {
+      "file": "fonts/cjk/cjk-3b.950879251f72.woff2",
+      "start": 30208,
+      "end": 30719,
+      "bytes": 66536,
+      "characters": 387
+    },
+    {
+      "file": "fonts/cjk/cjk-3c.f5732aa5af32.woff2",
+      "start": 30720,
+      "end": 31231,
+      "bytes": 63028,
+      "characters": 388
+    },
+    {
+      "file": "fonts/cjk/cjk-3d.3caf3bdec935.woff2",
+      "start": 31232,
+      "end": 31743,
+      "bytes": 68672,
+      "characters": 368
+    },
+    {
+      "file": "fonts/cjk/cjk-3e.9c54b1d570e6.woff2",
+      "start": 31744,
+      "end": 32255,
+      "bytes": 87240,
+      "characters": 403
+    },
+    {
+      "file": "fonts/cjk/cjk-3f.9e97dc22eb0a.woff2",
+      "start": 32256,
+      "end": 32767,
+      "bytes": 71140,
+      "characters": 310
+    },
+    {
+      "file": "fonts/cjk/cjk-40.6371f3f4b1f8.woff2",
+      "start": 32768,
+      "end": 33279,
+      "bytes": 66792,
+      "characters": 382
+    },
+    {
+      "file": "fonts/cjk/cjk-41.973fe5d51b33.woff2",
+      "start": 33280,
+      "end": 33791,
+      "bytes": 57168,
+      "characters": 398
+    },
+    {
+      "file": "fonts/cjk/cjk-42.d8ee26b677df.woff2",
+      "start": 33792,
+      "end": 34303,
+      "bytes": 78836,
+      "characters": 430
+    },
+    {
+      "file": "fonts/cjk/cjk-43.c74c90cd43fb.woff2",
+      "start": 34304,
+      "end": 34815,
+      "bytes": 78016,
+      "characters": 409
+    },
+    {
+      "file": "fonts/cjk/cjk-44.671a3a577809.woff2",
+      "start": 34816,
+      "end": 35327,
+      "bytes": 81636,
+      "characters": 396
+    },
+    {
+      "file": "fonts/cjk/cjk-45.086e5e7cab71.woff2",
+      "start": 35328,
+      "end": 35839,
+      "bytes": 55480,
+      "characters": 335
+    },
+    {
+      "file": "fonts/cjk/cjk-46.dd79a48c3da5.woff2",
+      "start": 35840,
+      "end": 36351,
+      "bytes": 55004,
+      "characters": 311
+    },
+    {
+      "file": "fonts/cjk/cjk-47.8c165ff76de5.woff2",
+      "start": 36352,
+      "end": 36863,
+      "bytes": 63548,
+      "characters": 372
+    },
+    {
+      "file": "fonts/cjk/cjk-48.feae20d3b254.woff2",
+      "start": 36864,
+      "end": 37375,
+      "bytes": 72516,
+      "characters": 406
+    },
+    {
+      "file": "fonts/cjk/cjk-49.51916483fb34.woff2",
+      "start": 37376,
+      "end": 37887,
+      "bytes": 77772,
+      "characters": 441
+    },
+    {
+      "file": "fonts/cjk/cjk-4a.e001e4558f5c.woff2",
+      "start": 37888,
+      "end": 38399,
+      "bytes": 43620,
+      "characters": 211
+    },
+    {
+      "file": "fonts/cjk/cjk-4b.805273f06b6a.woff2",
+      "start": 38400,
+      "end": 38911,
+      "bytes": 65284,
+      "characters": 366
+    },
+    {
+      "file": "fonts/cjk/cjk-4c.251f3a725af4.woff2",
+      "start": 38912,
+      "end": 39423,
+      "bytes": 63264,
+      "characters": 324
+    },
+    {
+      "file": "fonts/cjk/cjk-4d.5217230ec23b.woff2",
+      "start": 39424,
+      "end": 39935,
+      "bytes": 73936,
+      "characters": 339
+    },
+    {
+      "file": "fonts/cjk/cjk-4e.2c74a2628c98.woff2",
+      "start": 39936,
+      "end": 40447,
+      "bytes": 74340,
+      "characters": 324
+    },
+    {
+      "file": "fonts/cjk/cjk-4f.759df24ce2b0.woff2",
+      "start": 40448,
+      "end": 40959,
+      "bytes": 66048,
+      "characters": 291
+    },
+    {
+      "file": "fonts/cjk/cjk-7c.8b89ac38fa05.woff2",
+      "start": 63488,
+      "end": 63999,
+      "bytes": 9472,
+      "characters": 58
+    },
+    {
+      "file": "fonts/cjk/cjk-7d.66afac44762f.woff2",
+      "start": 64000,
+      "end": 64511,
+      "bytes": 3088,
+      "characters": 16
+    },
+    {
+      "file": "fonts/cjk/cjk-7f.cff891e90e71.woff2",
+      "start": 65024,
+      "end": 65535,
+      "bytes": 15036,
+      "characters": 224
+    }
+  ]
+}
