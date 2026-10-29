@@ -70669,7 +70669,7 @@ A.JC.prototype={
 l(a){return"WebSessionBindingTelegramAuthorization[redacted]"}}
 A.c2W.prototype={
 cn2(a,b,c,d,e,a0){var s,r,q,p,o,n,m,l,k,j,i=this,h=null,g=new A.au8(a.ae("/auth-session/v2/client-observations"),A.aT(t.m)),f=v.G
-g.b=new A.c4R(new A.RJ("513863412ca917314f5d72f0bf75735461f15ecc",f.window.matchMedia("(display-mode: standalone)").matches),g.gd1t())
+g.b=new A.c4R(new A.RJ("3ff3827d6d44dcf9252844b9349d884033616ae3",f.window.matchMedia("(display-mode: standalone)").matches),g.gd1t())
 i.w!==$&&A.aW()
 i.w=g
 s=new A.c3a()
