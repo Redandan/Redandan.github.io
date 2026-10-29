@@ -1,9 +1,9 @@
 {
   "app_name": "agora_market",
-  "version": "1.0.5053",
-  "build_number": "5053",
+  "version": "1.0.5054",
+  "build_number": "5054",
   "package_name": "agora_market",
-  "source_commit": "de2e180495844433700b303017820cfe026b7ef3",
+  "source_commit": "3df7cb7961639e775f21c5943173cf9213d2bfef",
   "source_dirty": false,
   "web_session_flags": {
     "AGORA_WEB_SESSION_V2_ENABLED": false,
@@ -13,9 +13,9 @@
   },
   "management_origin": "",
   "entry_flavor": "buyer-html-split",
-  "buyer_source_commit": "de2e180495844433700b303017820cfe026b7ef3",
-  "buyer_asset_path": "assets/de2e18049584",
-  "buyer_version": "1.0.5053",
+  "buyer_source_commit": "3df7cb7961639e775f21c5943173cf9213d2bfef",
+  "buyer_asset_path": "assets/3df7cb796163",
+  "buyer_version": "1.0.5054",
   "release_stage": "awaiting_public_verification",
   "pending_public_verification": [
     "clean-source local release gates and verified production prebuilt delivery, then same-source Pages/production public product UI acceptance"
